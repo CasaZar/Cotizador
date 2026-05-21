@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casa Zaru — Cotizador Cubiertas Madera Noble</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --wood: #8B5E3C; --wood-dark: #5C3D22; --wood-light: #C4936A;
+  --wood-pale: #F5EDE3; --wood-warm: #E8D5C0;
+  --green: #3B6D11; --green-light: #EAF3DE; --green-mid: #639922;
+  --text: #2C2C2A; --text-muted: #888780;
+  --border: rgba(139,94,60,0.18); --border-mid: rgba(139,94,60,0.32);
+  --bg: #FDFAF7; --card: #FFFFFF; --radius: 12px; --radius-lg: 18px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.hero { background: var(--wood-dark); padding: 2rem 2rem 1.75rem; text-align: center; }
+.hero-brand { font-family: 'DM Serif Display', serif; font-size: 28px; color: #F5EDE3; letter-spacing: 0.04em; margin-bottom: 4px; }
+.hero-sub { font-size: 12px; color: rgba(245,237,227,0.5); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 300; }
+
+.container { max-width: 640px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+.steps { display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border-mid); background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--text-muted); transition: all 0.3s; flex-shrink: 0; }
+.step-dot.active { background: var(--wood); border-color: var(--wood); color: #fff; }
+.step-dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+.step-line { flex: 1; max-width: 56px; height: 1.5px; background: var(--border); transition: background 0.3s; }
+.step-line.done { background: var(--green); }
+
+.card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; display: none; animation: fadeIn 0.3s ease; }
+.card.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.card-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--wood-dark); margin-bottom: 4px; }
+.card-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+
+/* Uso grid */
+.uso-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 0; }
+.uso-opt { border: 0.5px solid var(--border-mid); border-radius: var(--radius); padding: 10px 6px; cursor: pointer; transition: all 0.15s; background: var(--bg); text-align: center; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
+.uso-opt:hover, .uso-opt:active { background: var(--wood-pale); border-color: var(--wood-light); }
+.uso-opt.selected { background: var(--wood-pale); border-color: var(--wood); border-width: 1.5px; }
+.uso-icon { font-size: 18px; margin-bottom: 4px; }
+.uso-label { font-size: 11px; font-weight: 500; color: var(--text); }
+
+/* Madera grid */
+.madera-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+.madera-opt { border: 0.5px solid var(--border-mid); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; background: var(--bg); touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
+.madera-opt:hover, .madera-opt:active { background: var(--wood-pale); border-color: var(--wood-light); }
+.madera-opt.selected { background: var(--wood-pale); border-color: var(--wood); border-width: 1.5px; }
+.madera-name { font-weight: 500; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.madera-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; }
+.madera-tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
+.tag-p { background: #F5EDE3; color: var(--wood); }
+.tag-m { background: #EEF4E8; color: var(--green); }
+.tag-b { background: #F0F0F0; color: #666; }
+
+/* Value blocks */
+.value-block { background: var(--wood-pale); border: 0.5px solid var(--wood-warm); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+.value-block-title { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--wood-dark); margin-bottom: 10px; }
+.value-items { display: flex; flex-direction: column; gap: 8px; }
+.value-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text); line-height: 1.4; }
+.value-item-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+.garantia { display: flex; align-items: center; gap: 10px; background: var(--green-light); border: 0.5px solid #B5D98A; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 1rem; }
+.garantia-text { font-size: 13px; color: var(--green); font-weight: 500; }
+.garantia-sub { font-size: 11px; color: #5A8A2A; margin-top: 1px; }
+
+/* Precio */
+.price-reveal { text-align: center; padding: 1.5rem 1rem; border-radius: var(--radius-lg); background: var(--wood-dark); margin-bottom: 1.25rem; }
+.price-label { font-size: 11px; color: rgba(245,237,227,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+.price-main { font-family: 'DM Serif Display', serif; font-size: 44px; color: #F5EDE3; line-height: 1; margin-bottom: 4px; }
+.price-sub { font-size: 12px; color: rgba(245,237,227,0.6); margin-top: 4px; }
+.price-desc { font-size: 12px; color: rgba(245,237,227,0.4); }
+
+/* Summary */
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.summary-row:last-child { border-bottom: none; }
+.summary-label { color: var(--text-muted); }
+.summary-val { font-weight: 500; color: var(--text); }
+
+/* Comparativa */
+.comp-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.comp-row:last-child { border-bottom: none; }
+.comp-row.selected-row { background: var(--wood-pale); margin: 0 -1rem; padding: 10px 1rem; border-radius: 6px; }
+.comp-row.selected-row .comp-nombre { color: var(--wood-dark); font-weight: 600; }
+.comp-row.selected-row .comp-precio { color: var(--wood-dark); font-weight: 700; }
+
+/* Detalle */
+.detalle-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.detalle-row:last-child { border-bottom: none; }
+
+/* Buttons */
+.btn-primary { width: 100%; background: var(--wood); color: #F5EDE3; border: none; border-radius: var(--radius); padding: 14px; font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: background 0.15s; margin-top: 8px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.btn-primary:hover { background: var(--wood-dark); }
+.btn-secondary { width: 100%; background: none; color: var(--text-muted); border: 0.5px solid var(--border-mid); border-radius: var(--radius); padding: 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; margin-top: 8px; touch-action: manipulation; }
+.btn-secondary:hover { background: var(--wood-pale); color: var(--wood); border-color: var(--wood-light); }
+.btn-whatsapp { width: 100%; background: #25D366; color: #fff; border: none; border-radius: var(--radius); padding: 14px; font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; touch-action: manipulation; }
+.btn-whatsapp:hover { background: #1DB954; }
+.btn-add-cubierta { width: 100%; background: none; border: 1.5px dashed var(--border-mid); border-radius: var(--radius); padding: 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; color: var(--wood); transition: all 0.15s; margin-top: 10px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.btn-add-cubierta:hover { background: var(--wood-pale); border-color: var(--wood-light); }
+.btn-add-cubierta:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.error-msg { font-size: 12px; color: #C0392B; margin-top: 6px; display: none; }
+.field-label { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+
+@media (max-width: 480px) {
+  .madera-grid { grid-template-columns: 1fr 1fr; }
+  .price-main { font-size: 36px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-brand">Casa Zaru</div>
+  <div class="hero-sub">Cotizador Cubiertas · Madera Noble</div>
+</div>
+
+<div class="container">
+
+  <div class="steps">
+    <div class="step-dot active" id="sd1">1</div>
+    <div class="step-line" id="sl1"></div>
+    <div class="step-dot" id="sd2">2</div>
+    <div class="step-line" id="sl2"></div>
+    <div class="step-dot" id="sd3">3</div>
+    <div class="step-line" id="sl3"></div>
+    <div class="step-dot" id="sd4">4</div>
+  </div>
+
+  <!-- PASO 1: Medidas y uso -->
+  <div class="card active" id="step1">
+    <div class="card-title">Medidas de tus cubiertas</div>
+    <div class="card-sub">Ingresa el largo y ancho de cada cubierta en centímetros. Puedes cotizar hasta 5 piezas.</div>
+
+    <!-- Tabla medidas -->
+    <div style="border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:28px 1fr 1fr 24px;gap:8px;padding:8px 12px;background:var(--wood-pale);font-size:10px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">
+        <span>#</span><span>Largo (cm)</span><span>Ancho (cm)</span><span></span>
+      </div>
+      <div id="cubiertas-list"></div>
+    </div>
+    <button class="btn-add-cubierta" id="btn-add" onclick="agregarCubierta()">+ Agregar cubierta</button>
+
+    <!-- Uso -->
+    <div style="margin-top:1.5rem;margin-bottom:4px">
+      <span class="field-label">Uso principal</span>
+      <div class="uso-grid">
+        <div class="uso-opt" onclick="selectUso('cocina',this)"><div class="uso-icon">🍳</div><div class="uso-label">Cocina</div></div>
+        <div class="uso-opt" onclick="selectUso('baño',this)"><div class="uso-icon">🚿</div><div class="uso-label">Baño</div></div>
+        <div class="uso-opt" onclick="selectUso('quincho',this)"><div class="uso-icon">🔥</div><div class="uso-label">Quincho</div></div>
+        <div class="uso-opt" onclick="selectUso('escritorio',this)"><div class="uso-icon">💻</div><div class="uso-label">Escritorio</div></div>
+        <div class="uso-opt" onclick="selectUso('bar',this)"><div class="uso-icon">🥃</div><div class="uso-label">Bar</div></div>
+        <div class="uso-opt" onclick="selectUso('comedor',this)"><div class="uso-icon">🪑</div><div class="uso-label">Mesa</div></div>
+        <div class="uso-opt" onclick="selectUso('peldanos',this)"><div class="uso-icon">🪜</div><div class="uso-label">Peldaños</div></div>
+        <div class="uso-opt" onclick="selectUso('repisa',this)"><div class="uso-icon">📚</div><div class="uso-label">Repisa</div></div>
+        <div class="uso-opt" onclick="selectUso('otro',this)"><div class="uso-icon">+</div><div class="uso-label">Otro</div></div>
+      </div>
+    </div>
+
+    <div id="err1" class="error-msg">Completa al menos una cubierta con largo y ancho, y selecciona el uso.</div>
+    <div id="err-ancho" class="error-msg">El ancho máximo es 160 cm.</div>
+    <button class="btn-primary" onclick="irPaso2()">Siguiente →</button>
+  </div>
+
+  <!-- PASO 2: Madera -->
+  <div class="card" id="step2">
+    <div class="card-title">Elige tu madera</div>
+    <div class="card-sub">Una sola madera para todas tus cubiertas. Al final verás el precio en todas las opciones.</div>
+    <div class="madera-grid">
+      <div class="madera-opt" onclick="selectMadera('pino',219900,this)">
+        <div class="madera-name">Pino Oregón</div>
+        <div class="madera-desc">Veta marcada, tono rosado suave. Liviana y versátil.</div>
+        <div class="madera-tag tag-b">Clásica</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('coihue',302295,this)">
+        <div class="madera-name">Coihue</div>
+        <div class="madera-desc">La más dura del sur. Ideal para superficies de alto tráfico.</div>
+        <div class="madera-tag tag-m">Más vendida</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('cipres',302295,this)">
+        <div class="madera-name">Ciprés</div>
+        <div class="madera-desc">Tono cálido y parejo. Buena dureza, nudos que le dan carácter único.</div>
+        <div class="madera-tag tag-m">Noble</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('castano',302295,this)">
+        <div class="madera-name">Castaño</div>
+        <div class="madera-desc">Veta grande e imponente. Tono miel oscuro, acabado elegante.</div>
+        <div class="madera-tag tag-m">Noble</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('manio',302295,this)">
+        <div class="madera-name">Mañío</div>
+        <div class="madera-desc">Textura fina y suave. Color claro con muy poco nudo.</div>
+        <div class="madera-tag tag-m">Noble</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('rauli',344900,this)">
+        <div class="madera-name">Raulí</div>
+        <div class="madera-desc">Veta fina y pronunciada, tono rojizo cálido. Alta durabilidad.</div>
+        <div class="madera-tag tag-p">Premium</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('lenga',344900,this)">
+        <div class="madera-name">Lenga</div>
+        <div class="madera-desc">Densa y pesada. Tono marrón rojizo, carácter del extremo sur.</div>
+        <div class="madera-tag tag-p">Premium</div>
+      </div>
+      <div class="madera-opt" onclick="selectMadera('combinada',344900,this)">
+        <div class="madera-name">Maderas Combinadas</div>
+        <div class="madera-desc">Mezcla de nobles en tonos variados. Veta única en cada pieza.</div>
+        <div class="madera-tag tag-p">Premium</div>
+      </div>
+    </div>
+    <div id="err2" class="error-msg">Por favor selecciona una madera.</div>
+    <button class="btn-primary" onclick="irPaso3()">Siguiente →</button>
+    <button class="btn-secondary" onclick="goStep(1)">← Atrás</button>
+  </div>
+
+  <!-- PASO 3: Valor -->
+  <div class="card" id="step3">
+    <div class="card-title">Antes de ver el precio...</div>
+    <div class="card-sub">Queremos que sepas exactamente qué estás cotizando.</div>
+
+    <div class="value-block">
+      <div class="value-block-title" id="value-uso-title">Para tu cocina</div>
+      <div class="value-items" id="value-uso-items"></div>
+    </div>
+
+    <div class="value-block">
+      <div class="value-block-title">Cada cubierta Casa Zaru es</div>
+      <div class="value-items">
+        <div class="value-item"><span class="value-item-icon">🌳</span><span>Madera sólida <strong>100% noble del sur de Chile</strong> — no MDF, no melamina, no enchapado.</span></div>
+        <div class="value-item"><span class="value-item-icon">🪚</span><span>Fabricada a medida en nuestro taller propio en <strong>7 a 15 días hábiles.</strong></span></div>
+        <div class="value-item"><span class="value-item-icon">✋</span><span>Terminada a mano pieza por pieza. Sin producción en serie.</span></div>
+        <div class="value-item"><span class="value-item-icon">📦</span><span>Envío a todo Chile con embalaje protegido, probado y con garantía.</span></div>
+      </div>
+    </div>
+
+    <div class="value-block" style="margin-bottom:1rem">
+      <div class="value-block-title">Acabados disponibles</div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--wood-warm);font-size:13px;">
+          <span><strong>Vitrificado mate</strong></span>
+          <span style="font-size:11px;color:var(--text-muted)">Aspecto natural · Alta resistencia</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--wood-warm);font-size:13px;">
+          <span><strong>Vitrificado semi brillo</strong></span>
+          <span style="font-size:11px;color:var(--text-muted)">Capa semi brillante · Alta resistencia</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px;">
+          <span><strong>Aceite cera Osmo</strong></span>
+          <span style="font-size:11px;color:var(--text-muted)">Textura natural · Resistencia media-alta</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">El acabado final se confirma con tu asesor según el uso y madera elegida.</div>
+    </div>
+
+    <div class="garantia">
+      <div style="font-size:22px;flex-shrink:0">🛡️</div>
+      <div>
+        <div class="garantia-text">Garantía de 5 años</div>
+        <div class="garantia-sub">Si hay algún defecto de fabricación, lo resolvemos sin costo.</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="irPaso4()">Ver mi cotización →</button>
+    <button class="btn-secondary" onclick="goStep(2)">← Atrás</button>
+  </div>
+
+  <!-- PASO 4: Resultado -->
+  <div class="card" id="step4">
+    <div class="card-title">Tu cotización</div>
+    <div class="card-sub">Precio basado en tus medidas y madera seleccionada.</div>
+
+    <div class="price-reveal">
+      <div class="price-label">Total de tu pedido</div>
+      <div class="price-main" id="precio-total">$0</div>
+      <div class="price-sub" id="precio-sub"></div>
+      <div class="price-desc">IVA incluido · Espesor hasta 4 cm</div>
+    </div>
+
+    <!-- Detalle por cubierta -->
+    <div style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;">
+      <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Detalle por cubierta</div>
+      <div id="detalle-cubiertas"></div>
+    </div>
+
+    <!-- Comparativa otras maderas -->
+    <div style="background:var(--wood-pale);border:0.5px solid var(--wood-warm);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;">
+      <div style="font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Mismo pedido en otras maderas</div>
+      <div id="comparativa-maderas"></div>
+    </div>
+
+    <!-- Resumen -->
+    <div style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1.25rem;">
+      <div class="summary-row"><span class="summary-label">Madera seleccionada</span><span class="summary-val" id="res-madera">—</span></div>
+      <div class="summary-row"><span class="summary-label">Uso</span><span class="summary-val" id="res-uso">—</span></div>
+      <div class="summary-row"><span class="summary-label">Cantidad de cubiertas</span><span class="summary-val" id="res-cantidad">—</span></div>
+      <div class="summary-row"><span class="summary-label">Plazo de producción</span><span class="summary-val">7 a 15 días hábiles</span></div>
+    </div>
+
+    <div class="value-block" style="margin-bottom:1rem">
+      <div class="value-block-title" style="font-size:13px;margin-bottom:6px">¿Por qué este valor?</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6">Cada cubierta se fabrica desde cero con madera noble sólida. No hay stock, no hay producción masiva. Lo que pagas es exactamente lo que recibes: una pieza única, con garantía real, que dura décadas.</div>
+    </div>
+
+    <div style="background:var(--wood-pale);border:0.5px solid var(--wood-warm);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:22px;flex-shrink:0">📖</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--wood-dark);margin-bottom:3px;">Catálogo de maderas</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Nuestro asesor te enviará el catálogo con fotos de cada especie por WhatsApp para que puedas ver cómo quedaría tu cubierta antes de confirmar.</div>
+      </div>
+    </div>
+
+    <a class="btn-whatsapp" id="btn-whatsapp" href="#" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Confirmar por WhatsApp
+    </a>
+    <button class="btn-secondary" onclick="resetTodo()">Hacer nueva cotización</button>
+  </div>
+
+</div>
+
+<script>
+var WHATSAPP_NUM = '56956375558';
+var MAX = 5;
+
+var MADERAS = [
+  {id:'pino',      nombre:'Pino Oregón',         precio:219900},
+  {id:'coihue',    nombre:'Coihue',              precio:302295},
+  {id:'cipres',    nombre:'Ciprés',              precio:302295},
+  {id:'castano',   nombre:'Castaño',             precio:302295},
+  {id:'manio',     nombre:'Mañío',               precio:302295},
+  {id:'rauli',     nombre:'Raulí',               precio:344900},
+  {id:'lenga',     nombre:'Lenga',               precio:344900},
+  {id:'combinada', nombre:'Maderas Combinadas',  precio:344900},
+];
+
+var GRUPOS_COMP = [
+  {nombre:'Pino Oregón',                        precio:219900},
+  {nombre:'Coihue / Ciprés / Castaño / Mañío',  precio:302295},
+  {nombre:'Raulí / Lenga / Combinadas',          precio:344900},
+];
+
+var USO_LABEL = {cocina:'Cocina',baño:'Baño',quincho:'Quincho',escritorio:'Escritorio',bar:'Bar',comedor:'Mesa'};
+var USO_VALUE = {
+  cocina:     ['La Coihue es la madera más dura del sur: resiste el uso diario de una cocina sin problema.','Con vitrificado mate o semi brillo repela líquidos y es fácil de limpiar.','Si se raya con el tiempo, se lija y retrata. No se reemplaza, se renueva.'],
+  baño:       ['Con vitrificado la madera dura décadas en el baño — crea una barrera impermeable.','Es una superficie única: la veta natural hace que ninguna cubierta sea igual a otra.','Visualmente transforma el baño completamente.'],
+  quincho:    ['Con aceite cera Osmo la madera resiste perfectamente en el ambiente del quincho.','Es cálida al tacto y visualmente muy superior a cualquier alternativa sintética.','Se retrata cada 6 a 9 meses con aceite cera para mantenerla en perfecto estado.'],
+  escritorio: ['La madera sólida no se pandea ni deforma con el tiempo como el MDF o melamina.','El aceite cera Osmo realza la veta y deja una textura agradable al tacto.','Cambia completamente el ambiente del espacio de trabajo.'],
+  bar:        ['La madera noble aguanta el uso intensivo con la terminación adecuada.','Es reparable: si se raya o marca, se lija y retrata.','Visualmente es el elemento que todos van a notar y recordar del espacio.'],
+  comedor:    ['La madera maciza sólida dura décadas — es una compra que se hereda.','Medidas exactas para tu espacio: no es un mueble de catálogo, es tuyo.','Con el tiempo mejora: adquiere carácter y se vuelve parte del ambiente.'],
+  peldanos:   ['La madera noble es el material más elegante y cálido para peldaños de escalera.','Con vitrificado semi brillo resiste perfectamente el tráfico constante.','Es reparable: si se desgasta con el tiempo, se lija y retrata sin reemplazar.'],
+  repisa:     ['La madera sólida no se pandea con el peso como el MDF o la melamina.','Visualmente transforma cualquier espacio — es funcional y decorativa a la vez.','A medida exacta para tu muro: no hay solución más limpia ni más duradera.'],
+  otro:       ['Cada cubierta se fabrica a medida según tus especificaciones exactas.','Nuestro asesor te ayudará a definir el acabado más adecuado para tu proyecto.','Madera noble sólida para cualquier aplicación — interior o exterior con el tratamiento correcto.']
+};
+
+var selectedMaderaId = null;
+var selectedMaderaPrecio = 0;
+var selectedUsoId = null;
+var cubiertas = [{id:1,largo:'',ancho:''},{id:2,largo:'',ancho:''}];
+var nextId = 3;
+var currentStep = 1;
+
+function getMadera(id) { return MADERAS.find(function(m){return m.id===id;})||null; }
+
+function selectMadera(id, precio, el) {
+  selectedMaderaId = id;
+  selectedMaderaPrecio = precio;
+  document.querySelectorAll('.madera-opt').forEach(function(e){e.classList.remove('selected');});
+  el.classList.add('selected');
+}
+
+function selectUso(id, el) {
+  selectedUsoId = id;
+  document.querySelectorAll('.uso-opt').forEach(function(e){e.classList.remove('selected');});
+  el.classList.add('selected');
+}
+
+function agregarCubierta() {
+  if (cubiertas.length >= MAX) return;
+  cubiertas.push({id:nextId++, largo:'', ancho:''});
+  renderCubiertas();
+}
+
+function eliminarCubierta(id) {
+  if (cubiertas.length <= 1) return;
+  cubiertas = cubiertas.filter(function(c){return c.id!==id;});
+  renderCubiertas();
+}
+
+function onInput(id, field, val) {
+  var c = cubiertas.find(function(x){return x.id===id;});
+  if (c) c[field] = parseFloat(val)||'';
+}
+
+function renderCubiertas() {
+  var html = cubiertas.map(function(c, i) {
+    return '<div style="display:grid;grid-template-columns:28px 1fr 1fr 24px;gap:8px;align-items:center;padding:10px 12px;border-top:0.5px solid var(--border);">'
+      + '<span style="font-family:\'DM Serif Display\',serif;font-size:15px;color:var(--wood);text-align:center">'+(i+1)+'</span>'
+      + '<input type="number" placeholder="Ej: 250" min="30" max="600" value="'+(c.largo||'')+'" style="width:100%;padding:9px 10px;border:0.5px solid var(--border-mid);border-radius:8px;background:var(--card);font-family:\'DM Sans\',sans-serif;font-size:14px;color:var(--text);outline:none;" oninput="onInput('+c.id+',\'largo\',this.value)">'
+      + '<input type="number" placeholder="Ej: 60" min="20" max="160" value="'+(c.ancho||'')+'" style="width:100%;padding:9px 10px;border:0.5px solid var(--border-mid);border-radius:8px;background:var(--card);font-family:\'DM Sans\',sans-serif;font-size:14px;color:var(--text);outline:none;" oninput="onInput('+c.id+',\'ancho\',this.value)">'
+      + (cubiertas.length > 1
+        ? '<span onclick="eliminarCubierta('+c.id+')" style="font-size:18px;color:var(--text-muted);cursor:pointer;text-align:center;line-height:1;display:flex;align-items:center;justify-content:center;">×</span>'
+        : '<span></span>')
+      + '</div>';
+  }).join('');
+  document.getElementById('cubiertas-list').innerHTML = html;
+
+  var btn = document.getElementById('btn-add');
+  btn.disabled = cubiertas.length >= MAX;
+  btn.textContent = cubiertas.length >= MAX
+    ? 'Máximo 5 cubiertas'
+    : '+ Agregar cubierta (' + cubiertas.length + '/' + MAX + ')';
+}
+
+function irPaso2() {
+  document.getElementById('err1').style.display = 'none';
+  document.getElementById('err-ancho').style.display = 'none';
+  var validas = cubiertas.filter(function(c){return c.largo&&c.ancho&&c.largo>0&&c.ancho>0;});
+  if (validas.length === 0 || !selectedUsoId) {
+    document.getElementById('err1').style.display = 'block'; return;
+  }
+  var anchoMal = validas.find(function(c){return c.ancho>160;});
+  if (anchoMal) { document.getElementById('err-ancho').style.display = 'block'; return; }
+  goStep(2);
+}
+
+function irPaso3() {
+  document.getElementById('err2').style.display = 'none';
+  if (!selectedMaderaId) { document.getElementById('err2').style.display = 'block'; return; }
+  var usoItems = USO_VALUE[selectedUsoId] || [];
+  document.getElementById('value-uso-items').innerHTML = usoItems.map(function(t){
+    return '<div class="value-item"><span class="value-item-icon">✦</span><span>'+t+'</span></div>';
+  }).join('');
+  document.getElementById('value-uso-title').textContent = 'Por qué funciona en tu ' + (USO_LABEL[selectedUsoId]||'').toLowerCase();
+  goStep(3);
+}
+
+function irPaso4() {
+  var m = getMadera(selectedMaderaId);
+  var validas = cubiertas.filter(function(c){return c.largo&&c.ancho&&c.largo>0&&c.ancho>0;});
+  var totalM2 = validas.reduce(function(s,c){return s+(c.largo*c.ancho/10000);},0);
+  var total = validas.reduce(function(s,c){return s+Math.round((c.largo*c.ancho/10000)*selectedMaderaPrecio);},0);
+
+  document.getElementById('precio-total').textContent = '$'+total.toLocaleString('es-CL');
+  document.getElementById('precio-sub').textContent = validas.length > 1
+    ? validas.length + ' cubiertas · ' + totalM2.toFixed(2) + ' m² total'
+    : '1 cubierta · ' + totalM2.toFixed(2) + ' m²';
+  document.getElementById('res-madera').textContent = m ? m.nombre : '—';
+  document.getElementById('res-uso').textContent = USO_LABEL[selectedUsoId]||'—';
+  document.getElementById('res-cantidad').textContent = validas.length + ' cubierta' + (validas.length>1?'s':'');
+
+  // Detalle
+  document.getElementById('detalle-cubiertas').innerHTML = validas.map(function(c,i){
+    var p = Math.round((c.largo*c.ancho/10000)*selectedMaderaPrecio);
+    var m2 = (c.largo*c.ancho/10000).toFixed(2);
+    return '<div class="detalle-row">'
+      +'<div><div style="font-weight:500;font-size:13px;color:var(--text)">Cubierta '+(i+1)+'</div>'
+      +'<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+c.largo+' × '+c.ancho+' cm · '+m2+' m²</div></div>'
+      +'<div style="font-weight:600;font-size:14px;color:var(--green)">$'+p.toLocaleString('es-CL')+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Comparativa
+  document.getElementById('comparativa-maderas').innerHTML = GRUPOS_COMP.map(function(g){
+    var totalG = validas.reduce(function(s,c){return s+Math.round((c.largo*c.ancho/10000)*g.precio);},0);
+    var esMia = g.precio === selectedMaderaPrecio;
+    return '<div class="comp-row'+(esMia?' selected-row':'')+'">'
+      +'<span class="comp-nombre">'+g.nombre
+      +(esMia?' <span style="font-size:10px;background:var(--wood);color:#fff;padding:1px 6px;border-radius:10px;margin-left:4px;">tu elección</span>':'')
+      +'</span>'
+      +'<span class="comp-precio">$'+totalG.toLocaleString('es-CL')+'</span>'
+      +'</div>';
+  }).join('');
+
+  // WhatsApp
+  var msg = '¡Hola! Hice una cotización en la web de Casa Zaru:\n\n'
+    + '🌳 Madera: '+(m?m.nombre:'')+ '\n'
+    + '🏠 Uso: '+(USO_LABEL[selectedUsoId]||'')+'\n\n';
+  validas.forEach(function(c,i){
+    var p = Math.round((c.largo*c.ancho/10000)*selectedMaderaPrecio);
+    msg += '📐 Cubierta '+(i+1)+': '+c.largo+' × '+c.ancho+' cm → $'+p.toLocaleString('es-CL')+'\n';
+  });
+  msg += '\n💰 Total estimado: $'+total.toLocaleString('es-CL')+'\n\n¿Pueden confirmarme esta cotización?';
+  document.getElementById('btn-whatsapp').href = 'https://wa.me/'+WHATSAPP_NUM+'?text='+encodeURIComponent(msg);
+
+  goStep(4);
+}
+
+function goStep(n) {
+  document.getElementById('step'+currentStep).classList.remove('active');
+  document.getElementById('step'+n).classList.add('active');
+  for (var i=1;i<=4;i++){
+    var d=document.getElementById('sd'+i);
+    if(i<n){d.className='step-dot done';d.innerHTML='✓';}
+    else if(i===n){d.className='step-dot active';d.innerHTML=i;}
+    else{d.className='step-dot';d.innerHTML=i;}
+    if(i<4) document.getElementById('sl'+i).className='step-line'+(i<n?' done':'');
+  }
+  currentStep=n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetTodo() {
+  selectedMaderaId=null; selectedMaderaPrecio=0; selectedUsoId=null;
+  cubiertas=[{id:1,largo:'',ancho:''},{id:2,largo:'',ancho:''}]; nextId=3;
+  document.querySelectorAll('.madera-opt,.uso-opt').forEach(function(e){e.classList.remove('selected');});
+  renderCubiertas();
+  goStep(1);
+}
+
+// Init
+renderCubiertas();
+</script>
+</body>
+</html>
