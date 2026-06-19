@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotizador en Línea · Casa Zaru</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --g:   #B8894A;
+  --gd:  #7A5620;
+  --gl:  #D4A96A;
+  --cr:  #FAF8F2;
+  --crd: #F0E6D0;
+  --crt: #F7F1E4;
+  --tx:  #2C1A08;
+  --tm:  #6B5840;
+  --bd:  #D9C4A5;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--cr); color: var(--tx); min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+.hidden { display: none !important; }
+
+/* ── LOGO BAR ── */
+.logo-bar { padding: 14px 16px 10px; text-align: center; border-bottom: 1px solid var(--bd); background: white; }
+.logotype { font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 700; letter-spacing: 3px; line-height: 1; }
+.logotype .c { color: var(--gd); }
+.logotype .z { color: var(--g); }
+.tagline { font-size: 8.5px; letter-spacing: 3px; text-transform: uppercase; color: var(--tm); margin-top: 3px; }
+.badge { display: inline-block; background: var(--g); color: white; font-size: 9px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; padding: 2px 10px; border-radius: 20px; margin-top: 6px; }
+
+/* ── DASHBOARD ── */
+.dash-body { padding: 18px 14px 28px; }
+.dash-body h2 { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gd); text-align: center; margin-bottom: 7px; }
+.dash-intro { font-size: 11.5px; color: var(--tm); text-align: center; line-height: 1.55; margin-bottom: 18px; }
+.pgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 460px; margin: 0 auto; }
+.pcard { background: white; border: 1.5px solid var(--bd); border-radius: 10px; padding: 14px 10px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; user-select: none; }
+.pcard:hover { border-color: var(--g); background: var(--crd); }
+.pcard:active { transform: scale(.98); }
+.pcard .ico { font-size: 24px; margin-bottom: 5px; }
+.pcard .pname { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 600; color: var(--tx); line-height: 1.3; }
+.pcard .psub { font-size: 10px; color: var(--tm); margin-top: 2px; }
+.pcard.wide { grid-column: span 2; }
+
+/* ── FORM ── */
+.form-body { padding: 0 14px 28px; }
+.form-hdr { display: flex; align-items: center; gap: 10px; padding: 14px 0 12px; border-bottom: 1px solid var(--bd); margin-bottom: 16px; }
+.btn-back { background: none; border: 1px solid var(--bd); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--tm); flex-shrink: 0; font-family: 'Inter', sans-serif; }
+.form-hdr h2 { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--gd); flex: 1; }
+.flabel { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gd); margin-bottom: 5px; }
+.flabel .req { color: #c0392b; font-weight: 700; }
+.finput, .fsel { width: 100%; padding: 10px 12px; border: 1px solid var(--bd); border-radius: 7px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; color: var(--tx); }
+.finput:focus, .fsel:focus { outline: none; border-color: var(--g); }
+.fsec { margin-bottom: 14px; }
+.btn-primary { width: 100%; background: var(--g); color: white; border: none; border-radius: 9px; padding: 13px; font-size: 15px; font-family: 'Playfair Display', serif; cursor: pointer; letter-spacing: 1px; transition: background .15s; margin-top: 4px; }
+.btn-primary:hover { background: var(--gd); }
+.msg-err { color: #c0392b; font-size: 12px; text-align: center; margin-top: 8px; }
+.col-labels { display: flex; gap: 5px; margin-bottom: 3px; }
+.col-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .4px; color: var(--tm); text-align: center; flex: 1; }
+.col-lbl.nar { flex: .45; }
+.col-lbl.wide { flex: 1.4; }
+.dim-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+.rnum { font-size: 10px; color: var(--tm); min-width: 14px; text-align: center; flex-shrink: 0; }
+.dim-row input, .dim-row select { flex: 1; padding: 8px 6px; border: 1px solid var(--bd); border-radius: 6px; font-size: 13px; font-family: 'Inter', sans-serif; background: white; color: var(--tx); min-width: 0; }
+.dim-row .nar { flex: .45; }
+.dim-row .wid { flex: 1.4; }
+.dim-row input:focus, .dim-row select:focus { outline: none; border-color: var(--g); }
+.btn-add { width: 100%; padding: 7px; border: 1.5px dashed var(--gl); border-radius: 7px; background: none; color: var(--g); font-size: 12px; cursor: pointer; margin-top: 3px; font-family: 'Inter', sans-serif; }
+
+/* ── QUOTE ── */
+.q-toolbar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--bd); background: white; }
+.tbtn { flex: 1; padding: 8px 3px; border-radius: 7px; font-size: 11px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 500; border: 1px solid var(--bd); background: white; color: var(--tx); }
+.tbtn.pri { background: var(--g); color: white; border-color: var(--g); }
+/* pantalla completa */
+#s3:fullscreen .logo-bar,
+#s3:fullscreen .q-toolbar { display: none !important; }
+#s3:fullscreen #q-out { height: 100vh; overflow-y: auto; background: var(--cr); }
+#s3:-webkit-full-screen .logo-bar,
+#s3:-webkit-full-screen .q-toolbar { display: none !important; }
+#s3:-webkit-full-screen #q-out { height: 100vh; overflow-y: auto; background: var(--cr); }
+#s3.fs-mode { position: fixed; inset: 0; z-index: 9999; background: var(--cr); overflow: hidden; }
+#s3.fs-mode .logo-bar, #s3.fs-mode .q-toolbar { display: none !important; }
+#s3.fs-mode #q-out { height: 100%; overflow-y: auto; }
+.btn-exit-fs { position: fixed; top: 14px; right: 14px; z-index: 10000; background: rgba(0,0,0,.55); color: white; border: none; border-radius: 20px; padding: 8px 18px; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; }
+.coti { padding: 13px; max-width: 500px; margin: 0 auto; }
+.coti-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.coti-logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+.coti-logo .c { color: var(--gd); }
+.coti-logo .z { color: var(--g); }
+.coti-sub { font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--tm); margin-top: 2px; }
+.coti-r { text-align: right; }
+.coti-title { font-family: 'Playfair Display', serif; font-size: 14px; color: var(--tx); }
+.coti-meta { font-size: 9px; color: var(--tm); margin-top: 1px; line-height: 1.45; }
+.info-bar { background: var(--crd); border-radius: 6px; padding: 5px 9px; font-size: 10px; color: var(--tm); margin-bottom: 9px; }
+.info-bar strong { color: var(--tx); }
+/* Dimension table */
+.ptable { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 11px; }
+.ptable th { background: var(--gd); color: white; padding: 5px 3px; text-align: center; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+.ptable td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--bd); background: var(--crt); }
+.ptable .trow td { background: var(--crd); font-weight: 600; font-size: 10.5px; border-top: 1.5px solid var(--gd); border-bottom: none; }
+/* precio por tier */
+.ptier-block { border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; margin-bottom: 10px; }
+.ptier-head { background: var(--crd); padding: 5px 9px; display: flex; }
+.ptier-head span { font-size: 8px; text-transform: uppercase; letter-spacing: .7px; color: var(--tm); flex: 1; text-align: right; font-weight: 600; }
+.ptier-head span:first-child { flex: 1.6; text-align: left; font-size: 9px; color: var(--gd); font-weight: 700; letter-spacing: .8px; }
+.ptier-row { display: flex; align-items: center; padding: 7px 9px; border-top: 1px solid var(--crd); background: white; }
+.ptier-row:nth-child(even) { background: var(--cr); }
+.ptier-wood { flex: 1.6; font-size: 10px; color: var(--tm); line-height: 1.3; }
+.ptier-total { flex: 1; text-align: right; font-size: 12.5px; font-weight: 700; color: var(--tx); }
+.ptier-trans { flex: 1; text-align: right; font-size: 11px; font-weight: 600; color: #2D6A4F; }
+.ptier-note { padding: 4px 9px; font-size: 8px; color: var(--tm); background: var(--crt); border-top: 1px solid var(--crd); text-align: center; }
+.dcto-green { color: #2D6A4F; font-weight: 700; }
+.transf-badge { display: inline-block; background: #D1FAE5; color: #065F46; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid #A7F3D0; }
+/* Specs bar */
+.specs { display: flex; border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; margin-bottom: 9px; background: white; }
+.spec { flex: 1; padding: 6px 5px; text-align: center; border-right: 1px solid var(--bd); }
+.spec:last-child { border-right: none; }
+.spec .sl { font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--gd); }
+.spec .sv { font-size: 9px; color: var(--tm); margin-top: 1px; line-height: 1.3; }
+/* Info boxes */
+.iboxes { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 9px; }
+.ibox { border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; }
+.ibox-h { background: var(--g); color: white; padding: 5px 7px; font-size: 8.5px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; text-align: center; }
+.ibox-b { padding: 7px; background: white; font-size: 9.5px; line-height: 1.55; color: var(--tm); }
+.ibox-b ul { list-style: none; padding: 0; }
+.ibox-b li { padding: 3px 0 3px 10px; text-indent: -10px; border-bottom: 1px solid var(--crd); line-height: 1.4; }
+.ibox-b li:last-child { border-bottom: none; }
+.ibox-b li::before { content: "· "; color: var(--g); font-weight: 700; }
+/* Bank */
+.bankrow { background: var(--crd); border: 1px solid var(--bd); border-radius: 6px; padding: 7px 10px; font-size: 9.5px; color: var(--tm); margin-bottom: 8px; text-align: center; line-height: 1.7; }
+.bankrow strong { color: var(--tx); }
+/* Warranty */
+.warranty { background: var(--crd); border: 1px solid var(--bd); border-radius: 7px; padding: 7px 10px; font-size: 9px; color: var(--tm); text-align: center; line-height: 1.45; }
+.warranty strong { display: block; font-size: 10px; color: var(--gd); margin-bottom: 2px; }
+
+@media print {
+  #s1, #s2, .logo-bar, .q-toolbar { display: none !important; }
+  body { background: white; }
+  .coti { padding: 8px; max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ s1: DASHBOARD ══ -->
+<div id="s1">
+  <div class="logo-bar">
+    <div class="logotype"><span class="c">CASA </span><span class="z">ZARU</span></div>
+    <div class="tagline">Madera del sur de Chile a medida</div>
+    <span class="badge">Cotizador en Línea</span>
+  </div>
+  <div class="dash-body">
+    <h2>¿Qué producto te interesa?</h2>
+    <p class="dash-intro">Selecciona el producto, ingresa tus medidas y recibe tu cotización al instante.</p>
+    <div class="pgrid">
+      <div class="pcard" data-prod="cubierta"><div class="ico">🪵</div><div class="pname">Cubierta</div><div class="psub">2,1 a 4,0 cm</div></div>
+      <div class="pcard" data-prod="repisa"><div class="ico">📐</div><div class="pname">Repisa / Cubierta</div><div class="psub">2 cm</div></div>
+      <div class="pcard" data-prod="peldano"><div class="ico">🪜</div><div class="pname">Peldaño</div><div class="psub">Escalera</div></div>
+      <div class="pcard" data-prod="granero"><div class="ico">🚪</div><div class="pname">Puerta Granero</div><div class="psub">Clásico · Cruz · Ensenada</div></div>
+      <div class="pcard" data-prod="maciza"><div class="ico">🚪</div><div class="pname">Puerta Maciza</div><div class="psub">Panguipulli · Lago Ranco…</div></div>
+      <div class="pcard" data-prod="vidrios"><div class="ico">🪟</div><div class="pname">Puerta con Vidrios</div><div class="psub">Valdivia · Pucón…</div></div>
+      <div class="pcard wide" data-prod="revestimiento"><div class="ico">🌿</div><div class="pname">Revestimiento</div><div class="psub">Coihue · Ciprés · precio por m²</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ s2: FORM ══ -->
+<div id="s2" class="hidden">
+  <div class="logo-bar">
+    <div class="logotype"><span class="c">CASA </span><span class="z">ZARU</span></div>
+    <span class="badge">Cotizador en Línea</span>
+  </div>
+  <div class="form-body">
+    <div class="form-hdr">
+      <button class="btn-back" id="btn-back">← Inicio</button>
+      <h2 id="f-title">—</h2>
+    </div>
+    <div class="fsec">
+      <label class="flabel" for="f-cli">Tu nombre <span class="req">*</span></label>
+      <input class="finput" type="text" id="f-cli" placeholder="Ej. Juan Pérez" autocomplete="name">
+    </div>
+    <div class="fsec">
+      <label class="flabel" for="f-con">Teléfono o correo <span class="req">*</span></label>
+      <input class="finput" type="text" id="f-con" placeholder="Ej. +56 9 1234 5678 o tu@correo.cl" autocomplete="off">
+    </div>
+    <div id="f-dyn"></div>
+    <div class="msg-err hidden" id="f-err">Por favor completa tu nombre y contacto para continuar.</div>
+    <button class="btn-primary" id="btn-calc">Calcular cotización →</button>
+  </div>
+</div>
+
+<!-- ══ s3: QUOTE ══ -->
+<div id="s3" class="hidden">
+  <div class="logo-bar">
+    <div class="logotype"><span class="c">CASA </span><span class="z">ZARU</span></div>
+    <span class="badge">Cotizador en Línea</span>
+  </div>
+  <div class="q-toolbar">
+    <button class="tbtn" id="btn-q-s1">← Inicio</button>
+    <button class="tbtn" id="btn-q-s2">Editar</button>
+    <button class="tbtn" id="btn-full">⛶ Pantalla</button>
+    <button class="tbtn pri" id="btn-img">📷 HD</button>
+    <button class="tbtn" id="btn-pdf">PDF</button>
+  </div>
+  <div id="q-out" class="coti"></div>
+</div>
+
+<script>
+/* ── SUPABASE ── */
+var SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';
+var SB_KEY = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
+var sbClient = supabase.createClient(SB_URL, SB_KEY);
+
+/* ── PRECIOS ── */
+var PR = {
+  cubierta:  { alto: 362145, medio: 333184, bajo: 241890 },
+  repisa:    { alto: 315066, medio: 289870, bajo: 210444 },
+  peldano:   { alto: 315066, medio: 289870, bajo: 210444 },
+  granero:   { bajo:{m2:208450,fijo:50000}, medio:{m2:246450,fijo:50000}, alto:{m2:263250,fijo:50000} },
+  maciza:    { alto:{m2:304323,fijo:80000}, medio:{m2:279986,fijo:80000}, bajo:{m2:203269,fijo:80000} },
+  vidrios:   { alto:{m2:304323,fijo:80000}, medio:{m2:279986,fijo:80000}, bajo:{m2:203269,fijo:80000} },
+  revestimiento: { coihue:89900, cipres:82900 }
+};
+var WOOD = {
+  alto:  'Coihue / Raulí / Lenga',
+  medio: 'Castaño / Ciprés / Mañío',
+  bajo:  'Pino Oregón'
+};
+var PNAME = {
+  cubierta:'Cubiertas', repisa:'Repisa / Cubierta 2cm', peldano:'Peldaños',
+  granero:'Puerta Granero', maciza:'Puerta Maciza', vidrios:'Puerta con Vidrios',
+  revestimiento:'Revestimiento'
+};
+var MODELOS = {
+  granero: ['Granero Clásico','Granero Cruz','Ensenada Vidrio'],
+  maciza:  ['Panguipulli','Lago Ranco','Frutillar','Puerto Varas'],
+  vidrios: ['Valdivia','Entrelagos','Chochamó','Pucón']
+};
+
+var prod = '', nrows = 1, qnum = '', conStr = '';
+
+/* ── QUOTE NUMBER ── */
+function qKey() {
+  var d = new Date();
+  return String(d.getMonth()+1).padStart(2,'0') + String(d.getFullYear()).slice(2);
+}
+function nextQ() {
+  try {
+    var k = qKey(), s = JSON.parse(localStorage.getItem('czCL')||'{}');
+    var n = s.k===k ? (s.n||0)+1 : 1;
+    localStorage.setItem('czCL', JSON.stringify({k:k,n:n}));
+    return 'N° CL-'+k+'-'+String(n).padStart(3,'0');
+  } catch(e) { return 'N° CL-'+qKey()+'-001'; }
+}
+
+/* ── NAVIGATION ── */
+function show(id) {
+  ['s1','s2','s3'].forEach(function(i) {
+    document.getElementById(i).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+/* ── FORM ── */
+function initProd(p) {
+  prod = p; nrows = 1;
+  document.getElementById('f-title').textContent = PNAME[p];
+  document.getElementById('f-err').classList.add('hidden');
+  renderForm(p);
+  show('s2');
+}
+
+function renderForm(p) {
+  var c = document.getElementById('f-dyn');
+
+  if (['cubierta','repisa','peldano'].includes(p)) {
+    c.innerHTML =
+      '<div class="fsec">' +
+        '<label class="flabel">Dimensiones</label>' +
+        '<div class="col-labels">' +
+          '<div class="col-lbl nar"></div>' +
+          '<div class="col-lbl">Largo cm</div>' +
+          '<div class="col-lbl">Ancho cm</div>' +
+          '<div class="col-lbl nar">Cant.</div>' +
+        '</div>' +
+        '<div id="drows">' + dimRow(1) + '</div>' +
+        '<button class="btn-add" id="btn-add-row">+ Agregar pieza</button>' +
+      '</div>';
+
+  } else if (['granero','maciza','vidrios'].includes(p)) {
+    var hasExtra = p === 'granero' || p === 'vidrios';
+    var opts = (MODELOS[p]||[]).map(function(m){ return '<option>'+m+'</option>'; }).join('');
+    c.innerHTML =
+      '<div class="fsec">' +
+        '<label class="flabel">Puertas</label>' +
+        '<div class="col-labels">' +
+          '<div class="col-lbl wide">Modelo</div>' +
+          '<div class="col-lbl">Alto cm</div>' +
+          '<div class="col-lbl">Ancho cm</div>' +
+          '<div class="col-lbl nar">Cant.</div>' +
+        '</div>' +
+        '<div id="drows">' + doorRow(1, opts) + '</div>' +
+        '<button class="btn-add" id="btn-add-row">+ Agregar puerta</button>' +
+      '</div>' +
+      (hasExtra ?
+        '<div class="fsec">' +
+          '<label class="flabel">Vidrio especial (opcional)</label>' +
+          '<select class="fsel" id="vt">' +
+            '<option value="">Sin extra de vidrio</option>' +
+            '<option value="Termopanel">Termopanel (+$40.000 neto/m²)</option>' +
+            '<option value="Biselado">Biselado (+$40.000 neto/m²)</option>' +
+          '</select>' +
+        '</div>'
+      : '');
+
+  } else if (p === 'revestimiento') {
+    c.innerHTML =
+      '<div class="fsec">' +
+        '<label class="flabel">Metros cuadrados (m²)</label>' +
+        '<input class="finput" type="number" id="rm" placeholder="ej. 12.5" step="0.01" min="0">' +
+      '</div>';
+  }
+
+  c.addEventListener('click', function(e) {
+    if (e.target.closest('#btn-add-row')) addRow();
+  });
+}
+
+function dimRow(n) {
+  return '<div class="dim-row" id="r'+n+'">' +
+    '<span class="rnum">'+n+'</span>' +
+    '<input type="number" placeholder="220" min="1" id="lg'+n+'">' +
+    '<input type="number" placeholder="60"  min="1" id="an'+n+'">' +
+    '<input type="number" placeholder="1"   min="1" value="1" class="nar" id="ca'+n+'">' +
+  '</div>';
+}
+function doorRow(n, opts) {
+  return '<div class="dim-row" id="r'+n+'">' +
+    '<select class="wid" id="mo'+n+'">'+opts+'</select>' +
+    '<input type="number" placeholder="200" min="1" id="lg'+n+'">' +
+    '<input type="number" placeholder="90"  min="1" id="an'+n+'">' +
+    '<input type="number" placeholder="1"   min="1" value="1" class="nar" id="ca'+n+'">' +
+  '</div>';
+}
+function addRow() {
+  nrows++;
+  var cont = document.getElementById('drows');
+  var div = document.createElement('div');
+  var opts = (MODELOS[prod]||[]).map(function(m){ return '<option>'+m+'</option>'; }).join('');
+  div.innerHTML = ['granero','maciza','vidrios'].includes(prod) ? doorRow(nrows,opts) : dimRow(nrows);
+  cont.appendChild(div.firstElementChild);
+}
+
+function cssFullscreen(el) {
+  el.classList.add('fs-mode');
+  document.getElementById('q-out').scrollTop = 0;
+  var exitBtn = document.createElement('button');
+  exitBtn.className = 'btn-exit-fs';
+  exitBtn.textContent = '✕ Salir';
+  el.appendChild(exitBtn);
+  exitBtn.style.cssText = 'position:fixed;top:14px;right:14px;z-index:10001;background:rgba(0,0,0,.55);color:white;border:none;border-radius:20px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:Inter,sans-serif';
+  exitBtn.addEventListener('click', function() {
+    el.classList.remove('fs-mode');
+    exitBtn.remove();
+  });
+}
+
+/* ── HELPERS ── */
+var fmt = function(n) { return '$' + Math.round(n).toLocaleString('es-CL'); };
+
+function tierTable(rows) {
+  var prows = rows.map(function(r) {
+    return '<div class="ptier-row">' +
+      '<span class="ptier-wood">'+r.label+'</span>' +
+      '<span class="ptier-total">'+fmt(r.total)+'</span>' +
+      '<span class="ptier-trans"><span class="transf-badge">'+fmt(r.total * 0.95)+'</span></span>' +
+    '</div>';
+  }).join('');
+  return '<div class="ptier-block">' +
+    '<div class="ptier-head">' +
+      '<span>Tipo de madera</span>' +
+      '<span>Con tarjeta</span>' +
+      '<span>Transferencia −5%</span>' +
+    '</div>' +
+    prows +
+    '<div class="ptier-note">Precios incluyen IVA 19% · Tarjeta de crédito al precio indicado</div>' +
+  '</div>';
+}
+
+/* ── QUOTE GENERATION ── */
+function generar() {
+  var cli   = document.getElementById('f-cli').value.trim();
+  conStr    = document.getElementById('f-con').value.trim();
+  var errEl = document.getElementById('f-err');
+  if (!cli || !conStr) {
+    errEl.classList.remove('hidden');
+    return;
+  }
+  errEl.classList.add('hidden');
+  qnum = nextQ();
+  var fecha = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+  var html  = '';
+  if (['cubierta','repisa','peldano'].includes(prod)) html = htmlCubierta(cli, fecha);
+  else if (['granero','maciza','vidrios'].includes(prod)) html = htmlPuerta(cli, fecha);
+  else if (prod === 'revestimiento') html = htmlRev(cli, fecha);
+  document.getElementById('q-out').innerHTML = html;
+  show('s3');
+}
+
+function htmlCubierta(cli, fecha) {
+  var filas = [], sumM2 = 0;
+  for (var i=1; i<=nrows; i++) {
+    var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
+    if (!lgEl||!lgEl.value||!anEl.value) continue;
+    var lg=parseFloat(lgEl.value), an=parseFloat(anEl.value), ca=parseInt(caEl.value)||1;
+    var m2=(lg/100)*(an/100)*ca;
+    sumM2+=m2; filas.push({n:i,lg:lg,an:an,ca:ca,m2:m2});
+  }
+  var dimRows = filas.map(function(f){
+    return '<tr><td>'+f.n+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td><td>'+f.m2.toFixed(2)+'</td></tr>';
+  }).join('');
+  var tierRows = [
+    {label: 'Pino Oregón',              total: sumM2 * PR[prod].bajo},
+    {label: 'Castaño / Ciprés / Mañío', total: sumM2 * PR[prod].medio},
+    {label: 'Coihue / Rauí / Lenga',    total: sumM2 * PR[prod].alto}
+  ];
+  var esp = prod==='cubierta' ? 'De 2,1 a 4,0 cms. Tú eliges' : '2 cms';
+  saveQuote({
+    numero:qnum, cliente:cli, contacto:conStr||null, producto:prod, tipo:'cliente',
+    total_bajo:  Math.round(tierRows[0].total),
+    total_medio: Math.round(tierRows[1].total),
+    total_alto:  Math.round(tierRows[2].total)
+  }, filas.map(function(f){ return {largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; }));
+  return shell(PNAME[prod], cli, fecha,
+    '<table class="ptable"><thead><tr><th>N°</th><th>Largo cm</th><th>Ancho cm</th><th>Cant.</th><th>M² total</th></tr></thead>' +
+    '<tbody>'+dimRows+
+    '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
+    '</tbody></table>' +
+    tierTable(tierRows) +
+    '<div class="specs">' +
+      '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+esp+'</div></div>' +
+      '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
+      '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
+      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30)+' kg</div></div>' +
+    '</div>' +
+    boxes() + warranty()
+  );
+}
+
+function htmlPuerta(cli, fecha) {
+  var hasExtra = prod==='granero'||prod==='vidrios';
+  var extraTipo = '';
+  if (hasExtra) {
+    var vtEl = document.getElementById('vt');
+    if (vtEl && vtEl.value) { extraTipo = vtEl.value; }
+  }
+  var filas=[];
+  for (var i=1; i<=nrows; i++) {
+    var moEl=document.getElementById('mo'+i), lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
+    if (!lgEl||!lgEl.value||!anEl.value) continue;
+    var mo=moEl?moEl.value:'', lg=parseFloat(lgEl.value), an=parseFloat(anEl.value), ca=parseInt(caEl.value)||1;
+    var m2=(lg/100)*(an/100);
+    filas.push({n:i,mo:mo,lg:lg,an:an,ca:ca,m2:m2});
+  }
+  var tiers = ['bajo','medio','alto'];
+  var tierRows = tiers.map(function(t) {
+    var sumNeto=0;
+    filas.forEach(function(f) {
+      var extraNeto = extraTipo ? f.m2 * 40000 : 0;
+      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo + extraNeto) * f.ca;
+    });
+    return {label: WOOD[t], total: sumNeto * 1.19};
+  });
+  var dimRows = filas.map(function(f){
+    return '<tr><td>'+f.n+'</td><td style="font-size:9.5px">'+f.mo+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td></tr>';
+  }).join('');
+  saveQuote({
+    numero:qnum, cliente:cli, contacto:conStr||null, producto:prod, tipo:'cliente',
+    total_bajo:  Math.round(tierRows[0].total),
+    total_medio: Math.round(tierRows[1].total),
+    total_alto:  Math.round(tierRows[2].total),
+    vidrio_tipo: extraTipo||null
+  }, filas.map(function(f){ return {modelo:f.mo, largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; }));
+  return shell(PNAME[prod], cli, fecha,
+    (extraTipo ? '<div class="info-bar">Vidrio extra: <strong>'+extraTipo+'</strong></div>' : '') +
+    '<table class="ptable"><thead><tr><th>N°</th><th>Modelo</th><th>Alto cm</th><th>Ancho cm</th><th>Cant.</th></tr></thead>' +
+    '<tbody>'+dimRows+'</tbody></table>' +
+    tierTable(tierRows) +
+    '<div class="specs">' +
+      '<div class="spec"><div class="sl">Madera</div><div class="sv">A elegir según precio</div></div>' +
+      '<div class="spec"><div class="sl">Terminación</div><div class="sv">Vitrificado / Aceite-Cera. Tú eliges</div></div>' +
+      '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
+      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(filas.reduce(function(a,f){return a+f.m2*f.ca;},0)*30)+' kg</div></div>' +
+    '</div>' +
+    boxes() + warranty()
+  );
+}
+
+function htmlRev(cli, fecha) {
+  var m2 = parseFloat((document.getElementById('rm')||{}).value||0);
+  var tierRows = [
+    {label: 'Ciprés',  total: m2 * PR.revestimiento.cipres},
+    {label: 'Coihue',       total: m2 * PR.revestimiento.coihue}
+  ];
+  saveQuote({
+    numero:qnum, cliente:cli, contacto:conStr||null, producto:'revestimiento', tipo:'cliente',
+    total_bajo:  Math.round(tierRows[0].total),
+    total_alto:  Math.round(tierRows[1].total)
+  }, [{m2:m2}]);
+  return shell('Revestimiento', cli, fecha,
+    '<table class="ptable"><thead><tr><th>Superficie (m²)</th></tr></thead>' +
+    '<tbody><tr><td style="font-size:16px;font-weight:700;padding:10px">'+m2.toFixed(2)+'</td></tr></tbody></table>' +
+    tierTable(tierRows) +
+    '<div class="specs">' +
+      '<div class="spec"><div class="sl">Madera</div><div class="sv">100% sólida del sur de Chile</div></div>' +
+      '<div class="spec"><div class="sl">Terminación</div><div class="sv">Vitrificado / Aceite-Cera. Tú eliges</div></div>' +
+      '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
+      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(m2*30)+' kg</div></div>' +
+    '</div>' +
+    boxes() + warranty()
+  );
+}
+
+function shell(nombre, cli, fecha, body) {
+  return '<div class="coti-hdr">' +
+    '<div>' +
+      '<div class="coti-logo"><span class="c">CASA </span><span class="z">ZARU</span></div>' +
+      '<div class="coti-sub">Madera del sur de Chile a medida</div>' +
+    '</div>' +
+    '<div class="coti-r">' +
+      '<div class="coti-title">Cotización '+nombre+'</div>' +
+      '<div class="coti-meta">'+qnum+'</div>' +
+      '<div class="coti-meta">'+fecha+'</div>' +
+      '<div class="coti-meta">Válida por 10 días</div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="info-bar">Para: <strong>'+cli+'</strong>' + (conStr ? '  ·  '+conStr : '') + '</div>' +
+  body;
+}
+
+function boxes() {
+  return '<div class="iboxes">' +
+    '<div class="ibox">' +
+      '<div class="ibox-h">Tu pedido incluye</div>' +
+      '<div class="ibox-b"><ul>' +
+        '<li>Terminación <strong>hidrorrepelente y antimanchas</strong>: Vitrificado mate o semi brillo / Aceite cera Osmo. <strong>Tú eliges</strong></li>' +
+        '<li><strong>Embalaje reforzado</strong> para traslado seguro</li>' +
+        '<li>Madera seleccionada del sur de Chile</li>' +
+        '<li>Cera de mantención incluida (50cc)</li>' +
+        '<li><strong>Garantía de 5 años</strong></li>' +
+      '</ul></div>' +
+    '</div>' +
+    '<div class="ibox">' +
+      '<div class="ibox-h">Pago y proceso</div>' +
+      '<div class="ibox-b"><ul>' +
+        '<li>Confirmar con <strong>70%</strong> · Transferencia o tarjeta</li>' +
+        '<li>Fabricación <strong>7 a 15 días hábiles</strong> desde confirmación</li>' +
+        '<li>Te enviamos <strong>foto</strong> cuando tu proyecto esté listo. Pagas saldo <strong>30%</strong> y hacemos el envío</li>' +
+        '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>' +
+      '</ul></div>' +
+    '</div>' +
+  '</div>' +
+  '<div class="bankrow">' +
+    '<strong>Tarjeta de crédito incluida en el precio.</strong><br>' +
+    'Transferencia bancaria: <span class="dcto-green">5% de descuento</span> sobre el precio indicado<br>' +
+    '<strong>Muvale Diseño SpA</strong> · RUT 77.157.082-8 · Banco BCI · Cta Cte 97457175 · hola@casazaru.cl' +
+  '</div>';
+}
+
+function warranty() {
+  return '<div class="warranty">' +
+    '<strong>Garantía Casa Zaru · 5 años</strong>' +
+    'Si tu pedido presenta un problema estructural de fabricación, lo reparamos o reemplazamos sin costo. ' +
+    'Aplica desde la fecha de compra. No aplica a piezas expuestas a sol o lluvia directos, ni a temperaturas mayores a 28 °C.' +
+  '</div>';
+}
+
+/* ── SUPABASE SAVE (silent fail) ── */
+async function saveQuote(data, lines) {
+  try {
+    var res = await sbClient.from('cotizaciones').insert(data).select().single();
+    if (res.error || !res.data) return;
+    var cotId = res.data.id;
+    if (lines && lines.length > 0) {
+      var lineData = lines.map(function(l, i) {
+        return Object.assign({ cotizacion_id: cotId, linea: i+1 }, l);
+      });
+      await sbClient.from('cotizacion_lineas').insert(lineData);
+    }
+  } catch(e) { /* silent */ }
+}
+
+/* ── EVENT LISTENERS ── */
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.pcard').forEach(function(card) {
+    card.addEventListener('click', function() { initProd(card.dataset.prod); });
+  });
+  document.getElementById('btn-back').addEventListener('click', function() { show('s1'); });
+  document.getElementById('btn-calc').addEventListener('click', generar);
+  document.getElementById('btn-q-s1').addEventListener('click', function() { show('s1'); });
+  document.getElementById('btn-q-s2').addEventListener('click', function() { show('s2'); });
+  document.getElementById('btn-full').addEventListener('click', function() {
+    var el = document.getElementById('s3');
+    document.getElementById('q-out').scrollTop = 0;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if (req) {
+      req.call(el).catch(function() { cssFullscreen(el); });
+    } else {
+      cssFullscreen(el);
+    }
+  });
+  document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+      document.getElementById('s3').classList.remove('fs-mode');
+    }
+  });
+  document.getElementById('btn-img').addEventListener('click', function() {
+    var btn = this;
+    btn.textContent = '…generando';
+    btn.disabled = true;
+    var el = document.getElementById('q-out');
+    html2canvas(el, { scale: 3, useCORS: true, backgroundColor: '#FAF8F2' }).then(function(canvas) {
+      btn.textContent = '📷 HD';
+      btn.disabled = false;
+      var dataUrl = canvas.toDataURL('image/png');
+      var nombre = 'CasaZaru_' + (PNAME[prod]||prod) + '_' + (qnum||'cotizacion') + '.png';
+      var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      if (isMobile) {
+        var win = window.open('about:blank');
+        win.document.write('<style>body{margin:0;background:#111}img{max-width:100%;display:block}</style><img src="' + dataUrl + '">');
+        win.document.title = nombre;
+      } else {
+        var a = document.createElement('a');
+        a.download = nombre;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    });
+  });
+  document.getElementById('btn-pdf').addEventListener('click', function() {
+    var el  = document.getElementById('q-out');
+    var opt = {
+      margin: 8,
+      filename: 'CasaZaru_' + (PNAME[prod]||prod) + '_' + (qnum||'cotizacion') + '.pdf',
+      image:    { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF:    { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(el).save();
+  });
+
+  show('s1');
+});
+</script>
+</body>
+</html>
