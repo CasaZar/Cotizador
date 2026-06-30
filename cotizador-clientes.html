@@ -177,6 +177,18 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .ptier-row.rec { background: var(--bg3); border-left: 3px solid var(--ac); }
 .ptier-rec-badge { font-size: 8px; font-weight: 700; color: var(--ac); text-transform: uppercase; letter-spacing: .8px; display: block; margin-top: 2px; }
 
+.btn-dtab { background:white;border:1.5px solid var(--bd);border-radius:8px;padding:8px 18px;font-size:12px;cursor:pointer;color:var(--tm);font-family:'Jost',sans-serif; }
+.btn-dtab.active { background:var(--ac);color:white;border-color:var(--ac); }
+.stat-card { background:white;border:1px solid var(--bd);border-radius:10px;padding:14px;text-align:center; }
+.stat-v { font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--tx); }
+.stat-l { font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--tm);margin-top:2px; }
+.btn-extras { width:100%;background:none;border:1px dashed var(--bd);border-radius:8px;padding:9px 14px;font-size:11px;cursor:pointer;color:var(--tm);font-family:'Jost',sans-serif;text-align:left;letter-spacing:.5px;transition:border-color .15s; }
+.btn-extras:hover { border-color:var(--ac);color:var(--ac); }
+.extra-row { display:flex;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px solid var(--bg3);font-size:12px;color:var(--tx); }
+.extra-row:last-child { border-bottom:none; }
+.extra-row label { flex:1;cursor:pointer;display:flex;align-items:center;gap:8px; }
+.extra-price { color:var(--tm);font-size:10px;white-space:nowrap; }
+.ex-qty { width:48px;border:1px solid var(--bd);border-radius:6px;padding:4px 6px;font-size:12px;font-family:'Jost',sans-serif;text-align:center; }
 @media print {
   #s1, #s2, .logo-bar { display: none !important; }
   body { background: white; }
@@ -298,10 +310,26 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
   <div id="q-out" class="coti"></div>
 </div>
 
+<!-- ══ s-dash: PANEL INTERNO ══ -->
+<div id="s-dash" class="hidden">
+  <div class="logo-bar">
+    <div class="logotype">CASA <span class="sep">·</span> ZARU</div>
+    <div><span class="badge" style="background:var(--acd)">Panel Interno</span></div>
+  </div>
+  <div style="padding:20px 16px 40px;max-width:700px;margin:0 auto">
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <button class="btn-dtab active" id="dtab-cli"   onclick="switchDtab('cli')">Clientes Web</button>
+      <button class="btn-dtab"        id="dtab-cesar" onclick="switchDtab('cesar')">César</button>
+    </div>
+    <div id="dash-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <div id="dash-tbl"></div>
+  </div>
+</div>
+
 <script>
 /* ── SUPABASE ── */
-var SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';
-var SB_KEY = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
+var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
+var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
 var sbClient = supabase.createClient(SB_URL, SB_KEY);
 
 /* ── FOTOS — pegar URL para activar foto en la card ── */
@@ -340,7 +368,7 @@ var MODELOS = {
 };
 
 /* prod holds actual product type (granero/maciza/vidrios when in puertas mode) */
-var prod = '', isPuertas = false, nrows = 1, qnum = '', conStr = '', uso = '', fromHash = false;
+var prod = '', isPuertas = false, nrows = 1, qnum = '', conStr = '', uso = '', fromHash = false, srcEmail = null;
 
 /* ── FOTOS ── */
 function applyFotos() {
@@ -369,7 +397,7 @@ function nextQ() {
 
 /* ── NAVIGATION ── */
 function show(id) {
-  ['s1','s2','s2b','s3'].forEach(function(i) {
+  ['s1','s2','s2b','s3','s-dash'].forEach(function(i) {
     document.getElementById(i).classList.add('hidden');
   });
   document.getElementById(id).classList.remove('hidden');
@@ -393,7 +421,7 @@ function calcLive() {
       var lg=parseFloat(lgEl.value)||0, an=parseFloat(anEl.value)||0, ca=parseInt((caEl&&caEl.value)||1)||1;
       sumM2 += (lg/100)*(an/100)*ca;
     }
-    if (sumM2 > 0) { bajo = sumM2 * PR[prod].bajo * 1.19; alto = sumM2 * PR[prod].alto * 1.19; }
+    if (sumM2 > 0) { bajo = sumM2 * PR[prod].bajo; alto = sumM2 * PR[prod].alto; }
 
   } else if (['granero','maciza','vidrios'].includes(prod)) {
     var vtEl2 = document.getElementById('vt');
@@ -408,7 +436,7 @@ function calcLive() {
       sumBajo += (m2p * PR[prod].bajo.m2 + PR[prod].bajo.fijo + extra) * ca2;
       sumAlto += (m2p * PR[prod].alto.m2 + PR[prod].alto.fijo + extra) * ca2;
     }
-    if (sumBajo > 0) { bajo = sumBajo * 1.19; alto = sumAlto * 1.19; }
+    if (sumBajo > 0) { bajo = sumBajo; alto = sumAlto; }
 
   } else if (prod === 'revestimiento') {
     var rmEl = document.getElementById('rm');
@@ -417,7 +445,9 @@ function calcLive() {
   }
 
   if (bajo > 0) {
-    rangeEl.innerHTML = fmt(bajo) + '<span class="sep-dash"> — </span>' + fmt(alto);
+    var liveM2 = (typeof sumM2 !== 'undefined' && sumM2) || (typeof m2r !== 'undefined' && m2r) || 0;
+    var exT = getExtrasTotal(liveM2);
+    rangeEl.innerHTML = fmt(bajo + exT) + '<span class="sep-dash"> — </span>' + fmt(alto + exT);
     noteEl.style.display = 'block';
   } else {
     rangeEl.innerHTML = '<span class="lp-empty">Ingresa las medidas</span>';
@@ -440,6 +470,7 @@ function initProd(p) {
   document.getElementById('f-title').textContent = isPuertas ? 'Puertas de madera' : PNAME[p];
   document.getElementById('f-err').classList.add('hidden');
   renderForm(p);
+  renderExtras();
   show('s2');
   calcLive();
 }
@@ -567,6 +598,8 @@ function addRow() {
 
 /* ── QUOTE GENERATION ── */
 function generar() {
+  fromHash = false;
+  qnum = '';
   var cli   = document.getElementById('f-cli').value.trim();
   conStr    = document.getElementById('f-con').value.trim();
   var errEl = document.getElementById('f-err');
@@ -620,13 +653,14 @@ function htmlCubierta(cli, fecha) {
     '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
     '</tbody></table>' +
     tierTable(tierRows, recWood()) +
+    extrasBlock(sumM2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+esp+'</div></div>' +
       '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30)+' kg</div></div>' +
     '</div>' +
-    boxes() + warranty() + muestrario() + whatsappCTA()
+    boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total, sumM2.toFixed(2) + ' m²')
   );
 }
 
@@ -649,10 +683,10 @@ function htmlPuerta(cli, fecha) {
   var tierRows = tiers.map(function(t) {
     var sumNeto=0;
     filas.forEach(function(f) {
-      var extraNeto = extraTipo ? f.m2 * 40000 : 0;
-      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo + extraNeto) * f.ca;
+      var extraIva = extraTipo ? f.m2 * 40000 * 1.19 : 0;
+      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo) * f.ca + extraIva * f.ca;
     });
-    return {label: WOOD[t], tier: t, total: sumNeto * 1.19};
+    return {label: WOOD[t], tier: t, total: sumNeto};
   });
   var dimRows = filas.map(function(f){
     return '<tr><td>'+f.n+'</td><td style="font-size:9.5px">'+f.mo+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td></tr>';
@@ -669,13 +703,14 @@ function htmlPuerta(cli, fecha) {
     '<table class="ptable"><thead><tr><th>N°</th><th>Modelo</th><th>Alto cm</th><th>Ancho cm</th><th>Cant.</th></tr></thead>' +
     '<tbody>'+dimRows+'</tbody></table>' +
     tierTable(tierRows, recWood()) +
+    extrasBlock(filas.reduce(function(a,f){return a+f.m2*f.ca;},0)) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Madera</div><div class="sv">A elegir según precio</div></div>' +
       '<div class="spec"><div class="sl">Terminación</div><div class="sv">Vitrificado / Aceite-Cera. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(filas.reduce(function(a,f){return a+f.m2*f.ca;},0)*30)+' kg</div></div>' +
     '</div>' +
-    boxes() + warranty() + muestrario() + whatsappCTA()
+    boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total, filas.length + ' u.')
   );
 }
 
@@ -694,13 +729,14 @@ function htmlRev(cli, fecha) {
     '<table class="ptable"><thead><tr><th>Superficie (m²)</th></tr></thead>' +
     '<tbody><tr><td style="font-size:16px;font-weight:700;padding:10px">'+m2.toFixed(2)+'</td></tr></tbody></table>' +
     tierTable(tierRows) +
+    extrasBlock(m2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Madera</div><div class="sv">100% sólida del sur de Chile</div></div>' +
       '<div class="spec"><div class="sl">Terminación</div><div class="sv">Vitrificado / Aceite-Cera. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(m2*30)+' kg</div></div>' +
     '</div>' +
-    boxes() + warranty() + muestrario() + whatsappCTA()
+    boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[1].total, m2.toFixed(2) + ' m²')
   );
 }
 
@@ -772,13 +808,14 @@ function boxes() {
   '</div>';
 }
 
-function whatsappCTA() {
-  var msg = 'Hola! Me interesa confirmar la cotización ' + qnum + ' de Casa Zarú.';
+function whatsappCTA(bajo, alto, det) {
+  var detalle = (bajo && alto) ? ('\n\nProducto: ' + PNAME[prod] + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
+  var msg = 'Hola! Me interesa confirmar la cotización ' + qnum + ' de Casa Zarú.' + detalle + '\n\nConfirmo por este medio.';
   var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
   return '<div class="wa-block">' +
     '<p class="wa-pitch">Cada pieza se fabrica a mano en el sur de Chile, con madera maciza 100% sólida. No hay moldes ni series — tu pedido es único, hecho exactamente a tu medida.</p>' +
     '<a class="wa-btn" href="' + url + '" target="_blank">💬 Confirmar cotización por WhatsApp →</a>' +
-    '<button class="btn-copy-link" onclick="copyShareLink()">🔗 Copiar enlace de cotización</button>' +
+    '<button class="btn-copy-link" onclick="copyShareLink()">📋 Copiar mensaje para WhatsApp</button>' +
   '</div>';
 }
 
@@ -888,12 +925,17 @@ async function copyShareLink() {
   var btn = document.querySelector('.btn-copy-link');
   if (btn) btn.textContent = 'Generando enlace…';
   var url = await buildShortUrl();
+  var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
+  var msg = 'Hola' + (cli ? ' ' + cli : '') + '! 👋\n\n' +
+    'Generamos tu cotización ' + qnum + ' de Casa Zaru.\n\n' +
+    'Puedes verla aquí:\n' + url + '\n\n' +
+    '¿Dudas? Escríbenos.\nAtte. Casa Zaru — casazaru.cl';
   function done() {
-    if (btn) { btn.textContent = '✓ Enlace copiado'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = '🔗 Copiar enlace de cotización'; btn.classList.remove('copied'); }, 2500); }
+    if (btn) { btn.textContent = '✓ Mensaje copiado'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = '📋 Copiar mensaje para WhatsApp'; btn.classList.remove('copied'); }, 2500); }
   }
-  if (navigator.clipboard) { navigator.clipboard.writeText(url).then(done).catch(done); }
+  if (navigator.clipboard) { navigator.clipboard.writeText(msg).then(done).catch(done); }
   else {
-    var ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done();
+    var ta = document.createElement('textarea'); ta.value = msg; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done();
   }
 }
 
@@ -916,19 +958,100 @@ async function loadFromShortCode(token) {
 }
 
 /* ── SUPABASE SAVE (silent fail) ── */
-async function saveQuote(data, lines) {
+function showToast(msg, ok) {
+  var t = document.getElementById('sq-toast');
+  if (!t) { t = document.createElement('div'); t.id='sq-toast'; t.style='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:8px;font-size:12px;font-family:sans-serif;z-index:9999;max-width:90vw;text-align:center'; document.body.appendChild(t); }
+  t.style.background = ok ? '#065F46' : '#991B1B';
+  t.style.color = 'white';
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display='none'; }, 15000);
+}
+async function saveQuote(data) {
   if (fromHash) return;
   try {
-    var res = await sbClient.from('cotizaciones').insert(data).select().single();
-    if (res.error || !res.data) return;
-    var cotId = res.data.id;
-    if (lines && lines.length > 0) {
-      var lineData = lines.map(function(l, i) {
-        return Object.assign({ cotizacion_id: cotId, linea: i+1 }, l);
-      });
-      await sbClient.from('cotizacion_lineas').insert(lineData);
+    var payload = Object.assign({}, data, { user_email: srcEmail });
+    var res = await sbClient.from('cotizaciones').insert(payload);
+    if (res.error) { showToast('DB error: ' + res.error.message, false); console.error('saveQuote:', res.error); return; }
+    showToast('✓ Cotización guardada', true);
+  } catch(e) { showToast('Error: ' + e.message, false); console.error('saveQuote:', e); }
+}
+
+/* ── PANEL INTERNO ── */
+var dashData = {cli:[],cesar:[]}, dashMode = 'cli';
+function switchDtab(m) {
+  dashMode = m;
+  document.getElementById('dtab-cli').className  = 'btn-dtab'+(m==='cli'  ?' active':'');
+  document.getElementById('dtab-cesar').className = 'btn-dtab'+(m==='cesar'?' active':'');
+  renderDash();
+}
+async function loadDash() {
+  document.getElementById('dash-tbl').innerHTML = '<div style="padding:20px;text-align:center;color:var(--tm)">Cargando…</div>';
+  var r1 = await sbClient.from('cotizaciones').select('*').is('user_email',null).order('fecha_creacion',{ascending:false});
+  var r2 = await sbClient.from('cotizaciones').select('*').not('user_email','is',null).order('fecha_creacion',{ascending:false});
+  dashData.cli   = r1.data || [];
+  dashData.cesar = r2.data || [];
+  if (r1.error) { document.getElementById('dash-tbl').innerHTML='<div style="padding:20px;color:#991B1B">Error: '+r1.error.message+'</div>'; return; }
+  renderDash();
+}
+function renderDash() {
+  var d = dashMode==='cli' ? dashData.cli : dashData.cesar;
+  var conc = d.filter(function(x){return x.estado==='concretada';}).length;
+  document.getElementById('dash-stats').innerHTML =
+    '<div class="stat-card"><div class="stat-v">'+d.length+'</div><div class="stat-l">Cotizaciones</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+conc+'</div><div class="stat-l">Concretadas</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+(d.length?Math.round(conc/d.length*100):0)+'%</div><div class="stat-l">Conversión</div></div>';
+  if (!d.length) { document.getElementById('dash-tbl').innerHTML='<div style="padding:30px;text-align:center;color:var(--tm)">Sin cotizaciones</div>'; return; }
+  var rows = d.map(function(x){
+    var f = x.fecha_creacion ? new Date(x.fecha_creacion).toLocaleDateString('es-CL') : '—';
+    return '<tr><td>'+(x.numero||'—')+'</td><td>'+(x.cliente||'—')+'</td><td style="font-size:9.5px">'+(x.contacto||'—')+'</td><td>'+(x.producto||'—')+'</td><td>$'+Math.round(x.total_alto||0).toLocaleString('es-CL')+'</td><td>'+f+'</td><td>'+(x.estado||'—')+'</td></tr>';
+  }).join('');
+  document.getElementById('dash-tbl').innerHTML='<table class="ptable"><thead><tr><th>N°</th><th>Cliente</th><th>Contacto</th><th>Producto</th><th>Total</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+/* ── EXTRAS ── */
+var EXTRAS = [
+  { id:'tenido',   label:'Teñido',                          precio:10000, unit:'m²' },
+  { id:'perf_enc', label:'Perf. encimera (lavaplatos)',      precio:14900, unit:'c/u' },
+  { id:'perf_red', label:'Perf. redonda (llave/desagüe)',    precio:5000,  unit:'c/u' },
+  { id:'union45',  label:'Unión en 45°',                     precio:24900, unit:'c/u' }
+];
+
+function renderExtras() {
+  var c = document.getElementById('f-dyn');
+  var rows = EXTRAS.map(function(e) {
+    var priceStr = fmt(e.precio) + '/' + e.unit;
+    if (e.unit === 'm²') {
+      return '<div class="extra-row"><label><input type="checkbox" id="ex_'+e.id+'" onchange="calcLive()"> '+e.label+'</label><span class="extra-price">'+priceStr+'</span></div>';
     }
-  } catch(e) { /* silent */ }
+    return '<div class="extra-row"><label>'+e.label+'</label><span class="extra-price">'+priceStr+'</span><input type="number" class="ex-qty" id="ex_'+e.id+'" min="0" value="0" oninput="calcLive()"></div>';
+  }).join('');
+  var wrap = document.createElement('div');
+  wrap.className = 'fsec';
+  wrap.innerHTML = '<button class="btn-extras" id="btn-extras" onclick="document.getElementById(\'extras-body\').classList.toggle(\'hidden\');this.textContent=document.getElementById(\'extras-body\').classList.contains(\'hidden\')?\'+ Extras opcionales\':\'− Extras opcionales\'">+ Extras opcionales</button><div id="extras-body" class="hidden" style="padding:2px 4px 4px">'+rows+'</div>';
+  c.appendChild(wrap);
+}
+
+function getExtrasTotal(m2) {
+  var t = 0;
+  EXTRAS.forEach(function(e) {
+    var el = document.getElementById('ex_'+e.id);
+    if (!el) return;
+    t += e.unit === 'm²' ? (el.checked ? e.precio * m2 : 0) : e.precio * (parseInt(el.value)||0);
+  });
+  return t;
+}
+
+function extrasBlock(m2) {
+  var items = [];
+  EXTRAS.forEach(function(e) {
+    var el = document.getElementById('ex_'+e.id);
+    if (!el) return;
+    var qty = e.unit === 'm²' ? (el.checked ? parseFloat(m2)||0 : 0) : (parseInt(el.value)||0);
+    if (qty > 0) items.push('<tr><td style="text-align:left">'+e.label+'</td><td>'+( e.unit==='m²' ? qty.toFixed(2)+' m²' : qty+' u.' )+'</td><td>'+fmt(e.precio*qty)+'</td></tr>');
+  });
+  if (!items.length) return '';
+  return '<table class="ptable" style="margin-bottom:10px"><thead><tr><th style="text-align:left">Extra</th><th>Cant.</th><th>Subtotal</th></tr></thead><tbody>'+items.join('')+'</tbody></table>';
 }
 
 /* ── EVENT LISTENERS ── */
@@ -943,9 +1066,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-s2b-back').addEventListener('click', function() { show('s2'); });
   document.getElementById('btn-q-s1').addEventListener('click', function() { show('s1'); });
   document.getElementById('btn-q-s2').addEventListener('click', function() { show('s2'); });
-  var sParam = new URLSearchParams(window.location.search).get('s');
-  if (sParam) {
-    loadFromShortCode(sParam).then(function(ok) { if (!ok) show('s1'); });
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('src') === 'cesar') srcEmail = 'hola@casazaru.cl';
+  if (params.get('panel') === 'zr25') {
+    show('s-dash'); loadDash();
+  } else if (params.get('s')) {
+    loadFromShortCode(params.get('s')).then(function(ok) { if (!ok) show('s1'); });
   } else if (!loadFromHash()) {
     show('s1');
   }
