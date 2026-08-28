@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cotizador en Línea · Casa Zaru</title>
+<!-- ── VISTA PREVIA AL COMPARTIR (27-08-2026) ──
+     Sin esto, pegar el link en WhatsApp mostraba una tarjeta EN BLANCO: no
+     había og:image ni descripción que leer. El logo va en su versión de fondo
+     dorado (la del favicon de la tienda) porque la miniatura de WhatsApp es
+     chica y el dorado se ve; el gold-sobre-blanco de la barra se pierde.
+     La URL de la imagen es ABSOLUTA a propósito: quien la resuelve es el
+     servidor de WhatsApp/Facebook, no el navegador del cliente. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Casa Zaru">
+<meta property="og:title" content="Cotizador en Línea · Casa Zaru">
+<meta property="og:description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera nativa a medida. Precio al instante, fabricado en el sur de Chile.">
+<meta property="og:url" content="https://cotizador.casazaru.cl/">
+<meta property="og:image" content="https://cotizador.casazaru.cl/fotos/logo-casa-zaru-og.png">
+<meta property="og:image:width" content="517">
+<meta property="og:image:height" content="517">
+<meta name="twitter:card" content="summary">
+<meta name="description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera nativa a medida. Precio al instante, fabricado en el sur de Chile.">
+<link rel="icon" type="image/png" href="fotos/logo-casa-zaru-og.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -1922,7 +1940,9 @@ function espesorFactor(tier) {
    Si el archivo del logo existe, reemplaza el wordmark de texto por la imagen real
    en todas las barras. Si no existe (404), no hace nada y queda el texto: nunca se
    ve un icono de imagen rota. Para activarlo basta con subir el archivo a esa ruta. */
-var LOGO_URL = 'https://cotizador.casazaru.cl/fotos/logo-casa-zaru.png';
+/* relativa a propósito: la página siempre se sirve desde la raíz del repo del
+   Cotizador, y con la URL absoluta el logo no aparecía al probar en local */
+var LOGO_URL = 'fotos/logo-casa-zaru.png';
 function applyLogo() {
   var probe = new Image();
   probe.onload = function() {
