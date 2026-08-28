@@ -1941,8 +1941,12 @@ function espesorFactor(tier) {
    en todas las barras. Si no existe (404), no hace nada y queda el texto: nunca se
    ve un icono de imagen rota. Para activarlo basta con subir el archivo a esa ruta. */
 /* relativa a propósito: la página siempre se sirve desde la raíz del repo del
-   Cotizador, y con la URL absoluta el logo no aparecía al probar en local */
-var LOGO_URL = 'fotos/logo-casa-zaru.png';
+   Cotizador, y con la URL absoluta el logo no aparecía al probar en local.
+   Es el SVG original de Canva (27-08-2026) con el viewBox recortado a la
+   franja del texto: vector, así que nítido en cualquier pantalla. El PNG
+   dorado (logo-casa-zaru-og.png) queda solo para la miniatura de WhatsApp,
+   que no acepta SVG. */
+var LOGO_URL = 'fotos/logo-casa-zaru.svg';
 function applyLogo() {
   var probe = new Image();
   probe.onload = function() {
