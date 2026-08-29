@@ -3564,22 +3564,18 @@ function htmlMesa(cli, fecha) {
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+pesoTotal+' kg</div></div>' +
     '</div>';
 
-  /* nota de ergonomía en la cotización: medidas de base y comensales de la pieza 1.
-     Misma regla que en el formulario: solo en el cotizador del vendedor, y
-     tampoco si es un escritorio o un arrimo o si cerró la sugerencia con la ✕.
-     En la cotización del cliente no va nunca: una medida de base referencial
-     impresa en el documento se lee como un compromiso de fabricación. */
-  var ergoNota = '';
-  if (vendorMode && filas.length && mesaAplicaErgo() && !ergoCerrada) {
-    var eq = mesaErgo(mesaModeloActual(), filas[0].lg, filas[0].an);
-    if (eq) ergoNota = '<div class="info-bar">📐 ' + escA(eq.texto) + ' <span style="font-style:italic">(referencial)</span></div>';
-  }
+  /* La nota de ergonomía NO va en la cotización (28-08-2026, pedido del
+     usuario): el documento lo ve el cliente —en pantalla, por link y en el
+     PDF— y una "base sugerida" referencial impresa se lee como compromiso de
+     fabricación. Vivió un tiempo acá gateada por vendorMode, pero el vendedor
+     genera el documento y se lo manda tal cual al cliente, así que el gate no
+     protegía nada. La sugerencia queda SOLO en el formulario (ms-ergo), que
+     es donde el vendedor decide. */
   return shell(escA(M.nombre), cli, fecha,
     '<table class="ptable"><thead><tr><th>N°</th><th>Largo cm</th><th>Ancho cm</th><th>Cant.</th><th>M² total</th></tr></thead>' +
     '<tbody>'+dimRows+
     '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
     '</tbody></table>' +
-    ergoNota +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
     tierTableMesa(tierRows, recWood(), M, esMadera, nBases) +
