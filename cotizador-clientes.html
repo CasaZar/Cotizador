@@ -4537,7 +4537,18 @@ function buildSegGroups(){
   Object.keys(map).forEach(function(k){
     var qs = map[k].slice().sort(function(a,b){ return new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0); });
     var lead = qs[0];
-    if ((lead.estado||'enviada') !== 'enviada') return;   /* cliente cerrado: su última cotización fue ganada o perdida */
+    if ((lead.estado||'enviada') !== 'enviada') {
+      /* Cliente cerrado: su última cotización fue ganada o perdida. PERO una
+         cotización abierta marcada con ★ lo mantiene vivo — es la señal
+         explícita de "este otro proyecto sigue". Caso real (31-08-2026):
+         Carolina Hito compró la cubierta chica de agosto y su cotización
+         grande de julio ($3,68M) seguía caliente; marcar la venta la hacía
+         desaparecer del seguimiento con la grande adentro. Sin la ★ el
+         cierre sigue tapando el resto, que es lo correcto para el caso común
+         de "cotizó 5 medidas y compró una". */
+      lead = qs.find(function(q){ return (q.estado||'enviada')==='enviada' && q.interesado; });
+      if (!lead) return;
+    }
     var owner = 'web';
     for (var i=0;i<qs.length;i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
     var hasVendor = qs.some(function(q){ return ownerCode(q); });
@@ -4988,6 +4999,7 @@ function candidatasACerrar(){
     if (x.eliminada) return false;
     if ((x.estado||'enviada') !== 'enviada') return false;      /* ganada o perdida: intocable */
     if (x.respondio) return false;                               /* conversó: nunca se cierra sola */
+    if (x.interesado) return false;                              /* ★ del vendedor: "esta sigue viva" — el cierre automático no la toca */
     if (x.motivo_pausa) return false;                            /* pausada con motivo y fecha */
     if (x.seg_proxima && String(x.seg_proxima).slice(0,10) >= hoyISO()) return false;  /* toque agendado */
     if (ballenas[x.id]) return false;                            /* spec §2.4 */
@@ -6208,6 +6220,33 @@ async function updateEstado(id, estado) {
     var m = pedirMonto(x);
     if (m === undefined) { renderVistaActual(); return; }   /* canceló el monto: repinta donde está */
     segSave(id, {estado:'ganado', monto_cierre:m}, '¡Venta ganada! 🎉');
+    /* ── ¿Y LAS OTRAS COTIZACIONES ABIERTAS DEL CLIENTE? ──
+       Marcar la venta cierra al cliente entero en el seguimiento, y a veces
+       una de las otras es un proyecto APARTE que sigue vivo (Carolina Hito:
+       compró la cubierta chica y la cotización grande de julio quedaba
+       caliente). Se pregunta UNA vez, aquí, que es cuando el vendedor lo
+       sabe: si siguen vivas se marcan con ★ y el grupo permanece en la cola;
+       si no, se cierran de vista como siempre. */
+    var k0 = clientKey(x);
+    var otras = allRows.filter(function(q){
+      return !q.eliminada && q.id !== id && clientKey(q) === k0 && (q.estado||'enviada') === 'enviada';
+    });
+    if (otras.length){
+      var mayor = otras.reduce(function(a,q){ return Math.max(a, q.total_alto||0); }, 0);
+      var msg = (x.cliente||'El cliente')+' tiene otras '+otras.length+' cotizaci'+(otras.length===1?'ón':'ones')+
+        ' abiertas (la mayor: '+fmt(mayor)+').\n\n¿Alguna sigue VIVA como proyecto aparte?\n\n'+
+        'Aceptar → quedan en seguimiento (se marcan ★)\n'+
+        'Cancelar → se dan por cerradas junto con esta venta';
+      if (confirm(msg)){
+        var ids = otras.map(function(q){ return q.id; });
+        sbClient.from('cotizaciones').update({interesado:true}).in('id', ids).then(function(r){
+          if (r && r.error) { showToast('No se pudo marcar ★: '+r.error.message, false); return; }
+          otras.forEach(function(q){ q.interesado = true; if (COTIS[q.id]) COTIS[q.id].interesado = true; });
+          computeSegPend(); renderTabs(); renderVistaActual();
+          showToast('Las otras '+otras.length+' siguen en seguimiento (★)', true);
+        });
+      }
+    }
     /* canal automático para el P&L (web / césar / jepe). Best-effort: requiere columna 'canal'. */
     var canal = ownerCode(x) || 'web';
     sbClient.from('cotizaciones').update({canal:canal}).eq('id',id).then(function(r){
