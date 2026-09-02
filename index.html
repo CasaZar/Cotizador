@@ -1917,6 +1917,45 @@ var confirming = false;   /* evita que doble clic en "Ver cotización" genere du
 var savedQnum = null;     /* número de cotización ya guardado en esta sesión (anti-duplicado) */
 var vendorMode = false;   /* true con el link privado de vendedor (?pro=zr): habilita productos de uso interno */
 var b2bMode = false;      /* true solo en el link privado de Jepe (?src=jepe&pro=zr): muestra el selector de descuento */
+
+/* ── EMBUDO PÚBLICO ──
+   Cuenta cuánta gente entra y cuánta llega a ver su cotización, en 4 pasos:
+   visita → producto → datos → cotizacion. Solo mide CLIENTES: el embudo se
+   arma únicamente en la entrada pública (embudoArrancar), así que panel,
+   links compartidos (?s= / #q=) y vendedores quedan fuera solos. Cada paso
+   se marca una vez por sesión de navegación (sessionStorage) y el insert va
+   sin .select(): el anon no tiene permiso de lectura sobre embudo_eventos. */
+var embudoListo = false, embudoCola = [], embudoCanal = 'web';
+function embudoTick(paso) {
+  if (vendorMode) return;
+  if (!embudoListo) { embudoCola.push(paso); return; }
+  try {
+    var k = 'zaru_embudo_' + paso;
+    if (sessionStorage.getItem(k)) return;
+    sessionStorage.setItem(k, '1');
+    var ses = sessionStorage.getItem('zaru_embudo_ses');
+    if (!ses) {
+      ses = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      sessionStorage.setItem('zaru_embudo_ses', ses);
+    }
+    sbClient.from('embudo_eventos')
+      .insert({ sesion: ses, paso: paso, producto: prod || null, canal: embudoCanal })
+      .then(function(){}, function(){});
+  } catch (e) {}
+}
+function embudoArrancar() {
+  /* espera el chequeo de sesión: si en este dispositivo hay equipo logueado,
+     no es un cliente y no se cuenta nada */
+  var soltar = function() {
+    embudoListo = true;
+    embudoTick('visita');
+    var cola = embudoCola; embudoCola = [];
+    cola.forEach(embudoTick);
+  };
+  sbClient.auth.getSession().then(function(r) {
+    if (!(r && r.data && r.data.session)) soltar();
+  }, soltar);
+}
 var cubiertaSolo = false; /* true con ?prod=cubierta: además de simplificado, cambia los rótulos a "cubierta" */
 /* true con CUALQUIER ?prod=…: el link viene de una landing de casazaru.cl, así que
    el cliente ya eligió el producto. Se le saca el botón de volver al selector para
@@ -2193,6 +2232,7 @@ function renderB2B(){
 function initProd(p) {
   isPuertas = (p === 'puertas');
   prod = isPuertas ? 'granero' : p;
+  embudoTick('producto');
   nrows = 1;
   peldanoEspesor = '4';
   cubiertaEspesor = '4';
@@ -3358,6 +3398,7 @@ function generar() {
     if (listaEl) listaEl.insertAdjacentElement('afterend', muestrarioEl);
     muestrarioEl.classList.remove('hidden');
   }
+  embudoTick('datos');
   show('s2b');
 }
 
@@ -3379,6 +3420,7 @@ async function confirmar() {
     else if (prod === 'revlibre') html = htmlRevLibre(cli, fecha);
     document.getElementById('q-out').innerHTML = html;
     show('s3');
+    embudoTick('cotizacion');
     /* La URL del navegador solo se reemplaza por el link compartible cuando NO
        hay sesión de vendedor. buildShareUrl() sale de BASE_URL, que no lleva
        query, así que hacerlo con un vendedor le borraba de la barra su ?pro=zr
@@ -6978,10 +7020,40 @@ function renderDash() {
       '</select></td>' +
       '<td><button class="dash-del" onclick="deleteQuote(\''+x.id+'\',\''+(x.numero||'').replace(/'/g,"")+'\')">✕</button></td></tr>';
   }).join('');
-  document.getElementById('dash-tbl').innerHTML= genteHtml + segResumen + perdeHtml + '<div class="tbl-scroll"><table class="ptable"><thead><tr><th>N°</th><th>Cliente</th><th>Contacto</th><th>Producto</th>' +
+  document.getElementById('dash-tbl').innerHTML= genteHtml + '<div id="embudo-metric"></div>' + segResumen + perdeHtml + '<div class="tbl-scroll"><table class="ptable"><thead><tr><th>N°</th><th>Cliente</th><th>Contacto</th><th>Producto</th>' +
     '<th class="th-sort" onclick="setDashSort(\'total_alto\')">Total'+sortArrow('total_alto')+'</th>' +
     '<th class="th-sort" onclick="setDashSort(\'fecha_creacion\')">Fecha'+sortArrow('fecha_creacion')+'</th>' +
     '<th>Seguim.</th><th>Estado</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  embudoPintar();
+}
+
+/* Embudo del cotizador público en el panel: solo lo ve el admin. Los datos
+   los junta embudoTick() en el navegador de cada cliente; acá se leen ya
+   agregados vía RPC (embudo_resumen), que exige sesión iniciada. */
+async function embudoPintar() {
+  var el = document.getElementById('embudo-metric');
+  if (!el || !panelEsAdminReal) return;
+  try {
+    var r = await sbClient.rpc('embudo_resumen', { dias: 30 });
+    if (r.error || !r.data) return;
+    var tot = { visita:0, producto:0, datos:0, cotizacion:0 };
+    var hoy = { visita:0, cotizacion:0 };
+    var hoyK = hoyISO();
+    r.data.forEach(function(f){
+      var n = Number(f.sesiones) || 0;
+      if (tot[f.paso] !== undefined) tot[f.paso] += n;
+      if (f.dia === hoyK && hoy[f.paso] !== undefined) hoy[f.paso] += n;
+    });
+    if (!tot.visita) {
+      el.innerHTML = '<div class="month-metrics">🔻 Embudo público: aún sin visitas registradas (empezó a medirse el 02-09-2026).</div>';
+      return;
+    }
+    var pct = function(n){ return Math.round(n * 100 / tot.visita) + '%'; };
+    el.innerHTML = '<div class="month-metrics" title="Personas distintas por sesión de navegación, últimos 30 días. Mide solo el cotizador público: vendedores, panel y links compartidos no cuentan.">' +
+      '🔻 Embudo 30 días: <strong>' + tot.visita + '</strong> entran → <strong>' + tot.producto + '</strong> eligen producto (' + pct(tot.producto) + ') → <strong>' + tot.datos + '</strong> dejan sus datos (' + pct(tot.datos) + ') → <strong>' + tot.cotizacion + '</strong> ven su cotización (' + pct(tot.cotizacion) + ')' +
+      (hoy.visita ? ' — hoy: ' + hoy.visita + ' entran, ' + hoy.cotizacion + ' cotizan' : '') +
+      '</div>';
+  } catch (e) {}
 }
 
 /* ── EXTRAS ──
@@ -7143,6 +7215,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!ok) { restaurando = false; if (prodDirecto) initProd(prodDirecto); else show('s1'); }
     }, function(){ restaurando = false; show('s1'); });
   } else if (!loadFromHash()) {
+    /* entrada pública: la única puerta que arma el embudo. El tick de
+       'producto' de initProd queda en cola y sale cuando el chequeo de
+       sesión confirma que no es alguien del equipo. */
+    embudoCanal = String(params.get('src') || params.get('utm_source') || 'web').slice(0, 40);
+    embudoArrancar();
     if (prodDirecto) initProd(prodDirecto); else show('s1');
   }
 });
