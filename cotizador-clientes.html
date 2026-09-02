@@ -261,6 +261,18 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s3 { background: var(--bg); }
 .coti { padding: 14px; max-width: 500px; margin: 0 auto; font-family: 'Jost', sans-serif; }
 .coti-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 11px; }
+/* ── FOTO DEL MODELO EN LA COTIZACIÓN (01-09-2026) ──
+   La cotización era puro texto y tablas; la foto del modelo elegido la vuelve
+   algo que dan ganas de reenviar. Solo fotos DEL producto cotizado (mesas y
+   puertas tienen modelo con foto propia): nada genérico que se pueda leer
+   como "esto es lo que compro" sin serlo. */
+.coti-foto { margin: 2px 0 12px; }
+.coti-foto img { width: 100%; max-height: 200px; object-fit: cover; object-position: center 55%; border-radius: 10px; border: 1px solid var(--bd); display: block; background: var(--crt); }
+.coti-foto .cf-cap { font-size: 12px; color: var(--tm); text-align: center; margin-top: 5px; letter-spacing: .3px; }
+.coti-fotos-row { display: flex; gap: 8px; margin: 2px 0 12px; }
+.coti-fotos-row .cf-item { flex: 1; min-width: 0; }
+.coti-fotos-row img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; border: 1px solid var(--bd); display: block; background: var(--crt); }
+.coti-fotos-row .cf-cap { font-size: 11.5px; color: var(--tm); text-align: center; margin-top: 4px; }
 .coti-logo { font-family: 'Cormorant Garamond', serif; font-size: 23px; font-weight: 700; letter-spacing: 3px; color: var(--acd); }
 .coti-sub { font-size: 11px; letter-spacing: 2.2px; text-transform: uppercase; color: var(--tm); margin-top: 2px; }
 .coti-r { text-align: right; }
@@ -3464,7 +3476,27 @@ function htmlPuerta(cli, fecha) {
         ? ' — '+vd.an+' × '+vd.al+' cm'+(vd.ca>1?' × '+vd.ca:'')
         : (vd.detalle ? ' — '+escA(vd.detalle) : ''))+'</div>'
     : '';
+  /* mini-galería con los modelos cotizados (una cotización puede mezclar
+     modelos, ej. Panguipulli en la entrada y Granero en los dormitorios).
+     Máximo 3 para que no empuje el precio fuera de la primera vista. */
+  var modelosUnicos = [];
+  filas.forEach(function(f){
+    if (f.mo && modelosUnicos.indexOf(f.mo) === -1) modelosUnicos.push(f.mo);
+  });
+  var fotosHtml = '';
+  var conFoto = modelosUnicos.map(function(nombre){
+    return DOOR_MODELS.find(function(d){ return d.nombre === nombre; });
+  }).filter(Boolean).slice(0, 3);
+  if (conFoto.length === 1) {
+    fotosHtml = '<div class="coti-foto"><img crossorigin="anonymous" src="' + conFoto[0].img + '" alt="' + escA(conFoto[0].nombre) + '">' +
+      '<div class="cf-cap">Modelo ' + escA(conFoto[0].nombre) + '</div></div>';
+  } else if (conFoto.length > 1) {
+    fotosHtml = '<div class="coti-fotos-row">' + conFoto.map(function(d){
+      return '<div class="cf-item"><img crossorigin="anonymous" src="' + d.img + '" alt="' + escA(d.nombre) + '"><div class="cf-cap">' + escA(d.nombre) + '</div></div>';
+    }).join('') + '</div>';
+  }
   return shell(PNAME[prod], cli, fecha,
+    fotosHtml +
     vidrioNote +
     (mcM2>0 ? '<div class="info-bar">Marco: <strong>'+mcMl.toFixed(2)+' ml · '+mcM2.toFixed(2)+' m²</strong></div>' : '') +
     '<table class="ptable"><thead><tr><th>N°</th><th>Modelo</th><th>Alto cm</th><th>Ancho cm</th><th>Cant.</th></tr></thead>' +
@@ -3571,7 +3603,14 @@ function htmlMesa(cli, fecha) {
      genera el documento y se lo manda tal cual al cliente, así que el gate no
      protegía nada. La sugerencia queda SOLO en el formulario (ms-ergo), que
      es donde el vendedor decide. */
+  /* la foto del modelo elegido abre la cotización; mesa libre va sin foto */
+  var mFoto = mesaModeloActual();
+  var fotoHtml = (mFoto && mFoto.foto)
+    ? '<div class="coti-foto"><img crossorigin="anonymous" src="' + mesaFotoUrl(mFoto) + '" alt="' + escA(mFoto.nombre) + '">' +
+      '<div class="cf-cap">' + escA(mFoto.nombre) + '</div></div>'
+    : '';
   return shell(escA(M.nombre), cli, fecha,
+    fotoHtml +
     '<table class="ptable"><thead><tr><th>N°</th><th>Largo cm</th><th>Ancho cm</th><th>Cant.</th><th>M² total</th></tr></thead>' +
     '<tbody>'+dimRows+
     '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
