@@ -293,6 +293,17 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .ptier-row { display: flex; align-items: center; padding: 10px 12px; border-top: 1px solid var(--bg3); background: white; }
 .ptier-row:nth-child(even) { background: var(--bg); }
 .ptier-wood { flex: 1.6; font-size: 15px; color: var(--tx); line-height: 1.3; }
+/* ── MUESTRAS DE MADERA EN LAS FILAS DE PRECIO (01-09-2026) ──
+   "Coihue vs Pino Oregón" se veía solo como texto y el cliente elegía a
+   ciegas. Una pastilla por especie, en el MISMO orden que los nombres de la
+   fila, para que se puedan mapear sin leyenda. Fotos reales de fotos/maderas. */
+.mad-sw { display: inline-flex; gap: 4px; flex: 0 0 auto; }
+.mad-sw img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--bd); display: block; background: var(--crt); }
+/* con pastillas, la celda de madera pasa a flex: las pastillas fijas a la
+   izquierda y el texto (con su badge ★ debajo) envuelve a la derecha, en vez
+   de partirse por abajo de las pastillas en pantallas angostas */
+.ptier-wood:has(.mad-sw) { display: flex; align-items: center; gap: 8px; }
+.pw-txt { min-width: 0; }
 /* el precio es el dato por el que el cliente entro al cotizador: debe pesar mas que todo lo que lo rodea */
 .ptier-total { flex: 1; text-align: right; font-size: 18.5px; font-weight: 700; color: var(--tx); }
 .ptier-trans { flex: 1; text-align: right; font-size: 15px; font-weight: 600; color: #2D6A4F; }
@@ -3746,6 +3757,20 @@ function shell(nombre, cli, fecha, body) {
   body;
 }
 
+/* pastillas de madera del tramo, en el mismo orden que los nombres de la fila */
+var MADERA_FOTOS = {
+  bajo:  [{f:'oregon',  n:'Pino Oregón'}],
+  medio: [{f:'castano', n:'Castaño'}, {f:'cipres', n:'Ciprés'}, {f:'manio', n:'Mañío'}],
+  alto:  [{f:'coihue',  n:'Coihue'},  {f:'rauli',  n:'Raulí'},  {f:'lenga', n:'Lenga'}]
+};
+function maderaSwatches(tier) {
+  var lista = MADERA_FOTOS[tier];
+  if (!lista) return '';
+  return '<span class="mad-sw">' + lista.map(function(m) {
+    return '<img crossorigin="anonymous" src="fotos/maderas/' + m.f + '.jpg" alt="' + m.n + '" title="' + m.n + '">';
+  }).join('') + '</span>';
+}
+
 function tierTable(rows, recTier) {
   var tf = transferFactor();
   var esPro = b2bDcto > 0;
@@ -3754,7 +3779,7 @@ function tierTable(rows, recTier) {
     var badge = isRec ? '<span class="ptier-rec-badge">' + recBadgeText() + '</span>' : '';
     var cls = isRec ? 'ptier-row rec' : 'ptier-row';
     return '<div class="' + cls + '">' +
-      '<span class="ptier-wood">' + r.label + badge + '</span>' +
+      '<span class="ptier-wood">' + maderaSwatches(r.tier) + '<span class="pw-txt">' + r.label + badge + '</span></span>' +
       '<span class="ptier-total">' + fmt(r.total) + '</span>' +
       '<span class="ptier-trans"><span class="transf-badge">' + fmt(r.total * tf) + '</span></span>' +
     '</div>';
