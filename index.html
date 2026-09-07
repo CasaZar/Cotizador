@@ -5285,6 +5285,12 @@ function renderSeguimiento(){
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
     if (esBall[g.key]) return;                          /* ya va fija arriba */
     if (sinPrimerContacto(g)){
+      /* Respondió sin toque registrado: hay conversación igual —el cliente
+         escribió solo, o el toque no se marcó—. Dejarlo en "nadie les ha
+         hablado" era mentira y hacía imposible sacarlo de ahí marcando
+         Respondió (07-09-2026, caso leonardo). Va a Conversaciones, donde
+         además tiene las casillas para registrar el toque a mano. */
+      if (enConversacion(g)){ conv.push(g); return; }
       /* ── EL MISMO DÍA NO SE PERSIGUE (26-08-2026) ──
          Escribirle a alguien que cotizó hace diez minutos se lee como acoso:
          el cliente acaba de ver su cotización en pantalla y ya tiene el link.
@@ -5840,6 +5846,10 @@ function segClientCard(g, cls){
          contactar son ruido—, pero de pasada se llevó los dos botones: no se
          podía agendar a alguien que aún no se contacta, ni marcar la venta de
          quien compra en el primer contacto. */
+      /* Solo en tarjetas compactas (sin casillas de cadencia): la salida para
+         el que contestó "No, todavía no" por error en el recuadro y quedó sin
+         forma de decir que sí. En las demás tarjetas ya están las casillas. */
+      (compacta && etapa < CADENCIA.length ? '<button class="sbtn" onclick="segYaEscribi(\''+x.id+'\')">✓ Ya le escribí</button>' : '')+
       '<button class="sbtn" onclick="segPosponerUI(\''+x.id+'\')">⏰ Posponer</button>'+
       wa+
       '<button class="sbtn win" onclick="updateEstado(\''+x.id+'\',\'ganado\')">💰 Ganada</button>'+
@@ -5862,6 +5872,14 @@ async function segToggleRecurrente(id, current){
 async function segRespondio(id){
   var x=COTIS[id]; if(!x || x.respondio) return;
   segSave(id, {respondio:true, fecha_primera_respuesta:new Date().toISOString()}, '💬 Respondió — sube en la cola');
+}
+/* "Sí le escribí", fuera del recuadro: para el que contestó "No, todavía no"
+   por error (o lo cerró) y quedó sin forma de corregirlo. Primero saca el
+   pendiente de la cola — si no, el recuadro volvería a preguntar al volver
+   al panel y el toque se marcaría dos veces. */
+function segYaEscribi(id){
+  pendQuitar(id);
+  segHecho(id);
 }
 /* deshace el último toque (para el que apretó la casilla por error) */
 async function segDeshacer(id){
