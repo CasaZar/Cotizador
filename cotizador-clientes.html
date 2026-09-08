@@ -2105,6 +2105,7 @@ function calcLive() {
   var sinLive = (prod === 'revlibre') || (prod === 'mesa' && vendorMode);
   if (wrapEl) wrapEl.style.display = sinLive ? 'none' : '';
   rbAutoSync();   /* los ml del reborde dependen de las medidas Y de las cantidades */
+  tnSync();       /* el teñido por tarifa sigue a los m² de las piezas */
   mesaSugerenciaRefrescar();   /* la sugerencia de base sigue al modelo y al largo */
   mesaParMedidas();            /* las dos mesas del par siguen al largo y al ancho */
   vidrioAutoRefrescar();       /* el vidrio sale del modelo y la medida de la puerta */
@@ -2778,6 +2779,66 @@ function removeVExtra(n) {
   if (row) row.remove();
   calcLive();
 }
+/* ── TARIFAS DE EXTRAS (07-09-2026) ──
+   Precios FINALES, con IVA, como todo lo que muestra el cotizador. La
+   perforación redonda son $5.000 + IVA. Solo el vendedor los ve: estas
+   opciones viven en el bloque de extras, que el público no tiene. */
+var VX_TARIFAS = {
+  tenidoM2: 10000,        /* teñido, por m² de las piezas cotizadas */
+  perfLavaplatos: 14900,  /* lavaplatos / encimera de cocina */
+  perfRedonda: 5950       /* redonda: llaves, enchufes, etc. */
+};
+/* m² actuales de las piezas, para la tarifa de teñido. Mismo cálculo que
+   calcLive: filas lg/an/ca, y en mesa se suma la cubierta inferior del par
+   Río Bueno. Puertas y revestimiento devuelven 0: ahí va valor manual. */
+function vxM2Actual() {
+  if (!['cubierta','repisa','peldano','mesa'].includes(prod)) return 0;
+  var m2 = 0;
+  for (var i=1; i<=nrows; i++) {
+    var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
+    if (!lgEl||!lgEl.value||!anEl||!anEl.value) continue;
+    m2 += (parseFloat(lgEl.value)||0)/100*(parseFloat(anEl.value)||0)/100*(parseInt((caEl&&caEl.value)||1)||1);
+  }
+  if (prod === 'mesa') m2 += mesaParM2();
+  return m2;
+}
+/* teñido por tarifa: el valor se recalcula solo cuando cambian las medidas
+   (tnSync corre dentro de calcLive). Escribir el valor a mano apaga el
+   modo tarifa para no pisar lo que puso el vendedor. */
+var tnAuto = false;
+function tnTarifa() {
+  var sel = document.getElementById('tn-tarifa');
+  tnAuto = !!(sel && sel.value === 'm2');
+  tnSync();
+  calcLive();
+}
+function tnSync() {
+  if (!tnAuto) return;
+  var val = document.getElementById('tn-val');
+  if (!val) { tnAuto = false; return; }
+  var v = Math.round(vxM2Actual() * VX_TARIFAS.tenidoM2);
+  val.value = v > 0 ? v : '';
+}
+function tnManual() {
+  tnAuto = false;
+  var sel = document.getElementById('tn-tarifa');
+  if (sel) sel.value = '';
+}
+/* perforación por tarifa: cada selección agrega una fila de extra ya
+   valorizada (pueden ser varias: 1 lavaplatos + 2 llaves). La fila queda
+   editable y se quita con su ✕, como cualquier extra libre. */
+function pfTarifa(sel) {
+  var t = sel.value; sel.value = '';
+  if (!t) return;
+  var def = (t === 'lava')
+    ? { nombre: 'Perforación lavaplatos / encimera', valor: VX_TARIFAS.perfLavaplatos }
+    : { nombre: 'Perforación redonda (llave, enchufe)', valor: VX_TARIFAS.perfRedonda };
+  addVExtra();
+  var nom = document.getElementById('vx-nom'+nVExtras), val = document.getElementById('vx-val'+nVExtras);
+  if (nom) nom.value = def.nombre;
+  if (val) val.value = def.valor;
+  calcLive();
+}
 /* ── REBORDE POR CANTO, PIEZA POR PIEZA ──
    Cada pieza tiene sus propios 4 cantos, porque en una misma cotización puede
    haber cubiertas con reborde y otras sin. Los metros lineales suman cada pieza
@@ -2971,6 +3032,7 @@ function vExtrasFieldHtml() {
   nVExtras = 0;
   rbFirmaPiezas = '';   /* el bloque se vuelve a crear vacío: forzar el redibujo de las piezas */
   rbManual = false;
+  tnAuto = false;       /* el select de tarifa nace en "Valor manual" */
   return '<div class="mesa-box'+(vendorMode?'':' hidden')+'">' +
     '<div class="mesa-h">Extras (opcional)</div>' +
     '<div class="vx-sub">' +
@@ -2992,14 +3054,27 @@ function vExtrasFieldHtml() {
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Teñido</div>' +
       '<div class="dim-row">' +
+        '<select class="finput" id="tn-tarifa" onchange="tnTarifa()">' +
+          '<option value="">Valor manual</option>' +
+          '<option value="m2">Tarifa — ' + fmt(VX_TARIFAS.tenidoM2) + ' por m²</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="dim-row">' +
         '<input type="text" id="tn-det" placeholder="Color / detalle" style="flex:2">' +
-        '<input type="number" inputmode="numeric" min="0" id="tn-val" placeholder="Valor">' +
+        '<input type="number" inputmode="numeric" min="0" id="tn-val" placeholder="Valor" oninput="tnManual()">' +
       '</div>' +
     '</div>' +
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Perforación</div>' +
       '<div class="dim-row">' +
-        '<input type="text" id="pf-det" placeholder="Ej. lavaplatos, pasada de llaves" style="flex:2">' +
+        '<select class="finput" id="pf-combo" onchange="pfTarifa(this)">' +
+          '<option value="">Agregar con tarifa…</option>' +
+          '<option value="lava">Lavaplatos / encimera — ' + fmt(VX_TARIFAS.perfLavaplatos) + '</option>' +
+          '<option value="red">Redonda (llave, enchufe…) — ' + fmt(VX_TARIFAS.perfRedonda) + '</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="dim-row">' +
+        '<input type="text" id="pf-det" placeholder="Otra: detalle a mano" style="flex:2">' +
         '<input type="number" inputmode="numeric" min="0" id="pf-val" placeholder="Valor">' +
       '</div>' +
     '</div>' +
