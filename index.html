@@ -327,6 +327,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .ibox-b { padding: 10px 12px; background: white; font-size: 13.5px; line-height: 1.6; color: var(--tm); }
 .ibox-b ul { list-style: none; padding: 0; }
 .ibox-b li { padding: 7px 0 7px 18px; text-indent: -18px; border-bottom: 1px solid var(--bg3); line-height: 1.55; }
+.ibox-no { margin-top: 8px; font-size: 12.5px; color: var(--tm); font-style: italic; }
 .ibox-b li:last-child { border-bottom: none; }
 .ibox-b li::before { content: "· "; color: var(--ac); font-weight: 700; }
 .ibox-incluye .ibox-b li::before { content: "✓ "; color: #2D6A4F; font-weight: 700; }
@@ -1154,7 +1155,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
     <div class="live-price-wrap">
       <div class="lp-label">Precio estimado</div>
       <div class="lp-range" id="live-range"><span class="lp-empty">Ingresa las medidas</span></div>
-      <div class="lp-note" id="live-note" style="display:none">Según la madera que elijas · IVA incluido</div>
+      <div class="lp-note" id="live-note" style="display:none">Según la madera que elijas · IVA incluido · Envío aparte</div>
     </div>
     <!-- 2º recién ahora los datos de contacto -->
     <div class="datos-sec">
@@ -1208,7 +1209,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
       <div class="val-steps-h">Cómo funciona el proceso</div>
       <div class="val-step"><div class="val-step-n">1</div><div class="val-step-t">Confirmas y pagas el <strong>70%</strong> para entrar a producción.</div></div>
       <div class="val-step"><div class="val-step-n">2</div><div class="val-step-t">Fabricamos tu pieza. <strong>Te enviamos foto</strong> cuando esté terminada, antes de embalarla.</div></div>
-      <div class="val-step"><div class="val-step-n">3</div><div class="val-step-t">Apruebas y pagas el saldo del <strong>30%</strong>. Hacemos el envío.</div></div>
+      <div class="val-step"><div class="val-step-n">3</div><div class="val-step-t">Apruebas y pagas el saldo del <strong>30%</strong>. Despachamos a todo Chile —el envío se cobra aparte, según destino— o lo retiras en nuestro taller en Villarrica.</div></div>
     </div>
   </div>
   <div class="cta-dock"><button class="btn-primary" id="btn-ver-coti">Ver mi cotización →</button></div>
@@ -1925,8 +1926,8 @@ var vendorMode = false;   /* true con el link privado de vendedor (?pro=zr): hab
 var b2bMode = false;      /* true solo en el link privado de Jepe (?src=jepe&pro=zr): muestra el selector de descuento */
 
 /* ── EMBUDO PÚBLICO ──
-   Cuenta cuánta gente entra y cuánta llega a ver su cotización, en 4 pasos:
-   visita → producto → datos → cotizacion. Solo mide CLIENTES: el embudo se
+   Cuenta cuánta gente entra y cuánta llega a ver su cotización, en 5 pasos:
+   visita → producto → medidas → datos → cotizacion. Solo mide CLIENTES: el embudo se
    arma únicamente en la entrada pública (embudoArrancar), así que panel,
    links compartidos (?s= / #q=) y vendedores quedan fuera solos. Cada paso
    se marca una vez por sesión de navegación (sessionStorage) y el insert va
@@ -2168,12 +2169,20 @@ function calcLive() {
     if (m2r > 0) { bajo = m2r * PR.revestimiento.cipres; alto = m2r * PR.revestimiento.coihue; }
   }
 
+  /* sin modelo no hay base que sumar: mostrar un precio acá era prometer una
+     mesa que el público después no puede cotizar */
+  if (prod === 'mesa' && !vendorMode && !mesaModeloActual()) {
+    rangeEl.innerHTML = '<span class="lp-empty">Elige un modelo para ver el precio</span>';
+    noteEl.style.display = 'none';
+    return;
+  }
   if (bajo > 0) {
-    var liveM2 = (typeof sumM2 !== 'undefined' && sumM2) || (typeof m2r !== 'undefined' && m2r) || 0;
+    var liveM2 =(typeof sumM2 !== 'undefined' && sumM2) || (typeof m2r !== 'undefined' && m2r) || 0;
     var exT = getExtrasTotal(liveM2);
     bajo += rebordeValor('bajo'); alto += rebordeValor('alto');   /* el reborde cuesta según la madera */
     rangeEl.innerHTML = fmt(bajo + exT) + '<span class="sep-dash"> — </span>' + fmt(alto + exT);
     noteEl.style.display = 'block';
+    embudoTick('medidas');
   } else {
     rangeEl.innerHTML = '<span class="lp-empty">Ingresa las medidas</span>';
     noteEl.style.display = 'none';
@@ -2398,9 +2407,12 @@ function renderForm(p) {
         '<select class="fsel hidden" id="ms-modelo" onchange="mesaModeloSel(this.value)">' +
           '<option value="">Libre / sin modelo</option>' + modeloOpts +
         '</select>' +
-        '<div class="finput-hint">Al elegir un modelo se completa el nombre y el tipo de base. Toca de nuevo para des-seleccionar (mesa libre).</div>' +
+        '<div class="finput-hint">' + (vendorMode
+          ? 'Al elegir un modelo se completa el nombre y el tipo de base. Toca de nuevo para des-seleccionar (mesa libre).'
+          : 'Elige un modelo para ver el precio: cada uno lleva su propia base.') + '</div>' +
       '</div>' +
-      '<div class="fsec">' +
+      /* el público no cotiza mesa libre: el nombre lo completa el modelo elegido */
+      '<div class="fsec' + (vendorMode ? '' : ' hidden') + '">' +
         '<label class="flabel">¿Qué es? <span class="req">*</span></label>' +
         '<input class="finput" type="text" id="ms-nombre" placeholder="Ej. Mesa de comedor, Arrimo, Mesa de centro" value="' + (mesaTipo==='centro' ? 'Mesa de centro' : 'Mesa de comedor') + '">' +
       '</div>' +
@@ -3432,12 +3444,16 @@ function generar() {
   var cli   = document.getElementById('f-cli').value.trim();
   conStr    = document.getElementById('f-con').value.trim();
   var errEl = document.getElementById('f-err');
+  /* primero lo que le falta a la pieza y después los datos de contacto: al
+     revés, el cliente escribía nombre y WhatsApp para enterarse recién ahí de
+     que le faltaba el modelo */
+  if (!hasValidDims()) { errEl.textContent = 'Ingresa al menos una medida antes de continuar.'; errEl.classList.remove('hidden'); return; }
+  if (prod === 'mesa' && !vendorMode && !mesaModeloActual()) { errEl.textContent = 'Elige un modelo de mesa para continuar.'; errEl.classList.remove('hidden'); return; }
   if (!cli) { errEl.textContent = 'Escribe tu nombre para continuar.'; errEl.classList.remove('hidden'); return; }
   if (!conStr) { errEl.textContent = 'Escribe tu WhatsApp o tu correo para continuar.'; errEl.classList.remove('hidden'); return; }
   if (!waPhone(conStr) && !esCorreo(conStr)) { errEl.textContent = 'Revisa tu contacto: un celular (+56 9 1234 5678) o un correo válido.'; errEl.classList.remove('hidden'); return; }
   var telChk = waPhone(conStr);
   if (telChk && !esCorreo(conStr) && telBasura(telChk)) { errEl.textContent = 'Ese número no parece un celular real. Revísalo — lo necesitamos para enviarte la cotización.'; errEl.classList.remove('hidden'); return; }
-  if (!hasValidDims()) { errEl.textContent = 'Ingresa al menos una medida antes de continuar.'; errEl.classList.remove('hidden'); return; }
   if (prod === 'mesa') {
     /* al público no se le piden valores: los calcula el modelo. Solo se exige
        que haya elegido uno, que es lo que define la base. */
@@ -3919,7 +3935,7 @@ function tierTable(rows, recTier) {
     '</div>' +
     prows +
     proNote +
-    '<div class="ptier-note">Precios con IVA incluido · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%</div>' +
+    '<div class="ptier-note">Precios con IVA incluido · No incluyen envío · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%</div>' +
   '</div>';
 }
 
@@ -3929,6 +3945,12 @@ function terminacionOpts() {
   var t = 'Vitrificado mate o semi brillo / Aceite cera Osmo';
   if (uso === 'exterior') t += ' / <strong>Cutek</strong> (aceite para exterior)';
   return t;
+}
+/* lo que el cliente suele dar por incluido y no lo está */
+function noIncluyeHtml() {
+  if (['granero','maciza','vidrios'].includes(prod))
+    return '<div class="ibox-no">No incluye chapa, manilla ni instalación.</div>';
+  return '';
 }
 function boxes() {
   return '<div class="iboxes">' +
@@ -3940,7 +3962,7 @@ function boxes() {
         '<li>Madera seleccionada del sur de Chile</li>' +
         '<li>Cera de mantención incluida (50cc)</li>' +
         '<li><strong>Garantía de 5 años</strong></li>' +
-      '</ul></div>' +
+      '</ul>' + noIncluyeHtml() + '</div>' +
     '</div>' +
     '<div class="ibox">' +
       '<div class="ibox-h">Pago y proceso</div>' +
@@ -3948,6 +3970,7 @@ function boxes() {
         '<li>Confirmar con <strong>70%</strong> · Transferencia o tarjeta</li>' +
         '<li>Fabricación <strong>7 a 15 días hábiles</strong> desde confirmación</li>' +
         '<li>Te enviamos <strong>foto</strong> cuando tu proyecto esté listo. Pagas saldo <strong>30%</strong> y hacemos el envío</li>' +
+        '<li><strong>Envío a todo Chile con costo aparte</strong>, según destino. También puedes retirar en nuestro taller en Villarrica</li>' +
         '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>' +
       '</ul></div>' +
     '</div>' +
@@ -7135,7 +7158,7 @@ async function embudoPintar() {
   try {
     var r = await sbClient.rpc('embudo_resumen', { dias: 30 });
     if (r.error || !r.data) return;
-    var tot = { visita:0, producto:0, datos:0, cotizacion:0 };
+    var tot = { visita:0, producto:0, medidas:0, datos:0, cotizacion:0 };
     var hoy = { visita:0, cotizacion:0 };
     var hoyK = hoyISO();
     r.data.forEach(function(f){
@@ -7149,7 +7172,9 @@ async function embudoPintar() {
     }
     var pct = function(n){ return Math.round(n * 100 / tot.visita) + '%'; };
     el.innerHTML = '<div class="month-metrics" title="Personas distintas por sesión de navegación, últimos 30 días. Mide solo el cotizador público: vendedores, panel y links compartidos no cuentan.">' +
-      '🔻 Embudo 30 días: <strong>' + tot.visita + '</strong> entran → <strong>' + tot.producto + '</strong> eligen producto (' + pct(tot.producto) + ') → <strong>' + tot.datos + '</strong> dejan sus datos (' + pct(tot.datos) + ') → <strong>' + tot.cotizacion + '</strong> ven su cotización (' + pct(tot.cotizacion) + ')' +
+      '🔻 Embudo 30 días: <strong>' + tot.visita + '</strong> entran → <strong>' + tot.producto + '</strong> eligen producto (' + pct(tot.producto) + ')' +
+      (tot.medidas ? ' → <strong>' + tot.medidas + '</strong> ven el precio estimado (' + pct(tot.medidas) + ', se mide desde el 14-09)' : '') +
+      ' → <strong>' + tot.datos + '</strong> dejan sus datos (' + pct(tot.datos) + ') → <strong>' + tot.cotizacion + '</strong> ven su cotización (' + pct(tot.cotizacion) + ')' +
       (hoy.visita ? ' — hoy: ' + hoy.visita + ' entran, ' + hoy.cotizacion + ' cotizan' : '') +
       '</div>';
   } catch (e) {}
