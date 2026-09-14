@@ -3946,10 +3946,20 @@ function terminacionOpts() {
   if (uso === 'exterior') t += ' / <strong>Cutek</strong> (aceite para exterior)';
   return t;
 }
-/* lo que el cliente suele dar por incluido y no lo está */
+/* lo que el cliente suele dar por incluido y no lo está. El marco se puede
+   cotizar: si ya viene en esta cotización, no se lo nombra como excluido. */
 function noIncluyeHtml() {
-  if (['granero','maciza','vidrios'].includes(prod))
-    return '<div class="ibox-no">No incluye chapa, manilla ni instalación.</div>';
+  if (!['granero','maciza','vidrios'].includes(prod)) return '';
+  var conMarco = getMarcoTotals().ml > 0;
+  return '<div class="ibox-no">' + (conMarco
+    ? 'No incluye bisagras, chapa ni manilla.'
+    : 'No incluye marco (se cotiza aparte), bisagras, chapa ni manilla.') + '</div>';
+}
+/* se evita instalar —la mayoría de los clientes es de otras regiones—, así
+   que se promete la pieza terminada, no el servicio */
+function listaParaInstalarLi() {
+  if (prod === 'cubierta' || ['granero','maciza','vidrios'].includes(prod))
+    return '<li>Llega <strong>lista para instalar</strong></li>';
   return '';
 }
 function boxes() {
@@ -3959,6 +3969,7 @@ function boxes() {
       '<div class="ibox-b"><ul>' +
         '<li>Terminación <strong>hidrorrepelente y antimanchas</strong>: ' + terminacionOpts() + '. <strong>Tú eliges</strong></li>' +
         '<li><strong>Embalaje reforzado</strong> para traslado seguro</li>' +
+        listaParaInstalarLi() +
         '<li>Madera seleccionada del sur de Chile</li>' +
         '<li>Cera de mantención incluida (50cc)</li>' +
         '<li><strong>Garantía de 5 años</strong></li>' +
