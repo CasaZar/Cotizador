@@ -595,6 +595,12 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .mbtn:hover { border-color:var(--ac);background:var(--bg3); }
 .mbtn.pri { background:var(--ac);color:white;border-color:var(--ac);text-align:center;letter-spacing:.5px; }
 .mbtn.cancel { border:none;color:var(--tm);text-align:center;font-size:14px; }
+.mresp-h { font-size:11.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;margin:12px 2px 6px; }
+/* lo que contestó el cliente a ese toque, al lado de su fecha */
+.tq-resp { display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;background:var(--bg3);color:var(--tm); }
+.tq-resp-interesado, .tq-resp-pensando { background:#E3F2E8;color:#2D6A4F; }
+.tq-resp-precio { background:#FEF3C7;color:#92400E; }
+.tq-resp-otro_lado, .tq-resp-numero { background:#FDE8E8;color:#991B1B; }
 .dm-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px; }
 @media(max-width:480px){ .dm-grid { grid-template-columns:repeat(2,1fr); } }
 .dm-card { border:2px solid var(--bd);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s; }
@@ -4587,6 +4593,45 @@ function esPrueba(x){ return !!(x && x.motivo_perdida === MOTIVO_PRUEBA); }
 /* motivos que implican que el cliente CONVERSÓ: al marcarlos se aprende
    respondio=true solo (validación del spec sin ponerle un error a César) */
 var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado'];
+/* Lo que el cliente había contestado al seguimiento anterior. Se pregunta al
+   registrar el siguiente, que es cuando el vendedor tiene el chat abierto:
+   anotar "no respondió" como un paso aparte era algo que nadie hacía. */
+var RESPUESTAS_PREV = [
+  { id:'nada',       txt:'No respondió' },
+  { id:'interesado', txt:'Interesado' },
+  { id:'pensando',   txt:'Lo está pensando' },
+  { id:'precio',     txt:'Precio alto' }
+];
+/* estas terminan el seguimiento: no se registra otro toque, se marca perdida */
+var RESPUESTAS_CIERRE = [
+  { id:'otro_lado', txt:'Compró en otro lado', motivo:'Compró en otro lado' },
+  { id:'numero',    txt:'Número no funciona',  motivo:'Número no funciona / sin WhatsApp' }
+];
+var RESPUESTAS_CON_CONVERSACION = ['interesado', 'pensando', 'precio', 'otro_lado'];
+function respTxt(id){
+  var r = RESPUESTAS_PREV.concat(RESPUESTAS_CIERRE).filter(function(x){ return x.id === id; })[0];
+  return r ? r.txt : '';
+}
+/* copia del historial con la respuesta anotada en el toque `prev`. Si ese toque
+   no tiene entrada (cotizaciones marcadas antes de que existiera el historial),
+   no se inventa una: quedaría un toque sin fecha. */
+function histConRespuesta(x, prev, resp){
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.map(function(h){ return Object.assign({}, h); }) : [];
+  for (var i = 0; i < hist.length; i++){
+    if (hist[i] && hist[i].etapa === prev){ hist[i].resp = resp; hist[i].resp_fecha = hoyISO(); break; }
+  }
+  return hist;
+}
+function respuestasBtns(fn, id, n){
+  var llamada = function(r){ return fn + '(\'' + id + '\',' + (n ? n + ',' : '') + '\'' + r.id + '\')'; };
+  return RESPUESTAS_PREV.map(function(r){
+      return '<button class="mbtn" onclick="' + llamada(r) + '">' + r.txt + '</button>';
+    }).join('') +
+    '<div class="mresp-h">Termina el seguimiento</div>' +
+    RESPUESTAS_CIERRE.map(function(r){
+      return '<button class="mbtn" onclick="' + llamada(r) + '">' + r.txt + ' <span class="mbtn-sub">se marca perdida</span></button>';
+    }).join('');
+}
 /* motivos de PAUSA (spec §4): cada uno agenda su próximo toque solo */
 var PAUSAS = [
   { id:'decision_familiar', t:'🏠 Lo conversa en familia', dias:7,
@@ -5211,6 +5256,12 @@ function horasSinToque(g){
    NUNCA cierra: ganadas, perdidas, las que respondieron, las pausadas con
    fecha, las que tienen un toque agendado a futuro, ni las ballenas. */
 var CIERRE_MOTIVO = 'Sin respuesta (cierre automático)';
+/* cuando los seguimientos dejaron anotado que no contestó: es distinto de
+   cerrar sin saber nada, y en "¿Por qué perdemos?" tiene que verse aparte */
+var CIERRE_MOTIVO_IGNORO = 'No respondió los seguimientos (cierre automático)';
+function nuncaRespondio(x){
+  return Array.isArray(x.seg_historial) && x.seg_historial.some(function(h){ return h && h.resp === 'nada'; });
+}
 var CFG_SEG_CIERRE_DIAS = 40;
 var CFG_SEG_BACKLOG_DIAS = 14;   /* plazo para trabajar el backlog desde el arranque del sistema */
 function candidatasACerrar(){
@@ -5244,15 +5295,21 @@ async function correrCierreAutomatico(){
   try{
     /* el historial se escribe fila por fila (cada una tiene el suyo); el estado
        va en un solo update para que sea rápido y atómico */
-    var res = await sbClient.from('cotizaciones')
-      .update({ estado:'perdida', motivo_perdida:CIERRE_MOTIVO, seg_proxima:null })
-      .in('id', ids).select('id');
-    if (res.error){ console.error('cierre automático:', res.error); return; }
+    var motivoDe = function(x){ return nuncaRespondio(x) ? CIERRE_MOTIVO_IGNORO : CIERRE_MOTIVO; };
+    var porMotivo = {};
+    cand.forEach(function(x){ var m = motivoDe(x); (porMotivo[m] = porMotivo[m] || []).push(x.id); });
+    var motivos = Object.keys(porMotivo);
+    for (var mi = 0; mi < motivos.length; mi++) {
+      var res = await sbClient.from('cotizaciones')
+        .update({ estado:'perdida', motivo_perdida:motivos[mi], seg_proxima:null })
+        .in('id', porMotivo[motivos[mi]]).select('id');
+      if (res.error){ console.error('cierre automático:', res.error); return; }
+    }
     cand.forEach(function(x){
       var hist = Array.isArray(x.seg_historial)?x.seg_historial.slice():[];
       hist.push({etapa:0, fecha:hoy, nota:'Cerrada automáticamente: '+CFG_SEG_CIERRE_DIAS+' días sin respuesta'});
       sbClient.from('cotizaciones').update({seg_historial:hist}).eq('id', x.id).then(function(){}, function(){});
-      x.estado='perdida'; x.motivo_perdida=CIERRE_MOTIVO; x.seg_historial=hist;
+      x.estado='perdida'; x.motivo_perdida=motivoDe(x); x.seg_historial=hist;
     });
     showToast('Se cerraron '+cand.length+' cotizacion'+(cand.length===1?'':'es')+' sin respuesta hace más de '+CFG_SEG_CIERRE_DIAS+' días', true);
   } catch(e){ console.error('cierre automático:', e); }
@@ -5774,12 +5831,29 @@ function pendPreguntar(){
   var x = COTIS[p.id];
   var quien = escA(p.nombre || (x && x.cliente) || 'este cliente');
   var canal = p.canal === 'mail' ? 'el correo' : 'WhatsApp';
+  /* desde el segundo toque: lo que se ve en el chat al volver es justo lo que
+     contestó (o no) al anterior, así que la misma respuesta confirma el envío */
+  if (x && (x.seg_etapa||0) >= 1) {
+    pModal('<h3>¿Qué había respondido '+quien+' a tu mensaje anterior?</h3>'+
+      '<div class="seg-empty" style="text-align:center;padding:0 4px 12px">Se abrió '+canal+
+      '. Toca lo que viste en el chat y queda registrado el seguimiento de hoy.</div>'+
+      respuestasBtns('pendResponder', p.id)+
+      '<button class="mbtn cancel" onclick="pendConfirmar(\''+p.id+'\',false)">No le escribí todavía</button>'+
+      '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
+    return;
+  }
   pModal('<h3>¿Le escribiste a '+quien+'?</h3>'+
     '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Se abrió '+canal+
     '. El toque se marca solo si confirmas que enviaste el mensaje.</div>'+
     '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',true)">Sí, ya le escribí</button>'+
     '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',false)">No, todavía no</button>'+
     '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
+}
+function pendResponder(id, resp){
+  pClose();
+  pendQuitar(id);
+  segResponderYMarcar(id, resp);
+  setTimeout(pendPreguntar, 400);   /* si abrió varios chats, sigue con el próximo */
 }
 function pendConfirmar(id, si){
   pClose();
@@ -5940,9 +6014,10 @@ function segClientCard(g, cls){
   for (var n=1;n<=CADENCIA.length && !compacta;n++){
     var h=null;
     for (var i=0;i<hist.length;i++){ if(hist[i].etapa===n){ h=hist[i]; break; } }
-    var fechaTq = (h && h.fecha) ? '<span class="tq-fecha">'+fmtFechaCorta(h.fecha)+'</span>' : '';
+    var fechaTq = ((h && h.fecha) ? '<span class="tq-fecha">'+fmtFechaCorta(h.fecha)+'</span>' : '') +
+                  ((h && h.resp) ? '<span class="tq-resp tq-resp-'+escA(h.resp)+'">'+escA(respTxt(h.resp))+'</span>' : '');
     toques += '<div class="seg-tq">'+
-      '<label class="seg-tq-chk"><input type="checkbox"'+(etapa>=n?' checked':'')+' onchange="segMarcar(\''+x.id+'\','+n+',this.checked)"><span>T'+n+' · día '+CADENCIA[n-1]+'</span>'+fechaTq+'</label>'+
+      '<label class="seg-tq-chk"><input type="checkbox"'+(etapa>=n?' checked':'')+' onchange="segCasilla(\''+x.id+'\','+n+',this)"><span>T'+n+' · día '+CADENCIA[n-1]+'</span>'+fechaTq+'</label>'+
       '<input class="seg-tq-nota" type="text" placeholder="¿Qué dijo el cliente?" value="'+escA(h&&h.nota?h.nota:'')+'" onchange="segNota(\''+x.id+'\','+n+',this.value)">'+
     '</div>';
   }
@@ -6126,10 +6201,11 @@ async function segHecho(id){
   segMarcar(id, n, true);
 }
 /* marcar/desmarcar una de las casillas de toque */
-async function segMarcar(id, n, checked){
+async function segMarcar(id, n, checked, resp){
   var x=COTIS[id]; if(!x) return;
   var etapa = checked ? n : n-1;
-  var hist=Array.isArray(x.seg_historial)?x.seg_historial.slice():[];
+  var hist = (checked && resp) ? histConRespuesta(x, n-1, resp)
+                               : (Array.isArray(x.seg_historial)?x.seg_historial.slice():[]);
   if (checked && !hist.some(function(h){ return h.etapa===n; })) hist.push({etapa:n, fecha:hoyISO()});
   var next=null;
   if (checked && etapa<CADENCIA.length && x.fecha_creacion){
@@ -6139,6 +6215,9 @@ async function segMarcar(id, n, checked){
   var updates = {seg_etapa:etapa, seg_proxima:next, seg_historial:hist};
   if (checked && !x.fecha_primer_contacto) updates.fecha_primer_contacto = new Date().toISOString();
   if (checked && x.motivo_pausa) updates.motivo_pausa = null;   /* el toque acordado ya se hizo: termina la pausa */
+  if (checked && RESPUESTAS_CON_CONVERSACION.indexOf(resp) !== -1 && !x.respondio) {
+    updates.respondio = true; updates.fecha_primera_respuesta = new Date().toISOString();
+  }
   /* El canal de origen NO se toca: quien cotizó solo por la web queda como
      web para siempre, haga quien haga el seguimiento. Son dos cosas distintas
      —de dónde vino el cliente y quién lo trabajó— y mezclarlas ensucia la
@@ -6147,7 +6226,38 @@ async function segMarcar(id, n, checked){
   if (!checked && etapa === 0) updates.fecha_primer_contacto = null;   /* deshizo el único toque */
   if (checked) registrarToque(x, n);          /* fase 2: fila en `toques` (fire-and-forget) */
   else borrarUltimoToque(x);
-  segSave(id, updates, checked?'Toque '+n+' registrado':'Toque '+n+' desmarcado');
+  segSave(id, updates, checked ? 'Toque '+n+' registrado'+(resp ? ' · el anterior: '+respTxt(resp).toLowerCase() : '')
+                               : 'Toque '+n+' desmarcado');
+}
+/* anota lo que contestó el cliente al toque anterior y registra el de hoy (n,
+   o el siguiente de la cadencia). Si la respuesta termina el seguimiento, no
+   se registra toque: la cotización pasa a perdida con ese motivo. */
+function segResponderYMarcar(id, resp, n){
+  var x = COTIS[id]; if (!x) return;
+  var sig = n || (x.seg_etapa||0) + 1;
+  var cierre = RESPUESTAS_CIERRE.filter(function(r){ return r.id === resp; })[0];
+  if (cierre) {
+    segPerder(id, cierre.motivo, { seg_historial: histConRespuesta(x, sig-1, resp), seg_proxima: null });
+    return;
+  }
+  if (sig > CADENCIA.length) return;
+  segMarcar(id, sig, true, resp);
+}
+/* casilla marcada a mano (el mensaje se mandó por fuera del panel): desde el
+   segundo toque pregunta lo mismo que el recuadro de vuelta del chat */
+function segCasilla(id, n, el){
+  if (!el.checked || n < 2) { segMarcar(id, n, el.checked); return; }
+  var x = COTIS[id]; if (!x) return;
+  el.checked = false;   /* queda marcada recién cuando elige una respuesta */
+  pModal('<h3>¿Qué había respondido '+escA(x.cliente||'el cliente')+' al toque '+(n-1)+'?</h3>'+
+    respuestasBtns('segCasillaResp', id, n)+
+    '<button class="mbtn cancel" onclick="segCasillaResp(\''+id+'\','+n+',\'\')">Marcar sin anotar respuesta</button>'+
+    '<button class="mbtn cancel" onclick="pClose()">Cancelar</button>');
+}
+function segCasillaResp(id, n, resp){
+  pClose();
+  if (!resp) { segMarcar(id, n, true); return; }
+  segResponderYMarcar(id, resp, n);
 }
 /* nota de lo que dijo el cliente en el toque n */
 async function segNota(id, n, txt){
@@ -6232,10 +6342,11 @@ function segPerderUI(id){
     MOTIVOS.map(function(m){ return '<button class="mbtn" onclick="segPerder(\''+id+'\',\''+m+'\')">'+m+'</button>'; }).join('')+
     '<button class="mbtn cancel" onclick="pClose()">Cancelar</button>');
 }
-function segPerder(id, motivo){
+function segPerder(id, motivo, extra){
   pClose();
   var x = COTIS[id] || {};
   var updates = {estado:'perdida', motivo_perdida:motivo};
+  if (extra) Object.keys(extra).forEach(function(k){ updates[k] = extra[k]; });
   /* si el motivo implica conversación (precio, plazo, compró en otro lado),
      respondio queda registrado — mejora la métrica sin pedirle nada a César */
   if (MOTIVOS_CON_RESPUESTA.indexOf(motivo) !== -1 && !x.respondio) {
