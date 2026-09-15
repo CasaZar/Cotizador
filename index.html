@@ -4783,6 +4783,16 @@ function dueDate(x){
   return due;
 }
 /* ── AGRUPACIÓN POR CLIENTE (regla planilla: cliente con cotización de vendedor Y web → recuadro del vendedor) ── */
+/* la cotización tiene algún contacto registrado (toque, primer contacto o respuesta) */
+function cotizContactada(x){
+  return (x.seg_etapa||0) > 0 || !!x.fecha_primer_contacto || !!x.respondio;
+}
+/* clientes con alguna cotización todavía en curso */
+function clientesConAbierta(rows){
+  var m = {};
+  rows.forEach(function(x){ if (!x.eliminada && (x.estado||'enviada') === 'enviada') m[clientKey(x)] = true; });
+  return m;
+}
 function clientKey(x){
   var tel = waPhone(x.contacto);
   if (tel) return 't'+tel;
@@ -5272,9 +5282,17 @@ function candidatasACerrar(){
   var grupos = buildSegGroups();
   var ballenas = {};
   grupos.forEach(function(g){ if (esBallena(g)) g.quotes.forEach(function(q){ ballenas[q.id]=true; }); });
+  /* El toque se anota solo en la cotización principal del cliente, así que sus
+     otras cotizaciones se ven "sin contactar": sin esto, la regla del backlog
+     las cerraba como perdidas con el cliente vivo en seguimiento. */
+  var enSeguimiento = {};
+  allRows.forEach(function(x){
+    if (!x.eliminada && (x.estado||'enviada') === 'enviada' && cotizContactada(x)) enSeguimiento[clientKey(x)] = true;
+  });
   return allRows.filter(function(x){
     if (x.eliminada) return false;
     if ((x.estado||'enviada') !== 'enviada') return false;      /* ganada o perdida: intocable */
+    if (!cotizContactada(x) && enSeguimiento[clientKey(x)]) return false;   /* otra cotización del mismo cliente sigue viva */
     if (x.respondio) return false;                               /* conversó: nunca se cierra sola */
     if (x.interesado) return false;                              /* ★ del vendedor: "esta sigue viva" — el cierre automático no la toca */
     if (x.motivo_pausa) return false;                            /* pausada con motivo y fecha */
@@ -5674,11 +5692,14 @@ function renderSeguimiento(){
   var porCliMes = {};
   mesRows.forEach(function(x){ var k=clientKey(x); (porCliMes[k]=porCliMes[k]||[]).push(x); });
   var clavesMes = Object.keys(porCliMes);
+  /* perdido es el cliente que ya no tiene NADA en curso: con una cotización
+     extra cerrada no alcanza, el cliente puede seguir vivo en la principal */
+  var cliConAbierta = clientesConAbierta(dashRows);
   var cliGan=0, cliPer=0, cliRapidos=0;
   clavesMes.forEach(function(k){
     var qs = porCliMes[k];
     if (qs.some(function(q){ return q.estado==='ganado'; })) cliGan++;
-    else if (qs.some(function(q){ return q.estado==='perdida'; })) cliPer++;
+    else if (!cliConAbierta[k] && qs.some(function(q){ return q.estado==='perdida'; })) cliPer++;
     /* contacto <24h: primera cotización del cliente contra su primer toque,
        mirando TODAS sus cotizaciones (el toque puede estar en cualquiera) */
     var creados = qs.map(function(q){ return String(q.fecha_creacion).slice(0,10); }).filter(Boolean).sort();
@@ -7143,8 +7164,10 @@ function renderDash() {
     if (dashMonth && !qs.some(function(q){ return String(q.fecha_creacion||'').slice(0,7)===dashMonth; })) return;   /* sin cotización en el mes elegido */
     var ganado = qs.some(function(q){ return q.estado==='ganado'; });
     var perdida = qs.some(function(q){ return q.estado==='perdida'; });
+    /* con alguna cotización en curso el cliente sigue vivo: no se cuenta perdido */
+    var enCurso = qs.some(function(q){ return (q.estado||'enviada')==='enviada'; });
     if (ganado) clientesGanados++;
-    else if (perdida) clientesPerdidos++;
+    else if (perdida && !enCurso) clientesPerdidos++;
   });
   var clientesCerrados = clientesGanados + clientesPerdidos;
   var conv = clientesCerrados > 0 ? Math.round(clientesGanados/clientesCerrados*100) : 0;
