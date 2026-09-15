@@ -4520,10 +4520,15 @@ async function saveQuote(data, lineas) {
    se reportó como bug algo que ya estaba arreglado en el servidor pero viejo
    en el celular. Con la fecha a la vista se sabe al tiro si lo que se está
    mirando es lo último, y tocándola se fuerza la recarga sin caché. */
-var PANEL_VERSION = '2026-08-17';
+/* La fecha sale del propio archivo publicado (Last-Modified), así no depende de
+   acordarse de cambiarla: la constante quedó pegada un mes en 2026-08-17. */
+var PANEL_VERSION = '2026-09-15';
 function verPinta(){
   var el = document.getElementById('ver-tag');
-  if (el) el.textContent = 'v' + PANEL_VERSION;
+  if (!el) return;
+  var d = new Date(document.lastModified);
+  el.textContent = 'v' + (isNaN(d.getTime()) ? PANEL_VERSION
+    : isoDate(d) + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'));
 }
 function verForzarRecarga(){
   /* el ?v= rompe el caché del navegador y del borde de GitHub Pages.
@@ -5327,10 +5332,24 @@ async function doPanelLogin(){
 }
 async function doPanelLogout(){ try{ await sbClient.auth.signOut(); }catch(e){} location.reload(); }
 
+/* Supabase entrega como máximo 1000 filas por consulta y lo que sobra lo corta
+   sin avisar. `armar` devuelve la consulta ya ordenada (con un desempate único,
+   para que ninguna fila se repita ni se salte entre páginas). */
+async function sbTodas(armar) {
+  var PAG = 1000, filas = [];
+  for (var desde = 0; ; desde += PAG) {
+    var r = await armar().range(desde, desde + PAG - 1);
+    if (r.error) return { data: null, error: r.error };
+    filas = filas.concat(r.data || []);
+    if (!r.data || r.data.length < PAG) return { data: filas, error: null };
+  }
+}
 async function loadDash() {
   bitacFlush();   /* toques que quedaron en cola por sesión expirada (fire-and-forget) */
   document.getElementById('dash-tbl').innerHTML = '<div style="padding:20px;text-align:center;color:var(--tm)">Cargando…</div>';
-  var res = await sbClient.from('cotizaciones').select('*').order('fecha_creacion',{ascending:false});
+  var res = await sbTodas(function(){
+    return sbClient.from('cotizaciones').select('*').order('fecha_creacion',{ascending:false}).order('id');
+  });
   if (res.error) { document.getElementById('dash-tbl').innerHTML='<div style="padding:20px;color:#991B1B">Error: '+res.error.message+'</div>'; return; }
   allRows = res.data || [];
   _fonosGanadas = null;   /* el caché de recompras se rearma con los datos frescos */
@@ -5340,9 +5359,12 @@ async function loadDash() {
      toque que le hizo César se cuenta como de César. Si falla, el reporte
      cae a seg_historial, que atribuye por dueño (lo de antes). */
   try {
-    var tq = await sbClient.from('toques')
-      .select('ts,hecho_por,cotizacion_id')
-      .gte('ts', addDias(hoyISO(), -ACTIVIDAD_DIAS));
+    var tq = await sbTodas(function(){
+      return sbClient.from('toques')
+        .select('ts,hecho_por,cotizacion_id')
+        .gte('ts', addDias(hoyISO(), -ACTIVIDAD_DIAS))
+        .order('ts').order('id');
+    });
     TOQUES = (!tq.error && tq.data) ? tq.data : [];
   } catch(e) { TOQUES = []; }
   /* las eliminadas no se muestran en el panel normal (solo en la pestaña Eliminadas del admin) */
@@ -6684,7 +6706,7 @@ function renderActividad(){
     var code = vendedorQueToco(t.hecho_por) || dueñoDeCoti[String(t.cotizacion_id)];
     if (!code) return;
     if (soloCode && code !== soloCode) return;
-    var f = String(t.ts||'').slice(0,10);
+    var f = fechaBaseISO(t.ts);   /* día en Chile: cortar el texto da el día UTC, y un toque después de las 21:00 caía en mañana */
     if (!f || f > hoy || f < desde) return;
     celda(f, code).delDia++;
   });
@@ -6728,12 +6750,12 @@ function renderActividad(){
   }).join('');
   var thVend = muestraVend ? '<th>Vendedor</th>' : '';
   document.getElementById('dash-tbl').innerHTML = '<div class="tbl-scroll"><table class="ptable"><thead><tr>'+
-    '<th>Fecha</th>'+thVend+'<th>Tocaban</th><th>Hechos</th><th>Sin hacer</th><th>% cumplido</th>'+
-    '<th>Toques del día</th></tr></thead>'+
+    '<th>Fecha</th>'+thVend+'<th>Tocaban</th><th>Atendidos</th><th>Pendientes</th><th>% cumplido</th>'+
+    '<th>Toques hechos ese día</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>'+
     '<div class="ptier-note" style="border-radius:0 0 7px 7px">Últimos '+ACTIVIDAD_DIAS+' días · se cuenta por <strong>cliente</strong>, no por cotización. '+
-    '<strong>Tocaban / Hechos / % cumplido</strong>: de los seguimientos que vencían ese día (cadencia '+CADENCIA.join('-')+' desde la cotización), cuántos están hechos. '+
-    '<strong>Toques del día</strong>: cuántos se hicieron efectivamente ese día, hayan vencido cuando hayan vencido.</div>';
+    '<strong>Tocaban / Atendidos / % cumplido</strong>: de los clientes cuyo seguimiento vencía ese día (cadencia '+CADENCIA.join('-')+' desde la cotización), cuántos ya tienen ese toque marcado — aunque se haya hecho otro día. '+
+    '<strong>Toques hechos ese día</strong>: los que se marcaron efectivamente ese día. Es el trabajo real del día.</div>';
 }
 /* ── 📖 MANUAL DE VALORES (solo admin) ──
    El panel central de precios: muestra y edita los valores que usa el
