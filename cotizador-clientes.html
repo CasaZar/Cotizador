@@ -6402,6 +6402,7 @@ async function ventaGuardar(){
   var seller = code ? sellerByCode(code) : null;
   var data={ numero:panelNextNum(), cliente:cli, contacto:((document.getElementById('v-con')||{}).value||'').trim()||null,
     producto:(document.getElementById('v-prod')||{}).value, estado:'ganado', monto_cierre:monto,
+    fecha_concretada:new Date().toISOString(),
     total_alto:monto, user_email: seller ? seller.email : null };
   var res=await sbClient.from('cotizaciones').insert(data).select();
   if (res.error){ showToast('Error: '+res.error.message, false); return; }
@@ -6612,7 +6613,9 @@ async function updateEstado(id, estado) {
   if (estado === 'ganado') {
     var m = pedirMonto(x);
     if (m === undefined) { renderVistaActual(); return; }   /* canceló el monto: repinta donde está */
-    segSave(id, {estado:'ganado', monto_cierre:m}, '¡Venta ganada! 🎉');
+    /* la fecha del cierre es la única forma de saber después cuántos días
+       tarda una venta, y con eso hasta cuándo vale la pena insistir */
+    segSave(id, {estado:'ganado', monto_cierre:m, fecha_concretada:new Date().toISOString()}, '¡Venta ganada! 🎉');
     /* ── ¿Y LAS OTRAS COTIZACIONES ABIERTAS DEL CLIENTE? ──
        Marcar la venta cierra al cliente entero en el seguimiento, y a veces
        una de las otras es un proyecto APARTE que sigue vivo (Carolina Hito:
@@ -6649,7 +6652,8 @@ async function updateEstado(id, estado) {
     return;
   }
   if (estado === 'perdida') { renderVistaActual(); segPerderUI(id); return; }
-  segSave(id, {estado:estado, seg_proxima:null}, 'Estado actualizado');
+  /* volver a "enviada" deshace una venta: la fecha de cierre ya no corresponde */
+  segSave(id, {estado:estado, seg_proxima:null, fecha_concretada:null}, 'Estado actualizado');
 }
 async function deleteQuote(id, numero) {
   var motivo = prompt('¿Por qué eliminas la cotización ' + numero + '?\n(Queda registrada para el administrador)');
