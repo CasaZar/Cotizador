@@ -4730,6 +4730,31 @@ function ownerCode(x){
 }
 function isWeb(x){ return !x.user_email && ownerCode(x)===null; }
 
+/* ── Los <details> se acuerdan de si estaban abiertos ──
+   La cola se vuelve a dibujar entera cada vez que se marca un toque, y al
+   volver de WhatsApp el modal de confirmación la redibuja igual. Un <details>
+   recién creado nace cerrado, así que "Resto de la cola" había que abrirlo
+   de nuevo después de cada cliente. El estado se guarda por clave, con
+   respaldo en memoria por si localStorage no está disponible. */
+var DET_KEY = 'zaru_det_abiertos';
+var DET_MEM = null;
+function detLeer(){
+  if (DET_MEM) return DET_MEM;
+  try { var v = JSON.parse(localStorage.getItem(DET_KEY) || '{}'); DET_MEM = (v && typeof v === 'object') ? v : {}; }
+  catch(e){ DET_MEM = {}; }
+  return DET_MEM;
+}
+/* va pegado dentro del tag: '<details class="x"' + detAttrs('b3') + '><summary>' */
+function detAttrs(k){
+  return (detLeer()[k] ? ' open' : '') + ' ontoggle="detRecordar(\'' + k + '\', this)"';
+}
+function detRecordar(k, el){
+  var a = detLeer();
+  if (el.open) a[k] = 1; else delete a[k];
+  DET_MEM = a;
+  try { localStorage.setItem(DET_KEY, JSON.stringify(a)); } catch(e){}
+}
+
 function isoDate(dt){ return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'); }
 function hoyISO(){ return isoDate(new Date()); }
 function addDias(iso,n){ var p=iso.split('-'); var dt=new Date(+p[0],+p[1]-1,+p[2]); dt.setDate(dt.getDate()+n); return isoDate(dt); }
@@ -5033,7 +5058,7 @@ function renderBacklog(){
       frescas.map(function(g){ return segClientCard(g,'today'); }).join('');
   }
   if (viejas.length){
-    html += '<details class="seg-b3"><summary>⚪ Más antiguas · '+viejas.length+
+    html += '<details class="seg-b3"'+detAttrs('viejas')+'><summary>⚪ Más antiguas · '+viejas.length+
       ' <span class="seg-bloque-sub">más de 21 días — solo si sobra tiempo</span></summary>'+
       viejas.map(function(g){ return segClientCard(g,'late'); }).join('')+'</details>';
   }
@@ -5608,13 +5633,13 @@ function renderSeguimiento(){
     /* el monto va en el título: "59" se lee como relleno, "59 · $12M" no. Es
        la parte de la cola que se olvida, así que al menos se ve qué hay dentro */
     var b3Valor = b3.reduce(function(a,g){ return a + (g.valor||0); }, 0);
-    html += '<details class="seg-b3"><summary>'+
+    html += '<details class="seg-b3"'+detAttrs('b3')+'><summary>'+
       '<span class="seg-bloque-n">3</span> Resto de la cola · '+b3.length+' · '+fmtM(b3Valor)+
       ' <span class="seg-bloque-sub">solo si sobra tiempo — no cuentan para el Día Verde. Si alguno vale la pena, márcalo con la ★ y sube al bloque 2.</span></summary>'+
       b3.map(function(g){ return segRegistrar(g,'today'); }).join('')+'</details>';
   }
   if (futuro.length){
-    html += '<details class="seg-b3"><summary>⚪ Esta semana · '+futuro.length+
+    html += '<details class="seg-b3"'+detAttrs('semana')+'><summary>⚪ Esta semana · '+futuro.length+
       ' <span class="seg-bloque-sub">agendados para los próximos días</span></summary>'+
       futuro.map(function(g){ return segRegistrar(g,'future'); }).join('')+'</details>';
   }
@@ -6025,7 +6050,7 @@ function segClientCard(g, cls){
     return '<div class="seg-qrow">'+(q.numero||'—')+' · '+(PNAME[q.producto]||q.producto||'')+' · '+fmt(q.total_alto||0)+(f?' · '+f:'')+(est!=='enviada'?' · '+est:'')+link+'</div>';
   }).join('');
   var qbody = g.quotes.length>1
-    ? '<details class="seg-qdet"><summary>venta probable <strong>'+fmt(g.valor)+'</strong> · '+g.quotes.length+' cotizaciones</summary><div class="seg-qlist">'+qrows+'</div></details>'
+    ? '<details class="seg-qdet"'+detAttrs('q:'+x.id)+'><summary>venta probable <strong>'+fmt(g.valor)+'</strong> · '+g.quotes.length+' cotizaciones</summary><div class="seg-qlist">'+qrows+'</div></details>'
     : '<div class="seg-qlist">'+qrows+'</div>';
   /* Las tarjetas del bloque 1 van compactas: si nunca se contactó, las 6
      casillas de cadencia son ruido puro — lo único que hay que hacer es
