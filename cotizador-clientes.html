@@ -284,6 +284,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .coti-r { text-align: right; }
 .coti-title { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; color: var(--tx); }
 .coti-meta { font-size: 12px; color: var(--tm); margin-top: 1px; line-height: 1.45; }
+.coti-meta.vencida { color: #B45309; font-weight: 600; }
 .info-bar { background: var(--bg3); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--tm); margin-bottom: 9px; }
 .info-bar strong { color: var(--tx); }
 .ptable { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 14px; }
@@ -1866,6 +1867,19 @@ function mesaModelosVisibles(){
    Pisa los defaults con lo guardado en cotizador_valores. Si la tabla no
    existe o falla la red, no pasa nada: rigen los valores del código. */
 var VALORES_META = {};   /* clave → updated_at, para mostrar en el Manual */
+/* ── PRECIO Y FECHA CONGELADOS ──
+   Una cotización es una promesa con fecha. Antes, el link compartido volvía a
+   calcular todo al abrirlo: mostraba la fecha de HOY, renovaba solo los 10 días
+   de validez y, si entremedio subía la pulgada, el cliente veía otro número bajo
+   el mismo link. Ahora el link se lleva los valores tal como estaban ese día
+   (VALORES_CRUDOS) y la fecha en que se hizo, y al abrirlo mandan esos. */
+var VALORES_CRUDOS = {};         /* clave → valor, tal como vino de cotizador_valores */
+var VALORES_CONGELADOS = null;   /* al abrir un link: pisa lo que traiga la tabla */
+var fechaDoc = null;             /* fecha original de la cotización (ISO) */
+function aplicarCongelados(){
+  if (!VALORES_CONGELADOS) return;
+  Object.keys(VALORES_CONGELADOS).forEach(function(k){ aplicarValor(k, VALORES_CONGELADOS[k]); });
+}
 function aplicarValor(clave, v) {
   if (v == null) return;
   if (clave === 'pr')          { Object.keys(v).forEach(function(k){ if (PR[k]) Object.assign(PR[k], v[k]); }); }
@@ -1901,7 +1915,10 @@ async function cargarValores() {
     var res = await sbClient.from('cotizador_valores').select('clave,valor,updated_at');
     if (res.error) { valoresTablaOK = false; return; }
     valoresTablaOK = true;
-    (res.data || []).forEach(function(r){ aplicarValor(r.clave, r.valor); VALORES_META[r.clave] = r.updated_at; });
+    (res.data || []).forEach(function(r){ VALORES_CRUDOS[r.clave] = r.valor; aplicarValor(r.clave, r.valor); VALORES_META[r.clave] = r.updated_at; });
+    /* si esto llegó DESPUÉS de abrir un link compartido, los valores de hoy
+       acaban de pisar los del día en que se cotizó: hay que reponerlos. */
+    aplicarCongelados();
     calcLive();   /* si había medidas escritas, refresca el precio con los valores reales */
   } catch (e) { valoresTablaOK = false; }
 }
@@ -3445,6 +3462,14 @@ function hasValidDims() {
 }
 function generar() {
   fromHash = false;
+  /* si venía de abrir un link y cambió las medidas, esto es una cotización
+     NUEVA: fecha y precios de hoy, no los congelados del link anterior. Hay que
+     reponer los valores vigentes, porque los del link ya pisaron las tablas. */
+  fechaDoc = null;
+  if (VALORES_CONGELADOS) {
+    VALORES_CONGELADOS = null;
+    Object.keys(VALORES_CRUDOS).forEach(function(k){ aplicarValor(k, VALORES_CRUDOS[k]); });
+  }
   qnum = '';
   savedQnum = null;
   var cli   = document.getElementById('f-cli').value.trim();
@@ -3512,9 +3537,12 @@ async function confirmar() {
   if (btn) { btn.disabled = true; btn.dataset.txt = btn.textContent; btn.textContent = 'Generando…'; }
   try {
     var cli   = document.getElementById('f-cli').value.trim();
-    var fecha = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+    var fecha = fechaDocTexto();
     if (!qnum) qnum = await nextQ();
-    shareShortUrl = await buildShortUrl();
+    /* Abrir un link compartido NO crea otro link: se reusa el que el cliente ya
+       tiene. Antes cada apertura insertaba una fila nueva en quote_links con un
+       token distinto, y la cotización quedaba con dos direcciones distintas. */
+    shareShortUrl = fromHash ? location.href : await buildShortUrl();
     var html  = '';
     if (['cubierta','repisa','peldano'].includes(prod)) html = htmlCubierta(cli, fecha);
     else if (['granero','maciza','vidrios'].includes(prod)) html = htmlPuerta(cli, fecha);
@@ -3882,6 +3910,18 @@ function htmlRev(cli, fecha) {
   );
 }
 
+/* La fecha del documento es la del día en que se cotizó, no la de hoy: los
+   links nuevos la traen y los viejos la sacan de created_at (ver restoreFromData).
+   Antes una cotización de julio abierta en septiembre decía "septiembre" y
+   renovaba sola sus 10 días de validez, así que nunca vencía. */
+var VALIDEZ_DIAS = 10;
+function fechaDocDate(){ var d = fechaDoc ? new Date(fechaDoc) : null; return (d && !isNaN(d)) ? d : new Date(); }
+function fechaDocTexto(){ return fechaDocDate().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'}); }
+function validezHtml(){
+  var vence = new Date(fechaDocDate().getTime() + VALIDEZ_DIAS*86400000);
+  if (Date.now() <= vence.getTime()) return '<div class="coti-meta">Válida por '+VALIDEZ_DIAS+' días</div>';
+  return '<div class="coti-meta vencida">Venció el '+vence.toLocaleDateString('es-CL')+' — escríbenos y la actualizamos</div>';
+}
 function shell(nombre, cli, fecha, body) {
   return '<div class="coti-hdr">' +
     '<div>' +
@@ -3892,7 +3932,7 @@ function shell(nombre, cli, fecha, body) {
       '<div class="coti-title">Cotización '+nombre+'</div>' +
       '<div class="coti-meta">'+qnum+'</div>' +
       '<div class="coti-meta">'+fecha+'</div>' +
-      '<div class="coti-meta">Válida por 10 días</div>' +
+      validezHtml() +
     '</div>' +
   '</div>' +
   '<div class="info-bar">Para: <strong>'+cli+'</strong>' + (conStr ? '  ·  '+conStr : '') + '</div>' +
@@ -4212,6 +4252,9 @@ function warranty() {
 function getShareData() {
   var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
   var data = { p: prod, cli: cli, con: conStr, uso: uso, qnum: qnum };
+  /* la foto del día: fecha y precios vigentes al cotizar (ver VALORES_CRUDOS) */
+  data.f = fechaDoc || new Date().toISOString();
+  if (Object.keys(VALORES_CRUDOS).length) data.vals = VALORES_CRUDOS;
   if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   if (prod === 'cubierta' && getCubiertaEspesor() === '8') data.esp8 = 1;   /* espesor 8 cm macizo (mult. por tier) */
@@ -4296,6 +4339,10 @@ async function buildShortUrl() {
 function restoreFromData(d) {
   fromHash = true;
   restaurando = true;   /* tapa el formulario mientras se rellena */
+  /* fecha original: d.f la traen los links nuevos; d._f la pone get_quote_link
+     desde created_at, que es lo único que tienen los links viejos. */
+  fechaDoc = d.f || d._f || null;
+  if (d.vals) { VALORES_CONGELADOS = d.vals; aplicarCongelados(); }
   if (d.qnum) qnum = d.qnum;
   b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
   var espGuardado = d.esp || null;   /* espesor de peldaño del link compartido */
