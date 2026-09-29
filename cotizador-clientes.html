@@ -4249,12 +4249,26 @@ function warranty() {
 }
 
 /* ── SHARE LINK ── */
-function getShareData() {
+/* Qué se congela: solo lo que mueve el precio. Fuera quedan los protocolos de
+   taller y la configuración del seguimiento, que no cambian ni un peso y son
+   cosa interna — no tienen por qué viajar en el link del cliente. */
+var CLAVES_PRECIO = ['pr','esp8','reborde','generales','tierPulgada','basesFierro','mesaModelos'];
+function valoresParaCongelar(){
+  var out = {};
+  CLAVES_PRECIO.forEach(function(k){ if (VALORES_CRUDOS[k] != null) out[k] = VALORES_CRUDOS[k]; });
+  return out;
+}
+function getShareData(conValores) {
   var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
   var data = { p: prod, cli: cli, con: conStr, uso: uso, qnum: qnum };
-  /* la foto del día: fecha y precios vigentes al cotizar (ver VALORES_CRUDOS) */
+  /* la foto del día: la fecha va siempre (son 30 caracteres); los precios van
+     SOLO en la fila de quote_links, que es jsonb y no tiene límite de largo.
+     En el link largo #q= inflaban la URL de 370 a 3.932 caracteres. */
   data.f = fechaDoc || new Date().toISOString();
-  if (Object.keys(VALORES_CRUDOS).length) data.vals = VALORES_CRUDOS;
+  if (conValores) {
+    var vals = valoresParaCongelar();
+    if (Object.keys(vals).length) data.vals = vals;
+  }
   if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   if (prod === 'cubierta' && getCubiertaEspesor() === '8') data.esp8 = 1;   /* espesor 8 cm macizo (mult. por tier) */
@@ -4319,7 +4333,7 @@ function randToken() {
 }
 
 async function buildShortUrl() {
-  var data = getShareData();
+  var data = getShareData(true);   /* la fila guardada sí se lleva los precios del día */
   /* 3 intentos con token nuevo: cubre hipos de red y el caso raro de token repetido.
      Antes bastaba un fallo para caer al link largo. */
   for (var i = 0; i < 3; i++) {
