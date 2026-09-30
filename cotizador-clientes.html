@@ -1869,16 +1869,41 @@ function mesaModelosVisibles(){
 var VALORES_META = {};   /* clave → updated_at, para mostrar en el Manual */
 /* ── PRECIO Y FECHA CONGELADOS ──
    Una cotización es una promesa con fecha. Antes, el link compartido volvía a
-   calcular todo al abrirlo: mostraba la fecha de HOY, renovaba solo los 10 días
-   de validez y, si entremedio subía la pulgada, el cliente veía otro número bajo
-   el mismo link. Ahora el link se lleva los valores tal como estaban ese día
-   (VALORES_CRUDOS) y la fecha en que se hizo, y al abrirlo mandan esos. */
+   calcular todo al abrirlo: mostraba la fecha de HOY, renovaba solo sus 10 días
+   de validez (o sea, nunca vencía) y, si entremedio subía la pulgada, el cliente
+   veía otro número bajo el mismo link. Ahora la fila de quote_links se lleva la
+   fecha y los valores tal como estaban ese día, y al abrir el link mandan esos.
+
+   El estado vive acá y solo lo tocan estas tres funciones:
+     congelarDesde(d)     al abrir un link compartido
+     reponerCongelados()  si cotizador_valores llega después y los pisó
+     descongelar()        al cotizar de nuevo: fecha y precios de hoy */
 var VALORES_CRUDOS = {};         /* clave → valor, tal como vino de cotizador_valores */
-var VALORES_CONGELADOS = null;   /* al abrir un link: pisa lo que traiga la tabla */
+var VALORES_CONGELADOS = null;   /* los del link abierto; mandan sobre los de hoy */
 var fechaDoc = null;             /* fecha original de la cotización (ISO) */
-function aplicarCongelados(){
+/* Se congela solo lo que mueve el precio. Los protocolos de taller y la config
+   del seguimiento no cambian ni un peso y son internos: no viajan al cliente. */
+var CLAVES_PRECIO = ['pr','esp8','reborde','generales','tierPulgada','basesFierro','mesaModelos'];
+function valoresParaCongelar(){
+  var out = {};
+  CLAVES_PRECIO.forEach(function(k){ if (VALORES_CRUDOS[k] != null) out[k] = VALORES_CRUDOS[k]; });
+  return out;
+}
+function aplicarValores(vals){ Object.keys(vals || {}).forEach(function(k){ aplicarValor(k, vals[k]); }); }
+/* d.f lo traen los links nuevos; d._f lo agrega get_quote_link desde
+   created_at, que es lo único que tienen los links anteriores al 29-09-2026 */
+function congelarDesde(d){
+  fechaDoc = d.f || d._f || null;
+  if (d.vals) { VALORES_CONGELADOS = d.vals; aplicarValores(d.vals); }
+}
+function reponerCongelados(){ if (VALORES_CONGELADOS) aplicarValores(VALORES_CONGELADOS); }
+/* Soltar la referencia no basta: los valores del link ya pisaron las tablas
+   en memoria, así que hay que volver a aplicar los vigentes. */
+function descongelar(){
+  fechaDoc = null;
   if (!VALORES_CONGELADOS) return;
-  Object.keys(VALORES_CONGELADOS).forEach(function(k){ aplicarValor(k, VALORES_CONGELADOS[k]); });
+  VALORES_CONGELADOS = null;
+  aplicarValores(VALORES_CRUDOS);
 }
 function aplicarValor(clave, v) {
   if (v == null) return;
@@ -1916,9 +1941,7 @@ async function cargarValores() {
     if (res.error) { valoresTablaOK = false; return; }
     valoresTablaOK = true;
     (res.data || []).forEach(function(r){ VALORES_CRUDOS[r.clave] = r.valor; aplicarValor(r.clave, r.valor); VALORES_META[r.clave] = r.updated_at; });
-    /* si esto llegó DESPUÉS de abrir un link compartido, los valores de hoy
-       acaban de pisar los del día en que se cotizó: hay que reponerlos. */
-    aplicarCongelados();
+    reponerCongelados();   /* si ya se abrió un link, los de hoy acaban de pisar los suyos */
     calcLive();   /* si había medidas escritas, refresca el precio con los valores reales */
   } catch (e) { valoresTablaOK = false; }
 }
@@ -3462,14 +3485,7 @@ function hasValidDims() {
 }
 function generar() {
   fromHash = false;
-  /* si venía de abrir un link y cambió las medidas, esto es una cotización
-     NUEVA: fecha y precios de hoy, no los congelados del link anterior. Hay que
-     reponer los valores vigentes, porque los del link ya pisaron las tablas. */
-  fechaDoc = null;
-  if (VALORES_CONGELADOS) {
-    VALORES_CONGELADOS = null;
-    Object.keys(VALORES_CRUDOS).forEach(function(k){ aplicarValor(k, VALORES_CRUDOS[k]); });
-  }
+  descongelar();   /* si venía de un link y cambió algo, esta es una cotización nueva */
   qnum = '';
   savedQnum = null;
   var cli   = document.getElementById('f-cli').value.trim();
@@ -3910,10 +3926,8 @@ function htmlRev(cli, fecha) {
   );
 }
 
-/* La fecha del documento es la del día en que se cotizó, no la de hoy: los
-   links nuevos la traen y los viejos la sacan de created_at (ver restoreFromData).
-   Antes una cotización de julio abierta en septiembre decía "septiembre" y
-   renovaba sola sus 10 días de validez, así que nunca vencía. */
+/* Fecha del documento: la del día en que se cotizó, no la de hoy
+   (ver PRECIO Y FECHA CONGELADOS). */
 var VALIDEZ_DIAS = 10;
 function fechaDocDate(){ var d = fechaDoc ? new Date(fechaDoc) : null; return (d && !isNaN(d)) ? d : new Date(); }
 function fechaDocTexto(){ return fechaDocDate().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'}); }
@@ -4249,21 +4263,13 @@ function warranty() {
 }
 
 /* ── SHARE LINK ── */
-/* Qué se congela: solo lo que mueve el precio. Fuera quedan los protocolos de
-   taller y la configuración del seguimiento, que no cambian ni un peso y son
-   cosa interna — no tienen por qué viajar en el link del cliente. */
-var CLAVES_PRECIO = ['pr','esp8','reborde','generales','tierPulgada','basesFierro','mesaModelos'];
-function valoresParaCongelar(){
-  var out = {};
-  CLAVES_PRECIO.forEach(function(k){ if (VALORES_CRUDOS[k] != null) out[k] = VALORES_CRUDOS[k]; });
-  return out;
-}
+/* conValores: la fila de quote_links se lleva los precios del día (ver
+   PRECIO Y FECHA CONGELADOS); el link largo #q= no, porque inflaban la URL. */
 function getShareData(conValores) {
   var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
   var data = { p: prod, cli: cli, con: conStr, uso: uso, qnum: qnum };
-  /* la foto del día: la fecha va siempre (son 30 caracteres); los precios van
-     SOLO en la fila de quote_links, que es jsonb y no tiene límite de largo.
-     En el link largo #q= inflaban la URL de 370 a 3.932 caracteres. */
+  /* la fecha va siempre (son 30 caracteres); los precios solo en la fila
+     guardada, que es jsonb: en el #q= llevaban la URL de 370 a 3.932 caracteres */
   data.f = fechaDoc || new Date().toISOString();
   if (conValores) {
     var vals = valoresParaCongelar();
@@ -4353,10 +4359,7 @@ async function buildShortUrl() {
 function restoreFromData(d) {
   fromHash = true;
   restaurando = true;   /* tapa el formulario mientras se rellena */
-  /* fecha original: d.f la traen los links nuevos; d._f la pone get_quote_link
-     desde created_at, que es lo único que tienen los links viejos. */
-  fechaDoc = d.f || d._f || null;
-  if (d.vals) { VALORES_CONGELADOS = d.vals; aplicarCongelados(); }
+  congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
   b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
   var espGuardado = d.esp || null;   /* espesor de peldaño del link compartido */
@@ -4805,11 +4808,15 @@ function detLeer(){
   catch(e){ DET_MEM = {}; }
   return DET_MEM;
 }
-/* va pegado dentro del tag: '<details class="x"' + detAttrs('b3') + '><summary>' */
+/* va pegado dentro del tag: '<details class="x"' + detAttrs('b3') + '><summary>'.
+   La clave viaja en data-det y no dentro del ontoggle: así una clave con
+   comillas no puede romper el handler. */
 function detAttrs(k){
-  return (detLeer()[k] ? ' open' : '') + ' ontoggle="detRecordar(\'' + k + '\', this)"';
+  return ' data-det="' + escA(k) + '"' + (detLeer()[k] ? ' open' : '') + ' ontoggle="detRecordar(this)"';
 }
-function detRecordar(k, el){
+function detRecordar(el){
+  var k = el.dataset.det;
+  if (!k) return;
   var a = detLeer();
   if (el.open) a[k] = 1; else delete a[k];
   DET_MEM = a;
