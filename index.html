@@ -5023,7 +5023,13 @@ function waMsg(x){
        sí o no, que es justo el dato que falta para marcar ganado o perdido. */
     6: 'Hola '+nom+', te escribo por última vez por '+P.suyo+' ('+num+'). ¿Lo dejamos para más adelante o prefieres que lo retomemos ahora? Con un sí o un no me basta, así no te sigo escribiendo.'
   };
-  var m = msgs[toque] || msgs[1];
+  /* Cadencia agotada (6/6): se le escribe desde Dormidos, a veces semanas
+     después. Antes salía de nuevo la plantilla 6 —"te escribo por última vez,
+     así no te sigo escribiendo"—, que repetida queda mal. Esta reabre la
+     conversación sin presionar, y calza con el link, que a esas alturas ya
+     dice "venció, escríbenos y la actualizamos". */
+  var pR = 'Hola '+nom+', ¿cómo estás? Soy César, de Casa Zaru. Hace un tiempo cotizaste '+P.suyo.replace('tu ','')+' con nosotros ('+num+') y quería saber cómo va ese proyecto.\n\nSi lo retomas, te actualizo la cotización al tiro, sin compromiso.';
+  var m = cadenciaAgotada(x) ? pR : (msgs[toque] || msgs[1]);
   if (link) {
     /* con el link adjunto, ofrecer reenviar la cotización sobra */
     m = m.replace(/\s*¿Te la reenvío\?/g, '');
@@ -5137,21 +5143,38 @@ function renderBacklog(){
   }
   document.getElementById('dash-tbl').innerHTML = html;
 }
-/* Dormidos: enviadas que se cayeron de la cola (cadencia agotada o +30 días sin gestión) */
+/* Dormidos: enviadas que se cayeron de la cola (cadencia agotada o +30 días
+   sin gestión). No son tarea del día: se trabajan cuando sobra tiempo. Los
+   que ya recibieron un mensaje de reactivación bajan a su propia sección
+   durante REACTIVACION_DIAS, para no escribirle dos veces al mismo. */
+function reactivadoEl(g){
+  return g.quotes.reduce(function(f, q){ var r = fechaReactivacion(q); return (r && (!f || r > f)) ? r : f; }, null);
+}
 function renderDormidos(){
   subFiltros('');
   var dorm = buildSegGroups().filter(grupoPasaOmni).filter(function(g){ return dueDate(g.lead)===null; });
   dorm.sort(function(a,b){ return b.valor-a.valor; });
+  var corte = addDias(hoyISO(), -REACTIVACION_DIAS);
+  var porEscribir = [], escritos = [];
+  dorm.forEach(function(g){ var f = reactivadoEl(g); (f && f >= corte ? escritos : porEscribir).push(g); });
   var enJuego = dorm.reduce(function(a,g){ return a+(g.valor||0); }, 0);
   var st=document.getElementById('dash-stats'); st.style.display='grid';
   st.innerHTML =
-    '<div class="stat-card"><div class="stat-v">'+dorm.length+'</div><div class="stat-l">Dormidos</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+porEscribir.length+'</div><div class="stat-l">Por reactivar</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+escritos.length+'</div><div class="stat-l">Ya les escribiste</div></div>'+
     '<div class="stat-card"><div class="stat-v money">'+fmt(enJuego)+'</div><div class="stat-l">Valor dormido</div></div>';
   if (!dorm.length){ document.getElementById('dash-tbl').innerHTML='<div class="seg-empty" style="padding:24px;text-align:center">No hay leads dormidos 🎉</div>'; return; }
-  document.getElementById('dash-tbl').innerHTML =
-    '<div class="seg-sec dorm">😴 Para reactivar<span class="seg-cnt">'+dorm.length+'</span></div>'+
-    '<div class="seg-empty" style="margin:-4px 0 10px">Clientes que se enfriaron. Un mensaje puede revivir la venta.</div>'+
-    dorm.map(function(g){ return segClientCard(g,'dorm'); }).join('');
+  var html =
+    '<div class="seg-sec dorm">😴 Para reactivar<span class="seg-cnt">'+porEscribir.length+'</span></div>'+
+    '<div class="seg-empty" style="margin:-4px 0 10px">Ya se les hizo todo el seguimiento y no son tarea del día. Cuando tengas tiempo, un mensaje puede revivir la venta. Si contesta, pausa o pospón con fecha y vuelve a la cola.</div>'+
+    (porEscribir.length ? porEscribir.map(function(g){ return segClientCard(g,'dorm'); }).join('')
+                        : '<div class="seg-empty">A todos les escribiste en los últimos '+REACTIVACION_DIAS+' días. 🎉</div>');
+  if (escritos.length){
+    html += '<details class="seg-b3"'+detAttrs('dorm-escritos')+'><summary>✉️ Ya les escribiste · '+escritos.length+
+      ' <span class="seg-bloque-sub">en los últimos '+REACTIVACION_DIAS+' días — esperando respuesta</span></summary>'+
+      escritos.map(function(g){ return segClientCard(g,'dorm'); }).join('')+'</details>';
+  }
+  document.getElementById('dash-tbl').innerHTML = html;
 }
 function segBloquesDef(){
   var b=[];
@@ -5600,7 +5623,7 @@ function renderSeguimiento(){
          hablado" era mentira y hacía imposible sacarlo de ahí marcando
          Respondió (07-09-2026, caso leonardo). Va a Conversaciones, donde
          además tiene las casillas para registrar el toque a mano. */
-      if (enConversacion(g)){ conv.push(g); return; }
+      if (enConversacion(g)){ if (!dormido(g)) conv.push(g); return; }
       /* ── EL MISMO DÍA NO SE PERSIGUE (26-08-2026) ──
          Escribirle a alguien que cotizó hace diez minutos se lee como acoso:
          el cliente acaba de ver su cotización en pantalla y ya tiene el link.
@@ -5611,15 +5634,20 @@ function renderSeguimiento(){
       if (fechaBaseISO(g.lead.fecha_creacion) === hoy){ b1Hoy.push(g); return; }
       (diasDe(g) > 7 ? b1Viejos : b1).push(g); return;
     }
+    /* La cadencia agotada manda sobre TODO: si ya se hicieron los 6 toques
+       (o pasó más de un mes sin gestión), el cliente se va a Dormidos y sale
+       de la cola diaria, aunque esté marcado con ★ o haya respondido alguna
+       vez. Por eso este chequeo va ANTES de las conversaciones y de los
+       interesados: antes iba después de las conversaciones, y un cliente que
+       contestó una vez seguía en "Conversaciones activas" para siempre, con
+       sus 6 toques hechos — y además salía duplicado en Dormidos.
+       Para volver a trabajarlo: desde Dormidos, posponer o pausar con fecha. */
+    var d=dueDate(g.lead); if(!d) return;
     if (enConversacion(g)){ conv.push(g); return; }
     /* Marcado con ★: sale TODOS los días, sin esperar la fecha de la
        cadencia. Antes, si su próximo toque caía en 3 días, se iba a la
        sección "Esta semana" (colapsada) y no se veía — o sea, marcarlo no
        garantizaba nada. Ahora la marca a mano manda sobre el calendario. */
-    /* La cadencia agotada manda sobre TODO: si ya se hicieron los 6 toques,
-       el cliente se va a Dormidos aunque esté marcado con ★. Por eso este
-       chequeo va ANTES del atajo de los interesados. */
-    var d=dueDate(g.lead); if(!d) return;
     if (esInteresado(g) && !pospuestoAMano(g)){ b2.push(g); return; }
     if (d > hoy){ if (d<=lim) futuro.push(g); return; }
     if (esPrioritario(g)) b2.push(g); else b3.push(g);
@@ -5951,8 +5979,9 @@ function pendPreguntar(){
   var quien = escA(p.nombre || (x && x.cliente) || 'este cliente');
   var canal = p.canal === 'mail' ? 'el correo' : 'WhatsApp';
   /* desde el segundo toque: lo que se ve en el chat al volver es justo lo que
-     contestó (o no) al anterior, así que la misma respuesta confirma el envío */
-  if (x && (x.seg_etapa||0) >= 1) {
+     contestó (o no) al anterior, así que la misma respuesta confirma el envío.
+     Con la cadencia agotada no: es una reactivación y basta con el sí o no. */
+  if (x && (x.seg_etapa||0) >= 1 && !cadenciaAgotada(x)) {
     pModal('<h3>¿Qué había respondido '+quien+' a tu mensaje anterior?</h3>'+
       '<div class="seg-empty" style="text-align:center;padding:0 4px 12px">Se abrió '+canal+
       '. Toca lo que viste en el chat y queda registrado el seguimiento de hoy.</div>'+
@@ -5993,8 +6022,9 @@ function segBotonContacto(g, x, clase){
   var nom = String(x.cliente||'').replace(/'/g,'');
   /* si ya está en espera, el botón se ve apretado y lo dice */
   var esperando = pendTiene(x.id);
+  /* también con la cadencia agotada: escribirle a un dormido queda anotado
+     como reactivación (ver segReactivar), no se pierde */
   function accion(canal){
-    if (etapa >= CADENCIA.length) return '';
     return 'pendAgregar(\''+x.id+'\',\''+escA(nom)+'\',\''+canal+'\');renderVistaActual();';
   }
   var phone = waPhone(x.contacto);
@@ -6276,8 +6306,8 @@ async function bitacFlush(){
   bitacGuardar(quedan);
   if (quedan.length < a.length) showToast('Bitácora: '+(a.length-quedan.length)+' toque(s) pendientes registrados', true);
 }
-async function registrarToque(x, n){
-  var tipo = toqueTipo(x, n), ts = new Date().toISOString();
+async function registrarToque(x, n, tipoFijo){
+  var tipo = tipoFijo || toqueTipo(x, n), ts = new Date().toISOString();
   try {
     var sess = await sbClient.auth.getSession();
     var quien = (sess.data && sess.data.session && sess.data.session.user.email) || null;
@@ -6315,9 +6345,33 @@ async function borrarUltimoToque(x){
    cumplimiento registrado viene de ahí. */
 async function segHecho(id){
   var x=COTIS[id]; if(!x) return;
-  var n=(x.seg_etapa||0)+1;
-  if (n > CADENCIA.length) return;
-  segMarcar(id, n, true);
+  if (cadenciaAgotada(x)) { segReactivar(id); return; }   /* no hay toque 7 */
+  segMarcar(id, (x.seg_etapa||0)+1, true);
+}
+/* ── REACTIVAR UN DORMIDO ──
+   Con los 6 toques hechos, el cliente vive en Dormidos y no vuelve solo a la
+   cola diaria. Antes, escribirle desde ahí no dejaba rastro (segHecho no
+   tenía toque 7 que marcar): ni historial ni bitácora, y nadie sabía si ya
+   se le había escrito. Ahora queda anotado y el cliente SIGUE en Dormidos,
+   bajo "Ya les escribiste". Si contesta, se pausa o pospone con fecha y ahí
+   sí vuelve a la cola. */
+var NOTA_REACTIVACION = 'Reactivación desde Dormidos';
+var REACTIVACION_DIAS = 30;   /* cuánto tiempo queda en "Ya les escribiste" */
+function cadenciaAgotada(x){ return (x.seg_etapa||0) >= CADENCIA.length; }
+function fechaReactivacion(x){
+  var h = Array.isArray(x.seg_historial) ? x.seg_historial : [];
+  var f = null;
+  h.forEach(function(e){ if (e && e.nota === NOTA_REACTIVACION && (!f || e.fecha > f)) f = e.fecha; });
+  return f;
+}
+async function segReactivar(id){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:NOTA_REACTIVACION });
+  var ok = await segSave(id, { seg_historial:hist }, 'Anotado — queda en Dormidos hasta que conteste');
+  /* en la bitácora va como 'cadencia': el check de la tabla `toques` no
+     conoce otro tipo. Lo que la distingue es la nota del historial. */
+  if (ok) registrarToque(x, 0, 'cadencia');
 }
 /* marcar/desmarcar una de las casillas de toque */
 async function segMarcar(id, n, checked, resp){
