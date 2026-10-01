@@ -4652,11 +4652,11 @@ var PEZ_GORDO = 2000000;
    entró por el formulario. Si contaran como perdidas, cada prueba bajaría la
    conversión real — por eso se excluyen de todas las métricas (esPrueba). */
 var MOTIVO_PRUEBA = 'Prueba — no es un cliente real';
-var MOTIVOS  = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Sin respuesta', 'Número no funciona / sin WhatsApp', MOTIVO_PRUEBA];
+var MOTIVOS  = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto', 'Sin respuesta', 'Número no funciona / sin WhatsApp', MOTIVO_PRUEBA];
 function esPrueba(x){ return !!(x && x.motivo_perdida === MOTIVO_PRUEBA); }
 /* motivos que implican que el cliente CONVERSÓ: al marcarlos se aprende
    respondio=true solo (validación del spec sin ponerle un error a César) */
-var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado'];
+var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto'];
 /* Lo que el cliente había contestado al seguimiento anterior. Se pregunta al
    registrar el siguiente, que es cuando el vendedor tiene el chat abierto:
    anotar "no respondió" como un paso aparte era algo que nadie hacía. */
@@ -4705,7 +4705,12 @@ var PAUSAS = [
   { id:'presupuesto', t:'💰 Tema presupuesto', dias:21,
     tip:'Ofrece camino, no rebaja: Pino Oregón, 4 cm de espesor o ajustar medidas.' },
   { id:'esperando_obra', t:'🏗️ Esperando obra / casa', dias:0,
-    tip:'Pregunta el mes de la obra: el toque se agenda solo 30 días antes.' }
+    tip:'Pregunta el mes de la obra: el toque se agenda solo 30 días antes.' },
+  /* El cliente frenó el proyecto y no sabe hasta cuándo. No es una pérdida
+     (puede volver) ni tiene fecha (por eso no es "esperando obra"): se le
+     escribe poco y espaciado, para seguir presente sin presionar. */
+  { id:'proyecto_pausado', t:'🧊 Proyecto en pausa, sin fecha', dias:60,
+    tip:'No insistas: un mensaje corto cada dos meses ("¿cómo va el proyecto?") para que cuando lo retome te escriba a ti.' }
 ];
 function pausaLabel(id){ var p=PAUSAS.find(function(q){return q.id===id;}); return p ? p.t.replace(/^\S+ /,'') : id; }
 var panelSeller = null;   /* null = admin (ve todo) */
@@ -6450,9 +6455,19 @@ function pedirMonto(x){
   var n=parseInt(String(v).replace(/\D/g,''),10);
   return isNaN(n)?undefined:n;
 }
+/* Antes de cerrar, la salida para lo que NO es una pérdida: un proyecto en
+   pausa indefinida puede volver. Marcarlo perdido lo saca del seguimiento y
+   ensucia los motivos reales — no fue precio ni otro proveedor. Pasó el
+   01-10-2026: el vendedor no encontraba qué elegir y terminó en este menú. */
 function segPerderUI(id){
   var x=COTIS[id]; if(!x) return;
+  var pausa = PAUSAS.find(function(p){ return p.id === 'proyecto_pausado'; });
   pModal('<h3>¿Por qué se perdió — '+escA(x.cliente||'')+'?</h3>'+
+    '<div class="pausa-sec">¿Puede volver? <span class="pausa-sec-sub">entonces no lo cierres</span></div>'+
+    '<button class="mbtn" onclick="segPausar(\''+id+'\',\''+pausa.id+'\')">'+pausa.t+
+      ' <span class="mbtn-sub">le escribes en '+pausa.dias+' días</span></button>'+
+    '<div class="pausa-tip">'+pausa.tip+'</div>'+
+    '<div class="pausa-sec" style="margin-top:10px">Se perdió</div>'+
     MOTIVOS.map(function(m){ return '<button class="mbtn" onclick="segPerder(\''+id+'\',\''+m+'\')">'+m+'</button>'; }).join('')+
     '<button class="mbtn cancel" onclick="pClose()">Cancelar</button>');
 }
