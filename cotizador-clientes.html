@@ -1971,6 +1971,39 @@ var savedQnum = null;     /* número de cotización ya guardado en esta sesión 
 var vendorMode = false;   /* true con el link privado de vendedor (?pro=zr): habilita productos de uso interno */
 var b2bMode = false;      /* true solo en el link privado de Jepe (?src=jepe&pro=zr): muestra el selector de descuento */
 
+/* ── ORIGEN DE LA VISITA ──
+   De qué anuncio o sitio llegó el cliente, guardado en la propia cotización
+   (columna jsonb "origen") para cruzar gasto en Google/Meta con ventas reales.
+   Solo en la entrada pública: vendedores, panel y links compartidos quedan en null.
+   El último origen CON anuncio se recuerda 90 días en localStorage: el que hizo
+   clic el lunes y vuelve a cotizar directo el jueves igual cuenta para ese anuncio
+   (va en "anterior", sin pisar lo que trae la visita de hoy). */
+var origenVisita = null;
+var ORIGEN_KEY = 'zaru_origen';
+var ORIGEN_ANUNCIO = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','gbraid','wbraid','fbclid'];
+function origenCapturar(params) {
+  try {
+    var o = { fecha: new Date().toISOString() }, conAnuncio = false;
+    ORIGEN_ANUNCIO.forEach(function(k){
+      var v = params.get(k);
+      if (v) { o[k] = String(v).slice(0, 300); conAnuncio = true; }
+    });
+    if (params.get('src')) o.src = String(params.get('src')).slice(0, 40);
+    if (params.get('prod')) o.prod = String(params.get('prod')).slice(0, 40);
+    var ref = '';
+    try { ref = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) {}
+    if (ref && ref !== location.hostname) o.ref = ref.slice(0, 120);
+    var previo = null;
+    try { previo = JSON.parse(localStorage.getItem(ORIGEN_KEY) || 'null'); } catch (e) {}
+    if (conAnuncio) {
+      try { localStorage.setItem(ORIGEN_KEY, JSON.stringify(o)); } catch (e) {}
+    } else if (previo && previo.fecha && (Date.now() - new Date(previo.fecha).getTime()) < 90 * 864e5) {
+      o.anterior = previo;
+    }
+    origenVisita = o;
+  } catch (e) { origenVisita = null; }
+}
+
 /* ── EMBUDO PÚBLICO ──
    Cuenta cuánta gente entra y cuánta llega a ver su cotización, en 5 pasos:
    visita → producto → medidas → datos → cotizacion. Solo mide CLIENTES: el embudo se
@@ -4577,8 +4610,16 @@ async function saveQuote(data, lineas) {
        para no necesitar permiso público de "update" en la tabla. */
     var payload = Object.assign({}, data, { user_email: srcEmail, link: shareShortUrl || null });
     if (b2bDcto > 0) payload.b2b_dcto = b2bDcto;   /* solo cotizaciones B2B con descuento (requiere columna) */
+    if (origenVisita && !vendorMode) payload.origen = origenVisita;
     /* sin .select(): con RLS el público solo puede insertar, no leer de vuelta la fila */
     var res = await sbClient.from('cotizaciones').insert(payload);
+    /* si la columna "origen" no existiera (SQL sin aplicar), la cotización se
+       guarda igual sin ella: perder el origen es aceptable, perder al cliente no */
+    if (res.error && payload.origen && /origen/.test(res.error.message || '')) {
+      console.warn('saveQuote: sin columna origen, se guarda sin ella');
+      delete payload.origen;
+      res = await sbClient.from('cotizaciones').insert(payload);
+    }
     if (res.error) { savedQnum = null; toastInterno('No se pudo registrar la cotización', false); console.error('saveQuote:', res.error); return; }
     saveQuoteLineas(data.numero, lineas);   /* el detalle de piezas, aparte y sin bloquear */
     toastInterno('Cotización guardada', true);
@@ -7676,6 +7717,7 @@ document.addEventListener('DOMContentLoaded', function() {
        'producto' de initProd queda en cola y sale cuando el chequeo de
        sesión confirma que no es alguien del equipo. */
     embudoCanal = String(params.get('src') || params.get('utm_source') || 'web').slice(0, 40);
+    origenCapturar(params);
     embudoArrancar();
     if (prodDirecto) initProd(prodDirecto); else show('s1');
   }
