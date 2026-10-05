@@ -344,6 +344,24 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 /* bloque de la base de fierro (uso interno) */
 .mesa-box { background:var(--bg2,#FBF7F0);border:1px solid var(--bd);border-radius:11px;padding:13px;margin-bottom:14px; }
 .mesa-h { font-family:'Cormorant Garamond',serif;font-size:17.5px;font-weight:600;color:var(--acd);margin-bottom:11px; }
+/* varios productos en una cotización (solo vendedores): la lista de lo que ya
+   se agregó, visible en el selector y en el formulario, y los encabezados de
+   cada producto dentro del documento */
+.combo-bar { background:#FFF8EC;border:1.5px solid var(--ac);border-radius:11px;padding:11px 13px;margin-bottom:14px; }
+.combo-h { font-size:13px;font-weight:600;color:var(--acd);letter-spacing:.4px;margin-bottom:6px; }
+.combo-li { display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--tx);padding:5px 0;border-top:1px solid #F0E3CC; }
+.combo-li:first-of-type { border-top:none; }
+.combo-li .cl-n { flex:1;min-width:0; }
+.combo-li .cl-p { color:var(--tm);font-size:12.5px;white-space:nowrap; }
+.combo-li button { background:none;border:none;color:var(--tm);cursor:pointer;font-size:15px;padding:0 4px; }
+.combo-hint { font-size:12.5px;color:var(--tm);margin-top:6px; }
+.combo-vaciar { background:none;border:none;color:var(--tm);text-decoration:underline;cursor:pointer;font-size:12px;padding:0;margin-top:4px;font-family:'Jost',sans-serif; }
+.btn-combo { width:100%;margin-top:10px;padding:12px;border:1.5px dashed var(--ac);border-radius:10px;background:#FFF8EC;color:var(--acd);font-size:14.5px;cursor:pointer;font-family:'Jost',sans-serif;letter-spacing:.4px; }
+.btn-combo:hover { background:#FCEFD8; }
+.combo-item { margin-bottom:22px; }
+.combo-item-h { display:flex;align-items:center;gap:9px;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--acd);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:12px; }
+.combo-item-h .ci-n { display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:white;font-family:'Jost',sans-serif;font-size:13.5px;flex-shrink:0; }
+.combo-total-h { font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;color:var(--tx);margin:6px 0 9px; }
 /* sub-bloques del panel de extras (reborde / teñido / perforación) */
 .vx-sub { border:1px solid var(--bd);border-radius:9px;padding:10px 11px;margin-bottom:10px;background:white; }
 .vx-sub-h { font-size:13px;font-weight:600;color:var(--acd);margin-bottom:8px;letter-spacing:.3px; }
@@ -1096,6 +1114,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
       <div class="dash-divider"></div>
       <p class="dash-intro">Selecciona el producto, ingresa tus medidas<br>y recibe tu cotización al instante.</p>
     </div>
+    <div id="combo-bar-s1"></div>
     <div class="pgrid">
 
       <div class="pcard" data-prod="cubierta"><span class="ptag">Lo más pedido</span>
@@ -1135,6 +1154,17 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
         <div class="pcard-body"><div class="pinfo"><div class="pname">Revestimiento a medida</div><div class="psub">Uso interno · madera libre, precio por tabla</div></div><span class="parrow">→</span></div>
       </div>
 
+      <!-- Solo vendedores (oct 2026): se destapan en habilitarInternos() -->
+      <div class="pcard hidden" id="pcard-banca" data-prod="banca">
+        <div class="pcard-img"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="9" width="18" height="3" rx=".8"/><path d="M6 12v7M18 12v7"/></svg></div></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Bancas</div><div class="psub">Uso interno · asiento 4 cm + patas y armado</div></div><span class="parrow">→</span></div>
+      </div>
+
+      <div class="pcard hidden" id="pcard-pcocina" data-prod="pcocina">
+        <div class="pcard-img"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="5" width="8.5" height="14" rx=".6"/><rect x="12.5" y="5" width="8.5" height="14" rx=".6"/><path d="M9.5 11v2M14.5 11v2" stroke-linecap="round"/></svg></div></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas de mueble de cocina</div><div class="psub">Uso interno · 2 cm, valor repisa + fijo por puerta</div></div><span class="parrow">→</span></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1156,6 +1186,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
          cliente NO existe: .form-side va con display:contents, así que sus
          hijos fluyen exactamente igual que antes, en el mismo orden. -->
     <aside class="form-side">
+    <div id="combo-bar-s2"></div>
     <div id="b2b-wrap" class="hidden"></div>
     <!-- precio estimado en vivo: el cliente ve un numero ANTES de dar sus datos.
          calcLive() ya calculaba el rango, pero este bloque no existia en el DOM. -->
@@ -1179,6 +1210,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
     </div>
     <div class="msg-err hidden" id="f-err">Por favor completa tus datos para continuar.</div>
     <button class="btn-primary" id="btn-calc">Ver mi cotización →</button>
+    <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
+    <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar y cotizar otro producto</button>
     </aside>
   </div>
 </div>
@@ -1327,6 +1360,13 @@ var PR = {
   cubierta:  { alto: 362145, medio: 333184, bajo: 241890 },
   repisa:    { alto: 315066, medio: 289870, bajo: 210444 },
   peldano:   { alto: 362145, medio: 333184, bajo: 241890 },
+  /* Solo vendedores (oct 2026). No tienen tabla de m² propia: la banca cobra
+     el asiento como cubierta de 4 cm y la puerta de cocina como repisa de 2 cm
+     (ver currentPR). Aquí va solo el fijo POR UNIDAD, editable en el Manual:
+     banca = patas/base + armado mientras cada diseño no tenga precio propio;
+     puerta de cocina = el cargo por puerta sobre el valor de repisa. */
+  banca:     { fijo: 100000 },
+  pcocina:   { fijo: 10000 },
   granero:   { bajo:{m2:241890,fijo:50000}, medio:{m2:333184,fijo:50000}, alto:{m2:362145,fijo:50000} },
   maciza:    { alto:{m2:362145,fijo:80000}, medio:{m2:333184,fijo:80000}, bajo:{m2:241890,fijo:80000} },
   vidrios:   { alto:{m2:362145,fijo:80000}, medio:{m2:333184,fijo:80000}, bajo:{m2:241890,fijo:80000} },
@@ -1340,8 +1380,16 @@ var WOOD = {
 var PNAME = {
   cubierta:'Cubiertas', repisa:'Repisa / Cubierta 2cm', peldano:'Peldaños',
   granero:'Puerta Granero', maciza:'Puerta Madera', vidrios:'Puerta con Vidrios',
-  revestimiento:'Revestimiento', mesa:'Mesas de madera', revlibre:'Revestimiento a medida'
+  revestimiento:'Revestimiento', mesa:'Mesas de madera', revlibre:'Revestimiento a medida',
+  banca:'Bancas', pcocina:'Puertas de mueble de cocina'
 };
+/* nombre de un producto guardado. Una cotización con varios productos guarda
+   sus códigos unidos por "+" (ej. "mesa+banca"), así que se traduce cada uno.
+   Un código desconocido sale escapado: la columna la escribe el insert público. */
+function prodNombre(p) {
+  if (!p) return '';
+  return String(p).split('+').map(function(x){ return PNAME[x] || escA(x); }).join(' + ');
+}
 var FIERRO_KG_M = 3;   /* 18 kg los 6 metros de perfil */
 var MODELOS = {
   granero: ['Granero Clásico','Granero Cruz'],
@@ -2060,7 +2108,13 @@ function getPeldanoEspesor() {
 function currentPR() {
   if (prod === 'peldano') return getPeldanoEspesor() === '2' ? PR.repisa : PR.cubierta;
   if (prod === 'mesa') return PR.cubierta;   /* la cubierta de la mesa se cotiza como cubierta */
+  if (prod === 'banca') return PR.cubierta;  /* asiento de 4 cm = cubierta */
+  if (prod === 'pcocina') return PR.repisa;  /* puerta de 2 cm = repisa */
   return PR[prod];
+}
+/* fijo por unidad: patas y armado de cada banca, cargo de cada puerta de cocina */
+function fijoUnidad() {
+  return (prod === 'banca' || prod === 'pcocina') ? (PR[prod].fijo || 0) : 0;
 }
 function setPeldanoEspesor(val) {
   peldanoEspesor = val;
@@ -2197,15 +2251,17 @@ function calcLive() {
   vidrioAutoRefrescar();       /* el vidrio sale del modelo y la medida de la puerta */
   var bajo = 0, alto = 0;
 
-  if (['cubierta','repisa','peldano'].includes(prod)) {
-    var sumM2 = 0;
+  if (['cubierta','repisa','peldano','banca','pcocina'].includes(prod)) {
+    var sumM2 = 0, nUnid = 0;
     for (var i=1; i<=nrows; i++) {
       var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
       if (!lgEl||!lgEl.value||!anEl.value) continue;
       var lg=parseFloat(lgEl.value)||0, an=parseFloat(anEl.value)||0, ca=parseInt((caEl&&caEl.value)||1)||1;
       sumM2 += (lg/100)*(an/100)*ca;
+      nUnid += ca;
     }
-    if (sumM2 > 0) { bajo = sumM2 * currentPR().bajo * espesorFactor('bajo'); alto = sumM2 * currentPR().alto * espesorFactor('alto'); }
+    var fijoLive = fijoUnidad() * nUnid;
+    if (sumM2 > 0) { bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive; alto = sumM2 * currentPR().alto * espesorFactor('alto') + fijoLive; }
 
   } else if (prod === 'mesa') {
     /* cubierta + base sugerida del modelo, por cada mesa cotizada */
@@ -2270,6 +2326,8 @@ function calcLive() {
 
 function recWood() {
   if (prod === 'revestimiento') return null;
+  /* productos nuevos (oct 2026): sin historia no hay "la más pedida" que decir */
+  if (prod === 'banca' || prod === 'pcocina') return null;
   if (prod === 'mesa') return 'alto';   /* mesas y arrimos: la madera noble luce más */
   if (['granero','maciza','vidrios'].includes(prod)) return 'alto';
   /* baño y exterior → medio (Ciprés/Castaño, los que mejor aguantan humedad) */
@@ -2349,10 +2407,19 @@ function initProd(p) {
 }
 
 function renderForm(p) {
-  var c = document.getElementById('f-dyn');
+  /* #f-dyn se cambia por un nodo nuevo en cada producto. Los listeners de más
+     abajo se agregan con addEventListener y, sobre el mismo nodo, se iban
+     acumulando: después de volver al inicio y elegir otro producto, "+ Agregar
+     pieza" sumaba DOS filas por clic. Con varios productos en una cotización
+     eso pasaría siempre. cloneNode(false) copia id y clases, no los listeners. */
+  var viejo = document.getElementById('f-dyn');
+  var c = viejo.cloneNode(false);
+  viejo.parentNode.replaceChild(c, viejo);
 
-  if (['cubierta','repisa','peldano'].includes(p)) {
-    var usoField = (p === 'peldano') ?
+  if (['cubierta','repisa','peldano','banca','pcocina'].includes(p)) {
+    /* banca y puerta de cocina no preguntan el uso: el espesor ya viene dado y
+       recWood() no recomienda madera para ellos */
+    var usoField = (p === 'banca' || p === 'pcocina') ? '' : (p === 'peldano') ?
       '<div class="fsec">' +
         '<label class="flabel">Espesor</label>' +
         '<select class="fsel" id="f-espesor-peldano" onchange="setPeldanoEspesor(this.value)">' +
@@ -2394,9 +2461,16 @@ function renderForm(p) {
           '<option value="8">8 cm macizo</option>' +
         '</select>' +
       '</div>' : '';
+    var dimLbl = (p === 'banca') ? 'Medidas del asiento (4 cm de espesor)'
+               : (p === 'pcocina') ? 'Medidas de cada puerta (2 cm de espesor)' : 'Dimensiones';
+    var fijoHint = (p === 'banca')
+      ? '<div class="finput-hint">Cada banca suma <strong>' + fmt(PR.banca.fijo) + '</strong> de patas y armado. En «Cant.» va el número de bancas de esa medida.</div>'
+      : (p === 'pcocina')
+      ? '<div class="finput-hint">Cada puerta suma <strong>' + fmt(PR.pcocina.fijo) + '</strong> sobre el valor de la madera. En «Cant.» va el número de puertas de esa medida.</div>'
+      : '';
     c.innerHTML = usoField + espCubField +
       '<div class="fsec">' +
-        '<label class="flabel">Dimensiones</label>' +
+        '<label class="flabel">' + dimLbl + '</label>' + fijoHint +
         '<div class="col-labels dg">' +
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
@@ -3504,6 +3578,42 @@ function getMarcoTotals() {
 }
 
 /* ── QUOTE GENERATION ── */
+/* Lo que le falta a la PIEZA (no al cliente). Lo usan generar() y
+   comboAgregar(): agregar un producto a la cotización exige lo mismo que
+   cotizarlo solo. Muestra el error y devuelve false si algo falta. */
+function validarProducto(errEl, paraCombo) {
+  function falta(txt) { errEl.textContent = txt; errEl.classList.remove('hidden'); return false; }
+  if (!hasValidDims()) return falta('Ingresa al menos una medida antes de continuar.');
+  /* el revestimiento por m² tiene otra escala de maderas (Ciprés / Coihue) y
+     no calza en el total de tres maderas de una cotización combinada */
+  if (prod === 'revestimiento' && (paraCombo || combo.length))
+    return falta('El revestimiento por m² se cotiza aparte: no se puede juntar con otros productos. Cotízalo solo, o vacía la lista de arriba.');
+  if (prod === 'mesa') {
+    /* al público no se le piden valores: los calcula el modelo. Solo se exige
+       que haya elegido uno, que es lo que define la base. */
+    if (!vendorMode) {
+      if (!mesaModeloActual()) return falta('Elige un modelo de mesa para continuar.');
+    } else {
+      var mChk = mesaDatos();
+      var haySug = !!mesaSugerido();
+      if (mChk.baseTipo === 'madera') {
+        if (!haySug && (mChk.valorBajo <= 0 || mChk.valorMedio <= 0 || mChk.valorAlto <= 0)) return falta('Escribe el valor de la base de madera para los 3 tipos de madera, o elige un modelo del catálogo.');
+      } else if (!haySug && mChk.valor <= 0) return falta('Escribe el valor de la base de fierro, o elige un modelo del catálogo.');
+    }
+  }
+  if (prod === 'revlibre') {
+    var rvChk = rvDatos();
+    if (!document.getElementById('rv-madera').value.trim()) return falta('Escribe el tipo de madera.');
+    if (rvChk.valorTabla <= 0) return falta('Escribe el valor por tabla.');
+  }
+  return true;
+}
+/* para qué espacio es: lo pregunta el formulario de cubierta y repisa; el
+   resto de los productos lo trae dado */
+function usoActual() {
+  var usoEl = document.getElementById('f-uso');
+  return usoEl ? (usoEl.value || 'otro') : (prod === 'peldano' ? 'peldanos' : 'otro');
+}
 function hasValidDims() {
   if (prod === 'revestimiento') {
     var rmEl = document.getElementById('rm');
@@ -3527,34 +3637,14 @@ function generar() {
   /* primero lo que le falta a la pieza y después los datos de contacto: al
      revés, el cliente escribía nombre y WhatsApp para enterarse recién ahí de
      que le faltaba el modelo */
-  if (!hasValidDims()) { errEl.textContent = 'Ingresa al menos una medida antes de continuar.'; errEl.classList.remove('hidden'); return; }
-  if (prod === 'mesa' && !vendorMode && !mesaModeloActual()) { errEl.textContent = 'Elige un modelo de mesa para continuar.'; errEl.classList.remove('hidden'); return; }
+  if (!validarProducto(errEl)) return;
   if (!cli) { errEl.textContent = 'Escribe tu nombre para continuar.'; errEl.classList.remove('hidden'); return; }
   if (!conStr) { errEl.textContent = 'Escribe tu WhatsApp o tu correo para continuar.'; errEl.classList.remove('hidden'); return; }
   if (!waPhone(conStr) && !esCorreo(conStr)) { errEl.textContent = 'Revisa tu contacto: un celular (+56 9 1234 5678) o un correo válido.'; errEl.classList.remove('hidden'); return; }
   var telChk = waPhone(conStr);
   if (telChk && !esCorreo(conStr) && telBasura(telChk)) { errEl.textContent = 'Ese número no parece un celular real. Revísalo — lo necesitamos para enviarte la cotización.'; errEl.classList.remove('hidden'); return; }
-  if (prod === 'mesa') {
-    /* al público no se le piden valores: los calcula el modelo. Solo se exige
-       que haya elegido uno, que es lo que define la base. */
-    if (!vendorMode) {
-      if (!mesaModeloActual()) { errEl.textContent = 'Elige un modelo de mesa para continuar.'; errEl.classList.remove('hidden'); return; }
-    } else {
-      var mChk = mesaDatos();
-      var haySug = !!mesaSugerido();
-      if (mChk.baseTipo === 'madera') {
-        if (!haySug && (mChk.valorBajo <= 0 || mChk.valorMedio <= 0 || mChk.valorAlto <= 0)) { errEl.textContent = 'Escribe el valor de la base de madera para los 3 tipos de madera, o elige un modelo del catálogo.'; errEl.classList.remove('hidden'); return; }
-      } else if (!haySug && mChk.valor <= 0) { errEl.textContent = 'Escribe el valor de la base de fierro, o elige un modelo del catálogo.'; errEl.classList.remove('hidden'); return; }
-    }
-  }
-  if (prod === 'revlibre') {
-    var rvChk = rvDatos();
-    if (!document.getElementById('rv-madera').value.trim()) { errEl.textContent = 'Escribe el tipo de madera.'; errEl.classList.remove('hidden'); return; }
-    if (rvChk.valorTabla <= 0) { errEl.textContent = 'Escribe el valor por tabla.'; errEl.classList.remove('hidden'); return; }
-  }
   errEl.classList.add('hidden');
-  var usoEl = document.getElementById('f-uso');
-  uso = usoEl ? (usoEl.value || 'otro') : (prod === 'peldano' ? 'peldanos' : 'otro');
+  uso = usoActual();
   var muestrarioEl = document.getElementById('s2b-muestrario');
   if (muestrarioEl) {
     /* El muestrario se muestra en todos los productos. Excepcion: revestimiento
@@ -3591,13 +3681,13 @@ async function confirmar() {
     /* Abrir un link compartido NO crea otro link: se reusa el que el cliente ya
        tiene. Antes cada apertura insertaba una fila nueva en quote_links con un
        token distinto, y la cotización quedaba con dos direcciones distintas. */
+    /* con productos ya agregados, el link guarda todos (el de pantalla al final);
+       hay que fijarlo ANTES de buildShortUrl, que lo lee vía getShareData() */
+    comboShare = combo.length
+      ? combo.map(function(it){ return it.share; }).concat([getShareDataProducto(false)])
+      : null;
     shareShortUrl = fromHash ? location.href : await buildShortUrl();
-    var html  = '';
-    if (['cubierta','repisa','peldano'].includes(prod)) html = htmlCubierta(cli, fecha);
-    else if (['granero','maciza','vidrios'].includes(prod)) html = htmlPuerta(cli, fecha);
-    else if (prod === 'revestimiento') html = htmlRev(cli, fecha);
-    else if (prod === 'mesa') html = htmlMesa(cli, fecha);
-    else if (prod === 'revlibre') html = htmlRevLibre(cli, fecha);
+    var html = combo.length ? htmlCombinada(cli, fecha) : htmlProducto(cli, fecha);
     document.getElementById('q-out').innerHTML = html;
     show('s3');
     embudoTick('cotizacion');
@@ -3617,28 +3707,151 @@ async function confirmar() {
   }
 }
 
+/* el documento de UN producto: elige el armador según el producto en pantalla */
+function htmlProducto(cli, fecha) {
+  if (['cubierta','repisa','peldano','banca','pcocina'].includes(prod)) return htmlCubierta(cli, fecha);
+  if (['granero','maciza','vidrios'].includes(prod)) return htmlPuerta(cli, fecha);
+  if (prod === 'revestimiento') return htmlRev(cli, fecha);
+  if (prod === 'mesa') return htmlMesa(cli, fecha);
+  if (prod === 'revlibre') return htmlRevLibre(cli, fecha);
+  return '';
+}
+
+/* ── VARIOS PRODUCTOS EN UNA COTIZACIÓN (solo vendedores, oct 2026) ──
+   Ej. una mesa y dos bancas: un documento, un número, un link y un total por
+   madera. Nada se guarda hasta "Ver cotización": cada "＋ Agregar" captura el
+   producto del formulario y vuelve al selector.
+
+   La captura reusa los armadores de cada producto tal cual (htmlCubierta,
+   htmlMesa…): mientras comboCaptura no es null, shell() entrega el cuerpo en
+   vez de armar el documento, saveQuote() entrega los totales en vez de
+   guardar, y el pie común (cajas, garantía, muestrario, WhatsApp) sale vacío
+   para ponerlo una sola vez al final. */
+var combo = [];           /* productos ya agregados: {p, uso, share, nombre, body, tot, lineas} */
+var comboCaptura = null;  /* el producto que se está capturando en este momento */
+var comboShare = null;    /* productos del documento a la vista, para el link compartido */
+var comboDoc = null;      /* productos del documento mientras se arma su pie común */
+function comboCapturar() {
+  var it = { p: prod, uso: uso, share: getShareDataProducto(false) };
+  comboCaptura = it;
+  try { htmlProducto('', ''); } finally { comboCaptura = null; }
+  return it;
+}
+function comboAgregar() {
+  var errEl = document.getElementById('f-err');
+  if (!validarProducto(errEl, true)) return;
+  errEl.classList.add('hidden');
+  fromHash = false;
+  descongelar();   /* igual que generar(): lo que se agrega se cotiza con los precios de hoy */
+  uso = usoActual();
+  combo.push(comboCapturar());
+  comboPintar();
+  show('s1');
+}
+function comboQuitar(i) { combo.splice(i, 1); comboPintar(); }
+function comboVaciar() { combo = []; comboShare = null; comboPintar(); }
+/* la lista de lo agregado, arriba del selector y del formulario */
+function comboPintar() {
+  var html = '';
+  if (combo.length) {
+    var filas = combo.map(function(it, i){
+      return '<div class="combo-li"><span class="cl-n">' + (i+1) + '. ' + it.nombre + '</span>' +
+        '<span class="cl-p">' + fmt(it.tot.bajo) + ' – ' + fmt(it.tot.alto) + '</span>' +
+        '<button type="button" title="Quitar de la cotización" onclick="comboQuitar(' + i + ')">✕</button></div>';
+    }).join('');
+    html = '<div class="combo-bar">' +
+      '<div class="combo-h">En esta cotización · ' + combo.length + (combo.length === 1 ? ' producto' : ' productos') + '</div>' +
+      filas +
+      '<div class="combo-hint">Elige o completa el siguiente producto. «Ver mi cotización» junta todo en un solo documento, con el total por madera.</div>' +
+      '<button type="button" class="combo-vaciar" onclick="comboVaciar()">Vaciar y empezar de nuevo</button>' +
+    '</div>';
+  }
+  ['combo-bar-s1', 'combo-bar-s2'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.innerHTML = html;
+  });
+}
+/* el documento con todos los productos: cada uno con su detalle y su tabla
+   de precios, y al final el total por madera y el pie común una sola vez */
+function htmlCombinada(cli, fecha) {
+  var items = combo.concat([comboCapturar()]);
+  var tot = { bajo: 0, medio: 0, alto: 0 };
+  items.forEach(function(it){
+    ['bajo','medio','alto'].forEach(function(t){ tot[t] += (it.tot && it.tot[t]) || 0; });
+  });
+  /* producto = los códigos unidos por "+", sin repetir (ej. "mesa+banca"):
+     el panel lo traduce con prodNombre() y los reportes lo agrupan aparte */
+  var codigos = [];
+  items.forEach(function(it){ if (codigos.indexOf(it.p) === -1) codigos.push(it.p); });
+  var lineas = [];
+  items.forEach(function(it){
+    (it.lineas || []).forEach(function(l){
+      lineas.push(Object.assign({}, l, { modelo: PNAME[it.p] + (l.modelo ? ' · ' + l.modelo : '') }));
+    });
+  });
+  var vidrio = null;
+  items.forEach(function(it){ if (!vidrio && it.vidrio_tipo) vidrio = it.vidrio_tipo; });
+  saveQuote({
+    numero:qnum, cliente:cli, contacto:conStr||null, producto:codigos.join('+'),
+    total_bajo: Math.round(tot.bajo), total_medio: Math.round(tot.medio), total_alto: Math.round(tot.alto),
+    vidrio_tipo: vidrio
+  }, lineas);
+  var cuerpo = items.map(function(it, i){
+    return '<div class="combo-item">' +
+      '<div class="combo-item-h"><span class="ci-n">' + (i+1) + '</span>' + it.nombre + '</div>' +
+      it.body +
+    '</div>';
+  }).join('');
+  var totRows = [
+    {label: 'Pino Oregón',              tier: 'bajo',  total: tot.bajo},
+    {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: tot.medio},
+    {label: 'Coihue / Raulí / Lenga',   tier: 'alto',  total: tot.alto}
+  ];
+  var nombres = items.map(function(it){ return PNAME[it.p] || it.p; });
+  var titulo = items.length <= 3 ? nombres.join(' + ') : (items.length + ' productos');
+  comboDoc = items;
+  try {
+    return shell(titulo, cli, fecha,
+      cuerpo +
+      '<div class="combo-total-h">Total de la cotización · ' + items.length + ' productos</div>' +
+      tierTable(totRows, null) +
+      boxes() + warranty() + muestrario() + whatsappCTA(tot.bajo, tot.alto, items.length + ' productos', nombres.join(' + '))
+    );
+  } finally { comboDoc = null; }
+}
+
 function htmlCubierta(cli, fecha) {
-  var filas = [], sumM2 = 0;
+  var filas = [], sumM2 = 0, nUnid = 0;
   for (var i=1; i<=nrows; i++) {
     var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
     if (!lgEl||!lgEl.value||!anEl.value) continue;
     var lg=parseFloat(lgEl.value), an=parseFloat(anEl.value), ca=parseInt(caEl.value)||1;
     var m2=(lg/100)*(an/100)*ca;
-    sumM2+=m2; filas.push({n:i,lg:lg,an:an,ca:ca,m2:m2});
+    sumM2+=m2; nUnid+=ca; filas.push({n:i,lg:lg,an:an,ca:ca,m2:m2});
   }
   var dimRows = filas.map(function(f){
     return '<tr><td>'+f.n+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td><td>'+f.m2.toFixed(2)+'</td></tr>';
   }).join('');
   var vExtrasList = vExtrasDatos();
   var vExtrasTot = vExtrasList.reduce(function(a,e){ return a+e.valor; }, 0);
+  /* banca y puerta de cocina suman un fijo por unidad (0 en el resto) */
+  var fijoU = fijoUnidad(), fijoTot = fijoU * nUnid;
   var tierRows = [
-    {label: 'Pino Oregón',              tier: 'bajo',  total: sumM2 * currentPR().bajo  * espesorFactor('bajo')  + rebordeValor('bajo')  + vExtrasTot},
-    {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: sumM2 * currentPR().medio * espesorFactor('medio') + rebordeValor('medio') + vExtrasTot},
-    {label: 'Coihue / Raulí / Lenga',   tier: 'alto',  total: sumM2 * currentPR().alto  * espesorFactor('alto')  + rebordeValor('alto')  + vExtrasTot}
+    {label: 'Pino Oregón',              tier: 'bajo',  total: sumM2 * currentPR().bajo  * espesorFactor('bajo')  + rebordeValor('bajo')  + vExtrasTot + fijoTot},
+    {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: sumM2 * currentPR().medio * espesorFactor('medio') + rebordeValor('medio') + vExtrasTot + fijoTot},
+    {label: 'Coihue / Raulí / Lenga',   tier: 'alto',  total: sumM2 * currentPR().alto  * espesorFactor('alto')  + rebordeValor('alto')  + vExtrasTot + fijoTot}
   ];
   var vEsp = vEspesorFinal();
   var esp = vEsp || (es8cm() ? '8 cms macizo — incluye 4 cms extra de espesor' :
-    (prod==='cubierta' ? 'De 2,1 a 4,0 cms. Tú eliges' : prod==='peldano' ? (getPeldanoEspesor() + ' cms') : '2 cms'));
+    (prod==='cubierta' ? 'De 2,1 a 4,0 cms. Tú eliges' : prod==='peldano' ? (getPeldanoEspesor() + ' cms') :
+     prod==='banca' ? '4 cms (asiento)' : '2 cms'));
+  /* el cliente ve de dónde sale el precio, igual que el desglose cubierta + base de las mesas */
+  var fijoNota = '';
+  if (prod === 'banca' && fijoU > 0)
+    fijoNota = '<div class="info-bar">Cada banca incluye patas y armado: <strong>' + fmt(fijoU) + '</strong>' +
+      (nUnid > 1 ? ' × ' + nUnid + ' bancas' : '') + ' · el asiento se cobra por m²</div>';
+  if (prod === 'pcocina' && fijoU > 0)
+    fijoNota = '<div class="info-bar">Valor por puerta: madera por m² + <strong>' + fmt(fijoU) + '</strong>' +
+      (nUnid > 1 ? ' × ' + nUnid + ' puertas' : '') + '</div>';
   saveQuote({
     numero:qnum, cliente:cli, contacto:conStr||null, producto:prod,
     total_bajo:  Math.round(tierRows[0].total),
@@ -3653,10 +3866,12 @@ function htmlCubierta(cli, fecha) {
     '</tbody></table>' +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
+    fijoNota +
     tierTable(tierRows, recWood()) +
     extrasBlock(sumM2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+escA(esp)+'</div></div>' +
+      (prod === 'banca' ? '<div class="spec"><div class="sl">Patas</div><div class="sv">Según diseño · incluidas en el valor</div></div>' : '') +
       '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30)+' kg</div></div>' +
@@ -3970,6 +4185,9 @@ function validezHtml(){
   return '<div class="coti-meta vencida">Venció el '+vence.toLocaleDateString('es-CL')+' — escríbenos y la actualizamos</div>';
 }
 function shell(nombre, cli, fecha, body) {
+  /* capturando un producto para una cotización combinada: entregar el cuerpo
+     (sin encabezado) y el nombre; el documento lo arma htmlCombinada() */
+  if (comboCaptura) { comboCaptura.nombre = nombre; comboCaptura.body = body; return ''; }
   return '<div class="coti-hdr">' +
     '<div>' +
       '<div class="coti-logo">CASA ZARU</div>' +
@@ -4041,21 +4259,35 @@ function terminacionOpts() {
 }
 /* lo que el cliente suele dar por incluido y no lo está. El marco se puede
    cotizar: si ya viene en esta cotización, no se lo nombra como excluido. */
+/* productos del documento a la vista: todos los de una cotización combinada
+   (mientras se arma su pie) o solo el del formulario */
+function prodsDoc() { return comboDoc ? comboDoc.map(function(it){ return it.p; }) : [prod]; }
+var PUERTAS_P = ['granero','maciza','vidrios'];
 function noIncluyeHtml() {
-  if (!['granero','maciza','vidrios'].includes(prod)) return '';
-  var conMarco = getMarcoTotals().ml > 0;
-  return '<div class="ibox-no">' + (conMarco
-    ? 'No incluye bisagras, chapa ni manilla.'
-    : 'No incluye marco (se cotiza aparte), bisagras, chapa ni manilla.') + '</div>';
+  var ps = prodsDoc();
+  var hayPuerta = ps.some(function(p){ return PUERTAS_P.indexOf(p) !== -1; });
+  var hayCocina = ps.indexOf('pcocina') !== -1;
+  if (!hayPuerta && !hayCocina) return '';
+  var conMarco = comboDoc
+    ? comboDoc.some(function(it){ return it.share && it.share.marco && it.share.marco.length; })
+    : getMarcoTotals().ml > 0;
+  var no = [];
+  if (hayPuerta && !conMarco) no.push('marco (se cotiza aparte)');
+  no.push('bisagras');
+  if (hayPuerta) no.push('chapa', 'manilla');
+  if (hayCocina) no.push('tiradores');
+  var txt = no.length > 1 ? no.slice(0, -1).join(', ') + ' ni ' + no[no.length - 1] : no[0];
+  return '<div class="ibox-no">No incluye ' + txt + '.</div>';
 }
 /* se evita instalar —la mayoría de los clientes es de otras regiones—, así
    que se promete la pieza terminada, no el servicio */
 function listaParaInstalarLi() {
-  if (prod === 'cubierta' || ['granero','maciza','vidrios'].includes(prod))
+  if (prodsDoc().some(function(p){ return p === 'cubierta' || PUERTAS_P.indexOf(p) !== -1; }))
     return '<li>Llega <strong>lista para instalar</strong></li>';
   return '';
 }
 function boxes() {
+  if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
   return '<div class="iboxes">' +
     '<div class="ibox ibox-incluye">' +
       '<div class="ibox-h">Tu pedido incluye</div>' +
@@ -4085,8 +4317,9 @@ function boxes() {
   '</div>';
 }
 
-function whatsappCTA(bajo, alto, det) {
-  var detalle = (bajo && alto) ? ('\n\nProducto: ' + PNAME[prod] + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
+function whatsappCTA(bajo, alto, det, nombreProd) {
+  if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
+  var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
   var msg = 'Hola! Me interesa confirmar la cotización ' + qnum + ' de Casa Zarú.' + detalle + link + '\n\nConfirmo por este medio.';
   var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
@@ -4279,6 +4512,7 @@ async function descargarPDF(){
 }
 
 function muestrario() {
+  if (comboCaptura) return '';
   var msg = 'Hola! Me interesa recibir el muestrario de maderas de Casa Zarú.';
   var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
   return '<div class="muest-block">' +
@@ -4287,6 +4521,7 @@ function muestrario() {
 }
 
 function warranty() {
+  if (comboCaptura) return '';
   return '<div class="warranty">' +
     '<strong>Garantía Casa Zaru · 5 años</strong>' +
     'Cubre fallas estructurales de fabricación, válida desde la fecha de compra. ' +
@@ -4298,7 +4533,23 @@ function warranty() {
 /* ── SHARE LINK ── */
 /* conValores: la fila de quote_links se lleva los precios del día (ver
    PRECIO Y FECHA CONGELADOS); el link largo #q= no, porque inflaban la URL. */
+/* El link de una cotización combinada lleva la lista de productos en "combo"
+   (cada uno con los mismos datos que tendría su link solo) y arriba lo común:
+   cliente, número, fecha, precios del día y descuento. */
 function getShareData(conValores) {
+  if (comboShare && !comboCaptura) {
+    var d = { combo: comboShare, cli: (document.getElementById('f-cli') || {}).value || '', con: conStr, qnum: qnum };
+    d.f = fechaDoc || new Date().toISOString();
+    if (conValores) {
+      var valsC = valoresParaCongelar();
+      if (Object.keys(valsC).length) d.vals = valsC;
+    }
+    if (b2bDcto > 0) d.b2b = b2bDcto;
+    return d;
+  }
+  return getShareDataProducto(conValores);
+}
+function getShareDataProducto(conValores) {
   var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
   var data = { p: prod, cli: cli, con: conStr, uso: uso, qnum: qnum };
   /* la fecha va siempre (son 30 caracteres); los precios solo en la fila
@@ -4327,7 +4578,7 @@ function getShareData(conValores) {
     }
     var vEspNow = vEspesorFinal(); if (vEspNow) data.espFinal = vEspNow;
   }
-  if (['cubierta','repisa','peldano','mesa'].includes(prod)) {
+  if (['cubierta','repisa','peldano','mesa','banca','pcocina'].includes(prod)) {
     data.rows = [];
     for (var i = 1; i <= nrows; i++) {
       var lgEl = document.getElementById('lg'+i), anEl = document.getElementById('an'+i), caEl = document.getElementById('ca'+i);
@@ -4395,10 +4646,30 @@ function restoreFromData(d) {
   congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
   b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
-  var espGuardado = d.esp || null;   /* espesor de peldaño del link compartido */
-  uso = d.uso || 'otro'; conStr = d.con || '';
+  conStr = d.con || '';
   document.getElementById('f-cli').value = d.cli || '';
   document.getElementById('f-con').value = d.con || '';
+  combo = [];
+  if (d.combo && d.combo.length) {
+    /* cotización con varios productos: cada uno se rearma en el formulario y
+       se captura; el último queda en pantalla y confirmar() junta todo */
+    d.combo.forEach(function(it, i){
+      restoreProducto(it);
+      if (i < d.combo.length - 1) combo.push(comboCapturar());
+    });
+    comboPintar();
+  } else {
+    restoreProducto(d);
+  }
+  /* confirmar() es async y termina en show('s3'): recién ahí se levanta el
+     freno, para que el cliente pase de la pantalla de carga a su cotización
+     sin ver nada intermedio */
+  Promise.resolve(confirmar()).then(finRestauracion, finRestauracion);
+}
+/* rellena el formulario con UN producto del link (el único, o uno de la combinada) */
+function restoreProducto(d) {
+  var espGuardado = d.esp || null;   /* espesor de peldaño del link compartido */
+  uso = d.uso || 'otro';
   var isPuerta = ['granero','maciza','vidrios'].includes(d.p);
   initProd(isPuerta ? 'puertas' : d.p);
   if (espGuardado) {   /* restaurar espesor de peldaño (initProd lo resetea a 4) */
@@ -4493,10 +4764,6 @@ function restoreFromData(d) {
     }
   }
   rbRestaurar(d);   /* va DESPUÉS de las piezas: sus cantos cuelgan de cada fila */
-  /* confirmar() es async y termina en show('s3'): recién ahí se levanta el
-     freno, para que el cliente pase de la pantalla de carga a su cotización
-     sin ver nada intermedio */
-  Promise.resolve(confirmar()).then(finRestauracion, finRestauracion);
 }
 /* Restaura el reborde de un link compartido. Requiere que las piezas ya existan. */
 function rbRestaurar(d) {
@@ -4600,6 +4867,14 @@ async function saveQuoteLineas(numero, lineas) {
   } catch (e) { console.warn('guardar_lineas:', e); }
 }
 async function saveQuote(data, lineas) {
+  /* capturando un producto de una cotización combinada: no se guarda nada,
+     solo se anotan sus totales y piezas; se guarda UNA fila al final */
+  if (comboCaptura) {
+    comboCaptura.tot = { bajo: data.total_bajo || 0, medio: data.total_medio || 0, alto: data.total_alto || 0 };
+    comboCaptura.lineas = lineas || [];
+    comboCaptura.vidrio_tipo = data.vidrio_tipo || null;
+    return;
+  }
   if (fromHash) return;
   /* anti-duplicado: no insertar dos veces el mismo número en la misma sesión.
      El flag se fija ANTES del await para que clics rápidos seguidos no alcancen a duplicar. */
@@ -5014,6 +5289,8 @@ function telBasura(telNormalizado){
 }
 /* cómo se nombra el producto dentro del mensaje, para que suene natural */
 function prodTexto(p){
+  /* varios productos ("mesa+banca"): el texto genérico, "tu proyecto" */
+  if (String(p || '').indexOf('+') !== -1) p = '';
   switch(p){
     case 'cubierta':      return { suyo:'tu cubierta',       fotos:'cubiertas',      gen:'instaladas', dudas:'el espesor o el tipo de madera' };
     case 'repisa':        return { suyo:'tu repisa',         fotos:'repisas',        gen:'instaladas', dudas:'las medidas o el tipo de madera' };
@@ -5027,6 +5304,8 @@ function prodTexto(p){
        proyectos ya instalados" — con mesas siendo el segundo producto más
        cotizado. Una mesa además no se instala: se entrega. */
     case 'mesa':          return { suyo:'tu mesa',           fotos:'mesas',          gen:'entregadas', dudas:'las medidas, la madera o el tipo de base' };
+    case 'banca':         return { suyo:'tus bancas',        fotos:'bancas',         gen:'entregadas', dudas:'las medidas o el tipo de madera' };
+    case 'pcocina':       return { suyo:'tus puertas de cocina', fotos:'muebles de cocina', gen:'instalados', dudas:'las medidas o el tipo de madera' };
     default:              return { suyo:'tu proyecto',       fotos:'proyectos',      gen:'instalados', dudas:'las medidas o el tipo de madera' };
   }
 }
@@ -5283,7 +5562,8 @@ function segScore(g){
   if (dias > 30) s -= 30;
   var ticketAlto = g.quotes.some(function(q){
     if ((q.estado||'enviada') !== 'enviada') return false;
-    if (['granero','maciza','vidrios','mesa'].includes(q.producto)) return true;
+    /* una combinada ("mesa+banca") cuenta si trae alguno de estos */
+    if (String(q.producto || '').split('+').some(function(p){ return ['granero','maciza','vidrios','mesa'].includes(p); })) return true;
     return (q.total_alto||0) >= 800000;
   });
   if (ticketAlto) s += 10;
@@ -6104,7 +6384,7 @@ function segFila(g, cls){
   /* qué pidió, sin repetir productos */
   var prods = [];
   g.quotes.forEach(function(q){
-    var p = PNAME[q.producto] || q.producto;
+    var p = prodNombre(q.producto);
     if (p && prods.indexOf(p) === -1) prods.push(p);
   });
   var toque = (cls === 'nuevo') ? 'sin contactar'
@@ -6191,7 +6471,7 @@ function segClientCard(g, cls){
     var est = q.estado||'enviada';
     var link = q.link ? ' <a href="'+q.link+'" target="_blank">↗</a>' : '';
     var f = q.fecha_creacion ? new Date(q.fecha_creacion).toLocaleDateString('es-CL') : '';
-    return '<div class="seg-qrow">'+(q.numero||'—')+' · '+(PNAME[q.producto]||q.producto||'')+' · '+fmt(q.total_alto||0)+(f?' · '+f:'')+(est!=='enviada'?' · '+est:'')+link+'</div>';
+    return '<div class="seg-qrow">'+(q.numero||'—')+' · '+prodNombre(q.producto)+' · '+fmt(q.total_alto||0)+(f?' · '+f:'')+(est!=='enviada'?' · '+est:'')+link+'</div>';
   }).join('');
   var qbody = g.quotes.length>1
     ? '<details class="seg-qdet"'+detAttrs('q:'+x.id)+'><summary>venta probable <strong>'+fmt(g.valor)+'</strong> · '+g.quotes.length+' cotizaciones</summary><div class="seg-qlist">'+qrows+'</div></details>'
@@ -6802,7 +7082,8 @@ function applyDashFilters(data) {
        por su número —que es justo como se la nombra por teléfono—. */
     if (cliQ && !dashCoincide(x, cliQ)) return false;
     if (estQ && (x.estado||'enviada') !== estQ) return false;   /* sin estado guardado = enviada */
-    if (prodQ && x.producto !== prodQ) return false;
+    /* una combinada ("mesa+banca") aparece al filtrar por cualquiera de sus productos */
+    if (prodQ && String(x.producto || '').split('+').indexOf(prodQ) === -1) return false;
     if (dashMonth && String(x.fecha_creacion||'').slice(0,7) !== dashMonth) return false;
     var total = x.total_alto || 0;
     if (!isNaN(minQ) && total < minQ) return false;
@@ -6892,7 +7173,7 @@ function renderEliminadas(){
   if (!elim.length){ document.getElementById('dash-tbl').innerHTML='<div class="seg-empty" style="padding:24px;text-align:center">No hay cotizaciones eliminadas</div>'; return; }
   var rows = elim.map(function(x){
     var f = x.elim_fecha ? new Date(x.elim_fecha).toLocaleDateString('es-CL')+' '+new Date(x.elim_fecha).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}) : '—';
-    return '<tr><td>'+(x.numero||'—')+'</td><td>'+escA(x.cliente||'—')+'</td><td>'+(PNAME[x.producto]||x.producto||'—')+'</td>'+
+    return '<tr><td>'+(x.numero||'—')+'</td><td>'+escA(x.cliente||'—')+'</td><td>'+(prodNombre(x.producto)||'—')+'</td>'+
       '<td>$'+Math.round(x.total_alto||0).toLocaleString('es-CL')+'</td>'+
       '<td><strong>'+escA(x.elim_por||'—')+'</strong></td><td>'+escA(x.elim_motivo||'—')+'</td><td style="font-size:11.5px">'+f+'</td>'+
       '<td><button class="sbtn" onclick="restaurarQuote(\''+x.id+'\')">↩ Restaurar</button></td></tr>';
@@ -7203,6 +7484,12 @@ function renderManual() {
         '<label>Maciza/Vidrios · fijo por puerta' + mvNum('mv-pta-ma-fijo', PR.maciza.bajo.fijo, 5000) + '</label>' +
       '</div>' +
       '<div class="finput-hint">El $/m² de puertas usa la misma tabla de maderas de cubiertas; aquí solo se define el cargo fijo por puerta.</div>' +
+      '<div class="mv-sub">Bancas y puertas de mueble de cocina (solo vendedores) — fijo por unidad</div>' +
+      '<div class="mv-grid3">' +
+        '<label>Banca · patas y armado' + mvNum('mv-banca-fijo', PR.banca.fijo, 5000) + '</label>' +
+        '<label>Puerta de cocina · por puerta' + mvNum('mv-pcoc-fijo', PR.pcocina.fijo, 1000) + '</label>' +
+      '</div>' +
+      '<div class="finput-hint">La banca cobra el asiento como cubierta de 4 cm (m² × valor de arriba) + este fijo por banca. La puerta de cocina cobra la madera como repisa de 2 cm + este fijo por puerta.</div>' +
       '<div class="mv-sub">Revestimiento — $ por m²</div>' +
       '<div class="mv-grid3">' +
         '<label>Ciprés' + mvNum('mv-rev-cipres', PR.revestimiento.cipres, 1000) + '</label>' +
@@ -7294,7 +7581,9 @@ async function guardarValores(clave) {
       granero:  { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-gr-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-gr-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-gr-fijo')} },
       maciza:   { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
       vidrios:  { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
-      revestimiento: { cipres: mvLee('mv-rev-cipres'), coihue: mvLee('mv-rev-coihue') }
+      revestimiento: { cipres: mvLee('mv-rev-cipres'), coihue: mvLee('mv-rev-coihue') },
+      banca:   { fijo: mvLee('mv-banca-fijo') },
+      pcocina: { fijo: mvLee('mv-pcoc-fijo') }
     };
   } else if (clave === 'esp8') {
     v = { bajo: mvLee('mv-e8-bajo'), medio: mvLee('mv-e8-medio'), alto: mvLee('mv-e8-alto') };
@@ -7507,7 +7796,7 @@ function renderDash() {
     var numCorto = (x.numero||'—').replace(/^N°\s*CL-?/i,'');
     var numHtml = x.link ? '<a href="'+x.link+'" target="_blank" style="color:var(--ac);text-decoration:none;white-space:nowrap">'+numCorto+' ↗</a>' : '<span style="white-space:nowrap">'+numCorto+'</span>';
     var montoTxt = est==='ganado' && x.monto_cierre ? '$'+Math.round(x.monto_cierre).toLocaleString('es-CL') : '$'+Math.round(x.total_alto||0).toLocaleString('es-CL');
-    return '<tr><td>'+numHtml+'</td><td>'+escA(x.cliente||'—')+'</td><td style="font-size:11.5px">'+escA(x.contacto||'—')+'</td><td>'+(PNAME[x.producto]||x.producto||'—')+'</td><td>'+montoTxt+'</td><td style="font-size:11.5px">'+f+'</td>' +
+    return '<tr><td>'+numHtml+'</td><td>'+escA(x.cliente||'—')+'</td><td style="font-size:11.5px">'+escA(x.contacto||'—')+'</td><td>'+(prodNombre(x.producto)||'—')+'</td><td>'+montoTxt+'</td><td style="font-size:11.5px">'+f+'</td>' +
       '<td>'+tqBadge(tqDe(x))+'</td>' +
       '<td><select class="dash-estado '+est+'" onchange="updateEstado(\''+x.id+'\',this.value)">' +
         '<option value="enviada"'+(est==='enviada'?' selected':'')+'>Enviada</option>' +
@@ -7633,7 +7922,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-calc').addEventListener('click', generar);
   document.getElementById('btn-ver-coti').addEventListener('click', confirmar);
   document.getElementById('btn-s2b-back').addEventListener('click', function() { show('s2'); });
-  document.getElementById('btn-q-s1').addEventListener('click', function() { show('s1'); });
+  /* "Inicio" desde la cotización = empezar otra: los productos que se habían
+     juntado ya quedaron en el documento y no deben colarse en la siguiente */
+  document.getElementById('btn-q-s1').addEventListener('click', function() { comboVaciar(); show('s1'); });
   document.getElementById('btn-q-s2').addEventListener('click', function() { show('s2'); });
   var params = new URLSearchParams(window.location.search);
   /* ── ENLACE DIRECTO POR PRODUCTO (?prod=…) ──
@@ -7674,6 +7965,10 @@ document.addEventListener('DOMContentLoaded', function() {
     /* mesa ya es pública (ago 2026); acá solo queda el revestimiento a medida */
     var pr = document.getElementById('pcard-revlibre');
     if (pr) pr.classList.remove('hidden');
+    /* bancas, puertas de cocina y juntar varios productos: solo vendedores por ahora */
+    ['pcard-banca', 'pcard-pcocina', 'btn-combo'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.classList.remove('hidden');
+    });
   }
   if (params.get('pro') === 'zr') habilitarInternos();
   else {
