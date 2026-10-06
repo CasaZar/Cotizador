@@ -1317,6 +1317,50 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .marca .cierre-marca { background: var(--terracota); color: #fff; border-radius: 14px; padding: 16px; text-align: center; margin: 18px 0 8px; }
 .marca .cierre-marca .cm-lema { font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 16px; margin: 0 0 6px; }
 .marca .cierre-marca .cm-red { font-size: 12.5px; margin: 0; opacity: .95; }
+
+/* ── ÚLTIMA PÁGINA, TERCERA VUELTA (pedido del usuario 06-10, por WhatsApp) ──
+   1) El botón de WhatsApp con su color y latiendo, separado de los precios
+      por un corte: va en su propio recuadro verde claro. #1A9E4B y no el
+      #25D366 de WhatsApp: blanco sobre ese da 2:1; sobre este 3,5:1, que con
+      letra de 19 px en negrita es AA de texto grande.
+   2) Cada bloque se distingue del vecino: más aire entre ellos y colores
+      distintos (antes ficha, transferencia y garantía eran el mismo beige, y
+      las dos cajas, el mismo verde). */
+.marca .wa-block { background: #EAF6EE; border: 1px solid #BFE3CB; border-radius: 14px; padding: 16px 14px 12px; margin: 22px 0 26px; position: relative; }
+.marca .wa-block::before { content: ''; position: absolute; left: 18%; right: 18%; top: -12px; border-top: 1px solid var(--bd); }
+.marca .wa-btn { background: #1A9E4B; font-size: 19px; font-weight: 700; min-height: 58px; border-radius: 14px; animation: wa-latido 1.8s ease-out infinite; }
+.marca .wa-btn:hover { background: #168A41; }
+.marca .wa-btn .wa-ico { width: 26px; height: 26px; }
+.marca .wa-cap { color: #2F5E3F; margin-top: 9px; }
+@keyframes wa-latido {
+  0%   { box-shadow: 0 0 0 0 rgba(26,158,75,.55); transform: scale(1); }
+  12%  { transform: scale(1.03); }
+  24%  { transform: scale(1); }
+  70%  { box-shadow: 0 0 0 14px rgba(26,158,75,0); }
+  100% { box-shadow: 0 0 0 0 rgba(26,158,75,0); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .marca .wa-btn { animation: none; } }
+.marca .specs, .marca .iboxes, .marca .bankrow, .marca .maderas-acc,
+.marca .warranty, .marca .muest-block { margin-bottom: 22px; }
+.marca .specs { background: #fff; border: 1px solid var(--bd); border-radius: 12px; }
+.marca .iboxes { gap: 22px; }
+.marca .ibox-incluye { border-color: #C9D3C1; }
+.marca .ibox:not(.ibox-incluye) .ibox-h { background: var(--terracota); }
+.marca .bankrow { background: #FBF5EA; border: 1px dashed var(--dorado); }
+.marca .maderas-acc { border-color: #C9D3C1; }
+.marca .maderas-acc summary { color: var(--verde); font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 800; }
+.marca .warranty { background: #fff; border: 1px solid #C9D3C1; border-left: 4px solid var(--verde); }
+.marca .warranty strong { font-size: 15px; color: var(--verde); }
+.marca .warranty .tag-link { display: table; margin: 8px auto 0; }
+.marca .muest-block { background: #FBEDE3; border-color: #EBCDB6; border-radius: 12px; }
+/* 3) Fotos de "Conoce las maderas": en el celular eran franjas altas y
+      angostas que estiraban cada tarjeta. Ahora un cuadrado parejo. */
+@media (max-width: 600px) {
+  .marca .wood-chip { grid-template-columns: 72px 1fr; align-items: center; padding: 8px; column-gap: 2px; }
+  .marca .wood-swatch { grid-row: 1 / 3; width: 72px; height: 72px; min-height: 0; border-radius: 8px; align-self: center; }
+  .marca .wood-name { font-size: 16px; padding: 2px 10px 1px; align-self: end; }
+  .marca .wood-desc { font-size: 13.5px; line-height: 1.45; padding: 0 10px 2px; }
+}
 </style>
 </head>
 <body>
@@ -2748,7 +2792,7 @@ function renderForm(p) {
        y la caja del asesor no se agrega cuando esta existe (renderNotaAsesor). */
     var notaTxt = (p === 'peldano')
       ? 'También hacemos teñido y terminaciones especiales. Lo vemos contigo al final.'
-      : 'También hacemos perforaciones, encastres de enchufes y cortes especiales. Lo vemos contigo al final.';
+      : 'También hacemos perforaciones para encimeras y lavaplatos, encastres de enchufes y cortes especiales. Lo vemos contigo al final.';
     var maderaNota = vendorMode ? '' : '<div class="cubierta-nota">' + notaTxt + '</div>';
     /* cubierta también se pide en 8 cm macizo (doble madera en la zona visible).
        Solo en el cotizador de vendedores: el público se mantiene simple. */
