@@ -1291,6 +1291,9 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .marca .coti-hdr { background: var(--verde); border-radius: 12px; padding: 9px 14px; border-bottom: 0; justify-content: center; margin-bottom: 14px; }
 .marca .coti-logo { color: #fff; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 300; letter-spacing: 2px; }
 .marca .coti-logo b { font-family: 'Nanum Myeongjo', serif; font-weight: 700; }
+/* el logo real en blanco (06-10-2026): franja verde de arriba y encabezado de la cotización */
+#s-cargando .logotype .logo-blanco, #s1 .logotype .logo-blanco, #s2 .logotype .logo-blanco { height: 26px; }
+.marca .coti-logo .logo-blanco { display: block; height: 22px; width: auto; margin: 2px auto; }
 .marca .coti-title { font-size: 24px; line-height: 1.2; margin-top: 2px; }
 .marca .coti-para { font-size: 12.5px; margin-bottom: 0; }
 .marca .coti-linea { font-size: 12px; color: var(--tm); margin-bottom: 14px; line-height: 1.5; }
@@ -2350,8 +2353,15 @@ function origenCapturar(params) {
    se marca una vez por sesión de navegación (sessionStorage) y el insert va
    sin .select(): el anon no tiene permiso de lectura sobre embudo_eventos. */
 var embudoListo = false, embudoCola = [], embudoCanal = 'web';
+/* Links compartidos (?s=…): el que manda César o el del cliente que vuelve a
+   mirar su cotización. No son una visita del embudo web, pero lo que importa
+   ahí es si tocan WhatsApp: se cuentan SOLO esos clics, con canal "link"
+   (06-10-2026). Así no inflan las visitas ni las cotizaciones de la web. */
+var embudoSoloClics = false;
+var PASOS_CLIC = ['whatsapp', 'duda', 'muestrario'];
 function embudoTick(paso) {
   if (vendorMode) return;
+  if (embudoSoloClics && PASOS_CLIC.indexOf(paso) === -1) return;
   if (!embudoListo) { embudoCola.push(paso); return; }
   try {
     var k = 'zaru_embudo_' + paso;
@@ -2372,7 +2382,7 @@ function embudoArrancar() {
      no es un cliente y no se cuenta nada */
   var soltar = function() {
     embudoListo = true;
-    embudoTick('visita');
+    embudoTick('visita');   /* en un link compartido lo descarta embudoSoloClics */
     var cola = embudoCola; embudoCola = [];
     cola.forEach(embudoTick);
   };
@@ -2480,12 +2490,13 @@ function espesorFactor(tier) {
    dorado (logo-casa-zaru-og.png) queda solo para la miniatura de WhatsApp,
    que no acepta SVG. */
 var LOGO_URL = 'fotos/logo-casa-zaru.svg';
+/* el mismo SVG en blanco y sin el rectángulo de fondo (06-10-2026, pedido del
+   usuario: "ocupar el logo de Casa Zaru"), para la franja verde y el
+   encabezado de la cotización. Antes ahí iba una imitación en letras. */
+var LOGO_BLANCO_URL = 'fotos/logo-casa-zaru-blanco.svg';
 function applyLogo() {
-  /* en las pantallas del cliente (franja verde, etapa 2) va el logo en texto
-     como en la tarjeta: CASA en Playfair negrita y ZARU fino, en blanco. El
-     SVG tiene fondo propio y sobre verde salía como un rectángulo. */
   document.querySelectorAll('#s-cargando .logotype, #s1 .logotype, #s2 .logotype').forEach(function(el) {
-    el.innerHTML = '<b>CASA</b><span>ZARU</span>';
+    el.innerHTML = '<img class="logo-img logo-blanco" src="' + LOGO_BLANCO_URL + '" alt="Casa Zaru">';
   });
   var probe = new Image();
   probe.onload = function() {
@@ -4687,7 +4698,7 @@ function shell(nombre, cli, fecha, body) {
      200 × 60 cm"), el nombre va chico y sin teléfono (el cliente ya sabe su
      número; sigue guardado). Número y fecha bajan al final (coti-fin, en
      whatsappCTA) y la validez sube junto a los precios (confirmar). */
-  return '<div class="coti-hdr"><div class="coti-logo"><b>CASA</b> ZARU</div></div>' +
+  return '<div class="coti-hdr"><div class="coti-logo"><img class="logo-blanco" src="' + LOGO_BLANCO_URL + '" alt="Casa Zaru"></div></div>' +
   '<div class="coti-title">' + tituloDoc(nombre) + '</div>' +
   '<div class="coti-para">Para ' + escA(cli) + '</div>' +
   llegaListaHtml() +
@@ -8760,9 +8771,19 @@ document.addEventListener('DOMContentLoaded', function() {
   } else if (params.get('s')) {
     /* es un link compartido: el que espera es un cliente mirando SU cotización */
     var ct = document.getElementById('carga-txt'); if (ct) ct.textContent = 'Abriendo tu cotización…';
+    embudoCanal = 'link';
+    embudoSoloClics = true;
+    embudoArrancar();
     loadFromShortCode(params.get('s')).then(function(ok) {
-      if (!ok) { restaurando = false; if (prodDirecto) initProd(prodDirecto); else show('s1'); }
-    }, function(){ restaurando = false; show('s1'); });
+      if (!ok) { linkFallido(); restaurando = false; if (prodDirecto) initProd(prodDirecto); else show('s1'); }
+    }, function(){ linkFallido(); restaurando = false; show('s1'); });
+    /* si el link no abre, la persona cotiza desde cero: vuelve a ser una
+       visita web normal, con todo su embudo */
+    function linkFallido() {
+      embudoSoloClics = false; embudoCanal = 'web';
+      try { sessionStorage.removeItem('zaru_embudo_visita'); } catch (e) {}
+      embudoTick('visita');
+    }
   } else if (!loadFromHash()) {
     /* entrada pública: la única puerta que arma el embudo. El tick de
        'producto' de initProd queda en cola y sale cuando el chequeo de
