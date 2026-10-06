@@ -994,6 +994,15 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-plata span { display:block; font-size:12px; font-weight:400; color:var(--tm); }
 .hz-barra { height:6px; border-radius:3px; background:var(--bg3); margin-bottom:18px; overflow:hidden; }
 .hz-barra span { display:block; height:100%; background:#16A34A; border-radius:3px; transition:width .3s; }
+.hz-metas { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px 14px; margin:0 0 16px; }
+.hz-meta { cursor:pointer; padding:8px 10px 10px; border-radius:10px; border:1px solid transparent; }
+.hz-meta:hover { background:#fff; border-color:var(--bd2); }
+.hz-meta.on { background:#fff; border-color:var(--ac); }
+.hz-meta-l { font-size:15px; color:var(--tx); margin-bottom:6px; }
+.hz-meta-l strong { font-weight:600; }
+.hz-meta-l span { display:block; font-size:13px; color:var(--tm); margin-top:1px; }
+.hz-meta.ok .hz-meta-l span { color:#166534; }
+.hz-meta .hz-barra { margin-bottom:0; }
 .hz-lista { background:#fff; border:1px solid var(--bd2); border-radius:12px; overflow:hidden; }
 .hz-fila { border-bottom:1px solid #F1EADF; }
 .hz-fila:last-child { border-bottom:none; }
@@ -6441,22 +6450,10 @@ async function loadDash() {
   renderVistaActual();   /* los jobs pueden haber cerrado cotizaciones: repinta donde esté */
 }
 
-/* ── VISTA SEGUIMIENTO (un recuadro por cliente, bloques por vendedor / web) ── */
-function renderSeguimiento(){
-  /* fase 3: cada cliente que se pinta en la cola queda registrado con su
-     clase, para que el panel de detalle pueda encontrar al abierto sin
-     recalcular a qué bloque pertenecía. */
-  var pares = [];
-  function segRegistrar(g, cls){ pares.push({ g:g, cls:cls }); return segItem(g, cls); }
-  /* el buscador de arriba (uno solo para todo el panel) reemplazó al campo
-     "Buscar cliente" que vivía acá: filtra igual, y además por producto,
-     estado, mes y monto */
-  var groups = buildSegGroups().filter(grupoPasaOmni);
-  if (segSoloInteresados) groups = groups.filter(function(g){ return !!g.lead.interesado; });
-  var cmp = segComparator();
-  var bloques = segBloquesDef();
-  if (segBloque) bloques = bloques.filter(function(b){ return b.o===segBloque; });
-  var owners = {}; bloques.forEach(function(b){ owners[b.o] = true; });
+/* Clasifica la cola del día. Salió de renderSeguimiento el 06-10-2026 para
+   poder contarla dos veces: con los filtros de la vista (la lista que se ve)
+   y sin ellos (las metas del encabezado, que no cambian por filtrar). */
+function clasificarHoy(groups, owners, cmp){
   var hoy=hoyISO(), lim=addDias(hoy,7);
   /* ── Clasificación en los tres bloques del spec §5.2 ──
      b1 primeros contactos (siempre primero) · b2 prioritarios con toque hoy ·
@@ -6468,8 +6465,12 @@ function renderSeguimiento(){
      se excluía a las tocadas el mismo día. Insistirle a diario al cliente más
      valioso es la forma más rápida de quemarlo. Ahora se le da aire: reaparece
      recién a las 48 h, un día antes de romper el acuerdo de las 72. */
+  var porDueno = {};
   var ballenas = groups.filter(function(g){ return owners[g.owner] && esBallena(g) && !dormido(g) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
-    .sort(function(a,b){ return montoAbierto(b)-montoAbierto(a); }).slice(0,3);
+    .sort(function(a,b){ return montoAbierto(b)-montoAbierto(a); })
+    /* máximo 3 POR GRUPO (06-10-2026): con un tope global, en la vista Todos
+       las del vendedor tapaban a las web y la lista no calzaba con su meta */
+    .filter(function(g){ porDueno[g.owner] = (porDueno[g.owner]||0) + 1; return porDueno[g.owner] <= 3; });
   var esBall = {}; ballenas.forEach(function(g){ esBall[g.key] = true; });
   var b1=[], b1Viejos=[], b1Hoy=[], b2=[], b3=[], conv=[], futuro=[], hoyDone=[], enJuego=0;
   groups.forEach(function(g){
@@ -6513,6 +6514,29 @@ function renderSeguimiento(){
   });
   [b1,b1Viejos,b1Hoy,b2,b3,conv,futuro,hoyDone].forEach(function(a){ a.sort(cmp); });
   b1.concat(b2,b3).forEach(function(g){ enJuego += g.valor; });
+  return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3,
+           conv:conv, futuro:futuro, hoyDone:hoyDone, enJuego:enJuego };
+}
+/* ── VISTA SEGUIMIENTO (un recuadro por cliente, bloques por vendedor / web) ── */
+function renderSeguimiento(){
+  /* fase 3: cada cliente que se pinta en la cola queda registrado con su
+     clase, para que el panel de detalle pueda encontrar al abierto sin
+     recalcular a qué bloque pertenecía. */
+  var pares = [];
+  function segRegistrar(g, cls){ pares.push({ g:g, cls:cls }); return segItem(g, cls); }
+  /* el buscador de arriba (uno solo para todo el panel) reemplazó al campo
+     "Buscar cliente" que vivía acá: filtra igual, y además por producto,
+     estado, mes y monto */
+  var groups = buildSegGroups().filter(grupoPasaOmni);
+  if (segSoloInteresados) groups = groups.filter(function(g){ return !!g.lead.interesado; });
+  var cmp = segComparator();
+  var bloques = segBloquesDef();
+  if (segBloque) bloques = bloques.filter(function(b){ return b.o===segBloque; });
+  var owners = {}; bloques.forEach(function(b){ owners[b.o] = true; });
+  var hoy=hoyISO(), lim=addDias(hoy,7);
+  var C = clasificarHoy(groups, owners, cmp);
+  var ballenas=C.ballenas, b1=C.b1, b1Viejos=C.b1Viejos, b1Hoy=C.b1Hoy, b2=C.b2, b3=C.b3,
+      conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego;
   /* Progreso del día. La meta de toques cuenta TODO el seguimiento real del
      día: ballenas, conversaciones activas y bloque 2. Antes el texto decía que
      ballenas y conversaciones iban "fuera de la meta" pero el cálculo sí las
@@ -6522,15 +6546,37 @@ function renderSeguimiento(){
      bloque 1— y el bloque 3, que es relleno para cuando sobra tiempo.
      Se usa origenHoy() para que el contador y los distintivos de "Contactados
      hoy" no puedan discrepar nunca: es el mismo clasificador. */
-  var b1Hechos = hoyDone.filter(function(g){ return contactadoHoyEs1er(g); }).length;
+  /* ── DOS METAS (06-10-2026): los clientes del vendedor y los web ──
+     Cada grupo lleva su línea y su barra. Se cuentan sobre TODA la cola, sin
+     los filtros de la vista (chips, buscador, ★): filtrar la lista no cambia
+     lo que hay que hacer hoy. La meta de toques se ajusta a lo que de verdad
+     hay pendiente, con metaHoy() de tope: antes pedía 20 cuando solo había 9
+     que contaban y el día no podía quedar verde nunca. */
   var CUENTAN_META = ['ball', 'conv', 'b2'];
-  var b2Hechos = hoyDone.filter(function(g){ return CUENTAN_META.indexOf(origenHoy(g).cls) !== -1; }).length;
-  /* la meta de toques se ajusta a lo que de verdad hay para hacer hoy
-     (06-10-2026): si la lista trae menos seguimientos que la meta, terminar
-     la lista es cumplirla. Antes pedía 20 cuando solo había 9 que contaban
-     y el día no podía quedar verde nunca. */
-  var meta = Math.min(metaHoy(), b2Hechos + ballenas.length + conv.length + b2.length);
-  var diaVerde = (b1.length === 0) && (b2Hechos >= meta);
+  var gruposTodos = buildSegGroups();
+  var metas = segBloquesDef().map(function(b){
+    /* cada grupo se clasifica solo, igual que cuando se filtra la lista por
+       él: así las 3 de "no dejar enfriar" son las mismas que se ven */
+    var solo = {}; solo[b.o] = true;
+    var S = clasificarHoy(gruposTodos, solo, cmp);
+    var hechos = (S.hoyDone);
+    var n1Hechos = hechos.filter(function(g){ return contactadoHoyEs1er(g); }).length;
+    var segHechos = hechos.filter(function(g){ return CUENTAN_META.indexOf(origenHoy(g).cls) !== -1; }).length;
+    var nuevos = (S.b1);
+    var segPend = (S.ballenas).length + (S.conv).length + (S.b2).length;
+    var meta = Math.min(metaHoy(), segHechos + segPend);
+    /* la alerta de velocidad de antes (web sin primer contacto hace +24 h)
+       vive ahora dentro de la línea de su grupo */
+    var lentos = nuevos.filter(function(g){
+      return g.lead.fecha_creacion && (Date.now() - new Date(g.lead.fecha_creacion).getTime()) > 86400000;
+    }).length;
+    var nom = b.o === 'web' ? 'Web' : (isPanelAdmin() ? b.t.replace(/^\S+\s+/, '') : 'Tus clientes');
+    return { o:b.o, t:nom, total:n1Hechos + nuevos.length + meta, hecho:n1Hechos + Math.min(segHechos, meta),
+             nuevos:nuevos.length, seg:Math.max(0, meta - segHechos), lentos:lentos };
+  }).filter(function(m){ return m.total > 0; });
+  /* Tomás trabaja sobre todo los web: en el panel admin van primero */
+  if (isPanelAdmin()) metas.sort(function(a,b){ return (b.o === 'web') - (a.o === 'web'); });
+  var diaVerde = metas.every(function(m){ return m.hecho >= m.total; });
   /* ── REDISEÑO 06-10-2026: UNA SOLA LISTA "HOY" ──
      La clasificación de arriba (ballenas, bloques 1-3, conversaciones) sigue
      igual y decide el ORDEN; lo que cambió es cómo se muestra. Antes eran ocho
@@ -6567,38 +6613,31 @@ function renderSeguimiento(){
     'No cuentan para la meta. Si alguno vale la pena, ábrelo y márcalo como interesado: sube a la lista de hoy.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
   html += plegado('hechos', 'Hechos hoy', hoyDone, 'donehoy', 'Si marcaste alguno por error, ábrelo y deshaz el contacto.');
-  /* alerta de velocidad: cotizaciones web sin primer contacto hace +24h.
-     Solo cuando la lista NO incluye los web (vendedor filtrando sus clientes):
-     si los incluye, esas cotizaciones ya están arriba en la lista. */
-  var lentos = 0;
-  if (!owners.web) groups.forEach(function(g){
-    var x=g.lead;
-    if (isWeb(x) && (x.seg_etapa||0)===0 && x.fecha_creacion &&
-        (Date.now()-new Date(x.fecha_creacion).getTime()) > 86400000) lentos++;
-  });
-  var banner = lentos>0
-    ? '<div class="speed-alert" onclick="setSegBloque(\'web\')">⚡ '+lentos+' cotizaci'+(lentos===1?'ón':'ones')+' web sin primer contacto hace +24h — contáctalas primero →</div>'
-    : '';
-  /* Encabezado: una línea y una barra. La meta es la misma de antes (todos los
-     nuevos + los toques del día), contada igual que el Día Verde. */
+  /* Encabezado: el día y la plata en juego, y debajo una línea por meta con
+     su barra. Tocar una línea filtra la lista a ese grupo (y otra vez, la
+     vuelve a mostrar entera). */
   var diaNom = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][new Date().getDay()];
-  var metaTotal = b1Hechos + b1.length + meta;
-  var metaHecho = b1Hechos + Math.min(b2Hechos, meta);
-  var pct = metaTotal ? Math.round(metaHecho / metaTotal * 100) : 100;
-  var faltanSeg = Math.max(0, meta - b2Hechos);
-  var subTop = diaVerde ? 'Meta cumplida. Si quieres seguir, abre «Cuando termines tu meta diaria».'
-             : b1.length ? (b1.length===1 ? 'Primero el que nadie ha contactado' : 'Primero los '+b1.length+' que nadie ha contactado')+(faltanSeg ? ', después '+faltanSeg+(faltanSeg===1 ? ' seguimiento' : ' seguimientos') : '')+'.'
-             : faltanSeg ? (faltanSeg===1 ? 'Te falta 1 seguimiento.' : 'Te faltan '+faltanSeg+' seguimientos.')
-             : 'Meta cumplida.';
+  function lineaMeta(m){
+    var pct = m.total ? Math.round(m.hecho / m.total * 100) : 100;
+    var listo = m.hecho >= m.total;
+    var falta = [];
+    if (m.nuevos) falta.push(m.nuevos + (m.nuevos === 1 ? ' nuevo' : ' nuevos') + (m.lentos ? ' (' + m.lentos + ' con más de 24 h)' : ''));
+    if (m.seg) falta.push(m.seg + (m.seg === 1 ? ' seguimiento' : ' seguimientos'));
+    var sub = listo ? 'Listo ✓' : ((m.nuevos + m.seg === 1) ? 'Falta ' : 'Faltan ') + falta.join(' y ');
+    var on = (segBloque === m.o);
+    return '<div class="hz-meta' + (listo ? ' ok' : '') + (on ? ' on' : '') + '" onclick="setSegBloque(\'' + (on ? '' : m.o) + '\')" title="' + (on ? 'Toca para ver todos' : 'Toca para ver solo este grupo') + '">' +
+      '<div class="hz-meta-l"><strong>' + m.t + '</strong> · llevas ' + m.hecho + ' de ' + m.total + '<span>' + sub + '</span></div>' +
+      '<div class="hz-barra"><span style="width:' + pct + '%"></span></div></div>';
+  }
   var diaBanner =
     '<div class="hz-top'+(diaVerde?' ok':'')+'">'+
       '<div class="hz-top-l">'+
-        '<div class="hz-dia">'+(diaVerde ? 'Listo por hoy, '+diaNom : 'Hoy '+diaNom+' · llevas <strong>'+metaHecho+' de '+metaTotal+'</strong>')+'</div>'+
-        '<div class="hz-sub">'+subTop+'</div>'+
+        '<div class="hz-dia">'+(diaVerde ? 'Listo por hoy, '+diaNom : 'Hoy '+diaNom)+'</div>'+
+        (diaVerde ? '<div class="hz-sub">Metas cumplidas. Si quieres seguir, abre «Cuando termines tu meta diaria».</div>' : '')+
       '</div>'+
       '<div class="hz-plata">'+fmtM(enJuegoHoy)+'<span>en juego hoy</span></div>'+
     '</div>'+
-    '<div class="hz-barra"><span style="width:'+pct+'%"></span></div>';
+    (metas.length ? '<div class="hz-metas">'+metas.map(lineaMeta).join('')+'</div>' : '');
   /* Métricas del mes POR CLIENTE, no por cotización. Un cliente que pide 5
      cotizaciones y compra una vez es UN cliente ganado, no 1 ganada y 4
      perdidas — contarlo por fila hundía la conversión y el % de contacto
@@ -6640,7 +6679,7 @@ function renderSeguimiento(){
   st.style.display='block';
   /* las métricas del mes quedan como una línea discreta al final: el detalle
      vive en Actividad, y arriba solo va lo que hay que hacer hoy */
-  st.innerHTML = '<div class="hz-wrap">' + banner + diaBanner + '</div>';
+  st.innerHTML = '<div class="hz-wrap">' + diaBanner + '</div>';
   document.getElementById('dash-tbl').innerHTML = '<div class="hz-wrap">' + html +
     '<div class="hz-mes" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos).">'+
       'Este mes: '+clavesMes.length+' clientes ('+mesRows.length+' cotizaciones) · conversión '+convMes+'% ('+cliGan+' de '+cliDecididos+' decididos) · contacto en menos de 24 h '+rapidPct+'%</div></div>';
