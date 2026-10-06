@@ -427,29 +427,32 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .btn-del-row:hover { background:#FEF2F2;border-color:#FCA5A5; }
 .warranty { background: var(--bg3); border: 1px solid var(--bd); border-radius: 7px; padding: 10px 12px; font-size: 13px; color: var(--tm); text-align: center; line-height: 1.5; margin-bottom: 18px; }
 .warranty strong { display: block; font-size: 14px; color: var(--acd); margin-bottom: 3px; }
-.wa-block { margin: 18px 0 6px; }
-.wa-pitch { font-size: 13.5px; color: var(--tm); line-height: 1.65; text-align: center; margin-bottom: 13px; padding: 0 4px; font-style: italic; }
-.wa-btn { display: block; background: #25D366; color: white; border-radius: 10px; padding: 14px; font-size: 16.5px; font-family: 'Cormorant Garamond', serif; font-weight: 600; text-decoration: none; letter-spacing: 1px; text-align: center; }
-.wa-btn:hover { background: #1ebe5d; }
-
-/* ── VALUE SCREEN s2b ── */
-.val-body { padding: 28px 16px 96px; max-width: 480px; margin: 0 auto; }   /* el 96px de abajo despeja la .cta-dock fija */
-.val-h { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: var(--tx); text-align: center; margin-bottom: 8px; letter-spacing: .5px; }
-.val-lead { font-size: 14px; color: var(--tm); text-align: center; line-height: 1.7; margin-bottom: 22px; }
-.val-list { list-style: none; margin-bottom: 22px; }
-.val-list li { padding: 10px 0; border-bottom: 1px solid var(--bd); font-size: 15px; color: var(--tx); display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
-.val-list li:last-child { border-bottom: none; }
-.val-icon { color: var(--ac); font-size: 16.5px; flex-shrink: 0; margin-top: 2px; }
-.val-steps { background: var(--bg3); border: 1px solid var(--bd); border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; }
-.val-steps-h { font-size: 11px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: var(--acd); margin-bottom: 12px; text-align: center; }
-.val-step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-.val-step:last-child { margin-bottom: 0; }
-.val-step-n { background: var(--ac); color: white; border-radius: 50%; width: 22px; height: 22px; min-width: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-.val-step-t { font-size: 14px; color: var(--tx); line-height: 1.6; }
-.val-step-t strong { color: var(--acd); }
-/* ── MUESTRARIO DE MADERA (s2b, solo cotizador cubiertas-landing) ── */
-.wood-muestrario { margin-bottom: 24px; }
-.wood-muestrario-h { font-size: 12.5px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--acd); margin-bottom: 14px; text-align: center; }
+/* botón de WhatsApp: va debajo de los precios (lo mueve confirmar). Verde más
+   oscuro que el #25D366 de la marca WhatsApp: blanco sobre ese daba 2:1 de
+   contraste, ilegible al sol; sobre #167A45 da 5,4:1 */
+.wa-block { margin: 4px 0 20px; }
+.wa-btn { display: flex; align-items: center; justify-content: center; gap: 9px; background: #167A45; color: white; border-radius: 12px; padding: 14px; font-size: 17px; font-family: 'Jost', sans-serif; font-weight: 600; text-decoration: none; letter-spacing: .3px; text-align: center; min-height: 52px; }
+.wa-btn:hover { background: #126A3B; }
+.wa-ico { width: 22px; height: 22px; flex-shrink: 0; }
+.wa-cap { font-size: 12.5px; color: var(--tm); text-align: center; margin-top: 7px; }
+.doc-acciones { margin: 6px 0 10px; }
+/* el desplegable de maderas en la cotización (antes era la pantalla s2b) */
+.maderas-acc { border: 1px solid var(--bd); border-radius: 12px; background: white; margin-bottom: 18px; }
+.maderas-acc summary { cursor: pointer; padding: 13px 14px; font-size: 14.5px; font-weight: 600; color: var(--acd); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.maderas-acc summary::-webkit-details-marker { display: none; }
+.maderas-acc summary::after { content: '+'; font-size: 20px; font-weight: 400; color: var(--tm); }
+.maderas-acc[open] summary::after { content: '−'; }
+.maderas-acc .wood-grid { padding: 0 12px 12px; }
+/* formulario: link para cambiar WhatsApp ↔ correo y la línea de confianza bajo el botón */
+.con-modo { color: var(--acd); text-decoration: underline; white-space: nowrap; }
+.confianza { font-size: 12px; color: var(--tm); text-align: center; margin-top: 9px; line-height: 1.5; }
+/* peldaños: contrahuellas y guía de medición */
+.ct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.ct-grid .finput { margin-top: 5px; }
+.como-medir { border: 1px solid var(--bd); border-radius: 10px; background: white; margin-bottom: 16px; }
+.como-medir summary { cursor: pointer; padding: 11px 13px; font-size: 14px; font-weight: 600; color: var(--acd); }
+.como-medir svg { display: block; width: 100%; max-width: 300px; margin: 0 auto 4px; padding: 0 12px; }
+.como-medir ul { margin: 0; padding: 0 14px 12px 30px; font-size: 13.5px; color: var(--tm); line-height: 1.55; }
 .wood-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
 .wood-chip { border: 1px solid var(--bd); border-radius: 10px; overflow: hidden; background: white; box-shadow: 0 1px 3px rgba(44,26,8,.06); }
 .wood-swatch { height: 140px; background-size: cover; background-position: center; }
@@ -1203,69 +1206,42 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
     <!-- precio estimado en vivo: el cliente ve un numero ANTES de dar sus datos.
          calcLive() ya calculaba el rango, pero este bloque no existia en el DOM. -->
     <div class="live-price-wrap">
-      <div class="lp-label">Precio estimado</div>
-      <div class="lp-range" id="live-range"><span class="lp-empty">Ingresa las medidas</span></div>
-      <div class="lp-note" id="live-note" style="display:none">Según la madera que elijas · IVA incluido · Envío aparte</div>
+      <div class="lp-label">Tu precio estimado</div>
+      <div class="lp-range" id="live-range"><span class="lp-empty">Escribe las medidas para ver tu precio</span></div>
+      <div class="lp-note" id="live-note" style="display:none">Según la madera · IVA incluido · Envío aparte · Hasta 3 cuotas sin interés</div>
     </div>
-    <!-- 2º recién ahora los datos de contacto -->
+    <!-- 2º recién ahora los datos de contacto. Revisión UX del 06-10-2026: de los
+         que ven su precio solo el 23% dejaba sus datos, y el bloque no decía qué
+         se recibía a cambio. Ahora lo dice el título y lo repite el botón. -->
     <div class="datos-sec">
-      <div class="datos-h">Déjanos tus datos para ver tu cotización</div>
+      <div class="datos-h">Mira el precio exacto de cada madera</div>
       <div class="fsec">
-        <label class="flabel" for="f-cli">Tu nombre <span class="req">*</span></label>
-        <input class="finput" type="text" id="f-cli" placeholder="Ej. Juan Pérez" autocomplete="name">
+        <label class="flabel" for="f-cli">Tu nombre</label>
+        <input class="finput" type="text" id="f-cli" placeholder="Ej. Camila Soto" autocomplete="name">
       </div>
       <div class="fsec" style="margin-bottom:0">
-        <label class="flabel" for="f-con">Teléfono WhatsApp o correo <span class="req">*</span></label>
-        <input class="finput" type="text" id="f-con" placeholder="+56 9 1234 5678 o tu@correo.cl" autocomplete="tel">
-        <div class="finput-hint">Con WhatsApp te respondemos más rápido.</div>
+        <label class="flabel" for="f-con" id="f-con-lbl">Tu WhatsApp</label>
+        <!-- type="tel": abre el teclado numérico (con type="text" salía el de letras) -->
+        <input class="finput" type="tel" inputmode="tel" id="f-con" placeholder="+56 9 1234 5678" autocomplete="tel">
+        <div class="finput-hint">Solo lo usamos para tu cotización. No compartimos tus datos.
+          <a href="#" class="con-modo" id="f-con-modo" onclick="conModo(); return false;">Prefiero dejar mi correo</a></div>
       </div>
     </div>
-    <div class="msg-err hidden" id="f-err">Por favor completa tus datos para continuar.</div>
-    <button class="btn-primary" id="btn-calc">Ver mi cotización →</button>
+    <div class="msg-err hidden" id="f-err"></div>
+    <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
+    <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
     <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar y cotizar otro producto</button>
     </aside>
   </div>
 </div>
 
-<!-- ══ s2b: VALOR ══ -->
-<div id="s2b" class="hidden">
-  <div class="logo-bar">
-    <button class="btn-nav-sm left" id="btn-s2b-back">← Editar</button>
-    <div class="logotype">CASA ZARU</div>
-    <div><span class="badge">Cotizador en Línea</span></div>
-  </div>
-  <div class="val-body">
-    <h2 class="val-h">Tu pieza, hecha a mano</h2>
-    <div class="dash-divider"></div>
-    <p class="val-lead">Antes de ver el precio, esto es lo que incluye cada pedido de Casa Zaru.</p>
-    <div class="wood-muestrario hidden" id="s2b-muestrario">
-      <div class="wood-muestrario-h">Conoce las maderas</div>
-      <div class="wood-grid">
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/oregon.jpg')" data-wood="pino-oregon"></div><div class="wood-name">Pino Oregón</div><div class="wood-desc">La más accesible. Muy estable, ideal para ambientes rústicos.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/castano.jpg')" data-wood="castano"></div><div class="wood-name">Castaño</div><div class="wood-desc">Veta grande y marcada, de tono dorado miel. Una de las más duras.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/cipres.jpg')" data-wood="cipres"></div><div class="wood-name">Ciprés</div><div class="wood-desc">Con nudos a la vista. Recomendada para ambientes húmedos y exterior.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/manio.jpg')" data-wood="manio"></div><div class="wood-name">Mañío</div><div class="wood-desc">Textura fina y pareja, de tono cálido y particular.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/coihue.jpg')" data-wood="coihue"></div><div class="wood-name">Coihue</div><div class="wood-desc">Veta fina con suaves tonos café rojizos. La más dura que trabajamos: ideal para alto tráfico.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/rauli.jpg')" data-wood="rauli"></div><div class="wood-name">Raulí</div><div class="wood-desc">Un clásico del sur. Veta rojiza profunda.</div></div>
-        <div class="wood-chip"><div class="wood-swatch" style="background-image:url('https://cotizador.casazaru.cl/fotos/maderas/lenga.jpg')" data-wood="lenga"></div><div class="wood-name">Lenga</div><div class="wood-desc">Del extremo sur patagónico. Muy dura, de veta fina con tonos rojizos suaves y vetas claras.</div></div>
-      </div>
-    </div>
-    <ul class="val-list">
-      <li><span class="val-icon">✦</span><span>Madera maciza <strong>100% sólida</strong> del sur de Chile — sin MDF, sin melamina, sin enchapado.</span></li>
-      <li><span class="val-icon">✦</span><span>Fabricada <strong>a medida en taller propio</strong>, 7 a 15 días hábiles desde la confirmación.</span></li>
-      <li><span class="val-icon">✦</span><span>Terminada a mano, pieza por pieza. Acabados: <strong>vitrificado mate, semibrillo o aceite-cera Osmo</strong>. Tú eliges.</span></li>
-      <li><span class="val-icon">✦</span><span>Incluye <strong>garantía de 5 años</strong> por fallas estructurales de fabricación.</span></li>
-    </ul>
-    <div class="val-steps">
-      <div class="val-steps-h">Cómo funciona el proceso</div>
-      <div class="val-step"><div class="val-step-n">1</div><div class="val-step-t">Confirmas y pagas el <strong>70%</strong> para entrar a producción.</div></div>
-      <div class="val-step"><div class="val-step-n">2</div><div class="val-step-t">Fabricamos tu pieza. <strong>Te enviamos foto</strong> cuando esté terminada, antes de embalarla.</div></div>
-      <div class="val-step"><div class="val-step-n">3</div><div class="val-step-t">Apruebas y pagas el saldo del <strong>30%</strong>. Despachamos a todo Chile —el envío se cobra aparte, según destino— o lo retiras en nuestro taller en Villarrica.</div></div>
-    </div>
-  </div>
-  <div class="cta-dock"><button class="btn-primary" id="btn-ver-coti">Ver mi cotización →</button></div>
-</div>
+<!-- La pantalla intermedia s2b («Tu pieza, hecha a mano») se eliminó el
+     06-10-2026 por la revisión UX: venía DESPUÉS de los datos y la cotización
+     recién se guardaba con su botón, así que quien la abandonaba se perdía con
+     su contacto ya escrito (53 → 50 en 14 días). Su contenido pasó a la
+     cotización: promesas en "Tu pedido incluye", el proceso en "Pago y
+     proceso" y las 7 maderas en el desplegable "Conoce las maderas". -->
 
 <!-- ══ s3: QUOTE ══ -->
 <div id="s3" class="hidden">
@@ -2128,6 +2104,47 @@ function currentPR() {
 function fijoUnidad() {
   return (prod === 'banca' || prod === 'pcocina') ? (PR[prod].fijo || 0) : 0;
 }
+/* ── PELDAÑOS: CONTRAHUELLAS (06-10-2026) ──
+   La pieza vertical entre peldaños, opcional, de 2 cm: se cobra como repisa
+   por m² (PR.repisa, editable en el Manual). Antes no existía y los clientes
+   la cotizaban como peldaños sueltos ("107 × 13", nueve veces en 60 días).
+   Por defecto va una por peldaño, con el largo de su peldaño; la cantidad se
+   puede corregir (hay escaleras con una contrahuella más que peldaños). */
+function nPeldanos() {
+  var n = 0, largo = 0;
+  for (var i = 1; i <= nrows; i++) {
+    var lgEl = document.getElementById('lg'+i), anEl = document.getElementById('an'+i), caEl = document.getElementById('ca'+i);
+    if (!lgEl || !lgEl.value || !anEl || !anEl.value) continue;
+    var ca = parseInt((caEl && caEl.value) || 1) || 1;
+    n += ca; largo += (parseFloat(lgEl.value) || 0) * ca;
+  }
+  return { n: n, largoProm: n ? largo / n : 0 };
+}
+function contraSync() {
+  var cantEl = document.getElementById('ct-cant');
+  if (!cantEl || cantEl.dataset.manual) return;
+  var n = nPeldanos().n;
+  cantEl.value = n ? n : '';
+}
+function contraToggle() {
+  var on = !!(document.getElementById('ct-on') || {}).checked;
+  var box = document.getElementById('ct-box');
+  if (box) box.classList.toggle('hidden', !on);
+  calcLive();
+}
+function contraDatos() {
+  if (prod !== 'peldano') return null;
+  var chk = document.getElementById('ct-on');
+  if (!chk || !chk.checked) return null;
+  var alto = parseFloat((document.getElementById('ct-alto') || {}).value) || 0;
+  var p = nPeldanos();
+  if (!(alto > 0) || !p.n) return null;
+  var cantEl = document.getElementById('ct-cant');
+  var cant = parseInt(cantEl && cantEl.value) || p.n;
+  return { alto: alto, cant: cant, largo: p.largoProm, m2: (p.largoProm / 100) * (alto / 100) * cant,
+           manual: !!(cantEl && cantEl.dataset.manual) };
+}
+function contraValor(tier) { var c = contraDatos(); return c ? c.m2 * PR.repisa[tier] : 0; }
 function setPeldanoEspesor(val) {
   peldanoEspesor = val;
   calcLive();
@@ -2227,7 +2244,7 @@ async function nextQ() {
 var restaurando = false;
 function show(id) {
   if (restaurando && id !== 's3') return;
-  ['s-cargando','s1','s2','s2b','s3','s-dash','s-login'].forEach(function(i) {
+  ['s-cargando','s1','s2','s3','s-dash','s-login'].forEach(function(i) {
     var el = document.getElementById(i); if (el) el.classList.add('hidden');
   });
   document.getElementById(id).classList.remove('hidden');
@@ -2273,7 +2290,11 @@ function calcLive() {
       nUnid += ca;
     }
     var fijoLive = fijoUnidad() * nUnid;
-    if (sumM2 > 0) { bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive; alto = sumM2 * currentPR().alto * espesorFactor('alto') + fijoLive; }
+    if (prod === 'peldano') contraSync();
+    if (sumM2 > 0) {
+      bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive + contraValor('bajo');
+      alto = sumM2 * currentPR().alto * espesorFactor('alto') + fijoLive + contraValor('alto');
+    }
 
   } else if (prod === 'mesa') {
     /* cubierta + base sugerida del modelo, por cada mesa cotizada */
@@ -2328,10 +2349,16 @@ function calcLive() {
     var exT = getExtrasTotal(liveM2);
     bajo += rebordeValor('bajo'); alto += rebordeValor('alto');   /* el reborde cuesta según la madera */
     rangeEl.innerHTML = fmt(bajo + exT) + '<span class="sep-dash"> — </span>' + fmt(alto + exT);
+    /* peldaños: la gente compara por unidad (la tienda vende por peldaño), así
+       que además del total se muestra cuánto sale cada uno */
+    var nP = (prod === 'peldano') ? nPeldanos().n : 0;
+    noteEl.textContent = (nP > 1)
+      ? (nP + ' peldaños · ' + fmt((bajo + exT) / nP) + ' a ' + fmt((alto + exT) / nP) + ' c/u' + (contraDatos() ? ' con contrahuella' : '') + ' · IVA incluido · Envío aparte')
+      : 'Según la madera · IVA incluido · Envío aparte · Hasta 3 cuotas sin interés';
     noteEl.style.display = 'block';
     embudoTick('medidas');
   } else {
-    rangeEl.innerHTML = '<span class="lp-empty">Ingresa las medidas</span>';
+    rangeEl.innerHTML = '<span class="lp-empty">Escribe las medidas para ver tu precio</span>';
     noteEl.style.display = 'none';
   }
 }
@@ -2403,7 +2430,11 @@ function initProd(p) {
   cubiertaEspesor = '4';
   ergoCerrada = false;   /* cada cotización parte mostrando la sugerencia */
   mesaTipo = 'comedor';  /* el catálogo de mesas parte en comedor (renderForm lo lee) */
-  document.getElementById('f-title').textContent = isPuertas ? 'Puertas de madera' : PNAME[p];
+  /* el título invita a hacer, no nombra la categoría (revisión UX 06-10-2026) */
+  var TITULO_FORM = { cubierta:'Cotiza tu cubierta', repisa:'Cotiza tu repisa', peldano:'Cotiza tus peldaños',
+    puertas:'Cotiza tu puerta', mesa:'Cotiza tu mesa', revestimiento:'Cotiza tu revestimiento',
+    banca:'Cotiza tus bancas', pcocina:'Cotiza tus puertas de cocina' };
+  document.getElementById('f-title').textContent = TITULO_FORM[p] || (isPuertas ? 'Puertas de madera' : PNAME[p]);
   document.getElementById('f-err').classList.add('hidden');
   renderForm(p);
   /* Extras: solo en el cotizador del vendedor. En el público confundían —hay que
@@ -2441,7 +2472,9 @@ function renderForm(p) {
         '</select>' +
       '</div>' :
       '<div class="fsec">' +
-        '<label class="flabel">¿Para qué espacio es? <span class="req">*</span></label>' +
+        /* nunca fue obligatorio (vacío pasa como "otro"), pero el asterisco
+           lo hacía parecer una barrera antes de las medidas */
+        '<label class="flabel">¿Dónde va? <span style="font-weight:400;color:var(--tm)">(opcional)</span></label>' +
         '<select class="fsel" id="f-uso" onchange="usoAviso()">' +
           '<option value="">Selecciona el uso…</option>' +
           '<option value="cocina">Cocina</option>' +
@@ -2477,19 +2510,49 @@ function renderForm(p) {
         '</select>' +
       '</div>' : '';
     var dimLbl = (p === 'banca') ? 'Medidas del asiento (4 cm de espesor)'
-               : (p === 'pcocina') ? 'Medidas de cada puerta (2 cm de espesor)' : 'Dimensiones';
+               : (p === 'pcocina') ? 'Medidas de cada puerta (2 cm de espesor)'
+               : (p === 'peldano') ? 'Medidas de cada peldaño' : 'Dimensiones';
     var fijoHint = (p === 'banca')
       ? '<div class="finput-hint">Cada banca suma <strong>' + fmt(PR.banca.fijo) + '</strong> de patas y armado. En «Cant.» va el número de bancas de esa medida.</div>'
       : (p === 'pcocina')
       ? '<div class="finput-hint">Cada puerta suma <strong>' + fmt(PR.pcocina.fijo) + '</strong> sobre el valor de la madera. En «Cant.» va el número de puertas de esa medida.</div>'
+      : (p === 'peldano')
+      ? '<div class="finput-hint">En «Cant.» va cuántos peldaños tienen esa medida.</div>'
       : '';
+    /* ── PELDAÑOS (06-10-2026) ── 96 cotizaciones y 0 ventas en 60 días. Lo
+       que hacen los mejores configuradores de escaleras (ViewRail, Stairbox,
+       Kalafquén acá): nombres de medida que se entienden ("fondo", no
+       "ancho"), cómo medir a mano, contrahuellas en la misma cotización y el
+       precio por peldaño, que es como compara la gente. */
+    var peldanoExtra = (p !== 'peldano') ? '' :
+      '<div class="fsec">' +
+        '<label class="rb-chk" style="font-size:14.5px"><input type="checkbox" id="ct-on" onchange="contraToggle()"> Agregar contrahuellas (2 cm)</label>' +
+        '<div class="finput-hint" style="margin-top:2px">La pieza vertical que tapa el frente de cada escalón.</div>' +
+        '<div id="ct-box" class="hidden"><div class="ct-grid">' +
+          '<label class="flabel">Alto (cm)<input class="finput" type="number" inputmode="decimal" id="ct-alto" placeholder="18" min="1"></label>' +
+          '<label class="flabel">Cantidad<input class="finput" type="number" inputmode="numeric" id="ct-cant" min="1" oninput="this.dataset.manual=1"></label>' +
+        '</div><div class="finput-hint">Una por peldaño. Corrige la cantidad si tu escalera lleva otra en el arranque.</div></div>' +
+      '</div>' +
+      '<details class="como-medir"><summary>¿Cómo medir?</summary>' +
+        '<svg viewBox="0 0 240 104" role="img" aria-label="Corte de una escalera: el fondo es la profundidad del peldaño y el alto es la contrahuella">' +
+          '<path d="M14 92 H86 V60 H158 V28 H226" fill="none" stroke="#7A5620" stroke-width="3" stroke-linejoin="round"/>' +
+          '<path d="M86 52 H166" stroke="#B5652E" stroke-width="1.5" marker-start="url(#cm-a)" marker-end="url(#cm-a)"/>' +
+          '<path d="M78 92 V60" stroke="#B5652E" stroke-width="1.5" marker-start="url(#cm-a)" marker-end="url(#cm-a)"/>' +
+          '<defs><marker id="cm-a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#B5652E"/></marker></defs>' +
+          '<text x="126" y="46" text-anchor="middle" font-size="11" fill="#6B5840">Fondo</text>' +
+          '<text x="72" y="80" text-anchor="end" font-size="11" fill="#6B5840">Alto</text>' +
+        '</svg>' +
+        '<ul><li><strong>Largo:</strong> de lado a lado del escalón.</li>' +
+        '<li><strong>Fondo:</strong> desde la pared o la contrahuella hasta el borde. Suma 2 a 3 cm si quieres que sobresalga.</li>' +
+        '<li>Mide 2 o 3 escalones: a veces no son iguales.</li></ul>' +
+      '</details>';
     c.innerHTML = usoField + espCubField +
       '<div class="fsec">' +
         '<label class="flabel">' + dimLbl + '</label>' + fijoHint +
         '<div class="col-labels dg">' +
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
-          '<div class="col-lbl">Ancho cm</div>' +
+          '<div class="col-lbl">' + (p === 'peldano' ? 'Fondo cm' : 'Ancho cm') + '</div>' +
           '<div class="col-lbl nar">Cant.</div>' +
           '<div class="col-lbl del"></div>' +
         '</div>' +
@@ -2497,6 +2560,7 @@ function renderForm(p) {
         '<button class="btn-add" id="btn-add-row">'+addRowLabel+'</button>' +
         maderaNota +
       '</div>' +
+      peldanoExtra +
       vEspesorFieldHtml() + vExtrasFieldHtml();
     c.addEventListener('click', function(e) {
       if (e.target.closest('#btn-add-row')) addRow();
@@ -3506,10 +3570,11 @@ function vidrioExtraDatos() {
 }
 
 function dimRow(n) {
+  var ph = (prod === 'peldano') ? ['100', '28'] : ['220', '60'];   /* un peldaño típico, no una cubierta */
   return '<div class="dim-row dg" id="r'+n+'">' +
     '<span class="rnum">'+n+'</span>' +
-    '<input type="number" inputmode="decimal" placeholder="220" min="1" id="lg'+n+'">' +
-    '<input type="number" inputmode="decimal" placeholder="60"  min="1" id="an'+n+'">' +
+    '<input type="number" inputmode="decimal" placeholder="'+ph[0]+'" min="1" id="lg'+n+'">' +
+    '<input type="number" inputmode="decimal" placeholder="'+ph[1]+'"  min="1" id="an'+n+'">' +
     '<input type="number" inputmode="numeric" placeholder="1"   min="1" value="1" class="nar" id="ca'+n+'">' +
     '<button type="button" class="btn-del-row" onclick="removeRow(\'drows\','+n+')" title="Quitar">✕</button>' +
   '</div>';
@@ -3648,47 +3713,62 @@ function generar() {
   savedQnum = null;
   var cli   = document.getElementById('f-cli').value.trim();
   conStr    = document.getElementById('f-con').value.trim();
+  /* el "+56 9" que se pone solo al tocar el campo no cuenta como contacto */
+  if (/^\+?\s*56\s*9?\s*$/.test(conStr)) conStr = '';
   var errEl = document.getElementById('f-err');
+  var porCorreo = conModoCorreo;
+  function falta(txt) { errEl.textContent = txt; errEl.classList.remove('hidden'); }
   /* primero lo que le falta a la pieza y después los datos de contacto: al
      revés, el cliente escribía nombre y WhatsApp para enterarse recién ahí de
      que le faltaba el modelo */
   if (!validarProducto(errEl)) return;
-  if (!cli) { errEl.textContent = 'Escribe tu nombre para continuar.'; errEl.classList.remove('hidden'); return; }
-  if (!conStr) { errEl.textContent = 'Escribe tu WhatsApp o tu correo para continuar.'; errEl.classList.remove('hidden'); return; }
-  if (!waPhone(conStr) && !esCorreo(conStr)) { errEl.textContent = 'Revisa tu contacto: un celular (+56 9 1234 5678) o un correo válido.'; errEl.classList.remove('hidden'); return; }
+  if (!cli) return falta('Escribe tu nombre.');
+  if (!conStr) return falta(porCorreo ? 'Escribe tu correo para ver tu cotización.' : 'Escribe tu WhatsApp para ver tu cotización.');
+  if (!waPhone(conStr) && !esCorreo(conStr))
+    return falta(porCorreo ? 'Revisa el correo (ej. nombre@gmail.com).' : 'Revisa el número: son 8 dígitos después del +56 9.');
   var telChk = waPhone(conStr);
-  if (telChk && !esCorreo(conStr) && telBasura(telChk)) { errEl.textContent = 'Ese número no parece un celular real. Revísalo — lo necesitamos para enviarte la cotización.'; errEl.classList.remove('hidden'); return; }
+  if (telChk && !esCorreo(conStr) && telBasura(telChk)) return falta('Ese número no parece real. Revísalo: por ahí te contactamos.');
   errEl.classList.add('hidden');
   uso = usoActual();
-  var muestrarioEl = document.getElementById('s2b-muestrario');
-  if (muestrarioEl) {
-    /* El muestrario se muestra en todos los productos. Excepcion: revestimiento
-       solo se fabrica en Cipres y Coihue (ver PR.revestimiento), asi que ahi se
-       ocultan las maderas que no aplican para no ofrecer algo que no hacemos. */
-    var maderasProd = (prod === 'revestimiento') ? ['cipres', 'coihue'] : null;
-    [].forEach.call(muestrarioEl.querySelectorAll('.wood-chip'), function (chip) {
-      var sw = chip.querySelector('[data-wood]');
-      var key = sw ? sw.getAttribute('data-wood') : '';
-      chip.style.display = (!maderasProd || maderasProd.indexOf(key) !== -1) ? '' : 'none';
-    });
-    /* Lo que INCLUYE el pedido va primero y las maderas después (21-08-2026):
-       en el orden original las 7 tarjetas de madera empujaban la lista fuera de
-       la pantalla y la promesa se leía recién después de scrollear. Se mueve
-       acá y no en el HTML porque este bloque ya maneja el muestrario; correrlo
-       de nuevo no hace nada, el nodo ya quedó en su lugar. */
-    var listaEl = document.querySelector('#s2b .val-list');
-    if (listaEl) listaEl.insertAdjacentElement('afterend', muestrarioEl);
-    muestrarioEl.classList.remove('hidden');
-  }
   embudoTick('datos');
-  show('s2b');
+  /* directo a la cotización, que es donde se guarda: antes había una pantalla
+     intermedia y el contacto se perdía si el cliente la abandonaba */
+  confirmar();
+}
+/* ── CONTACTO: WHATSAPP O CORREO ──
+   El campo parte como WhatsApp (teclado numérico y "+56 9" puesto al tocarlo);
+   el link de abajo lo cambia a correo y de vuelta. conStr se sigue leyendo del
+   mismo #f-con, así que guardar, links y panel no cambian. */
+var conModoCorreo = false;
+function conModo(forzar) {
+  conModoCorreo = (typeof forzar === 'boolean') ? forzar : !conModoCorreo;
+  var inp = document.getElementById('f-con'), lbl = document.getElementById('f-con-lbl'), lnk = document.getElementById('f-con-modo');
+  if (!inp) return;
+  if (conModoCorreo) {
+    inp.type = 'email'; inp.setAttribute('inputmode', 'email'); inp.setAttribute('autocomplete', 'email');
+    inp.placeholder = 'nombre@correo.cl';
+    if (inp.value.indexOf('@') === -1) inp.value = '';   /* un número a medias no sirve como correo */
+    if (lbl) lbl.textContent = 'Tu correo';
+    if (lnk) lnk.textContent = 'Prefiero WhatsApp';
+  } else {
+    inp.type = 'tel'; inp.setAttribute('inputmode', 'tel'); inp.setAttribute('autocomplete', 'tel');
+    inp.placeholder = '+56 9 1234 5678';
+    if (inp.value.indexOf('@') !== -1) inp.value = '';   /* ni un correo como número */
+    if (lbl) lbl.textContent = 'Tu WhatsApp';
+    if (lnk) lnk.textContent = 'Prefiero dejar mi correo';
+  }
+}
+/* al tocar el campo vacío en modo WhatsApp se pone el "+56 9 ": quedan los 8 dígitos */
+function conPrefijo() {
+  var inp = document.getElementById('f-con');
+  if (inp && !conModoCorreo && !inp.value.trim()) inp.value = '+56 9 ';
 }
 
 async function confirmar() {
   if (confirming) return;   /* ya se está procesando este clic */
   confirming = true;
-  var btn = document.getElementById('btn-ver-coti');
-  if (btn) { btn.disabled = true; btn.dataset.txt = btn.textContent; btn.textContent = 'Generando…'; }
+  var btn = document.getElementById('btn-calc');
+  if (btn) { btn.disabled = true; btn.dataset.txt = btn.textContent; btn.textContent = 'Preparando tu cotización…'; }
   try {
     var cli   = document.getElementById('f-cli').value.trim();
     var fecha = fechaDocTexto();
@@ -3703,7 +3783,12 @@ async function confirmar() {
       : null;
     shareShortUrl = fromHash ? location.href : await buildShortUrl();
     var html = combo.length ? htmlCombinada(cli, fecha) : htmlProducto(cli, fecha);
-    document.getElementById('q-out').innerHTML = html;
+    var qOut = document.getElementById('q-out');
+    qOut.innerHTML = html;
+    /* el botón de WhatsApp, justo debajo de los precios (en la combinada, del
+       total, que es el último bloque de precios del documento) */
+    var waB = qOut.querySelector('.wa-block'), bloquesPrecio = qOut.querySelectorAll('.precios');
+    if (waB && bloquesPrecio.length) bloquesPrecio[bloquesPrecio.length - 1].insertAdjacentElement('afterend', waB);
     show('s3');
     embudoTick('cotizacion');
     /* La URL del navegador solo se reemplaza por el link compartible cuando NO
@@ -3850,11 +3935,22 @@ function htmlCubierta(cli, fecha) {
   var vExtrasTot = vExtrasList.reduce(function(a,e){ return a+e.valor; }, 0);
   /* banca y puerta de cocina suman un fijo por unidad (0 en el resto) */
   var fijoU = fijoUnidad(), fijoTot = fijoU * nUnid;
+  /* peldaños con contrahuellas: van en cada precio, cobradas como repisa 2 cm */
+  var ct = contraDatos();
+  var ctV = function(t){ return ct ? ct.m2 * PR.repisa[t] : 0; };
   var tierRows = [
-    {label: 'Pino Oregón',              tier: 'bajo',  total: sumM2 * currentPR().bajo  * espesorFactor('bajo')  + rebordeValor('bajo')  + vExtrasTot + fijoTot},
-    {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: sumM2 * currentPR().medio * espesorFactor('medio') + rebordeValor('medio') + vExtrasTot + fijoTot},
-    {label: 'Coihue / Raulí / Lenga',   tier: 'alto',  total: sumM2 * currentPR().alto  * espesorFactor('alto')  + rebordeValor('alto')  + vExtrasTot + fijoTot}
+    {label: 'Pino Oregón',              tier: 'bajo',  total: sumM2 * currentPR().bajo  * espesorFactor('bajo')  + rebordeValor('bajo')  + vExtrasTot + fijoTot + ctV('bajo')},
+    {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: sumM2 * currentPR().medio * espesorFactor('medio') + rebordeValor('medio') + vExtrasTot + fijoTot + ctV('medio')},
+    {label: 'Coihue / Raulí / Lenga',   tier: 'alto',  total: sumM2 * currentPR().alto  * espesorFactor('alto')  + rebordeValor('alto')  + vExtrasTot + fijoTot + ctV('alto')}
   ];
+  var esPeld = (prod === 'peldano');
+  var ctNota = ct
+    ? '<div class="info-bar">Contrahuellas de 2 cm: <strong>' + ct.cant + ' de ' + (Math.round(ct.largo * 10) / 10) + ' × ' + ct.alto + ' cm</strong> · ' + ct.m2.toFixed(2) + ' m² · incluidas en cada precio</div>'
+    : '';
+  /* precio por peldaño en cada tarjeta: la tienda vende por unidad y así compara la gente */
+  var porPeldano = (esPeld && nUnid > 1) ? function(r){
+    return '<span class="mesa-desglose">' + fmt(r.total / nUnid) + ' por peldaño' + (ct ? ', con su contrahuella' : '') + '</span>';
+  } : null;
   var vEsp = vEspesorFinal();
   var esp = vEsp || (es8cm() ? '8 cms macizo — incluye 4 cms extra de espesor' :
     (prod==='cubierta' ? 'De 2,1 a 4,0 cms. Tú eliges' : prod==='peldano' ? (getPeldanoEspesor() + ' cms') :
@@ -3872,26 +3968,29 @@ function htmlCubierta(cli, fecha) {
     total_bajo:  Math.round(tierRows[0].total),
     total_medio: Math.round(tierRows[1].total),
     total_alto:  Math.round(tierRows[2].total)
-  }, filas.map(function(f){ return {largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; }));
+  }, filas.map(function(f){ return {largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; })
+     .concat(ct ? [{ modelo:'Contrahuella', largo_cm: Math.round(ct.largo * 10) / 10, ancho_cm: ct.alto, cantidad: ct.cant, m2: ct.m2 }] : []));
   return shell(PNAME[prod], cli, fecha,
     (uso === 'exterior' ? '<div class="aviso-ext">☂️ ' + AVISO_EXTERIOR + '</div>' : '') +
-    '<table class="ptable"><thead><tr><th>N°</th><th>Largo cm</th><th>Ancho cm</th><th>Cant.</th><th>M² total</th></tr></thead>' +
+    '<table class="ptable"><thead><tr><th>N°</th><th>Largo cm</th><th>' + (esPeld ? 'Fondo cm' : 'Ancho cm') + '</th><th>Cant.</th><th>M² total</th></tr></thead>' +
     '<tbody>'+dimRows+
     '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
     '</tbody></table>' +
+    ctNota +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
     fijoNota +
-    tierTable(tierRows, recWood()) +
+    tierTable(tierRows, recWood(), porPeldano) +
     extrasBlock(sumM2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+escA(esp)+'</div></div>' +
       (prod === 'banca' ? '<div class="spec"><div class="sl">Patas</div><div class="sv">Según diseño · incluidas en el valor</div></div>' : '') +
       '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
-      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30)+' kg</div></div>' +
+      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30 + (ct ? ct.m2*15 : 0))+' kg</div></div>' +
     '</div>' +
-    boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total, sumM2.toFixed(2) + ' m²')
+    boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total,
+      esPeld ? (nUnid + ' peldaños' + (ct ? ' + contrahuellas' : '')) : (sumM2.toFixed(2) + ' m²'))
   );
 }
 
@@ -4215,8 +4314,8 @@ function maderaSwatches(tier) {
   }).join('') + '</span>';
 }
 
-function tierTable(rows, recTier) {
-  return preciosCards(rows, recTier, null,
+function tierTable(rows, recTier, desgloseFn) {
+  return preciosCards(rows, recTier, desgloseFn || null,
     'Precios con IVA incluido · No incluyen envío · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
 }
 /* pastilla de UNA especie cuando la fila es de una sola (revestimiento:
@@ -4292,9 +4391,33 @@ function noIncluyeHtml() {
 /* se evita instalar —la mayoría de los clientes es de otras regiones—, así
    que se promete la pieza terminada, no el servicio */
 function listaParaInstalarLi() {
-  if (prodsDoc().some(function(p){ return p === 'cubierta' || PUERTAS_P.indexOf(p) !== -1; }))
+  var ps = prodsDoc();
+  if (ps.some(function(p){ return p === 'cubierta' || PUERTAS_P.indexOf(p) !== -1; }))
     return '<li>Llega <strong>lista para instalar</strong></li>';
+  /* peldaños: la ficha de casazaru.cl ya lo promete ("llegan listos para instalar") */
+  if (ps.indexOf('peldano') !== -1) return '<li>Llegan <strong>listos para instalar</strong></li>';
   return '';
+}
+/* las 7 maderas con su descripción: vivían en la pantalla intermedia s2b
+   (eliminada el 06-10-2026) y ahora van en un desplegable de la cotización */
+var MADERAS_INFO = [
+  { f:'oregon',  n:'Pino Oregón', d:'La más accesible. Muy estable, ideal para ambientes rústicos.' },
+  { f:'castano', n:'Castaño',     d:'Veta grande y marcada, de tono dorado miel. Una de las más duras.' },
+  { f:'cipres',  n:'Ciprés',      d:'Con nudos a la vista. Recomendada para ambientes húmedos y exterior.' },
+  { f:'manio',   n:'Mañío',       d:'Textura fina y pareja, de tono cálido y particular.' },
+  { f:'coihue',  n:'Coihue',      d:'Veta fina con suaves tonos café rojizos. La más dura que trabajamos: ideal para alto tráfico.' },
+  { f:'rauli',   n:'Raulí',       d:'Un clásico del sur. Veta rojiza profunda.' },
+  { f:'lenga',   n:'Lenga',       d:'Del extremo sur patagónico. Muy dura, de veta fina con tonos rojizos suaves y vetas claras.' }
+];
+function maderasAcordeon() {
+  /* el revestimiento solo se fabrica en Ciprés y Coihue: no ofrecer lo que no hacemos */
+  var soloRev = prodsDoc().every(function(p){ return p === 'revestimiento'; });
+  var lista = MADERAS_INFO.filter(function(m){ return !soloRev || m.f === 'cipres' || m.f === 'coihue'; });
+  return '<details class="maderas-acc"><summary>Conoce las maderas</summary><div class="wood-grid">' +
+    lista.map(function(m){
+      return '<div class="wood-chip"><div class="wood-swatch" style="background-image:url(\'fotos/maderas/' + m.f + '.jpg\')"></div>' +
+        '<div class="wood-name">' + m.n + '</div><div class="wood-desc">' + m.d + '</div></div>';
+    }).join('') + '</div></details>';
 }
 function boxes() {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
@@ -4302,10 +4425,11 @@ function boxes() {
     '<div class="ibox ibox-incluye">' +
       '<div class="ibox-h">Tu pedido incluye</div>' +
       '<div class="ibox-b"><ul>' +
+        '<li>Madera maciza <strong>100% sólida</strong> del sur de Chile, sin MDF, melamina ni enchapado</li>' +
+        '<li>Hecha <strong>a mano y a tu medida</strong> en nuestro taller</li>' +
         '<li>Terminación <strong>hidrorrepelente y antimanchas</strong>: ' + terminacionOpts() + '. <strong>Tú eliges</strong></li>' +
         '<li><strong>Embalaje reforzado</strong> para traslado seguro</li>' +
         listaParaInstalarLi() +
-        '<li>Madera seleccionada del sur de Chile</li>' +
         '<li>Cera de mantención incluida (50cc)</li>' +
         '<li><strong>Garantía de 5 años</strong></li>' +
       '</ul>' + noIncluyeHtml() + '</div>' +
@@ -4324,18 +4448,36 @@ function boxes() {
   '<div class="bankrow">' +
     'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>' +
     '<strong>Muvale Diseño SpA</strong> · RUT 77.157.082-8 · Banco BCI · Cta Cte 97457175 · hola@casazaru.cl' +
-  '</div>';
+  '</div>' +
+  maderasAcordeon();
 }
 
+/* el botón dice lo que el cliente quiere, no "confirmar": todavía no elige madera */
+function quieroTxt() {
+  var ps = prodsDoc();
+  if (ps.length > 1) return 'Quiero avanzar';
+  return { cubierta:'Quiero esta cubierta', repisa:'Quiero esta repisa', peldano:'Quiero estos peldaños',
+           granero:'Quiero esta puerta', maciza:'Quiero esta puerta', vidrios:'Quiero esta puerta',
+           mesa:'Quiero esta mesa', revestimiento:'Quiero este revestimiento', revlibre:'Quiero este revestimiento',
+           banca:'Quiero estas bancas', pcocina:'Quiero estas puertas' }[ps[0]] || 'Quiero avanzar';
+}
+var WA_ICONO = '<svg class="wa-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.9-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+/* ── WHATSAPP Y ACCIONES DEL DOCUMENTO (revisión UX 06-10-2026) ──
+   El botón iba al final, después de ~9 bloques. Ahora confirmar() mueve el
+   .wa-block justo debajo de los precios; copiar link y PDF quedan al final.
+   El clic cuenta como paso "whatsapp" del embudo (requiere el SQL
+   supabase-cotizador/embudo-whatsapp.sql; sin él la base lo rechaza callada). */
 function whatsappCTA(bajo, alto, det, nombreProd) {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
-  var msg = 'Hola! Me interesa confirmar la cotización ' + qnum + ' de Casa Zarú.' + detalle + link + '\n\nConfirmo por este medio.';
+  var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
   return '<div class="wa-block">' +
-    '<p class="wa-pitch">Cada pieza se fabrica a mano en el sur de Chile, con madera maciza 100% sólida. No hay moldes ni series — tu pedido es único, hecho exactamente a tu medida.</p>' +
-    '<a class="wa-btn" href="' + url + '" target="_blank">💬 Confirmar cotización por WhatsApp →</a>' +
+    '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + '</a>' +
+    '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
+  '</div>' +
+  '<div class="doc-acciones">' +
     '<button class="btn-copy-link' + (srcEmail ? ' src-ok' : '') + '" onclick="copyShareLink()">📋 Copiar mensaje para WhatsApp</button>' +
     /* Sale de una petición real (26-08-2026): una clienta pidió la cotización
        en PDF "para enviársela al arquitecto". Para todos — cliente y
@@ -4393,7 +4535,7 @@ function pdfLienzo(){
   var copia = document.getElementById('q-out').cloneNode(true);
   copia.id = '';   /* sin ids duplicados en el documento */
   copia.style.cssText = 'position:static;width:' + PDF_ANCHO + 'px;max-width:' + PDF_ANCHO + 'px;margin:0;padding:18px 22px;background:#FAF8F2;';
-  ['.wa-block', '.muest-block', '.btn-copy-link', '.btn-pdf', '.nota-asesor'].forEach(function(sel){
+  ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor'].forEach(function(sel){
     var lista = copia.querySelectorAll(sel);
     for (var i = 0; i < lista.length; i++) lista[i].parentNode.removeChild(lista[i]);
   });
@@ -4571,6 +4713,8 @@ function getShareDataProducto(conValores) {
   }
   if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
+  var ctNow = contraDatos();
+  if (ctNow) data.ct = { alto: ctNow.alto, cant: ctNow.cant, manual: ctNow.manual ? 1 : 0 };
   if (prod === 'cubierta' && getCubiertaEspesor() === '8') data.esp8 = 1;   /* espesor 8 cm macizo (mult. por tier) */
   if (prod === 'mesa') data.mesa = mesaDatos();             /* base de fierro: nombre, valor, altura, perfil, color */
   if (prod !== 'revlibre') {   /* revlibre ya guarda sus extras dentro de data.rv */
@@ -4659,6 +4803,7 @@ function restoreFromData(d) {
   conStr = d.con || '';
   document.getElementById('f-cli').value = d.cli || '';
   document.getElementById('f-con').value = d.con || '';
+  conModo(/@/.test(d.con || ''));   /* si el cliente dejó correo, el campo vuelve en modo correo */
   combo = [];
   if (d.combo && d.combo.length) {
     /* cotización con varios productos: cada uno se rearma en el formulario y
@@ -4774,6 +4919,13 @@ function restoreProducto(d) {
     }
   }
   rbRestaurar(d);   /* va DESPUÉS de las piezas: sus cantos cuelgan de cada fila */
+  if (d.ct && d.p === 'peldano') {   /* contrahuellas: también después de las filas (su cantidad sigue a los peldaños) */
+    var ctOn = document.getElementById('ct-on'), ctAl = document.getElementById('ct-alto'), ctCa = document.getElementById('ct-cant');
+    if (ctOn) ctOn.checked = true;
+    var ctBox = document.getElementById('ct-box'); if (ctBox) ctBox.classList.remove('hidden');
+    if (ctAl) ctAl.value = d.ct.alto;
+    if (ctCa) { ctCa.value = d.ct.cant; if (d.ct.manual) ctCa.dataset.manual = '1'; }
+  }
 }
 /* Restaura el reborde de un link compartido. Requiere que las piezas ya existan. */
 function rbRestaurar(d) {
@@ -7932,8 +8084,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.getElementById('btn-back').addEventListener('click', function() { show('s1'); });
   document.getElementById('btn-calc').addEventListener('click', generar);
-  document.getElementById('btn-ver-coti').addEventListener('click', confirmar);
-  document.getElementById('btn-s2b-back').addEventListener('click', function() { show('s2'); });
+  document.getElementById('f-con').addEventListener('focus', conPrefijo);
   /* "Inicio" desde la cotización = empezar otra: los productos que se habían
      juntado ya quedaron en el documento y no deben colarse en la siguiente */
   document.getElementById('btn-q-s1').addEventListener('click', function() { comboVaciar(); show('s1'); });
