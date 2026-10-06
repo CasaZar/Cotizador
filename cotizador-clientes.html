@@ -260,7 +260,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 /* ── QUOTE s3 ── */
 #s3 { background: var(--bg); }
 .coti { padding: 14px; max-width: 500px; margin: 0 auto; font-family: 'Jost', sans-serif; }
-.coti-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 11px; }
+.coti-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--bd); }
 /* ── FOTO DEL MODELO EN LA COTIZACIÓN (01-09-2026) ──
    La cotización era puro texto y tablas; la foto del modelo elegido la vuelve
    algo que dan ganas de reenviar. Solo fotos DEL producto cotizado (mesas y
@@ -279,10 +279,14 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .coti-fotos-row img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; border: 1px solid var(--bd); display: block; background: var(--crt); }
 .coti-fotos-row .cf-cap { font-size: 11.5px; color: var(--tm); text-align: center; margin-top: 4px; }
 .coti-fotos-row.vert img { object-fit: contain; }
-.coti-logo { font-family: 'Cormorant Garamond', serif; font-size: 23px; font-weight: 700; letter-spacing: 3px; color: var(--acd); }
-.coti-sub { font-size: 11px; letter-spacing: 2.2px; text-transform: uppercase; color: var(--tm); margin-top: 2px; }
+.coti-logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 700; letter-spacing: 3px; color: var(--acd); }
+.coti-sub { font-size: 10.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--tm); margin-top: 2px; }
 .coti-r { text-align: right; }
-.coti-title { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; color: var(--tx); }
+/* el nombre del producto es el título del documento (06-10-2026): antes iba
+   chico a la derecha, apretado entre el número y la fecha */
+.coti-title { font-family: 'Cormorant Garamond', serif; font-size: 27px; font-weight: 600; line-height: 1.15; color: var(--tx); margin: 0 0 4px; }
+.coti-para { font-size: 13px; color: var(--tm); line-height: 1.5; margin-bottom: 16px; }
+.coti-para strong { color: var(--tx); font-weight: 600; }
 .coti-meta { font-size: 12px; color: var(--tm); margin-top: 1px; line-height: 1.45; }
 .coti-meta.vencida { color: #B45309; font-weight: 600; }
 .info-bar { background: var(--bg3); border-radius: 6px; padding: 7px 10px; font-size: 13px; color: var(--tm); margin-bottom: 9px; }
@@ -293,35 +297,46 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .ptable th.th-sort:hover { background: var(--ac); }
 .ptable td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--bd); background: var(--crt); }
 .ptable .trow td { background: var(--bg3); font-weight: 600; font-size: 12.5px; border-top: 1.5px solid var(--acd); border-bottom: none; }
-.ptier-block { border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(44,26,8,.06); }
-.ptier-head { background: var(--bg3); padding: 5px 9px; display: flex; }
-.ptier-head span { font-size: 12px; text-transform: uppercase; letter-spacing: .7px; color: var(--tm); flex: 1; text-align: right; font-weight: 600; }
-.ptier-head span:first-child { flex: 1.6; text-align: left; font-size: 13px; color: var(--acd); font-weight: 700; letter-spacing: .8px; }
-.ptier-row { display: flex; align-items: center; padding: 10px 12px; border-top: 1px solid var(--bg3); background: white; }
-.ptier-row:nth-child(even) { background: var(--bg); }
-.ptier-wood { flex: 1.6; font-size: 15px; color: var(--tx); line-height: 1.3; }
-/* ── MUESTRAS DE MADERA EN LAS FILAS DE PRECIO (01-09-2026) ──
+/* ── LA COTIZACIÓN, MÁS LIMPIA EN CELULAR (06-10-2026, propuesta A) ──
+   En un iPhone se veía saturada: encabezados café en mayúsculas, la tabla de
+   precios en tres columnas apretadas ("CON TARJETATRANSFERENCIA" se pegaban),
+   los nombres de madera partidos en tres líneas y "la más pedida" en cuatro
+   renglones. Ahora cada madera es una tarjeta, y medidas y specs van livianas.
+   No se sacó ningún dato: solo cambió cómo se ven.
+   Todo va bajo .coti: .ptable también la usan las tablas del panel. */
+.coti .ptable { font-size: 13.5px; margin-bottom: 14px; }
+.coti .ptable th { background: none; color: var(--tm); font-size: 11.5px; font-weight: 600; text-transform: none; letter-spacing: .2px; padding: 4px 3px 6px; border-bottom: 1px solid var(--bd); }
+.coti .ptable td { background: none; padding: 7px 3px; border-bottom: 1px solid var(--bg3); }
+.coti .ptable .trow td { background: none; font-size: 12.5px; border-top: 1px solid var(--bd); border-bottom: none; }
+/* ── MUESTRAS DE MADERA EN LAS TARJETAS DE PRECIO (01-09-2026) ──
    "Coihue vs Pino Oregón" se veía solo como texto y el cliente elegía a
-   ciegas. Una pastilla por especie, en el MISMO orden que los nombres de la
-   fila, para que se puedan mapear sin leyenda. Fotos reales de fotos/maderas. */
+   ciegas. Una pastilla por especie, en el MISMO orden que los nombres, para
+   que se puedan mapear sin leyenda. Fotos reales de fotos/maderas. */
 .mad-sw { display: inline-flex; gap: 4px; flex: 0 0 auto; }
-.mad-sw img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--bd); display: block; background: var(--crt); }
-/* con pastillas, la celda de madera pasa a flex: las pastillas fijas a la
-   izquierda y el texto (con su badge ★ debajo) envuelve a la derecha, en vez
-   de partirse por abajo de las pastillas en pantallas angostas */
-.ptier-wood:has(.mad-sw) { display: flex; align-items: center; gap: 8px; }
-.pw-txt { min-width: 0; }
-/* el precio es el dato por el que el cliente entro al cotizador: debe pesar mas que todo lo que lo rodea */
-.ptier-total { flex: 1; text-align: right; font-size: 18.5px; font-weight: 700; color: var(--tx); }
-.ptier-trans { flex: 1; text-align: right; font-size: 15px; font-weight: 600; color: #2D6A4F; }
+.mad-sw img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid var(--bd); display: block; background: var(--crt); }
+.precios { margin-bottom: 18px; }
+.pz { position: relative; background: white; border: 1px solid var(--bd); border-radius: 12px; padding: 12px 13px; margin-bottom: 9px; }
+/* la recomendada: borde de color y su etiqueta montada sobre el borde */
+.pz.rec { border: 2px solid var(--ac); padding: 16px 12px 11px; margin-top: 16px; }
+.pz-badge { position: absolute; top: -11px; left: 11px; background: var(--bg3); color: var(--acd); font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 8px; border: 1px solid var(--bd); white-space: nowrap; max-width: calc(100% - 22px); overflow: hidden; text-overflow: ellipsis; }
+.pz-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pz-mad { min-width: 0; }
+.pz-mad .mad-sw { margin-bottom: 6px; }
+.pz-nom { font-size: 14.5px; color: var(--tx); line-height: 1.3; }
+.pz-der { text-align: right; flex-shrink: 0; }
+/* el precio es el dato por el que el cliente entró al cotizador: pesa más que todo lo que lo rodea */
+.pz-precio { font-size: 19px; font-weight: 700; color: var(--tx); line-height: 1.2; }
+.pz-trans { font-size: 13px; font-weight: 600; color: #2D6A4F; margin-top: 3px; line-height: 1.25; }
+.pz-trans small { display: block; font-size: 11px; font-weight: 500; }
+.precios-nota { font-size: 11.5px; color: var(--tm); text-align: center; line-height: 1.5; margin-top: 2px; }
+/* nota al pie de un bloque; la cotización ya no la usa, pero sí la pestaña Actividad del panel */
 .ptier-note { padding: 6px 10px; font-size: 12px; color: var(--tm); background: var(--crt); border-top: 1px solid var(--bg3); text-align: center; }
-.dcto-green { color: #2D6A4F; font-weight: 700; }
-.transf-badge { display: inline-block; background: #E7F0E1; color: #2D5A3D; font-weight: 700; font-size: 15px; padding: 3px 10px; border-radius: 10px; border: 1px solid #C3DAB4; }
-.specs { display: flex; border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; margin-bottom: 18px; background: white; box-shadow: 0 1px 3px rgba(44,26,8,.06); }
-.spec { flex: 1; padding: 6px 5px; text-align: center; border-right: 1px solid var(--bd); }
-.spec:last-child { border-right: none; }
-.spec .sl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--acd); }
-.spec .sv { font-size: 13px; color: var(--tm); margin-top: 2px; line-height: 1.35; }
+.precios-pro { background: #EEF6FF; color: #1E40AF; font-weight: 600; font-size: 12px; border-radius: 8px; padding: 6px 10px; text-align: center; margin-bottom: 9px; }
+/* specs: de cuatro columnas apretadas a una grilla de dos, etiqueta arriba y valor abajo */
+.specs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; background: var(--bg3); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; }
+.spec { min-width: 0; }
+.spec .sl { font-size: 11.5px; font-weight: 600; color: var(--tm); letter-spacing: .2px; }
+.spec .sv { font-size: 13.5px; color: var(--tx); margin-top: 1px; line-height: 1.35; }
 .iboxes { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
 .ibox { border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; box-shadow: 0 1px 3px rgba(44,26,8,.06); }
 .ibox-h { background: var(--ac); color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; text-align: center; }
@@ -468,9 +483,6 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .dcto-tag { display: inline-block; background: #E7F0E1; color: #2D5A3D; font-weight: 700; font-size: 13px; padding: 2px 9px; border-radius: 10px; border: 1px solid #C3DAB4; vertical-align: middle; }
 .tag-link { display: inline-block; border: 1px solid var(--bd); border-radius: 6px; padding: 8px 14px; font-size: 13px; color: var(--tm); text-decoration: none; font-weight: 500; letter-spacing: .3px; vertical-align: middle; margin-top: 4px; }
 .tag-link:hover { border-color: var(--ac); color: var(--ac); }
-/* ── TIER RECOMENDADA ── */
-.ptier-row.rec { background: var(--bg3); border-left: 3px solid var(--ac); }
-.ptier-rec-badge { font-size: 12px; font-weight: 700; color: var(--ac); text-transform: uppercase; letter-spacing: .8px; display: block; margin-top: 3px; }
 
 .btn-dtab { background:white;border:1.5px solid var(--bd);border-radius:8px;padding:8px 18px;font-size:14px;cursor:pointer;color:var(--tm);font-family:'Jost',sans-serif;white-space:nowrap;flex-shrink:0; }
 .btn-dtab.active { background:var(--ac);color:white;border-color:var(--ac); }
@@ -765,7 +777,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
   .wa-block, .muest-block, .btn-copy-link, .btn-pdf, .nota-asesor,
   .btn-nav-sm, .cta-dock { display: none !important; }
   /* que no se parta un bloque de precio ni una tabla a la mitad de la hoja */
-  .ptier-row, .specs, .warranty, .ptable, .info-bar { break-inside: avoid; page-break-inside: avoid; }
+  .pz, .specs, .warranty, .ptable, .info-bar { break-inside: avoid; page-break-inside: avoid; }
   .coti-hdr { break-after: avoid; page-break-after: avoid; }
   /* los fondos de color se van en la impresión por defecto y la tabla de
      precios queda ilegible (texto claro sobre blanco): se fuerzan */
@@ -2447,9 +2459,12 @@ function renderForm(p) {
     /* El público no ve los checkboxes de extras (ver initProd), así que esta nota
        es la que le dice que el teñido y las perforaciones existen. Al peldaño no
        se le nombran perforaciones ni formas: no lleva lavaplatos ni llaves. */
+    /* Breve (06-10-2026, pedido del usuario): eran dos cajas —esta y la del
+       asesor— con cuatro líneas cada una en el celular. Queda una sola frase,
+       y la caja del asesor no se agrega cuando esta existe (renderNotaAsesor). */
     var notaTxt = (p === 'peldano')
-      ? 'También hacemos teñido a color y terminaciones especiales. Revisamos esos detalles contigo al final, con nuestro asesor.'
-      : 'También hacemos teñido a color, perforaciones a medida (lavaplatos, llaves) y distintas formas de cubierta. Revisamos esos detalles contigo al final, con nuestro asesor.';
+      ? 'También hacemos teñido y terminaciones especiales. Lo vemos contigo al final.'
+      : 'También hacemos perforaciones, encastres de enchufes y cortes especiales. Lo vemos contigo al final.';
     var maderaNota = vendorMode ? '' : '<div class="cubierta-nota">' + notaTxt + '</div>';
     /* cubierta también se pide en 8 cm macizo (doble madera en la zona visible).
        Solo en el cotizador de vendedores: el público se mantiene simple. */
@@ -4072,19 +4087,10 @@ function htmlMesa(cli, fecha) {
 }
 /* tabla de precios con el desglose cubierta + base (fierro o madera) */
 function tierTableMesa(rows, recTier, M, esMadera, nBases) {
-  var tf = transferFactor();
   var lblBase = (nBases > 1) ? (nBases + ' bases ') : 'base ';
-  var prows = rows.map(function(r) {
-    var isRec = recTier && r.tier === recTier;
-    var badge = isRec ? '<span class="ptier-rec-badge">'+recBadgeText()+'</span>' : '';
-    return '<div class="' + (isRec?'ptier-row rec':'ptier-row') + '">' +
-      '<span class="ptier-wood">' + r.label + badge +
-        '<span class="mesa-desglose">Cubierta ' + fmt(r.madera) + ' + ' + lblBase + fmt(r.base) + '</span></span>' +
-      '<span class="ptier-total">' + fmt(r.total) + '</span>' +
-      '<span class="ptier-trans"><span class="transf-badge">' + fmt(r.total * tf) + '</span></span>' +
-    '</div>';
-  }).join('');
-  var esPro = b2bDcto > 0;
+  var desglose = function(r) {
+    return '<span class="mesa-desglose">Cubierta ' + fmt(r.madera) + ' + ' + lblBase + fmt(r.base) + '</span>';
+  };
   var sufBase = (nBases > 1) ? (' × ' + nBases) : '';
   /* El valor de la base sale de la fila, no de M.valor: en el flujo público el
      vendedor no escribe nada y M.valor es 0, así que la nota decía "($0)".
@@ -4095,16 +4101,8 @@ function tierTableMesa(rows, recTier, M, esMadera, nBases) {
     ? ('cubierta de madera + base de madera (según el tipo elegido)' + sufBase)
     : ('cubierta de madera + base de fierro (' +
        (baseIgual && baseUnit > 0 ? fmt(baseUnit) : 'según el tipo elegido') + sufBase + ')');
-  return '<div class="ptier-block">' +
-    '<div class="ptier-head">' +
-      '<span>Tipo de madera</span>' +
-      '<span>Con tarjeta</span>' +
-      '<span>' + transfLabel() + '</span>' +
-    '</div>' +
-    prows +
-    (esPro ? '<div class="ptier-note" style="background:#EEF6FF;color:#1E40AF;font-weight:600">★ Incluye Descuento Casa Zaru Profesionales: '+b2bDcto+'% extra</div>' : '') +
-    '<div class="ptier-note">Valores incluyen ' + notaBase + ' · Precios con IVA</div>' +
-  '</div>';
+  return preciosCards(rows, recTier, desglose,
+    'Valores incluyen ' + notaBase + ' · Precios con IVA · Con tarjeta pagas el valor indicado');
 }
 
 function htmlRevLibre(cli, fecha) {
@@ -4112,7 +4110,6 @@ function htmlRevLibre(cli, fecha) {
   var totalTablas = rv.valorTabla * rv.cantTablas;
   var totalExtras = rv.extras.reduce(function(a,e){ return a + e.valor; }, 0);
   var total = totalTablas + rv.instalacion + totalExtras;
-  var tf = transferFactor();
 
   saveQuote({
     numero:qnum, cliente:cli, contacto:conStr||null, producto:'revlibre',
@@ -4127,13 +4124,8 @@ function htmlRevLibre(cli, fecha) {
   return shell(escA(rv.madera) + ' — Revestimiento', cli, fecha,
     '<table class="ptable"><thead><tr><th style="text-align:left">Detalle</th><th>Valor</th></tr></thead>' +
     '<tbody>'+itemRows.join('')+'</tbody></table>' +
-    '<div class="ptier-block">' +
-      '<div class="ptier-head"><span>Resumen</span><span>Con tarjeta</span><span>'+transfLabel()+'</span></div>' +
-      '<div class="ptier-row"><span class="ptier-wood">'+escA(rv.madera)+(rv.perfil?(' · '+escA(rv.perfil)):'')+'</span>' +
-        '<span class="ptier-total">'+fmt(total)+'</span>' +
-        '<span class="ptier-trans"><span class="transf-badge">'+fmt(total*tf)+'</span></span></div>' +
-      '<div class="ptier-note">Precio acordado con tu vendedor · Precios con IVA incluido</div>' +
-    '</div>' +
+    preciosCards([{ label: escA(rv.madera) + (rv.perfil ? (' · ' + escA(rv.perfil)) : ''), tier: null, total: total }], null, null,
+      'Precio acordado con tu vendedor · Precios con IVA incluido · Con tarjeta pagas el valor indicado') +
     '<div class="specs">' +
       (rv.espesor ? '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+escA(rv.espesor)+'</div></div>' : '') +
       (rv.perfil ? '<div class="spec"><div class="sl">Perfil</div><div class="sv">'+escA(rv.perfil)+'</div></div>' : '') +
@@ -4188,19 +4180,21 @@ function shell(nombre, cli, fecha, body) {
   /* capturando un producto para una cotización combinada: entregar el cuerpo
      (sin encabezado) y el nombre; el documento lo arma htmlCombinada() */
   if (comboCaptura) { comboCaptura.nombre = nombre; comboCaptura.body = body; return ''; }
+  /* cliente, contacto y número se escapan: al abrir un link compartido vienen
+     de la fila de quote_links, que cualquiera con la llave pública puede escribir */
   return '<div class="coti-hdr">' +
     '<div>' +
       '<div class="coti-logo">CASA ZARU</div>' +
       '<div class="coti-sub">Madera del sur de Chile a medida</div>' +
     '</div>' +
     '<div class="coti-r">' +
-      '<div class="coti-title">Cotización '+nombre+'</div>' +
-      '<div class="coti-meta">'+qnum+'</div>' +
+      '<div class="coti-meta">'+escA(qnum)+'</div>' +
       '<div class="coti-meta">'+fecha+'</div>' +
       validezHtml() +
     '</div>' +
   '</div>' +
-  '<div class="info-bar">Para: <strong>'+cli+'</strong>' + (conStr ? '  ·  '+conStr : '') + '</div>' +
+  '<div class="coti-title">Cotización '+nombre+'</div>' +
+  '<div class="coti-para">Para: <strong>'+escA(cli)+'</strong>' + (conStr ? ' · '+escA(conStr) : '') + '</div>' +
   /* El cuadro verde de "César te escribe por WhatsApp" se sacó el 21-08-2026:
      el botón de WhatsApp del final ya dice lo mismo y el aviso empujaba el
      precio más abajo todavía. */
@@ -4222,32 +4216,48 @@ function maderaSwatches(tier) {
 }
 
 function tierTable(rows, recTier) {
+  return preciosCards(rows, recTier, null,
+    'Precios con IVA incluido · No incluyen envío · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
+}
+/* pastilla de UNA especie cuando la fila es de una sola (revestimiento:
+   "Ciprés" va en el tramo bajo, que en el resto es Oregón, y mostraba esa foto) */
+function maderaSwatchUna(nombre) {
+  var hit = null;
+  Object.keys(MADERA_FOTOS).forEach(function(t){
+    MADERA_FOTOS[t].forEach(function(m){ if (m.n === nombre) hit = m; });
+  });
+  return hit ? '<span class="mad-sw"><img crossorigin="anonymous" src="fotos/maderas/' + hit.f + '.jpg" alt="' + hit.n + '" title="' + hit.n + '"></span>' : '';
+}
+/* ── PRECIOS EN TARJETAS (06-10-2026) ──
+   Una tarjeta por madera: pastillas y nombre a la izquierda, precio con
+   tarjeta grande a la derecha y el de transferencia debajo. La recomendada
+   lleva borde y su etiqueta montada encima. Los rótulos de columna que había
+   ("Con tarjeta", "Transferencia −5%") van dentro de la tarjeta y en la nota. */
+function preciosCards(rows, recTier, desgloseFn, nota) {
   var tf = transferFactor();
-  var esPro = b2bDcto > 0;
-  var prows = rows.map(function(r) {
+  var lt = transfLabel();
+  var conTransf = 'con ' + lt.charAt(0).toLowerCase() + lt.slice(1);
+  var cards = rows.map(function(r) {
     var isRec = recTier && r.tier === recTier;
-    var badge = isRec ? '<span class="ptier-rec-badge">' + recBadgeText() + '</span>' : '';
-    var cls = isRec ? 'ptier-row rec' : 'ptier-row';
-    return '<div class="' + cls + '">' +
-      '<span class="ptier-wood">' + maderaSwatches(r.tier) + '<span class="pw-txt">' + r.label + badge + '</span></span>' +
-      '<span class="ptier-total">' + fmt(r.total) + '</span>' +
-      '<span class="ptier-trans"><span class="transf-badge">' + fmt(r.total * tf) + '</span></span>' +
+    var sw = maderaSwatchUna(r.label) || maderaSwatches(r.tier);
+    return '<div class="pz' + (isRec ? ' rec' : '') + '">' +
+      (isRec ? '<span class="pz-badge">' + recBadgeText() + '</span>' : '') +
+      '<div class="pz-row">' +
+        '<div class="pz-mad">' + sw +
+          '<div class="pz-nom">' + String(r.label).replace(/ \/ /g, ' · ') + '</div>' +
+          (desgloseFn ? desgloseFn(r) : '') +
+        '</div>' +
+        '<div class="pz-der">' +
+          '<div class="pz-precio">' + fmt(r.total) + '</div>' +
+          '<div class="pz-trans">' + fmt(r.total * tf) + '<small>' + conTransf + '</small></div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   }).join('');
-  var transLbl = transfLabel();
-  var proNote = esPro
-    ? '<div class="ptier-note" style="background:#EEF6FF;color:#1E40AF;font-weight:600">★ Incluye Descuento Casa Zaru Profesionales: ' + b2bDcto + '% extra</div>'
+  var proNote = b2bDcto > 0
+    ? '<div class="precios-pro">★ Incluye Descuento Casa Zaru Profesionales: ' + b2bDcto + '% extra</div>'
     : '';
-  return '<div class="ptier-block">' +
-    '<div class="ptier-head">' +
-      '<span>Tipo de madera</span>' +
-      '<span>Con tarjeta</span>' +
-      '<span>' + transLbl + '</span>' +
-    '</div>' +
-    prows +
-    proNote +
-    '<div class="ptier-note">Precios con IVA incluido · No incluyen envío · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%</div>' +
-  '</div>';
+  return '<div class="precios">' + proNote + cards + '<div class="precios-nota">' + nota + '</div></div>';
 }
 
 /* Terminaciones que se ofrecen. En uso exterior se suma Cutek, que es el
@@ -7878,14 +7888,16 @@ function renderExtras() {
 function renderNotaAsesor() {
   var c = document.getElementById('f-dyn');
   if (!c || document.getElementById('nota-asesor')) return;
+  /* cubierta, repisa y peldaño ya dicen "lo vemos contigo al final" en su nota
+     corta: una segunda caja era repetir lo mismo con más texto */
+  if (c.querySelector('.cubierta-nota')) return;
   var d = document.createElement('div');
   d.id = 'nota-asesor';
   d.className = 'nota-asesor';
   /* el texto va en UN solo <span>: dentro de un flex, cada trozo suelto y
      cada <strong> se vuelven ítems distintos y la frase se parte en columnas */
   d.innerHTML = '<span class="na-ico">💬</span>' +
-                '<span class="na-txt">¿Necesitas algo que no aparece acá? Al final vas a poder ' +
-                '<strong>contactar a un asesor del equipo</strong> para agregar detalles o enviarnos tus planos.</span>';
+                '<span class="na-txt">¿Algo especial o tienes planos? Al final puedes <strong>hablar con un asesor</strong>.</span>';
   c.appendChild(d);
 }
 function getExtrasTotal(m2) {
