@@ -1328,15 +1328,22 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
       las dos cajas, el mismo verde). */
 .marca .wa-block { background: #EAF6EE; border: 1px solid #BFE3CB; border-radius: 14px; padding: 16px 14px 12px; margin: 22px 0 26px; position: relative; }
 .marca .wa-block::before { content: ''; position: absolute; left: 18%; right: 18%; top: -12px; border-top: 1px solid var(--bd); }
-.marca .wa-btn { background: #1A9E4B; font-size: 19px; font-weight: 700; min-height: 58px; border-radius: 14px; animation: wa-latido 1.8s ease-out infinite; }
+.marca .wa-btn { background: #1A9E4B; font-size: 19px; font-weight: 700; min-height: 58px; border-radius: 14px; animation: wa-latido 2.8s ease-out infinite; }
+/* las salidas para el que duda: texto, no botón, para que el principal siga mandando */
+.marca .wa-otras { margin-top: 12px; border-top: 1px solid #BFE3CB; }
+.marca .wa-otras a { display: block; text-decoration: none; padding: 10px 2px 2px; text-align: center; }
+.marca .wa-otras a + a { border-top: 1px dashed #CFE6D7; margin-top: 8px; }
+.marca .wa-otras strong { display: block; font-size: 15px; font-weight: 600; color: #166534; }
+.marca .wa-otras span { display: block; font-size: 12.5px; color: #4B6352; margin-top: 2px; }
 .marca .wa-btn:hover { background: #168A41; }
 .marca .wa-btn .wa-ico { width: 26px; height: 26px; }
 .marca .wa-cap { color: #2F5E3F; margin-top: 9px; }
 @keyframes wa-latido {
-  0%   { box-shadow: 0 0 0 0 rgba(26,158,75,.55); transform: scale(1); }
-  12%  { transform: scale(1.03); }
-  24%  { transform: scale(1); }
-  70%  { box-shadow: 0 0 0 14px rgba(26,158,75,0); }
+  /* suave a propósito (06-10): con las salidas para el que duda, el botón no necesita gritar */
+  0%   { box-shadow: 0 0 0 0 rgba(26,158,75,.30); transform: scale(1); }
+  10%  { transform: scale(1.015); }
+  20%  { transform: scale(1); }
+  60%  { box-shadow: 0 0 0 8px rgba(26,158,75,0); }
   100% { box-shadow: 0 0 0 0 rgba(26,158,75,0); transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .marca .wa-btn { animation: none; } }
@@ -1348,7 +1355,14 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .marca .ibox:not(.ibox-incluye) .ibox-h { background: var(--terracota); }
 .marca .bankrow { background: #FBF5EA; border: 1px dashed var(--dorado); }
 .marca .maderas-acc { border-color: #C9D3C1; }
-.marca .maderas-acc summary { color: var(--verde); font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 800; }
+.marca .maderas-acc summary { color: var(--verde); font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 800; gap: 10px; }
+.marca .ma-t { display: flex; flex-direction: column; gap: 6px; }
+.marca .ma-minis { display: flex; }
+.marca .ma-minis i { width: 22px; height: 22px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid #fff; margin-left: -5px; box-shadow: 0 0 0 1px var(--bd); }
+.marca .ma-minis i:first-child { margin-left: 0; }
+.marca .maderas-acc summary::after { content: 'Ver  +'; white-space: pre; flex-shrink: 0; background: var(--verde); color: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; border-radius: 20px; padding: 7px 14px; line-height: 1; }
+.marca .maderas-acc[open] summary::after { content: 'Cerrar  −'; background: #fff; color: var(--verde); box-shadow: inset 0 0 0 1.5px var(--verde); }
+.marca .maderas-acc[open] .ma-minis { display: none; }
 .marca .warranty { background: #fff; border: 1px solid #C9D3C1; border-left: 4px solid var(--verde); }
 .marca .warranty strong { font-size: 15px; color: var(--verde); }
 .marca .warranty .tag-link { display: table; margin: 8px auto 0; }
@@ -4809,7 +4823,13 @@ function maderasAcordeon() {
   /* el revestimiento solo se fabrica en Ciprés y Coihue: no ofrecer lo que no hacemos */
   var soloRev = prodsDoc().every(function(p){ return p === 'revestimiento'; });
   var lista = MADERAS_INFO.filter(function(m){ return !soloRev || m.f === 'cipres' || m.f === 'coihue'; });
-  return '<details class="maderas-acc"><summary>Conoce las maderas</summary><div class="wood-grid">' +
+  /* el resumen muestra las maderas en miniatura y un botón "Ver": con solo
+     el título y un "+" chico no se notaba que se podía abrir (06-10-2026) */
+  var minis = lista.map(function(m){
+    return '<i style="background-image:url(\'fotos/maderas/' + m.f + '.jpg\')"></i>';
+  }).join('');
+  return '<details class="maderas-acc"><summary><span class="ma-t">Conoce las maderas' +
+    '<span class="ma-minis">' + minis + '</span></span></summary><div class="wood-grid">' +
     lista.map(function(m){
       return '<div class="wood-chip"><div class="wood-swatch" style="background-image:url(\'fotos/maderas/' + m.f + '.jpg\')"></div>' +
         '<div class="wood-name">' + m.n + '</div><div class="wood-desc">' + m.d + '</div></div>';
@@ -4893,9 +4913,23 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
+  /* dos salidas más para el que todavía duda (06-10-2026, pedido del usuario:
+     "Quiero mi..." solo empujaba a comprar). Mismo chat que la cotización; el
+     mensaje dice que es una duda, para que no se lea como un cierre. Cuentan
+     como paso "whatsapp" del embudo hasta que haya uno propio. */
+  var urlDuda = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
+    'Hola, tengo una duda sobre mi cotización ' + qnum + ' de Casa Zaru.' + link);
+  var urlMuest = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
+    'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
   return '<div class="wa-block">' +
     '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + '</a>' +
     '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
+    '<div class="wa-otras">' +
+      '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'whatsapp\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
+        '<span>Te respondemos por WhatsApp, sin compromiso.</span></a>' +
+      '<a href="' + urlMuest + '" target="_blank" onclick="embudoTick(\'whatsapp\')"><strong>¿Quieres ver la madera antes? →</strong>' +
+        '<span>Te enviamos un muestrario a $20.000 con envío. Se descuenta de tu compra.</span></a>' +
+    '</div>' +
   '</div>' +
   '<div class="doc-acciones">' +
     '<button class="btn-copy-link' + (srcEmail ? ' src-ok' : '') + '" onclick="copyShareLink()">📋 Copiar mensaje para WhatsApp</button>' +
@@ -5089,6 +5123,9 @@ async function descargarPDF(){
 }
 
 function muestrario() {
+  /* 06-10-2026: el muestrario pasó al recuadro de WhatsApp (whatsappCTA), junto
+     a "¿Tienes dudas?": al final de la página casi nadie llegaba a verlo. */
+  return '';
   if (comboCaptura) return '';
   var msg = 'Hola, me interesa recibir el muestrario de maderas de Casa Zaru.';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);   /* mismo chat que su cotización */
@@ -5102,7 +5139,7 @@ function warranty() {
   return '<div class="warranty">' +
     '<strong>Garantía Casa Zaru · 5 años</strong>' +
     'Cubre fallas estructurales de fabricación, válida desde la fecha de compra. ' +
-    'No cubre exposición directa y constante a lluvia o sol sin la protección adecuada, ni daños por uso indebido, instalación incorrecta o intervenciones de terceros. ' +
+    'No cubre exposición directa y constante a lluvia o sol sin la protección adecuada, ni daños por uso indebido o intervenciones de terceros. ' +
     '<a href="https://drive.google.com/file/d/18j3u74v3-BWCeu5nRxQUD_tus1P4U380/view?usp=sharing" target="_blank" class="tag-link">Ver términos y condiciones →</a>' +
   '</div>';
 }
