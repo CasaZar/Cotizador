@@ -10,15 +10,20 @@
      dorado (la del favicon de la tienda) porque la miniatura de WhatsApp es
      chica y el dorado se ve; el gold-sobre-blanco de la barra se pierde.
      La URL de la imagen es ABSOLUTA a propósito: quien la resuelve es el
-     servidor de WhatsApp/Facebook, no el navegador del cliente. -->
+     servidor de WhatsApp/Facebook, no el navegador del cliente.
+     06-10-2026: de 600×600 a 200×200. WhatsApp pone la imagen GRANDE sobre el
+     texto cuando mide 300 px o más, y una miniatura al costado si es menor; el
+     usuario pidió la chica. Archivo con otro nombre a propósito: WhatsApp
+     guarda la vista previa por URL de imagen y con el mismo nombre seguiría
+     mostrando la grande. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Casa Zaru">
 <meta property="og:title" content="Cotizador en Línea · Casa Zaru">
 <meta property="og:description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera nativa a medida. Precio al instante, fabricado en el sur de Chile.">
 <meta property="og:url" content="https://cotizador.casazaru.cl/">
-<meta property="og:image" content="https://cotizador.casazaru.cl/fotos/logo-casa-zaru-og.png">
-<meta property="og:image:width" content="600">
-<meta property="og:image:height" content="600">
+<meta property="og:image" content="https://cotizador.casazaru.cl/fotos/logo-casa-zaru-og-200.png">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
 <meta name="twitter:card" content="summary">
 <meta name="description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera nativa a medida. Precio al instante, fabricado en el sur de Chile.">
 <link rel="icon" type="image/png" href="fotos/logo-casa-zaru-og.png">
@@ -2689,6 +2694,7 @@ function esCorreo(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v||'').
 var AVISO_EXTERIOR = 'Para uso exterior recomendamos instalarla <strong>bajo techo</strong> (terraza cubierta, quincho techado o alero). La madera expuesta directamente al sol y la lluvia se deteriora, y la garantía no cubre ese daño.';
 function usoAviso(){
   var el = document.getElementById('uso-aviso'), sel = document.getElementById('f-uso');
+  medFrecRepintar();
   if (!el || !sel) return;
   if (sel.value === 'exterior') { el.innerHTML = '☂️ ' + AVISO_EXTERIOR; el.classList.remove('hidden'); }
   else { el.classList.add('hidden'); el.innerHTML = ''; }
@@ -3885,11 +3891,32 @@ function vidrioExtraDatos() {
    ayudan al que todavía no tiene su medida exacta, que es donde más gente se
    iba (de 390 que eligen producto, 235 llegan a ver precio). */
 var MEDIDAS_FREC = [[200, 60], [160, 90], [120, 60], [180, 90], [200, 80]];
+/* Según "¿Dónde va?" (06-10-2026, pedido del usuario: "si pongo baño, que
+   salgan las típicas de baño"). Sacadas de las 3.641 cotizaciones de cubierta
+   guardadas en quote_links (data.uso + data.rows), contando una vez cada
+   cliente con cada medida y sin las de prueba. Cocina, comedor y escritorio
+   son las más repetidas tal cual; baño (55 clientes), quincho y repisa vienen
+   dispersas y salen agrupadas de a 10 cm de largo y 5 de ancho. Exterior,
+   "otro" y sin elegir usan la lista general. */
+var MEDIDAS_POR_USO = {
+  cocina:     { t: 'cocina',     m: [[200, 60], [220, 60], [300, 60], [240, 60], [150, 60]] },
+  comedor:    { t: 'comedor',    m: [[180, 90], [160, 90], [200, 100], [220, 100], [240, 120], [100, 100]] },
+  escritorio: { t: 'escritorio', m: [[200, 60], [140, 60], [120, 60], [180, 80], [160, 60]] },
+  bano:       { t: 'baño',       m: [[60, 45], [80, 45], [100, 45], [110, 50], [170, 50]] },
+  quincho:    { t: 'quincho',    m: [[120, 60], [150, 90], [220, 60], [300, 60], [300, 100]] },
+  repisa:     { t: 'repisa',     m: [[120, 40], [160, 25], [100, 20], [80, 30], [50, 15]] }
+};
 function medFrecHtml() {
-  return '<div class="finput-hint" style="margin:0 0 5px">Las más pedidas</div><div class="med-frec">' +
-    MEDIDAS_FREC.map(function(m){
+  var u = MEDIDAS_POR_USO[usoActual()];
+  return '<div id="med-frec-box"><div class="finput-hint" style="margin:0 0 5px">Las más pedidas' + (u ? ' para ' + u.t : '') + '</div><div class="med-frec">' +
+    (u ? u.m : MEDIDAS_FREC).map(function(m){
       return '<button type="button" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div></div>';
+}
+/* al cambiar "¿Dónde va?" se reemplazan las medidas sugeridas */
+function medFrecRepintar() {
+  var box = document.getElementById('med-frec-box');
+  if (box) box.outerHTML = medFrecHtml();
 }
 function medFrec(l, a) {
   var lg = document.getElementById('lg1'), an = document.getElementById('an1');
@@ -4915,8 +4942,9 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
   /* dos salidas más para el que todavía duda (06-10-2026, pedido del usuario:
      "Quiero mi..." solo empujaba a comprar). Mismo chat que la cotización; el
-     mensaje dice que es una duda, para que no se lea como un cierre. Cuentan
-     como paso "whatsapp" del embudo hasta que haya uno propio. */
+     mensaje dice que es una duda, para que no se lea como un cierre. Cada una
+     cuenta como su propio paso del embudo, "duda" y "muestrario" (requieren
+     supabase-cotizador/embudo-whatsapp.sql; sin él la base los rechaza callada). */
   var urlDuda = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
     'Hola, tengo una duda sobre mi cotización ' + qnum + ' de Casa Zaru.' + link);
   var urlMuest = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
@@ -4925,9 +4953,9 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + '</a>' +
     '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
     '<div class="wa-otras">' +
-      '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'whatsapp\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
+      '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'duda\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
         '<span>Te respondemos por WhatsApp, sin compromiso.</span></a>' +
-      '<a href="' + urlMuest + '" target="_blank" onclick="embudoTick(\'whatsapp\')"><strong>¿Quieres ver la madera antes? →</strong>' +
+      '<a href="' + urlMuest + '" target="_blank" onclick="embudoTick(\'muestrario\')"><strong>¿Quieres ver la madera antes? →</strong>' +
         '<span>Te enviamos un muestrario a $20.000 con envío. Se descuenta de tu compra.</span></a>' +
     '</div>' +
   '</div>' +
