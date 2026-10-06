@@ -446,6 +446,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 /* formulario: link para cambiar WhatsApp ↔ correo y la línea de confianza bajo el botón */
 .con-modo { color: var(--acd); text-decoration: underline; white-space: nowrap; }
 .confianza { font-size: 12px; color: var(--tm); text-align: center; margin-top: 9px; line-height: 1.5; }
+.legal-datos { font-size: 11px; color: var(--tm); text-align: center; margin-top: 8px; line-height: 1.45; }
+.legal-datos a { color: var(--tm); text-decoration: underline; }
 /* peldaños: contrahuellas y guía de medición */
 .ct-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .ct-grid .finput { margin-top: 5px; }
@@ -726,6 +728,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .pausa-badge { display:inline-block;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* respondió: la señal que más predice el cierre después de la recompra */
 .resp-badge { display:inline-block;background:#DCFCE7;color:#166534;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
+/* llegó por anuncio: seguimiento desde el WhatsApp 0141 (ver chipAnuncio) */
+.anuncio-badge { display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* de qué bloque salió un cliente ya contactado hoy */
 .org-badge { display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px;border:1px solid transparent; }
 .org-badge.ball { background:#FDF2F8;color:#9D174D;border-color:#F9A8D4; }
@@ -1223,13 +1227,21 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
         <label class="flabel" for="f-con" id="f-con-lbl">Tu WhatsApp</label>
         <!-- type="tel": abre el teclado numérico (con type="text" salía el de letras) -->
         <input class="finput" type="tel" inputmode="tel" id="f-con" placeholder="+56 9 1234 5678" autocomplete="tel">
-        <div class="finput-hint">Solo lo usamos para tu cotización. No compartimos tus datos.
+        <!-- Ley 21.719 (06-10-2026): el contacto se pide para responder la
+             cotización que la persona solicitó (medida precontractual), así
+             que no requiere casilla de consentimiento, pero sí informar para
+             qué se usa y cómo ejercer los derechos. El "No compartimos tus
+             datos" de antes no era exacto: pasan por Meta (WhatsApp) y otros
+             proveedores. Ofertas y novedades necesitarían consentimiento
+             aparte, con casilla desmarcada. -->
+        <div class="finput-hint">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.
           <a href="#" class="con-modo" id="f-con-modo" onclick="conModo(); return false;">Prefiero dejar mi correo</a></div>
       </div>
     </div>
     <div class="msg-err hidden" id="f-err"></div>
     <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
     <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
+    <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
     <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar y cotizar otro producto</button>
     </aside>
@@ -4462,6 +4474,28 @@ function quieroTxt() {
            banca:'Quiero estas bancas', pcocina:'Quiero estas puertas' }[ps[0]] || 'Quiero avanzar';
 }
 var WA_ICONO = '<svg class="wa-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.9-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
+/* ── A QUÉ WHATSAPP VA EL CLIENTE (06-10-2026) ──
+   Las cotizaciones que llegan desde un ANUNCIO van al WhatsApp nuevo (+56 9
+   2766 0141), que lleva el seguimiento de esa campaña. Todo lo demás (la web,
+   los vendedores, los links compartidos sin anuncio) sigue en el 5558, el
+   verificado por Meta y enlazado al catálogo de Shopify: los dos flujos no se
+   mezclan. "Desde un anuncio" = la visita trae utm_medium de pago (Meta:
+   paid, con los parámetros del brief de anuncios; Google: cpc) o el gclid de
+   Google. El fbclid solo NO cuenta: Facebook e Instagram lo agregan también a
+   los links orgánicos. El número elegido viaja en el link compartido (d.wa),
+   así el cliente que vuelve días después cae en el mismo chat. */
+var WA_WEB = '56956375558', WA_ANUNCIOS = '56927660141';
+var waDestino = null;   /* el número que trajo el link compartido; null = decidir por la visita */
+function vieneDeAnuncio(o) {
+  if (!o) return false;
+  if (o.gclid || o.gbraid || o.wbraid) return true;
+  return /^(paid|cpc|ppc|cpm|paid_social|paidsocial|ads?)$/i.test(String(o.utm_medium || ''));
+}
+function waNumero() {
+  if (waDestino) return waDestino;
+  if (vendorMode || srcEmail) return WA_WEB;   /* lo que cotiza un vendedor sigue con el número de siempre */
+  return vieneDeAnuncio(origenVisita) ? WA_ANUNCIOS : WA_WEB;
+}
 /* ── WHATSAPP Y ACCIONES DEL DOCUMENTO (revisión UX 06-10-2026) ──
    El botón iba al final, después de ~9 bloques. Ahora confirmar() mueve el
    .wa-block justo debajo de los precios; copiar link y PDF quedan al final.
@@ -4472,7 +4506,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
-  var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
+  var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
   return '<div class="wa-block">' +
     '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + '</a>' +
     '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
@@ -4665,8 +4699,8 @@ async function descargarPDF(){
 
 function muestrario() {
   if (comboCaptura) return '';
-  var msg = 'Hola! Me interesa recibir el muestrario de maderas de Casa Zarú.';
-  var url = 'https://wa.me/56956375558?text=' + encodeURIComponent(msg);
+  var msg = 'Hola, me interesa recibir el muestrario de maderas de Casa Zaru.';
+  var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);   /* mismo chat que su cotización */
   return '<div class="muest-block">' +
     '<p class="muest-txt">¿Quieres ver y tocar la madera antes de confirmar? Te enviamos un muestrario a <strong>$20.000 con envío incluido</strong> — ese valor se descuenta de tu compra. <a href="' + url + '" target="_blank" style="color:var(--ac);font-weight:600;text-decoration:none">Escríbenos →</a></p>' +
   '</div>';
@@ -4697,6 +4731,7 @@ function getShareData(conValores) {
       if (Object.keys(valsC).length) d.vals = valsC;
     }
     if (b2bDcto > 0) d.b2b = b2bDcto;
+    if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
     return d;
   }
   return getShareDataProducto(conValores);
@@ -4715,6 +4750,7 @@ function getShareDataProducto(conValores) {
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   var ctNow = contraDatos();
   if (ctNow) data.ct = { alto: ctNow.alto, cant: ctNow.cant, manual: ctNow.manual ? 1 : 0 };
+  if (waNumero() === WA_ANUNCIOS) data.wa = WA_ANUNCIOS;   /* el link vuelve al mismo WhatsApp */
   if (prod === 'cubierta' && getCubiertaEspesor() === '8') data.esp8 = 1;   /* espesor 8 cm macizo (mult. por tier) */
   if (prod === 'mesa') data.mesa = mesaDatos();             /* base de fierro: nombre, valor, altura, perfil, color */
   if (prod !== 'revlibre') {   /* revlibre ya guarda sus extras dentro de data.rv */
@@ -4800,6 +4836,8 @@ function restoreFromData(d) {
   congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
   b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
+  /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
+  waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
   conStr = d.con || '';
   document.getElementById('f-cli').value = d.cli || '';
   document.getElementById('f-con').value = d.con || '';
@@ -6525,6 +6563,13 @@ function segBotonContacto(g, x, clase){
   }
   return '';
 }
+/* El cliente llegó por un anuncio: su cotización lo mandó al WhatsApp nuevo
+   (ver waNumero), así que el seguimiento va desde ese número y no desde el
+   5558. La etiqueta lo dice en la fila y en la ficha. */
+function chipAnuncio(g) {
+  var deAnuncio = (g.quotes || []).some(function(q){ return vieneDeAnuncio(q.origen); });
+  return deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '';
+}
 /* Fila de una línea. Ojo: NO puede ser un <button>, porque adentro lleva
    el botón de contacto y anidar interactivos es HTML inválido (y el clic
    del hijo se lo come el padre). Va como div con un área abrible. */
@@ -6538,6 +6583,7 @@ function segFila(g, cls){
   var marcas = '';
   if (g.quotes.some(function(q){ return q.respondio; })) marcas += '<span class="resp-badge">💬 Respondió</span>';
   if (x.motivo_pausa)                                    marcas += '<span class="pausa-badge">⏸ '+escA(pausaLabel(x.motivo_pausa))+'</span>';
+  marcas += chipAnuncio(g);
   /* de quién es el cliente: mismo criterio que la ficha completa */
   var origen = (g.hasVendor && g.hasWeb) ? 'Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'
              : g.hasVendor               ? 'Cliente '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre
@@ -6628,7 +6674,7 @@ function segClientCard(g, cls){
   if (g.hasVendor && g.hasWeb){ origen='🔁 Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'; oClase='mix'; }
   else if (g.hasVendor){ origen='Cliente '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre; oClase='vend'; }
   else { origen='Cotizó solo'; oClase='web'; }
-  var ownChip = '<span class="seg-owner '+oClase+'">'+origen+'</span>';
+  var ownChip = '<span class="seg-owner '+oClase+'">'+origen+'</span>' + chipAnuncio(g);
   var qrows = g.quotes.map(function(q){
     var est = q.estado||'enviada';
     var link = q.link ? ' <a href="'+q.link+'" target="_blank">↗</a>' : '';
