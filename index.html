@@ -1226,7 +1226,8 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .marca .pz-trans { color: var(--verde); }
 .marca .pz-badge { background: #FBEDE3; color: var(--terracota-osc); border-color: #EBCDB6; }
 .marca .ibox { border-color: var(--bd); box-shadow: none; border-radius: 12px; }
-.marca .ibox-h { background: #fff; color: #2F3B28; font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 600; text-transform: none; letter-spacing: 0; text-align: left; padding: 11px 12px 2px; }
+/* encabezados con color (pedido del usuario 06-10): franja verde, letra blanca */
+.marca .ibox-h { background: var(--verde); color: #fff; font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 800; text-transform: none; letter-spacing: 0; text-align: left; padding: 10px 13px; }
 .marca .ibox-incluye .ibox-b li::before { color: var(--verde); }
 .marca .bankrow, .marca .warranty { background: var(--bg3); border-color: var(--bd); border-radius: 12px; }
 .marca .warranty strong { color: #2F3B28; }
@@ -1356,7 +1357,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
     <div class="live-price-wrap">
       <div class="lp-label">Tu precio estimado</div>
       <div class="lp-range" id="live-range"><span class="lp-empty">Escribe las medidas para ver tu precio</span></div>
-      <div class="lp-note" id="live-note" style="display:none">Según la madera · IVA incluido · Envío aparte · Hasta 3 cuotas sin interés</div>
+      <div class="lp-note" id="live-note" style="display:none">Según la madera · IVA incluido · Envío según comuna · Hasta 3 cuotas sin interés</div>
     </div>
     <!-- 2º recién ahora los datos de contacto. Revisión UX del 06-10-2026: de los
          que ven su precio solo el 23% dejaba sus datos, y el bloque no decía qué
@@ -2520,8 +2521,8 @@ function calcLive() {
        que además del total se muestra cuánto sale cada uno */
     var nP = (prod === 'peldano') ? nPeldanos().n : 0;
     noteEl.textContent = (nP > 1)
-      ? (nP + ' peldaños · ' + fmt((bajo + exT) / nP) + ' a ' + fmt((alto + exT) / nP) + ' c/u' + (contraDatos() ? ' con contrahuella' : '') + ' · IVA incluido · Envío aparte')
-      : 'Según la madera · IVA incluido · Envío aparte · Hasta 3 cuotas sin interés';
+      ? (nP + ' peldaños · ' + fmt((bajo + exT) / nP) + ' a ' + fmt((alto + exT) / nP) + ' c/u' + (contraDatos() ? ' con contrahuella' : '') + ' · IVA incluido · Envío según comuna')
+      : 'Según la madera · IVA incluido · Envío según comuna · Hasta 3 cuotas sin interés';
     noteEl.style.display = 'block';
     embudoTick('medidas');
     barraPrecio.hay = true;
@@ -4588,7 +4589,7 @@ function maderaSwatches(tier) {
 
 function tierTable(rows, recTier, desgloseFn) {
   return preciosCards(rows, recTier, desgloseFn || null,
-    'Precios con IVA incluido · No incluyen envío · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
+    'Precios con IVA incluido · Envío según comuna · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
 }
 /* pastilla de UNA especie cuando la fila es de una sola (revestimiento:
    "Ciprés" va en el tramo bajo, que en el resto es Oregón, y mostraba esa foto) */
@@ -4712,7 +4713,8 @@ function boxes() {
         '<li>Confirmar con <strong>70%</strong> · Transferencia o tarjeta</li>' +
         '<li>Fabricación <strong>7 a 15 días hábiles</strong> desde confirmación</li>' +
         '<li>Te enviamos <strong>foto</strong> cuando tu proyecto esté listo. Pagas saldo <strong>30%</strong> y hacemos el envío</li>' +
-        '<li><strong>Envío a todo Chile con costo aparte</strong>, según destino. También puedes retirar en nuestro taller en Villarrica</li>' +
+        /* 06-10-2026: sin "costo aparte" (pedido del usuario), pero sin esconder que el envío se cobra */
+        '<li><strong>Despachamos a todo Chile</strong>: el envío lo cotizamos según tu comuna. También puedes retirar en nuestro taller en Villarrica</li>' +
         '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>' +
       '</ul></div>' +
     '</div>' +
