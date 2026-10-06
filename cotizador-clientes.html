@@ -983,6 +983,76 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .seg-fila .sf-marcas { display:flex; align-items:center; gap:0; padding-left:8px; margin-right:-6px; }
 .seg-fila .sf-marcas .seg-star { margin:0; padding:3px; font-size:19px; line-height:1; }
 .seg-fila .sf-marcas .seg-star:hover { transform:scale(1.15); }
+/* ── Lista "Hoy" (rediseño 06-10-2026): una columna, filas planas ── */
+.hz-wrap { max-width:820px; }
+.hz-top { display:flex; align-items:flex-end; gap:16px; margin:4px 0 10px; }
+.hz-top-l { flex:1; min-width:0; }
+.hz-dia { font-size:19px; color:var(--tx); line-height:1.3; }
+.hz-dia strong { font-weight:600; }
+.hz-sub { font-size:14px; color:var(--tm); margin-top:2px; }
+.hz-plata { text-align:right; font-size:18px; font-weight:600; color:var(--tx); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.hz-plata span { display:block; font-size:12px; font-weight:400; color:var(--tm); }
+.hz-barra { height:6px; border-radius:3px; background:var(--bg3); margin-bottom:18px; overflow:hidden; }
+.hz-barra span { display:block; height:100%; background:#16A34A; border-radius:3px; transition:width .3s; }
+.hz-lista { background:#fff; border:1px solid var(--bd2); border-radius:12px; overflow:hidden; }
+.hz-fila { border-bottom:1px solid #F1EADF; }
+.hz-fila:last-child { border-bottom:none; }
+.hz-fila.abierta { background:#FBF7F0; }
+.hz-linea { display:flex; align-items:center; gap:10px; padding:0 14px 0 0; }
+.hz-main { flex:1; min-width:0; display:flex; align-items:center; gap:12px; padding:12px 0 12px 14px; background:none; border:none; text-align:left; cursor:pointer; font:inherit; color:inherit; }
+.hz-ini { width:36px; height:36px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; background:var(--bg3); color:var(--acd); }
+.hz-ballena .hz-ini { background:#EDE9FE; color:#4C1D95; }
+.hz-nuevo .hz-ini { background:#FEE2E2; color:#991B1B; }
+.hz-conv .hz-ini { background:#DCFCE7; color:#166534; }
+.hz-donehoy .hz-ini { background:#F3F4F6; color:#6B7280; }
+.hz-txt { min-width:0; display:flex; flex-direction:column; gap:1px; }
+.hz-nom { font-size:15.5px; font-weight:600; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hz-monto { font-weight:600; color:var(--acd); font-variant-numeric:tabular-nums; margin-left:4px; }
+.hz-det { font-size:13.5px; color:var(--tm); }
+.hz-marca { font-size:12px; font-weight:500; padding:1px 8px; border-radius:999px; background:var(--bg3); color:var(--acd); margin-left:8px; vertical-align:1px; }
+.hz-marca.int { background:#FCE7F3; color:#9D174D; }
+.hz-marca.rec { background:#FEF3C7; color:#92400E; }
+.hz-anuncio { display:inline-block; margin-left:6px; font-size:12px; font-weight:600; color:#1D4ED8; }
+.hz-act { flex-shrink:0; }
+.hz-btn { display:inline-block; padding:8px 14px; border-radius:8px; font-size:14px; font-weight:600; font-family:inherit; text-decoration:none; border:1px solid var(--bd); background:#fff; color:var(--tx); cursor:pointer; white-space:nowrap; }
+.hz-btn.wa { background:#16A34A; border-color:#16A34A; color:#fff; }
+.hz-btn.mail { background:#fff; border-color:#16A34A; color:#166534; }
+.hz-btn.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
+.hz-mas { padding:2px 14px 14px 62px; }
+.hz-preg { font-size:14px; color:var(--tx); margin-bottom:8px; }
+.hz-preg span { color:var(--tm); font-size:13px; }
+.hz-resps { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.hz-r { padding:7px 12px; border-radius:8px; border:1px solid var(--bd); background:#fff; font:inherit; font-size:14px; color:var(--tx); cursor:pointer; }
+.hz-r:hover { border-color:var(--ac); background:var(--crt); }
+.hz-r.fin { color:#991B1B; border-color:#FCA5A5; }
+.hz-acc { display:flex; flex-wrap:wrap; align-items:center; gap:4px 2px; }
+.hz-contacto { font-size:13px; color:var(--tm); margin-right:8px; }
+.hz-l { background:none; border:none; padding:5px 8px; border-radius:6px; font:inherit; font-size:13.5px; color:var(--acd); cursor:pointer; }
+.hz-l:hover { background:var(--bg3); }
+.hz-l.ok { color:#166534; } .hz-l.mal { color:#991B1B; }
+.hz-ficha { margin-top:10px; }
+.hz-ficha .seg-card { margin:0; }
+.hz-vacio { padding:22px; text-align:center; color:var(--tm); font-size:15px; }
+.hz-aviso { margin:12px 0 0; padding:10px 14px; font-size:14px; color:var(--tm); border:1px dashed var(--bd); border-radius:10px; cursor:pointer; }
+.hz-pleg { margin-top:12px; }
+.hz-pleg > summary { list-style:none; cursor:pointer; padding:11px 14px; border:1px solid var(--bd2); border-radius:10px; background:#fff; font-size:14.5px; color:var(--tx); display:flex; align-items:center; gap:8px; }
+.hz-pleg > summary::-webkit-details-marker { display:none; }
+.hz-pleg > summary::before { content:'▸'; color:var(--tm); }
+.hz-pleg[open] > summary::before { content:'▾'; }
+.hz-pleg[open] > summary { border-radius:10px 10px 0 0; border-bottom:none; }
+.hz-pleg[open] > .hz-lista { border-radius:0 0 12px 12px; }
+.hz-pleg-n { margin-left:auto; color:var(--tm); font-size:13.5px; font-variant-numeric:tabular-nums; }
+.hz-pleg-nota { font-size:13px; color:var(--tm); padding:8px 14px; background:#fff; border-left:1px solid var(--bd2); border-right:1px solid var(--bd2); }
+.hz-mes { margin-top:18px; font-size:12.5px; color:var(--tm); }
+@media (max-width:600px){
+  .hz-top { flex-direction:column; align-items:flex-start; gap:4px; }
+  .hz-plata { text-align:left; }
+  .hz-linea { flex-wrap:wrap; padding:0 14px 12px 0; }
+  .hz-main { padding-bottom:6px; }
+  .hz-act { margin-left:62px; }
+  .hz-mas { padding-left:14px; }
+  .hz-nom { white-space:normal; }
+}
 /* el área abrible: ocupa toda su columna y lleva nombre + línea de datos.
    (Antes acá había un grid-template-columns de 4 columnas, sobrante de una
    versión anterior, que pisaba el de 5 definido más arriba.) */
@@ -6455,105 +6525,53 @@ function renderSeguimiento(){
   var b1Hechos = hoyDone.filter(function(g){ return contactadoHoyEs1er(g); }).length;
   var CUENTAN_META = ['ball', 'conv', 'b2'];
   var b2Hechos = hoyDone.filter(function(g){ return CUENTAN_META.indexOf(origenHoy(g).cls) !== -1; }).length;
-  var meta = metaHoy();
+  /* la meta de toques se ajusta a lo que de verdad hay para hacer hoy
+     (06-10-2026): si la lista trae menos seguimientos que la meta, terminar
+     la lista es cumplirla. Antes pedía 20 cuando solo había 9 que contaban
+     y el día no podía quedar verde nunca. */
+  var meta = Math.min(metaHoy(), b2Hechos + ballenas.length + conv.length + b2.length);
   var diaVerde = (b1.length === 0) && (b2Hechos >= meta);
-  function sec(t,cls,arr,vacio,extra){
-    var body = arr.length ? arr.map(function(g){ return segRegistrar(g,cls); }).join('') : '<div class="seg-empty">'+vacio+'</div>';
-    var cnt = arr.length ? '<span class="seg-cnt">'+arr.length+'</span>' : '';
-    return '<div class="seg-sec '+cls+'">'+t+cnt+'</div>'+(extra||'')+body;
+  /* ── REDISEÑO 06-10-2026: UNA SOLA LISTA "HOY" ──
+     La clasificación de arriba (ballenas, bloques 1-3, conversaciones) sigue
+     igual y decide el ORDEN; lo que cambió es cómo se muestra. Antes eran ocho
+     secciones con títulos, contadores y explicaciones, y cada cliente traía
+     seis casillas con notas y hasta siete etiquetas: no se sabía por dónde
+     partir. Ahora es una fila tras otra, de arriba hacia abajo, con un botón
+     para escribir y —al abrirla— los botones de qué contestó el cliente. */
+  var lista = [];
+  ballenas.forEach(function(g){ lista.push([g,'ballena']); });
+  b1.forEach(function(g){ lista.push([g,'nuevo']); });
+  conv.forEach(function(g){ lista.push([g,'conv']); });
+  b2.forEach(function(g){ lista.push([g,'today']); });
+  var enJuegoHoy = lista.reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
+  function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
+  function plegado(k, titulo, arr, cls, nota){
+    if (!arr.length) return '';
+    var monto = arr.reduce(function(a,g){ return a + (g.valor||0); }, 0);
+    return '<details class="hz-pleg"'+detAttrs(k)+'><summary>'+titulo+
+      '<span class="hz-pleg-n">'+arr.length+(monto ? ' · '+fmtM(monto) : '')+'</span></summary>'+
+      (nota ? '<div class="hz-pleg-nota">'+nota+'</div>' : '')+
+      '<div class="hz-lista">'+arr.map(function(g){ return filaReg(g, cls); }).join('')+'</div></details>';
   }
-  function bloqueH(n, titulo, sub, cnt, clase){
-    return '<div class="seg-bloque '+(clase||'')+'" id="seg-bloque-'+n+'"><span class="seg-bloque-n">'+n+'</span>'+
-      '<span class="seg-bloque-t">'+titulo+'<span class="seg-bloque-sub">'+sub+'</span></span>'+
-      '<span class="seg-bloque-c">'+cnt+'</span></div>';
-  }
-  var html='';
-  /* BALLENAS — fijas arriba, fuera de la meta. Una sola paga el mes. */
-  if (ballenas.length){
-    html += '<div class="seg-sec ballena">🐋 No dejar enfriar<span class="seg-cnt">'+ballenas.length+'</span></div>'+
-      '<div class="seg-empty" style="margin:-4px 0 8px">Clientes que ya nos compraron antes, o con más de '+fmt(PEZ_GORDO)+' en cotizaciones abiertas (varias veces el ticket promedio). Van fijos arriba porque perder uno de estos cuesta mucho más que perder varios normales: <strong>parte por acá</strong>. Cuentan para tu meta de toques, igual que el bloque 2.</div>'+
-      ballenas.map(function(g){
-        var h = horasSinToque(g);
-        var alerta = h >= 72 ? '<div class="ballena-alerta">⚠ '+Math.floor(h/24)+' días sin un toque — el acuerdo es no pasar de 72 horas</div>' : '';
-        return alerta + segRegistrar(g,'ballena');
-      }).join('');
-  }
-  /* BLOQUE 1 — nunca se sacrifica */
-  html += bloqueH(1,'Escríbeles hoy mismo','Cotizaron antes de hoy y nadie les ha hablado',
-                  (b1.length? b1.length+' por hacer' : '✓ al día'), b1.length?'urg':'ok');
-  html += b1.length
-    ? b1.map(function(g){ return segRegistrar(g,'nuevo'); }).join('')
-    : '<div class="seg-empty">Todo lo nuevo está contactado. 🎉</div>';
+  var html = '<div class="hz-lista">'+
+    (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
+                  : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>')+
+    '</div>';
   if (b1Viejos.length){
-    /* viven en su pestaña propia (fase 6): aquí solo el recordatorio, para que
-       la cola del día no se llene con lo que ya no es de hoy */
-    html += '<div class="seg-backlog" style="cursor:pointer" onclick="setDashView(\'backlog\')">'+
-      '📦 <strong>'+b1Viejos.length+'</strong> sin primer contacto hace más de '+BACKLOG_DIAS+' días — están en la pestaña <strong>Backlog</strong>, para después de terminar los bloques 1 y 2 →</div>';
+    html += '<div class="hz-aviso" onclick="setDashView(\'backlog\')">'+b1Viejos.length+
+      ' llevan más de '+BACKLOG_DIAS+' días sin primer contacto: están en <strong>Backlog</strong>, para cuando termines esta lista →</div>';
   }
-  /* COTIZARON HOY — a la vista, pero no son tarea. Van plegados: el punto es
-     ver el movimiento del día sin que 17 tarjetas empujen el bloque 2 fuera
-     de la pantalla. El botón de WhatsApp sigue ahí por si hay que escribirle
-     igual (una consulta urgente, un cliente que llamó). */
-  if (b1Hoy.length){
-    var montoHoy = b1Hoy.reduce(function(a,g){ return a + (g.valor||0); }, 0);
-    html += '<div class="seg-hoy-h" onclick="segHoyToggle()">'+
-        '<span class="seg-hoy-ico" id="seg-hoy-ico">'+(segHoyAbierto?'▾':'▸')+'</span>'+
-        '🆕 Cotizaron hoy · les escribes mañana<span class="seg-cnt">'+b1Hoy.length+'</span>'+
-        '<span class="seg-hoy-monto">'+fmt(montoHoy)+'</span>'+
-      '</div>'+
-      '<div class="seg-hoy-body'+(segHoyAbierto?'':' hidden')+'" id="seg-hoy-body">'+
-        '<div class="seg-empty" style="margin:-4px 0 8px">Acaban de cotizar y ya tienen su cotización a la vista: escribirles el mismo día se lee como insistencia. Mañana entran al bloque 1. Si igual necesitas contactar a alguno, el botón está.</div>'+
-        b1Hoy.map(function(g){ return segRegistrar(g,'nuevo'); }).join('')+
-      '</div>';
-  }
-  /* BLOQUE 2 — hasta la meta del día */
-  html += bloqueH(2,'Hazles seguimiento','Respondieron antes o cotizaron sobre '+fmt(CFG_SEG.corte),
-                  (meta ? b2Hechos+' de '+meta : 'sin meta hoy'), (meta && b2Hechos>=meta)?'ok':'');
-  html += b2.length
-    ? b2.map(function(g){ return segRegistrar(g,'today'); }).join('')
-    : '<div class="seg-empty">'+(meta ? 'Sin toques pendientes para hoy.' : 'Hoy no hay meta de toques.')+'</div>';
-  /* CONVERSACIONES ACTIVAS — fuera de la cola de plantillas */
-  if (conv.length){
-    html += '<div class="seg-sec conv">💬 Conversaciones activas<span class="seg-cnt">'+conv.length+'</span></div>'+
-      '<div class="seg-empty" style="margin:-4px 0 8px">Ya te contestaron: aquí el seguimiento es la conversación, no una plantilla. Cuentan para tu meta de toques.</div>'+
-      conv.map(function(g){ return segRegistrar(g,'conv'); }).join('');
-  }
-  /* BLOQUE 3 — solo si sobra tiempo, colapsado */
-  if (b3.length){
-    /* el monto va en el título: "59" se lee como relleno, "59 · $12M" no. Es
-       la parte de la cola que se olvida, así que al menos se ve qué hay dentro */
-    var b3Valor = b3.reduce(function(a,g){ return a + (g.valor||0); }, 0);
-    html += '<details class="seg-b3"'+detAttrs('b3')+'><summary>'+
-      '<span class="seg-bloque-n">3</span> Resto de la cola · '+b3.length+' · '+fmtM(b3Valor)+
-      ' <span class="seg-bloque-sub">solo si sobra tiempo — no cuentan para el Día Verde. Si alguno vale la pena, márcalo con la ★ y sube al bloque 2.</span></summary>'+
-      b3.map(function(g){ return segRegistrar(g,'today'); }).join('')+'</details>';
-  }
-  if (futuro.length){
-    html += '<details class="seg-b3"'+detAttrs('semana')+'><summary>⚪ Esta semana · '+futuro.length+
-      ' <span class="seg-bloque-sub">agendados para los próximos días</span></summary>'+
-      futuro.map(function(g){ return segRegistrar(g,'future'); }).join('')+'</details>';
-  }
-  if (hoyDone.length){
-    /* ordenadas por bloque de origen para poder leer de un vistazo qué se
-       trabajó hoy, y un resumen contado arriba de la lista */
-    hoyDone.sort(function(a,b){
-      var d = ORDEN_ORIGEN.indexOf(origenHoy(a).cls) - ORDEN_ORIGEN.indexOf(origenHoy(b).cls);
-      return d || cmp(a,b);
-    });
-    var cuenta = {};
-    hoyDone.forEach(function(g){ var o = origenHoy(g); cuenta[o.cls] = cuenta[o.cls] || {n:0, o:o}; cuenta[o.cls].n++; });
-    var resumen = ORDEN_ORIGEN.filter(function(k){ return cuenta[k]; }).map(function(k){
-      return '<span class="org-badge '+k+'">'+cuenta[k].n+' '+cuenta[k].o.corto+'</span>';
-    }).join('');
-    html += sec('✅ Contactados hoy','donehoy',hoyDone,'','<div class="org-resumen">'+resumen+'</div>');
-  }
-  /* alerta de velocidad: cotizaciones web sin primer contacto hace +24h */
-  /* Se muestra SIEMPRE, aunque el vendedor esté filtrando solo sus clientes:
-     es la única parte del mundo web que no puede esperar (una cotización recién
-     hecha, contestada dentro del día, convierte muchísimo más). Es una línea,
-     no la lista completa, así que no vuelve a llenar la cola. */
+  html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
+    'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
+  html += plegado('b3', 'Cuando termines tu meta diaria, escríbeles a estos', b3, 'today',
+    'No cuentan para la meta. Si alguno vale la pena, ábrelo y márcalo como interesado: sube a la lista de hoy.');
+  html += plegado('semana', 'Próximos días', futuro, 'future', '');
+  html += plegado('hechos', 'Hechos hoy', hoyDone, 'donehoy', 'Si marcaste alguno por error, ábrelo y deshaz el contacto.');
+  /* alerta de velocidad: cotizaciones web sin primer contacto hace +24h.
+     Solo cuando la lista NO incluye los web (vendedor filtrando sus clientes):
+     si los incluye, esas cotizaciones ya están arriba en la lista. */
   var lentos = 0;
-  groups.forEach(function(g){
+  if (!owners.web) groups.forEach(function(g){
     var x=g.lead;
     if (isWeb(x) && (x.seg_etapa||0)===0 && x.fecha_creacion &&
         (Date.now()-new Date(x.fecha_creacion).getTime()) > 86400000) lentos++;
@@ -6561,40 +6579,26 @@ function renderSeguimiento(){
   var banner = lentos>0
     ? '<div class="speed-alert" onclick="setSegBloque(\'web\')">⚡ '+lentos+' cotizaci'+(lentos===1?'ón':'ones')+' web sin primer contacto hace +24h — contáctalas primero →</div>'
     : '';
-  function ficha(cls,emo,label,n){
-    return '<div class="stat-card tap seg-'+cls+'f" onclick="scrollToSec(\''+cls+'\')"><div class="stat-v">'+n+'</div><div class="stat-l">'+emo+' '+label+'</div></div>';
-  }
-  /* Día Verde (spec §8.1): bloque 1 al 100% Y bloque 2 en la meta. El bloque 3
-     no influye. Si el bloque 1 está incompleto, el día NO puede ser verde. */
-  /* Encabezado del día: responde "¿qué tengo que hacer hoy?" de una mirada.
-     Dos pasos numerados, con el número que falta en cada uno. */
+  /* Encabezado: una línea y una barra. La meta es la misma de antes (todos los
+     nuevos + los toques del día), contada igual que el Día Verde. */
   var diaNom = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][new Date().getDay()];
-  var p1Ok = b1.length === 0, p2Ok = b2Hechos >= meta;
+  var metaTotal = b1Hechos + b1.length + meta;
+  var metaHecho = b1Hechos + Math.min(b2Hechos, meta);
+  var pct = metaTotal ? Math.round(metaHecho / metaTotal * 100) : 100;
+  var faltanSeg = Math.max(0, meta - b2Hechos);
+  var subTop = diaVerde ? 'Meta cumplida. Si quieres seguir, abre «Cuando termines tu meta diaria».'
+             : b1.length ? (b1.length===1 ? 'Primero el que nadie ha contactado' : 'Primero los '+b1.length+' que nadie ha contactado')+(faltanSeg ? ', después '+faltanSeg+(faltanSeg===1 ? ' seguimiento' : ' seguimientos') : '')+'.'
+             : faltanSeg ? (faltanSeg===1 ? 'Te falta 1 seguimiento.' : 'Te faltan '+faltanSeg+' seguimientos.')
+             : 'Meta cumplida.';
   var diaBanner =
-    '<div class="hoy-box'+(diaVerde?' ok':'')+'">'+
-      '<div class="hoy-top">'+(diaVerde ? '🟢 Día Verde — listo por hoy' : 'Tu meta de hoy, '+diaNom)+'</div>'+
-      '<div class="hoy-pasos">'+
-        '<div class="hoy-paso'+(p1Ok?' ok':'')+'" onclick="scrollToBloque(1)">'+
-          '<span class="hoy-n">1</span>'+
-          /* se muestra "hechos de total" y cuántos faltan, no solo lo que
-             queda: sin el total no se sabe si 17 pendientes es que no se
-             empezó o que ya se hizo la mitad */
-          '<span class="hoy-txt">'+(p1Ok
-              ? 'Nuevos contactados ✓ ('+b1Hechos+')'
-              : '<strong>'+b1Hechos+' de '+(b1Hechos+b1.length)+'</strong> contactados')+
-          /* ya no dice "el mismo día": los del día quedan fuera del bloque 1 a
-             propósito, y el subtítulo contradecía a la sección "Cotizaron hoy" */
-          '<span class="hoy-sub">'+(p1Ok ? 'Cotizaron antes de hoy y nadie les ha escrito' : 'Faltan '+b1.length+' — cotizaron antes de hoy')+'</span>'+
-          '<span class="hoy-go">Ir al bloque 1 →</span></span>'+
-        '</div>'+
-        '<div class="hoy-paso'+(p2Ok?' ok':'')+'" onclick="scrollToBloque(2)" title="Cuentan las ballenas, las conversaciones activas y el bloque 2. No cuentan los primeros contactos (esos son el paso 1) ni el bloque 3.">'+
-          '<span class="hoy-n">2</span>'+
-          '<span class="hoy-txt">'+(meta ? '<strong>'+b2Hechos+' de '+meta+'</strong> toques' : 'Hoy sin meta')+
-          '<span class="hoy-sub">'+(p2Ok ? 'Meta cumplida ✓' : (meta ? 'Faltan '+(meta-b2Hechos)+' — cuenta 🐋 y conversaciones' : 'Solo primeros contactos'))+'</span>'+
-          '<span class="hoy-go">Ir al bloque 2 →</span></span>'+
-        '</div>'+
+    '<div class="hz-top'+(diaVerde?' ok':'')+'">'+
+      '<div class="hz-top-l">'+
+        '<div class="hz-dia">'+(diaVerde ? 'Listo por hoy, '+diaNom : 'Hoy '+diaNom+' · llevas <strong>'+metaHecho+' de '+metaTotal+'</strong>')+'</div>'+
+        '<div class="hz-sub">'+subTop+'</div>'+
       '</div>'+
-    '</div>';
+      '<div class="hz-plata">'+fmtM(enJuegoHoy)+'<span>en juego hoy</span></div>'+
+    '</div>'+
+    '<div class="hz-barra"><span style="width:'+pct+'%"></span></div>';
   /* Métricas del mes POR CLIENTE, no por cotización. Un cliente que pide 5
      cotizaciones y compra una vez es UN cliente ganado, no 1 ganada y 4
      perdidas — contarlo por fila hundía la conversión y el % de contacto
@@ -6634,14 +6638,12 @@ function renderSeguimiento(){
   var rapidPct = clavesMes.length ? Math.round(cliRapidos/clavesMes.length*100) : 0;
   var st = document.getElementById('dash-stats');
   st.style.display='block';
-  /* Sin fichas: el encabezado del día ya dice los dos números que importan y
-     repetirlos abajo era el ruido que hacía difícil saber qué hacer. */
-  st.innerHTML = banner + diaBanner +
-    '<div class="month-metrics" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos); los que siguen en seguimiento no cuentan todavía.">'+
-      '📅 Este mes · <strong>'+clavesMes.length+'</strong> clientes ('+mesRows.length+' cotizaciones)'+
-      ' &nbsp;·&nbsp; Conversión <strong>'+convMes+'%</strong> ('+cliGan+' de '+cliDecididos+' decididos)'+
-      ' &nbsp;·&nbsp; Contacto &lt;24h <strong>'+rapidPct+'%</strong></div>';
-  document.getElementById('dash-tbl').innerHTML = html || '<div class="seg-empty" style="padding:24px;text-align:center">No hay seguimientos pendientes 🎉</div>';
+  /* las métricas del mes quedan como una línea discreta al final: el detalle
+     vive en Actividad, y arriba solo va lo que hay que hacer hoy */
+  st.innerHTML = '<div class="hz-wrap">' + banner + diaBanner + '</div>';
+  document.getElementById('dash-tbl').innerHTML = '<div class="hz-wrap">' + html +
+    '<div class="hz-mes" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos).">'+
+      'Este mes: '+clavesMes.length+' clientes ('+mesRows.length+' cotizaciones) · conversión '+convMes+'% ('+cliGan+' de '+cliDecididos+' decididos) · contacto en menos de 24 h '+rapidPct+'%</div></div>';
   segPintarDetalle(pares);
 }
 /* salta al encabezado del bloque 1 o 2 desde el recuadro "Tu meta de hoy",
@@ -6673,7 +6675,10 @@ var segSel = null;
 function esEscritorio(){ return window.matchMedia('(min-width:1100px)').matches; }
 /* ¿la vista actual usa cola + detalle? Solo Seguimiento: el Backlog y los
    Dormidos siguen con la tarjeta completa en línea, como hasta ahora. */
-function usaDetalle(){ return esEscritorio() && dashView === 'seg'; }
+/* Desde el rediseño del 06-10-2026 la lista "Hoy" es una sola columna en
+   todas las pantallas: la ficha se abre DENTRO de la fila, no en un panel
+   aparte a la derecha. Se deja la función para no tocar a quienes la llaman. */
+function usaDetalle(){ return false; }
 /* fila de una línea: lo justo para decidir a quién le toca, sin acciones
    —las acciones viven en el panel de la derecha, para que no haya dos
    botones distintos haciendo lo mismo. */
@@ -6902,6 +6907,131 @@ function segFila(g, cls){
    celular. Un solo punto de decisión para todas las secciones. */
 function segItem(g, cls){
   return usaDetalle() ? segFila(g, cls) : segClientCard(g, cls);
+}
+/* ── LISTA "HOY" (rediseño 06-10-2026) ──
+   Una fila por cliente: iniciales, nombre y monto, y en la segunda línea qué
+   pidió y POR QUÉ le toca hoy. A la derecha, el botón de escribir. Al tocar
+   la fila se abre: las respuestas que ya existían (RESPUESTAS_PREV y
+   RESPUESTAS_CIERRE, las mismas del recuadro que aparece al volver del chat)
+   y las acciones de siempre. La ficha completa con las casillas y las notas
+   sigue ahí, un clic más abajo, para el que la necesite. */
+var hoyAbierto = null;    /* id de la fila abierta */
+var hoyFicha = false;     /* si la fila abierta muestra además la ficha completa */
+function hoyToggle(id){
+  if (hoyAbierto === id) { hoyAbierto = null; hoyFicha = false; }
+  else { hoyAbierto = id; hoyFicha = false; }
+  renderSeguimiento();
+}
+function hoyVerFicha(){ hoyFicha = !hoyFicha; renderSeguimiento(); }
+/* respuesta desde la fila: igual que desde el recuadro de vuelta del chat.
+   Saca el pendiente primero, si no el recuadro volvería a preguntar al
+   volver al panel y el toque quedaría marcado dos veces. */
+function hoyResp(id, resp){
+  pendQuitar(id);
+  hoyAbierto = null; hoyFicha = false;
+  segResponderYMarcar(id, resp);
+}
+function hoyIniciales(nombre){
+  var p = String(nombre||'').replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü ]/g,' ').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '#';
+  return (p[0][0] + (p.length > 1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+/* la razón en palabras, no en códigos de bloque */
+function hoyRazon(g, cls){
+  var x = g.lead, etapa = x.seg_etapa||0;
+  if (cls === 'donehoy') return 'contactado hoy';
+  if (cls === 'future') return 'le toca el '+fmtFechaCorta(dueDate(x));
+  /* si alguna de sus cotizaciones ya respondió, no es un primer contacto en
+     frío: se dice, como lo decía la etiqueta "Respondió" de la tarjeta. Y la
+     conversación activa nunca se lee como primer contacto. */
+  var respondio = g.quotes.some(function(q){ return q.respondio; });
+  if (sinPrimerContacto(g) && cls !== 'conv'){
+    var d = diasDe(g);
+    var ini = respondio ? 'te respondió, sin toque anotado' : 'primer contacto';
+    if (d <= 0) return respondio ? ini+' · cotizó hoy' : 'cotizó hoy';
+    return ini+' · cotizó hace '+d+' día'+(d===1?'':'s');
+  }
+  var partes = [];
+  if (cls === 'ballena'){
+    var h = horasSinToque(g);
+    partes.push(esRecurrente(g) ? 'ya nos compró' : 'monto alto');
+    if (h >= 24) partes.push(Math.floor(h/24)+' días sin toque');
+  } else if (cls === 'conv'){
+    partes.push('te contestó: sigue la conversación');
+  } else {
+    var due = dueDate(x), hoy = hoyISO();
+    if (due && due < hoy){
+      var atr = Math.round((new Date(hoy) - new Date(due)) / 86400000);
+      partes.push(atr+' día'+(atr===1?'':'s')+' atrasado');
+    } else partes.push('le toca hoy');
+  }
+  partes.push('toque '+Math.min(etapa+1, CADENCIA.length)+' de '+CADENCIA.length);
+  /* lo último que se anotó que contestó. La respuesta se guarda en el toque
+     ANTERIOR al registrar el siguiente, así que se busca la más reciente. */
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial : [];
+  var ult = hist.filter(function(e){ return e && e.resp; })
+                .sort(function(a,b){ return (b.etapa||0) - (a.etapa||0); })[0];
+  /* sin repetir "interesado" cuando la ★ ya lo dice */
+  if (ult && !(x.interesado && ult.resp === 'interesado')) partes.push(ult.resp === 'nada' ? 'no contestó el anterior' : respTxt(ult.resp).toLowerCase());
+  return partes.join(' · ');
+}
+function hoyFila(g, cls){
+  var x = g.lead, etapa = x.seg_etapa||0;
+  var abierta = (hoyAbierto === x.id);
+  var prods = [];
+  g.quotes.forEach(function(q){ var p = prodNombre(q.producto); if (p && prods.indexOf(p) === -1) prods.push(p); });
+  /* UNA marca como máximo, la que más cambia la conversación */
+  var marca = '';
+  if (x.interesado) marca = '<span class="hz-marca int">★ interesado</span>';
+  else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
+  else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
+  /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
+  var anuncio = (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); })
+    ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
+  var boton = (cls === 'donehoy')
+    ? '<button class="hz-btn sec" onclick="segDeshacer(\''+x.id+'\')">Deshacer</button>'
+    : segBotonContacto(g, x, 'hz-btn');
+  var mas = '';
+  if (abierta){
+    var resp = '';
+    if (cls !== 'donehoy' && !cadenciaAgotada(x)){
+      if (etapa === 0){
+        resp = '<div class="hz-preg">¿Ya le escribiste por otro lado?</div>'+
+          '<div class="hz-resps"><button class="hz-r" onclick="hoyAbierto=null;segYaEscribi(\''+x.id+'\')">Sí, anotar el primer contacto</button></div>';
+      } else {
+        resp = '<div class="hz-preg">¿Qué contestó a tu mensaje anterior? <span>Se anota el seguimiento de hoy.</span></div>'+
+          '<div class="hz-resps">'+
+            RESPUESTAS_PREV.map(function(r){ return '<button class="hz-r" onclick="hoyResp(\''+x.id+'\',\''+r.id+'\')">'+r.txt+'</button>'; }).join('')+
+            RESPUESTAS_CIERRE.map(function(r){ return '<button class="hz-r fin" onclick="hoyResp(\''+x.id+'\',\''+r.id+'\')" title="Se marca perdida">'+r.txt+'</button>'; }).join('')+
+          '</div>';
+      }
+    }
+    var interesado = !!x.interesado;
+    mas = '<div class="hz-mas">'+resp+
+      '<div class="hz-acc">'+
+        '<span class="hz-contacto">'+escA(x.contacto||'sin contacto')+' · '+g.quotes.length+(g.quotes.length===1?' cotización':' cotizaciones')+'</span>'+
+        '<button class="hz-l" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')">'+(interesado?'Quitar interesado':'★ Interesado')+'</button>'+
+        '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
+        '<button class="hz-l ok" onclick="updateEstado(\''+x.id+'\',\'ganado\')">Ganada</button>'+
+        '<button class="hz-l mal" onclick="segPerderUI(\''+x.id+'\')">Perdida</button>'+
+        '<button class="hz-l" onclick="hoyVerFicha()">'+(hoyFicha?'Ocultar ficha':'Ficha completa')+'</button>'+
+      '</div>'+
+      (hoyFicha ? '<div class="hz-ficha">'+segClientCard(g, cls)+'</div>' : '')+
+    '</div>';
+  }
+  return '<div class="hz-fila hz-'+cls+(abierta?' abierta':'')+'">'+
+    '<div class="hz-linea">'+
+      '<button class="hz-main" onclick="hoyToggle(\''+x.id+'\')">'+
+        '<span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
+        '<span class="hz-txt">'+
+          '<span class="hz-nom">'+escA(x.cliente||'—')+' <span class="hz-monto">'+fmt(g.valor)+'</span>'+marca+'</span>'+
+          '<span class="hz-det">'+escA(prods.join(', '))+(prods.length?' · ':'')+hoyRazon(g, cls)+anuncio+'</span>'+
+        '</span>'+
+      '</button>'+
+      '<span class="hz-act">'+boton+'</span>'+
+    '</div>'+
+    mas+
+  '</div>';
 }
 function segAbrir(id){
   segSel = id;
