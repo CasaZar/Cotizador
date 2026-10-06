@@ -22,7 +22,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera nativa a medida. Precio al instante, fabricado en el sur de Chile.">
 <link rel="icon" type="image/png" href="fotos/logo-casa-zaru-og.png">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
@@ -1102,6 +1102,133 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 @media (min-width:1500px){
   .dash-wrap { grid-template-columns:210px minmax(0,1100px); justify-content:start; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MARCA EN LAS PANTALLAS DEL CLIENTE (etapa 2, 06-10-2026)
+   La identidad de la tarjeta de Casa Zaru: verde #485B3D, terracota (botones
+   en #A85D2A, que da 4,9:1 con texto blanco; el #B5652E de la tarjeta da
+   4,3:1 y no alcanza AA en texto chico), dorado #D4AC74 solo en el lema.
+   Playfair Display solo en títulos grandes; Poppins en todo lo demás
+   (la Cormorant fina se leía mal en botones y rótulos chicos).
+   Va SOLO en #s-cargando, #s1, #s2 y #s3: el panel (#s-dash, #s-login) usa
+   las mismas clases (.btn-primary, .finput, .logo-bar) y queda como estaba.
+   El fondo sigue #FAF8F2: el corte de páginas del PDF busca ese color.
+   ══════════════════════════════════════════════════════════════════════ */
+/* .marca = el documento de la cotización (#q-out). Va por clase y no por
+   #s3 porque el PDF renta una COPIA de #q-out fuera de #s3: con #s3 la copia
+   salía sin los estilos nuevos. */
+#s-cargando, #s1, #s2, #s3, .marca {
+  --ac: #A85D2A; --acd: #485B3D; --tx: #2B2A24; --tm: #6B6658;
+  --bd: #E1D8C8; --bd2: #E1D8C8; --bg3: #F3EEE3; --crt: #F7F3EA;
+  --verde: #485B3D; --terracota: #A85D2A; --terracota-osc: #8F4E22; --dorado: #D4AC74;
+  font-family: 'Poppins', sans-serif;
+}
+/* #s3 no va acá: su "#s3 *" (con id) le ganaba a los títulos .marca y el documento
+   salía sin Playfair. El documento ya hereda Poppins por .marca. */
+#s-cargando *, #s1 *, #s2 *, .marca * { font-family: inherit; }
+#s3 .btn-nav-sm { font-family: 'Poppins', sans-serif; }
+/* barra de arriba: franja verde con el logo en blanco y el lema en dorado */
+#s-cargando .logo-bar, #s1 .logo-bar, #s2 .logo-bar { background: var(--verde); border-bottom: 0; padding: 14px 16px 12px; }
+#s-cargando .logotype, #s1 .logotype, #s2 .logotype { color: #fff; font-size: 23px; letter-spacing: 2px; text-indent: 0; }
+#s-cargando .logotype b, #s1 .logotype b, #s2 .logotype b { font-family: 'Playfair Display', serif; font-weight: 700; }
+#s-cargando .logotype span, #s1 .logotype span, #s2 .logotype span { font-family: 'Poppins', sans-serif; font-weight: 300; margin-left: .3em; }
+#s1 .tagline { color: var(--dorado); font-size: 9.5px; letter-spacing: 2.4px; font-weight: 500; }
+#s-cargando .badge, #s1 .badge, #s2 .badge { display: none; }
+/* en la cotización el logo ya va en su encabezado: arriba quedan solo Editar e Inicio */
+#s3 .logo-bar { background: transparent; border-bottom: 0; padding: 10px 16px 4px; min-height: 44px; }
+#s3 .logo-bar .logotype, #s3 .logo-bar .badge { display: none; }
+#s3 .btn-nav-sm { border-color: var(--bd); color: var(--tm); font-size: 12.5px; letter-spacing: .2px; }
+/* títulos en Playfair */
+#s1 .dash-body h2, #s2 .form-hdr h2, #s2 .datos-h, .marca .coti-title, .marca .combo-item-h, .marca .combo-total-h {
+  font-family: 'Playfair Display', serif; font-weight: 600; color: #2F3B28; letter-spacing: 0;
+}
+#s1 .dash-body h2 { font-size: 26px; }
+#s1 .dash-divider { display: none; }
+#s1 .dash-intro { font-size: 13.5px; }
+#s2 .form-hdr h2 { font-size: 24px; }
+#s2 .datos-h { font-size: 19px; }
+/* rótulos sin mayúsculas sostenidas; campos con borde que se ve (3:1) y 16 px o más, para que el iPhone no haga zoom */
+#s2 .flabel { text-transform: none; letter-spacing: .1px; font-size: 14px; font-weight: 500; color: var(--tx); }
+#s2 .finput, #s2 .fsel, #s2 .dim-row input { border-color: #A08C70; font-size: 16.5px; }
+#s2 .finput:focus, #s2 .fsel:focus, #s2 .dim-row input:focus { border-color: var(--verde); box-shadow: 0 0 0 3px rgba(72,91,61,.18); }
+#s2 .col-lbl { text-transform: none; letter-spacing: .2px; }
+/* botón principal: terracota, Poppins, sin mayúsculas */
+#s2 .btn-primary, #s3 .btn-primary { background: var(--terracota); font-family: 'Poppins', sans-serif; font-size: 16.5px; font-weight: 600; letter-spacing: .2px; text-transform: none; min-height: 52px; border-radius: 12px; }
+#s2 .btn-primary:hover, #s3 .btn-primary:hover { background: var(--terracota-osc); }
+#s2 .btn-add { border-color: #CBBFA9; }
+/* precio en vivo: caja blanca, número en Poppins con cifras parejas */
+#s2 .live-price-wrap { background: #fff; border-color: var(--bd); }
+#s2 .lp-label { text-transform: none; letter-spacing: .2px; font-size: 13px; }
+#s2 .lp-range { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+#s2 .lp-empty { font-style: normal; font-size: 14px; }
+#s2 .datos-sec { background: #fff; }
+
+/* ── INICIO: el nombre va BAJO la foto (María José, 06-10: en blanco sobre la
+   foto no se leía cuando la foto era clara) ── */
+#s1 .pcard { aspect-ratio: auto; display: flex; flex-direction: column; background: #fff; border-color: var(--bd); }
+#s1 .pcard-img { position: relative; inset: auto; aspect-ratio: 4 / 3; background: var(--bg3); }
+#s1 .pcard::after { display: none; }
+#s1 .pcard-body { position: static; padding: 9px 12px 12px; }
+#s1 .pcard .pname { font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600; color: var(--tx); text-shadow: none; line-height: 1.25; }
+#s1 .pcard .psub { color: var(--tm); font-size: 12.5px; margin-top: 2px; }
+#s1 .pcard .ptag { color: var(--terracota); text-transform: none; letter-spacing: .2px; font-size: 11.5px; }
+#s1 .pcard:hover { border-color: var(--terracota); }
+/* la cubierta (309 de cada 391 que eligen) va ancha y con borde; el resto, por demanda */
+#s1 .pcard[data-prod="cubierta"] { grid-column: span 2; border: 2px solid var(--terracota); order: 0; }
+#s1 .pcard[data-prod="cubierta"] .pcard-img { aspect-ratio: 16 / 8; }
+#s1 .pcard[data-prod="peldano"] { order: 1; }
+#s1 .pcard[data-prod="puertas"] { order: 2; }
+#s1 .pcard[data-prod="mesa"] { order: 3; }
+#s1 .pcard[data-prod="repisa"] { order: 4; }
+#s1 .pcard[data-prod="revestimiento"] { order: 5; }
+#s1 .pcard[data-prod="revlibre"], #s1 .pcard[data-prod="banca"], #s1 .pcard[data-prod="pcocina"] { order: 6; }
+@media (min-width:720px){ #s1 .pcard .pname { font-size: 16px; } }
+#s1 .prof-banner { display: flex; flex-direction: column; gap: 4px; max-width: 1120px; margin: 16px auto 0; background: #EEF1EA; border-radius: 12px; padding: 12px 14px; text-decoration: none; color: var(--tx); font-size: 13.5px; line-height: 1.45; }
+#s1 .prof-banner strong { font-weight: 600; }
+#s1 .prof-cta { color: var(--verde); font-weight: 600; }
+body.modo-vendedor #s1 .prof-banner { display: none; }
+#s1 .s1-confianza { text-align: center; font-size: 12px; color: var(--tm); margin: 14px auto 0; max-width: 1120px; line-height: 1.5; }
+
+/* ── FORMULARIO: medidas frecuentes y barra fija con el precio ── */
+.med-frec { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin: 2px 0 10px; -webkit-overflow-scrolling: touch; }
+.med-frec button { flex: 0 0 auto; border: 1px solid var(--verde); color: var(--verde); background: #fff; border-radius: 20px; padding: 6px 12px; font-size: 13.5px; cursor: pointer; font-family: 'Poppins', sans-serif; min-height: 36px; }
+.med-frec button:active { background: #EEF1EA; }
+#barra-precio { display: none; }
+@media (max-width: 899px) {
+  #barra-precio.ver { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; align-items: center; justify-content: space-between; gap: 10px;
+    background: #fff; border-top: 1px solid var(--bd); box-shadow: 0 -4px 16px rgba(44,26,8,.10); padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); font-family: 'Poppins', sans-serif; }
+  #barra-precio .bp-l { font-size: 11.5px; color: #6B6658; }
+  #barra-precio .bp-v { font-size: 15.5px; font-weight: 600; color: #2B2A24; font-variant-numeric: tabular-nums; }
+  #barra-precio button { background: #A85D2A; color: #fff; border: 0; border-radius: 10px; padding: 11px 16px; font-size: 14.5px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
+}
+
+/* ── LA COTIZACIÓN (.marca = #q-out y su copia del PDF) ── */
+.marca .coti-hdr { background: var(--verde); border-radius: 12px; padding: 9px 14px; border-bottom: 0; justify-content: center; margin-bottom: 14px; }
+.marca .coti-logo { color: #fff; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 300; letter-spacing: 2px; }
+.marca .coti-logo b { font-family: 'Playfair Display', serif; font-weight: 700; }
+.marca .coti-title { font-size: 26px; margin-top: 2px; }
+.marca .coti-para { margin-bottom: 3px; }
+.marca .coti-linea { font-size: 12px; color: var(--tm); margin-bottom: 14px; line-height: 1.5; }
+.marca .coti-valida.vencida { color: #B45309; font-weight: 600; }
+.marca .llega-lista { background: #EEF1EA; border-radius: 12px; padding: 12px 14px; margin: 0 0 16px; }
+.marca .llega-lista .ll-h { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: #2F3B28; margin: 0 0 6px; }
+.marca .llega-lista ul { list-style: none; margin: 0; padding: 0; }
+.marca .llega-lista li { font-size: 13.5px; line-height: 1.45; padding: 3px 0 3px 22px; position: relative; color: var(--tx); }
+.marca .llega-lista li::before { content: '✓'; position: absolute; left: 2px; color: var(--verde); font-weight: 700; }
+.marca .pz-trans { color: var(--verde); }
+.marca .pz-badge { background: #FBEDE3; color: var(--terracota-osc); border-color: #EBCDB6; }
+.marca .ibox { border-color: var(--bd); box-shadow: none; border-radius: 12px; }
+.marca .ibox-h { background: #fff; color: #2F3B28; font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; text-transform: none; letter-spacing: 0; text-align: left; padding: 11px 12px 2px; }
+.marca .ibox-incluye .ibox-b li::before { color: var(--verde); }
+.marca .bankrow, .marca .warranty { background: var(--bg3); border-color: var(--bd); border-radius: 12px; }
+.marca .warranty strong { color: #2F3B28; }
+.marca .wa-btn { background: var(--terracota); font-family: 'Poppins', sans-serif; }
+.marca .wa-btn:hover { background: var(--terracota-osc); }
+.marca .btn-pdf { border-color: var(--verde); color: var(--verde); font-family: 'Poppins', sans-serif; }
+.marca .btn-copy-link { font-family: 'Poppins', sans-serif; }
+.marca .cierre-marca { background: var(--terracota); color: #fff; border-radius: 14px; padding: 16px; text-align: center; margin: 18px 0 8px; }
+.marca .cierre-marca .cm-lema { font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; margin: 0 0 6px; }
+.marca .cierre-marca .cm-red { font-size: 12.5px; margin: 0; opacity: .95; }
 </style>
 </head>
 <body>
@@ -1124,47 +1251,47 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 <div id="s1" class="hidden">
   <div class="logo-bar">
     <div class="logotype">CASA ZARU</div>
-    <div class="tagline">Madera del sur de Chile a medida</div>
+    <div class="tagline">Maderas nobles del sur de Chile a medida</div>
     <div><span class="badge">Cotizador en Línea</span></div>
   </div>
   <div class="dash-body">
     <div class="dash-intro-wrap">
-      <h2>¿Qué producto te interesa?</h2>
+      <h2>¿Qué quieres cotizar?</h2>
       <div class="dash-divider"></div>
-      <p class="dash-intro">Selecciona el producto, ingresa tus medidas<br>y recibe tu cotización al instante.</p>
+      <p class="dash-intro">Precio al instante. Hecho a mano en Villarrica.</p>
     </div>
     <div id="combo-bar-s1"></div>
     <div class="pgrid">
 
       <div class="pcard" data-prod="cubierta"><span class="ptag">Lo más pedido</span>
         <div class="pcard-img" id="img-cubierta"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="7" width="18" height="3.5" rx="1"/><rect x="3" y="13.5" width="18" height="3.5" rx="1"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Cubierta de madera</div><div class="psub">Espesor 2,1 a 4,0 cm · Coihue, Raulí, Lenga, Ciprés, Pino…</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Cubiertas a medida</div><div class="psub">Cocina, baño, mesa o escritorio</div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="repisa">
         <div class="pcard-img" id="img-repisa"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="11" width="18" height="2.5" rx="1"/><line x1="7" y1="13.5" x2="7" y2="20" stroke-linecap="round"/><line x1="17" y1="13.5" x2="17" y2="20" stroke-linecap="round"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Repisa / Cubierta</div><div class="psub">2 cm de espesor</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Repisas</div><div class="psub">2 cm de espesor</div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="peldano">
         <div class="pcard-img" id="img-peldano"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 20h4v-4h4v-4h4v-4h4V4" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Peldaño de escalera</div><div class="psub">A medida</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Peldaños</div><div class="psub">A medida, 2 o 4 cm</div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="puertas">
         <div class="pcard-img" id="img-puertas"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="3" width="16" height="20" rx="1"/><circle cx="16.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas de madera</div><div class="psub">Granero · Maciza · Con vidrios</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas</div><div class="psub">Granero, maciza o con vidrios</div></div><span class="parrow">→</span></div>
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
       <div class="pcard" id="pcard-mesa" data-prod="mesa">
         <div class="pcard-img" id="img-mesa"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="6" width="19" height="2.6" rx=".8"/><path d="M5 8.6V19M19 8.6V19M5 13h14"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas de madera</div><div class="psub">De comedor o de centro · 22 modelos</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas</div><div class="psub">Comedor y centro</div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="revestimiento">
         <div class="pcard-img" id="img-revestimiento"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="4" width="4" height="16" rx=".5"/><rect x="10" y="4" width="4" height="16" rx=".5"/><rect x="17" y="4" width="4" height="16" rx=".5"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Revestimiento</div><div class="psub">Coihue · Ciprés · precio por m²</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Revestimiento</div><div class="psub">Coihue o ciprés, por m²</div></div><span class="parrow">→</span></div>
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
@@ -1185,6 +1312,15 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
       </div>
 
     </div>
+    <!-- Programa para profesionales (06-10-2026). Los tramos de la Cuenta
+         Casa Zaru (2% sobre $1,5M y 5% sobre $3M comprados en el año, más el
+         5% por transferencia) se explican por WhatsApp: acá va solo la
+         invitación. Al 5558, no al número de anuncios. -->
+    <a class="prof-banner" href="https://wa.me/56956375558?text=Hola%2C%20soy%20profesional%20del%20rubro%20y%20quiero%20abrir%20mi%20Cuenta%20Casa%20Zaru." target="_blank" rel="noopener">
+      <span><strong>¿Arquitecto, diseñador o empresa?</strong> Con la Cuenta Casa Zaru llegas hasta un 10% bajo el valor de lista.</span>
+      <span class="prof-cta">Quiero mi cuenta →</span>
+    </a>
+    <p class="s1-confianza">6 años fabricando en Villarrica · Garantía 5 años · Envío a todo Chile · 3 cuotas sin interés</p>
   </div>
 </div>
 
@@ -1246,6 +1382,9 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
     <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar y cotizar otro producto</button>
     </aside>
   </div>
+  <!-- barra fija con el precio, solo en celular (ver barraPintar) -->
+  <div id="barra-precio"><div><div class="bp-l">Tu precio estimado</div><div class="bp-v" id="bp-v"></div></div>
+    <button type="button" onclick="barraIrADatos()">Continuar</button></div>
 </div>
 
 <!-- La pantalla intermedia s2b («Tu pieza, hecha a mano») se eliminó el
@@ -1263,7 +1402,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
     <div><span class="badge">Cotizador en Línea</span></div>
     <button class="btn-nav-sm right" id="btn-q-s1">Inicio</button>
   </div>
-  <div id="q-out" class="coti"></div>
+  <div id="q-out" class="coti marca"></div>
 </div>
 
 <!-- ══ s-login: ACCESO AL PANEL ══ -->
@@ -1378,7 +1517,7 @@ var WOOD = {
   bajo:  'Pino Oregón'
 };
 var PNAME = {
-  cubierta:'Cubiertas', repisa:'Repisa / Cubierta 2cm', peldano:'Peldaños',
+  cubierta:'Cubiertas', repisa:'Repisas', peldano:'Peldaños',
   granero:'Puerta Granero', maciza:'Puerta Madera', vidrios:'Puerta con Vidrios',
   revestimiento:'Revestimiento', mesa:'Mesas de madera', revlibre:'Revestimiento a medida',
   banca:'Bancas', pcocina:'Puertas de mueble de cocina'
@@ -2191,9 +2330,16 @@ function espesorFactor(tier) {
    que no acepta SVG. */
 var LOGO_URL = 'fotos/logo-casa-zaru.svg';
 function applyLogo() {
+  /* en las pantallas del cliente (franja verde, etapa 2) va el logo en texto
+     como en la tarjeta: CASA en Playfair negrita y ZARU fino, en blanco. El
+     SVG tiene fondo propio y sobre verde salía como un rectángulo. */
+  document.querySelectorAll('#s-cargando .logotype, #s1 .logotype, #s2 .logotype').forEach(function(el) {
+    el.innerHTML = '<b>CASA</b><span>ZARU</span>';
+  });
   var probe = new Image();
   probe.onload = function() {
     document.querySelectorAll('.logotype').forEach(function(el) {
+      if (el.closest('#s-cargando, #s1, #s2, #s3')) return;
       el.innerHTML = '<img class="logo-img" src="' + LOGO_URL + '" alt="Casa Zaru">';
     });
   };
@@ -2354,6 +2500,7 @@ function calcLive() {
   if (prod === 'mesa' && !vendorMode && !mesaModeloActual()) {
     rangeEl.innerHTML = '<span class="lp-empty">Elige un modelo para ver el precio</span>';
     noteEl.style.display = 'none';
+    barraPrecio.hay = false; barraPintar();
     return;
   }
   if (bajo > 0) {
@@ -2369,10 +2516,14 @@ function calcLive() {
       : 'Según la madera · IVA incluido · Envío aparte · Hasta 3 cuotas sin interés';
     noteEl.style.display = 'block';
     embudoTick('medidas');
+    barraPrecio.hay = true;
+    var bpv = document.getElementById('bp-v'); if (bpv) bpv.textContent = fmt(bajo + exT) + ' – ' + fmt(alto + exT);
   } else {
     rangeEl.innerHTML = '<span class="lp-empty">Escribe las medidas para ver tu precio</span>';
     noteEl.style.display = 'none';
+    barraPrecio.hay = false;
   }
+  barraPintar();
 }
 
 function recWood() {
@@ -2561,6 +2712,7 @@ function renderForm(p) {
     c.innerHTML = usoField + espCubField +
       '<div class="fsec">' +
         '<label class="flabel">' + dimLbl + '</label>' + fijoHint +
+        (p === 'cubierta' ? medFrecHtml() : '') +
         '<div class="col-labels dg">' +
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
@@ -3581,6 +3733,64 @@ function vidrioExtraDatos() {
   };
 }
 
+/* ── MEDIDAS MÁS PEDIDAS (etapa 2, 06-10-2026) ──
+   Un toque escribe la medida en la primera pieza (y se puede corregir). Son
+   las cinco medidas de cubierta más cotizadas según el Pulso del Cotizador;
+   ayudan al que todavía no tiene su medida exacta, que es donde más gente se
+   iba (de 390 que eligen producto, 235 llegan a ver precio). */
+var MEDIDAS_FREC = [[200, 60], [160, 90], [120, 60], [180, 90], [200, 80]];
+function medFrecHtml() {
+  return '<div class="finput-hint" style="margin:0 0 5px">Las más pedidas</div><div class="med-frec">' +
+    MEDIDAS_FREC.map(function(m){
+      return '<button type="button" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
+    }).join('') + '</div>';
+}
+function medFrec(l, a) {
+  var lg = document.getElementById('lg1'), an = document.getElementById('an1');
+  if (!lg || !an) return;
+  lg.value = l; an.value = a;
+  calcLive();
+}
+/* ── BARRA FIJA CON EL PRECIO (celular, etapa 2) ──
+   Con el teclado abierto, el precio en vivo quedaba fuera de la pantalla. La
+   barra lo muestra abajo mientras se completa el formulario; se esconde con
+   un campo activo (el teclado del iPhone la empuja y tapa lo que se escribe)
+   y cuando el bloque de datos ya está a la vista. */
+var barraPrecio = { hay: false, enfoco: false, datosVisibles: false };
+function barraPintar() {
+  var b = document.getElementById('barra-precio');
+  if (b) b.classList.toggle('ver', barraPrecio.hay && !barraPrecio.enfoco && !barraPrecio.datosVisibles);
+}
+function barraIrADatos() {
+  var d = document.querySelector('#s2 .datos-sec');
+  if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function(){ var c = document.getElementById('f-cli'); if (c && !c.value) c.focus(); }, 450);
+}
+function barraIniciar() {
+  document.addEventListener('focusin', function(e){
+    if (e.target.closest && e.target.closest('#s2') && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { barraPrecio.enfoco = true; barraPintar(); }
+  });
+  document.addEventListener('focusout', function(){
+    /* al saltar de un campo a otro hay un instante sin foco: no parpadear */
+    setTimeout(function(){
+      var a = document.activeElement;
+      barraPrecio.enfoco = !!(a && a.closest && a.closest('#s2') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+      barraPintar();
+    }, 120);
+  });
+  /* se esconde mientras se ve el bloque de datos o el botón final (si no, al
+     bajar un poco más la barra tapaba el botón "Ver precio por madera") */
+  var vigilar = ['#s2 .datos-sec', '#btn-calc', '#s2 .legal-datos'].map(function(s){ return document.querySelector(s); }).filter(Boolean);
+  if (vigilar.length && 'IntersectionObserver' in window) {
+    var visibles = {};
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(x){ visibles[vigilar.indexOf(x.target)] = x.isIntersecting; });
+      barraPrecio.datosVisibles = Object.keys(visibles).some(function(k){ return visibles[k]; });
+      barraPintar();
+    });
+    vigilar.forEach(function(el){ io.observe(el); });
+  }
+}
 function dimRow(n) {
   var ph = (prod === 'peldano') ? ['100', '28'] : ['220', '60'];   /* un peldaño típico, no una cubierta */
   return '<div class="dim-row dg" id="r'+n+'">' +
@@ -4284,8 +4494,9 @@ function fechaDocDate(){ var d = fechaDoc ? new Date(fechaDoc) : null; return (d
 function fechaDocTexto(){ return fechaDocDate().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'}); }
 function validezHtml(){
   var vence = new Date(fechaDocDate().getTime() + VALIDEZ_DIAS*86400000);
-  if (Date.now() <= vence.getTime()) return '<div class="coti-meta">Válida por '+VALIDEZ_DIAS+' días</div>';
-  return '<div class="coti-meta vencida">Venció el '+vence.toLocaleDateString('es-CL')+' — escríbenos y la actualizamos</div>';
+  /* la fecha concreta dice más que "válida por 10 días" (etapa 2, 06-10-2026) */
+  if (Date.now() <= vence.getTime()) return '<span class="coti-valida">Precio válido hasta el ' + vence.toLocaleDateString('es-CL', {day:'numeric', month:'long'}) + '</span>';
+  return '<span class="coti-valida vencida">Venció el '+vence.toLocaleDateString('es-CL')+' — escríbenos y la actualizamos</span>';
 }
 function shell(nombre, cli, fecha, body) {
   /* capturando un producto para una cotización combinada: entregar el cuerpo
@@ -4293,25 +4504,36 @@ function shell(nombre, cli, fecha, body) {
   if (comboCaptura) { comboCaptura.nombre = nombre; comboCaptura.body = body; return ''; }
   /* cliente, contacto y número se escapan: al abrir un link compartido vienen
      de la fila de quote_links, que cualquiera con la llave pública puede escribir */
-  return '<div class="coti-hdr">' +
-    '<div>' +
-      '<div class="coti-logo">CASA ZARU</div>' +
-      '<div class="coti-sub">Madera del sur de Chile a medida</div>' +
-    '</div>' +
-    '<div class="coti-r">' +
-      '<div class="coti-meta">'+escA(qnum)+'</div>' +
-      '<div class="coti-meta">'+fecha+'</div>' +
-      validezHtml() +
-    '</div>' +
-  '</div>' +
+  /* Encabezado corto (06-10-2026, "mucha info que al cliente no le interesa"):
+     franja con el logo y, bajo el título, número + fecha + validez en UNA
+     línea chica. El lema va en el cierre del documento. No se sacó ningún dato. */
+  return '<div class="coti-hdr"><div class="coti-logo"><b>CASA</b> ZARU</div></div>' +
   '<div class="coti-title">Cotización '+nombre+'</div>' +
   '<div class="coti-para">Para: <strong>'+escA(cli)+'</strong>' + (conStr ? ' · '+escA(conStr) : '') + '</div>' +
+  '<div class="coti-linea">' + escA(qnum) + ' · ' + fecha + ' · ' + validezHtml() + '</div>' +
+  llegaListaHtml() +
   /* El cuadro verde de "César te escribe por WhatsApp" se sacó el 21-08-2026:
      el botón de WhatsApp del final ya dice lo mismo y el aviso empujaba el
      precio más abajo todavía. */
   body;
 }
 
+/* ── "LLEGA LISTA PARA USAR" (etapa 2, 06-10-2026) ──
+   Lo que más quita dudas, antes de los precios: que llega terminada, de qué
+   está hecha, cómo viaja y la garantía. Las mismas promesas siguen completas
+   en "Tu pedido incluye" (no se sacó nada de ahí). El revestimiento va sin
+   terminación, así que a él no se le promete "terminada". */
+function llegaListaHtml() {
+  var ps = prodsDoc();
+  if (ps.every(function(p){ return p === 'revestimiento' || p === 'revlibre'; })) return '';
+  var plural = ps.length > 1 || ['peldano','banca','pcocina'].indexOf(ps[0]) !== -1;
+  return '<div class="llega-lista"><p class="ll-h">' + (plural ? 'Llegan listos para usar' : 'Llega lista para usar') + '</p><ul>' +
+    '<li>' + (plural ? 'Terminados' : 'Terminada') + ', con protector <strong>hidrorrepelente y antimanchas</strong></li>' +
+    '<li>Madera maciza <strong>100% sólida</strong> del sur de Chile, sin MDF ni enchapado</li>' +
+    '<li>Embalaje reforzado y despacho a todo Chile. <strong>Si llega con daño, la reponemos</strong></li>' +
+    '<li><strong>Garantía de 5 años</strong></li>' +
+  '</ul></div>';
+}
 /* pastillas de madera del tramo, en el mismo orden que los nombres de la fila */
 var MADERA_FOTOS = {
   bajo:  [{f:'oregon',  n:'Pino Oregón'}],
@@ -4468,10 +4690,11 @@ function boxes() {
 function quieroTxt() {
   var ps = prodsDoc();
   if (ps.length > 1) return 'Quiero avanzar';
-  return { cubierta:'Quiero esta cubierta', repisa:'Quiero esta repisa', peldano:'Quiero estos peldaños',
-           granero:'Quiero esta puerta', maciza:'Quiero esta puerta', vidrios:'Quiero esta puerta',
-           mesa:'Quiero esta mesa', revestimiento:'Quiero este revestimiento', revlibre:'Quiero este revestimiento',
-           banca:'Quiero estas bancas', pcocina:'Quiero estas puertas' }[ps[0]] || 'Quiero avanzar';
+  /* en primera persona ("mi"), como lo diría el cliente (etapa 2, 06-10-2026) */
+  return { cubierta:'Quiero mi cubierta', repisa:'Quiero mi repisa', peldano:'Quiero mis peldaños',
+           granero:'Quiero mi puerta', maciza:'Quiero mi puerta', vidrios:'Quiero mi puerta',
+           mesa:'Quiero mi mesa', revestimiento:'Quiero mi revestimiento', revlibre:'Quiero mi revestimiento',
+           banca:'Quiero mis bancas', pcocina:'Quiero mis puertas' }[ps[0]] || 'Quiero avanzar';
 }
 var WA_ICONO = '<svg class="wa-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.9-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
 /* ── A QUÉ WHATSAPP VA EL CLIENTE (06-10-2026) ──
@@ -4517,7 +4740,10 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
        en PDF "para enviársela al arquitecto". Para todos — cliente y
        vendedor: descarga el archivo directo, sin diálogo de impresión. */
     '<button class="btn-pdf" onclick="descargarPDF()">📄 Descargar en PDF</button>' +
-  '</div>';
+  '</div>' +
+  /* cierre de marca, como la tarjeta: también sale en el PDF (último bloque) */
+  '<div class="cierre-marca"><p class="cm-lema">Madera noble del sur de Chile, hecha para durar años</p>' +
+    '<p class="cm-red">@casazaru · hola@casazaru.cl · casazaru.cl</p></div>';
 }
 /* ── PDF ──
    Descarga DIRECTA con html2pdf (html2canvas + jsPDF): la primera versión
@@ -8131,6 +8357,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-back').addEventListener('click', function() { show('s1'); });
   document.getElementById('btn-calc').addEventListener('click', generar);
   document.getElementById('f-con').addEventListener('focus', conPrefijo);
+  barraIniciar();
   /* "Inicio" desde la cotización = empezar otra: los productos que se habían
      juntado ya quedaron en el documento y no deben colarse en la siguiente */
   document.getElementById('btn-q-s1').addEventListener('click', function() { comboVaciar(); show('s1'); });
