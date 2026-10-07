@@ -641,6 +641,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .tq-resp { display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;background:var(--bg3);color:var(--tm); }
 .tq-resp-interesado, .tq-resp-pensando { background:#E3F2E8;color:#2D6A4F; }
 .tq-resp-precio { background:#FEF3C7;color:#92400E; }
+.tq-resp-pausa { background:#E0EEF7;color:#1E4E79; }
 .tq-resp-otro_lado, .tq-resp-numero { background:#FDE8E8;color:#991B1B; }
 .dm-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px; }
 @media(max-width:480px){ .dm-grid { grid-template-columns:repeat(2,1fr); } }
@@ -5663,9 +5664,15 @@ var RESPUESTAS_CIERRE = [
   { id:'otro_lado', txt:'Compró en otro lado', motivo:'Compró en otro lado' },
   { id:'numero',    txt:'Número no funciona',  motivo:'Número no funciona / sin WhatsApp' }
 ];
-var RESPUESTAS_CON_CONVERSACION = ['interesado', 'pensando', 'precio', 'otro_lado'];
+/* esta pausa el seguimiento (07-10-2026, pedido del usuario): no es pérdida,
+   puede volver. Usa la pausa «Proyecto en pausa, sin fecha» de PAUSAS, que
+   antes solo se alcanzaba desde «Perdida». */
+var RESPUESTAS_PAUSA = [
+  { id:'pausa', txt:'Proyecto en pausa', pausa:'proyecto_pausado' }
+];
+var RESPUESTAS_CON_CONVERSACION = ['interesado', 'pensando', 'precio', 'otro_lado', 'pausa'];
 function respTxt(id){
-  var r = RESPUESTAS_PREV.concat(RESPUESTAS_CIERRE).filter(function(x){ return x.id === id; })[0];
+  var r = RESPUESTAS_PREV.concat(RESPUESTAS_PAUSA, RESPUESTAS_CIERRE).filter(function(x){ return x.id === id; })[0];
   return r ? r.txt : '';
 }
 /* copia del historial con la respuesta anotada en el toque `prev`. Si ese toque
@@ -5682,6 +5689,9 @@ function respuestasBtns(fn, id, n){
   var llamada = function(r){ return fn + '(\'' + id + '\',' + (n ? n + ',' : '') + '\'' + r.id + '\')'; };
   return RESPUESTAS_PREV.map(function(r){
       return '<button class="mbtn" onclick="' + llamada(r) + '">' + r.txt + '</button>';
+    }).join('') +
+    RESPUESTAS_PAUSA.map(function(r){
+      return '<button class="mbtn" onclick="' + llamada(r) + '">' + r.txt + ' <span class="mbtn-sub">le escribes en 60 días</span></button>';
     }).join('') +
     '<div class="mresp-h">Termina el seguimiento</div>' +
     RESPUESTAS_CIERRE.map(function(r){
@@ -7170,6 +7180,7 @@ function hoyFila(g, cls){
         resp = '<div class="hz-preg">¿Qué contestó a tu mensaje anterior? <span>Se anota el seguimiento de hoy.</span></div>'+
           '<div class="hz-resps">'+
             RESPUESTAS_PREV.map(function(r){ return '<button class="hz-r" onclick="hoyResp(\''+x.id+'\',\''+r.id+'\')">'+r.txt+'</button>'; }).join('')+
+            RESPUESTAS_PAUSA.map(function(r){ return '<button class="hz-r" onclick="hoyResp(\''+x.id+'\',\''+r.id+'\')" title="Se pausa: le vuelves a escribir en 60 días">'+r.txt+'</button>'; }).join('')+
             RESPUESTAS_CIERRE.map(function(r){ return '<button class="hz-r fin" onclick="hoyResp(\''+x.id+'\',\''+r.id+'\')" title="Se marca perdida">'+r.txt+'</button>'; }).join('')+
           '</div>';
       }
@@ -7508,6 +7519,9 @@ function segResponderYMarcar(id, resp, n){
     segPerder(id, cierre.motivo, { seg_historial: histConRespuesta(x, sig-1, resp), seg_proxima: null });
     return;
   }
+  /* proyecto en pausa: se anota la respuesta y se pausa, sin toque nuevo */
+  var pausaR = RESPUESTAS_PAUSA.filter(function(r){ return r.id === resp; })[0];
+  if (pausaR) { segPausar(id, pausaR.pausa, histConRespuesta(x, sig-1, resp)); return; }
   if (sig > CADENCIA.length) return;
   segMarcar(id, sig, true, resp);
 }
@@ -7562,11 +7576,12 @@ function segPosponerUI(id){
 }
 /* FASE 4: pausa con motivo. Saber el motivo implica que el cliente conversó,
    así que respondio se marca solo (la validación del spec, sin error molesto). */
-async function segPausar(id, motivoId){
+/* histBase: historial con la respuesta ya anotada (cuando viene de «¿Qué contestó?») */
+async function segPausar(id, motivoId, histBase){
   var x=COTIS[id]; if(!x) return;
   var p = PAUSAS.find(function(q){ return q.id === motivoId; }); if(!p) return;
   var fecha = addDias(hoyISO(), p.dias);
-  var hist = Array.isArray(x.seg_historial)?x.seg_historial.slice():[];
+  var hist = Array.isArray(histBase) ? histBase.slice() : (Array.isArray(x.seg_historial)?x.seg_historial.slice():[]);
   hist.push({etapa:0, fecha:hoyISO(), nota:'Pausa: '+pausaLabel(motivoId)+' → toque el '+fecha});
   var updates = {motivo_pausa:motivoId, seg_proxima:fecha, seg_historial:hist};
   if (!x.respondio) { updates.respondio = true; updates.fecha_primera_respuesta = new Date().toISOString(); }
