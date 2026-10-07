@@ -1275,6 +1275,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 #s1 .s1-confianza { text-align: center; font-size: 12px; color: var(--tm); margin: 14px auto 0; max-width: 1120px; line-height: 1.5; }
 
 /* ── FORMULARIO: medidas frecuentes y barra fija con el precio ── */
+#med-frec-box { margin-top: 14px; }
 .med-frec { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin: 2px 0 10px; -webkit-overflow-scrolling: touch; }
 .med-frec button { flex: 0 0 auto; border: 1px solid var(--verde); color: var(--verde); background: #fff; border-radius: 20px; padding: 6px 12px; font-size: 13.5px; cursor: pointer; font-family: 'Poppins', sans-serif; min-height: 36px; }
 .med-frec button:active { background: #EEF1EA; }
@@ -1612,7 +1613,10 @@ var sbClient = supabase.createClient(SB_URL, SB_KEY);
    la tarjeta ancha; las demás 4:3. Reemplazaron los renders de ChatGPT de
    puertas, que además delataban su origen en el nombre del archivo. */
 var FOTOS = {
-  cubierta:      'https://cotizador.casazaru.cl/fotos/cubierta.jpg',   /* la vertical: la -wide era el recorte apaisado de la tarjeta ancha */
+  /* 06-10-2026: vuelve la -wide (la isla de cocina con lavaplatos). La tarjeta
+     de cubierta es ancha otra vez (16/8) y la vertical era una cubierta en el
+     taller, no en una casa: cocina es el uso que más se cotiza. */
+  cubierta:      'https://cotizador.casazaru.cl/fotos/cubierta-wide.jpg',
   repisa:        'https://cotizador.casazaru.cl/fotos/repisa.jpg',
   peldano:       'https://cotizador.casazaru.cl/fotos/peldano.jpg',
   mesa:          'https://cotizador.casazaru.cl/fotos/mesa.jpg',
@@ -2837,7 +2841,10 @@ function renderForm(p) {
       '</div>' : '';
     var dimLbl = (p === 'banca') ? 'Medidas del asiento (4 cm de espesor)'
                : (p === 'pcocina') ? 'Medidas de cada puerta (2 cm de espesor)'
-               : (p === 'peldano') ? 'Medidas de cada peldaño' : 'Dimensiones';
+               : (p === 'peldano') ? 'Medidas de cada peldaño'
+               /* 06-10-2026: «Dimensiones» no decía que había que escribir, y con
+                  los ejemplos en gris los campos parecían ya llenos */
+               : 'Escribe tus medidas en cm';
     var fijoHint = (p === 'banca')
       ? '<div class="finput-hint">Cada banca suma <strong>' + fmt(PR.banca.fijo) + '</strong> de patas y armado. En «Cant.» va el número de bancas de esa medida.</div>'
       : (p === 'pcocina')
@@ -2875,7 +2882,6 @@ function renderForm(p) {
     c.innerHTML = usoField + espCubField +
       '<div class="fsec">' +
         '<label class="flabel">' + dimLbl + '</label>' + fijoHint +
-        (p === 'cubierta' ? medFrecHtml() : '') +
         '<div class="col-labels dg">' +
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
@@ -2885,6 +2891,9 @@ function renderForm(p) {
         '</div>' +
         '<div id="drows">' + dimRow(1) + '</div>' +
         '<button class="btn-add" id="btn-add-row">'+addRowLabel+'</button>' +
+        /* las más pedidas van DEBAJO de los campos (06-10-2026): arriba se leían
+           como la forma de ingresar la medida y no se veía dónde escribirla */
+        (p === 'cubierta' ? medFrecHtml() : '') +
         maderaNota +
       '</div>' +
       peldanoExtra +
@@ -3919,7 +3928,7 @@ var MEDIDAS_POR_USO = {
 };
 function medFrecHtml() {
   var u = MEDIDAS_POR_USO[usoActual()];
-  return '<div id="med-frec-box"><div class="finput-hint" style="margin:0 0 5px">Las más pedidas' + (u ? ' para ' + u.t : '') + '</div><div class="med-frec">' +
+  return '<div id="med-frec-box"><div class="finput-hint" style="margin:0 0 5px">¿Aún no tienes la medida? Toca una de las más pedidas' + (u ? ' para ' + u.t : '') + ':</div><div class="med-frec">' +
     (u ? u.m : MEDIDAS_FREC).map(function(m){
       return '<button type="button" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
     }).join('') + '</div></div>';
@@ -3976,7 +3985,7 @@ function barraIniciar() {
   }
 }
 function dimRow(n) {
-  var ph = (prod === 'peldano') ? ['100', '28'] : ['220', '60'];   /* un peldaño típico, no una cubierta */
+  var ph = (prod === 'peldano') ? ['ej. 100', 'ej. 28'] : ['ej. 220', 'ej. 60'];   /* un peldaño típico, no una cubierta */
   return '<div class="dim-row dg" id="r'+n+'">' +
     '<span class="rnum">'+n+'</span>' +
     '<input type="number" inputmode="decimal" placeholder="'+ph[0]+'" min="1" id="lg'+n+'">' +
