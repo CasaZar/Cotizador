@@ -1912,17 +1912,17 @@ var VALORES = {
      costo = sin IVA, lo que cobra el proveedor. cliente = lo que se cobra al
      cliente CON IVA; 0 = sin definir aún → se sugiere costo+IVA redondeado.
 
-     OJO con los tramos largos: el precio de lista del fierro es PLANO por tipo
-     de base ($289.900 simple · $329.900 compleja · $249.900 redonda), pero el
-     costo del proveedor SUBE con el largo. A $289.900 el margen se cae de 28%
-     (hasta 280) a 14% (281-320) y a −0,6% (321-360: se vende BAJO COSTO). Por
-     eso solo van cargados los dos tramos sanos; los otros quedan en 0 hasta
-     que Tomás defina el precio largo. Mantener el markup del tramo corto
-     (1,392×) pediría $347.880 y $405.860. */
+     Base suelta («Agrega base a tu cubierta», 08-10-2026): $289.900 hasta
+     240 cm de cubierta y $319.900 sobre 240, en las tres bases (trapecio, X,
+     rectangular). El costo del proveedor sube con el largo, así que los tramos
+     de 280/320/360 se mantienen aunque cobren lo mismo: el margen queda en
+     35% (241-280), 22% (281-320) y 9% (321-360). A los $289.900 planos de
+     antes, el tramo 321-360 se vendía bajo costo. */
   basesFierro: [
-    { nombre:'Base rectangular hasta 280 cm', forma:'rectangular', largoMax:280, costo:175000, cliente:289900 },
-    { nombre:'Base rectangular 281–320 cm',   forma:'rectangular', largoMax:320, costo:210000, cliente:0 },
-    { nombre:'Base rectangular 321–360 cm',   forma:'rectangular', largoMax:360, costo:245000, cliente:0 },
+    { nombre:'Base rectangular hasta 240 cm', forma:'rectangular', largoMax:240, costo:175000, cliente:289900 },
+    { nombre:'Base rectangular 241–280 cm',   forma:'rectangular', largoMax:280, costo:175000, cliente:319900 },
+    { nombre:'Base rectangular 281–320 cm',   forma:'rectangular', largoMax:320, costo:210000, cliente:319900 },
+    { nombre:'Base rectangular 321–360 cm',   forma:'rectangular', largoMax:360, costo:245000, cliente:319900 },
     { nombre:'Base redonda (cruz / trípode)', forma:'redonda',     largoMax:150, costo:150000, cliente:249900 },
     { nombre:'Par de bancas (fierro)',        forma:'bancas',      largoMax:280, costo:140000, cliente:0 }
   ]
