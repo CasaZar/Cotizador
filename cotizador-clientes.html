@@ -6131,6 +6131,7 @@ function renderTabs(){
     VENDEDORES.forEach(function(v){ tabs.push({id:v.code,label:v.nombre}); });
     tabs.push({id:'backlog',label:'📦 Backlog'});
     tabs.push({id:'dormidos',label:'😴 Dormidos'});
+    tabs.push({id:'reactivar',label:'🔁 Reactivar'});
     tabs.push({id:'actividad',label:'📊 Actividad'});
     tabs.push({id:'manual',label:'📖 Manual'});
     tabs.push({id:'elim',label:'🗑 Eliminadas'});
@@ -6139,6 +6140,7 @@ function renderTabs(){
     if (!panelSeller.b2b) tabs.push({id:'web',label:'Clientes Web'});
     tabs.push({id:'backlog',label:'📦 Backlog'});
     tabs.push({id:'dormidos',label:'😴 Dormidos'});
+    tabs.push({id:'reactivar',label:'🔁 Reactivar'});
     tabs.push({id:'actividad',label:'📊 Mi actividad'});
   }
   document.getElementById('dash-tabs').innerHTML = tabs.map(function(t){
@@ -6165,6 +6167,7 @@ function renderVistaActual(){
   if (v==='seg')            renderSeguimiento();
   else if (v==='elim')      renderEliminadas();
   else if (v==='dormidos')  renderDormidos();
+  else if (v==='reactivar') renderReactivar();
   else if (v==='actividad') renderActividad();
   else if (v==='backlog')   renderBacklog();
   else if (v==='manual')    renderManual();
@@ -6241,6 +6244,106 @@ function renderDormidos(){
       escritos.map(function(g){ return segClientCard(g,'dorm'); }).join('')+'</details>';
   }
   document.getElementById('dash-tbl').innerHTML = html;
+}
+/* ── REACTIVAR (08-10-2026) ──
+   Clientes que el cierre automático cerró por silencio hace poco. Desde el
+   01-09 fueron unos 325, casi todos con un solo mensaje. No se reabren solos:
+   se les escribe UNA vez con un mensaje distinto ("¿cómo va tu proyecto?"),
+   partiendo por los de mayor monto, ~10 al día y fuera de la meta. Si
+   contesta, «Respondió: reabrir» lo devuelve al seguimiento como conversación.
+   Entran: cerrados por silencio en los últimos REACT_CERR_CIERRE días, que
+   cotizaron hace menos de REACT_CERR_COTI días, sin otra cotización abierta
+   o ganada, y con teléfono o correo. Medir: si contestan menos de 1 de cada
+   20, la lista no vale el tiempo y se saca. */
+var NOTA_REACT_CERR = 'Reactivación de cerrada por silencio';
+var REACT_CERR_CIERRE = 30, REACT_CERR_COTI = 70, REACT_CERR_DIA = 10;
+function esCierreSilencio(x){
+  return x && x.estado === 'perdida' && (x.motivo_perdida === CIERRE_MOTIVO || x.motivo_perdida === CIERRE_MOTIVO_IGNORO);
+}
+function fechaEnHist(x, prefijo){
+  var f = null;
+  (Array.isArray(x.seg_historial) ? x.seg_historial : []).forEach(function(h){
+    if (h && h.fecha && String(h.nota||'').indexOf(prefijo) === 0){ var d = String(h.fecha).slice(0,10); if (!f || d > f) f = d; }
+  });
+  return f;
+}
+function gruposReactivar(){
+  var hoy = hoyISO(), porCli = {};
+  dashRows.forEach(function(x){ if (!x.eliminada && !esPrueba(x)) (porCli[clientKey(x)] = porCli[clientKey(x)] || []).push(x); });
+  var out = [];
+  Object.keys(porCli).forEach(function(k){
+    var qs = porCli[k].slice().sort(function(a,b){ return new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0); });
+    var lead = qs[0];
+    if (!esCierreSilencio(lead)) return;
+    if (qs.some(function(q){ return (q.estado||'enviada') !== 'perdida'; })) return;   /* otra abierta o ganada */
+    var cerro = fechaEnHist(lead, 'Cerrada automáticamente');
+    if (!cerro || cerro < addDias(hoy, -REACT_CERR_CIERRE)) return;
+    if (!lead.fecha_creacion || fechaBaseISO(lead.fecha_creacion) < addDias(hoy, -REACT_CERR_COTI)) return;
+    if (!waPhone(lead.contacto) && !correoDe(lead)) return;
+    var owner = 'web';
+    for (var i=0;i<qs.length;i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
+    if (!isPanelAdmin() && owner !== panelSeller.code && !(owner === 'web' && !panelSeller.b2b)) return;
+    var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
+    var escrito = null;
+    qs.forEach(function(q){ var f = fechaEnHist(q, NOTA_REACT_CERR); if (f && (!escrito || f > escrito)) escrito = f; });
+    out.push({ key:k, quotes:qs, lead:lead, owner:owner, valor:valor, cerro:cerro, escrito:escrito });
+  });
+  return out.sort(function(a,b){ return b.valor - a.valor; });
+}
+function waMsgReactivar(x){
+  var nom = (x.cliente||'').trim().split(' ')[0];
+  var P = prodTexto(x.producto);
+  var m = 'Hola '+nom+', ¿cómo estás? Soy César, de Casa Zaru. Hace unas semanas cotizaste '+P.suyo.replace('tu ','')+' con nosotros'+
+    (x.numero ? ' ('+x.numero+')' : '')+' y quería saber cómo va ese proyecto.\n\nSi lo retomas, te actualizo la cotización al tiro, sin compromiso.';
+  return waLimpio(m);
+}
+function reactFila(g){
+  var x = g.lead, phone = waPhone(x.contacto);
+  var dias = Math.max(0, Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000));
+  var boton = phone
+    ? '<a class="hz-btn wa" target="_blank" onclick="reactEscribi(\''+x.id+'\')" href="https://wa.me/'+phone+'?text='+encodeURIComponent(waMsgReactivar(x))+'">💬 WhatsApp</a>'
+    : '<a class="hz-btn mail" target="_blank" onclick="reactEscribi(\''+x.id+'\')" href="'+escA(correoUrl(x, g))+'">✉ Correo</a>';
+  return '<div class="hz-fila"><div class="hz-linea">'+
+    '<div class="hz-main" style="cursor:default"><span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
+      '<span class="hz-txt"><span class="hz-nom">'+escA(x.cliente||'Sin nombre')+'<span class="hz-monto">'+fmtM(g.valor)+'</span></span>'+
+      '<span class="hz-det">'+escA(PNAME[x.producto]||x.producto||'')+' · cotizó hace '+dias+' días · '+
+        (g.escrito ? 'le escribiste el '+fmtFechaCorta(g.escrito) : 'se cerró el '+fmtFechaCorta(g.cerro))+'</span></span></div>'+
+    '<div class="hz-act" style="display:flex;gap:6px">'+(g.escrito ? '' : boton)+
+      '<button class="hz-btn" onclick="reactReabrir(\''+x.id+'\')" title="Contestó: vuelve al seguimiento como conversación">Respondió: reabrir</button></div>'+
+  '</div></div>';
+}
+function renderReactivar(){
+  subFiltros('');
+  var gs = gruposReactivar().filter(grupoPasaOmni);
+  var porEscribir = gs.filter(function(g){ return !g.escrito; }), escritos = gs.filter(function(g){ return g.escrito; });
+  var hoyL = porEscribir.slice(0, REACT_CERR_DIA), resto = porEscribir.slice(REACT_CERR_DIA);
+  var st = document.getElementById('dash-stats'); st.style.display = 'grid';
+  st.innerHTML =
+    '<div class="stat-card"><div class="stat-v">'+porEscribir.length+'</div><div class="stat-l">Por escribir</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+escritos.length+'</div><div class="stat-l">Ya les escribiste</div></div>'+
+    '<div class="stat-card"><div class="stat-v money">'+fmtM(porEscribir.reduce(function(a,g){ return a+(g.valor||0); }, 0))+'</div><div class="stat-l">En juego</div></div>';
+  if (!gs.length){ document.getElementById('dash-tbl').innerHTML = '<div class="seg-empty" style="padding:24px;text-align:center">Nadie para reactivar 🎉</div>'; return; }
+  var html = '<div class="seg-empty" style="margin:0 0 10px">Se cerraron solos por no contestar, casi siempre con un solo mensaje. Escríbeles <strong>una vez</strong> (el mensaje es distinto: pregunta cómo va el proyecto). No cuenta para tu meta: hazlo cuando termines. Si contesta, toca «Respondió: reabrir» y vuelve a tu seguimiento.</div>';
+  html += hoyL.length ? '<div class="hz-lista">'+hoyL.map(reactFila).join('')+'</div>'
+                      : '<div class="seg-empty">A todos les escribiste. 🎉</div>';
+  if (resto.length) html += '<details class="hz-pleg"'+detAttrs('react-resto')+'><summary>Más, si te sobra tiempo<span class="hz-pleg-n">'+resto.length+'</span></summary><div class="hz-lista">'+resto.map(reactFila).join('')+'</div></details>';
+  if (escritos.length) html += '<details class="hz-pleg"'+detAttrs('react-escritos')+'><summary>Ya les escribiste · esperando respuesta<span class="hz-pleg-n">'+escritos.length+'</span></summary><div class="hz-lista">'+escritos.map(reactFila).join('')+'</div></details>';
+  document.getElementById('dash-tbl').innerHTML = html;
+}
+async function reactEscribi(id){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:NOTA_REACT_CERR });
+  var ok = await segSave(id, { seg_historial:hist }, 'Anotado — queda en «Ya les escribiste» hasta que conteste');
+  if (ok) registrarToque(x, 0, 'cadencia');
+}
+async function reactReabrir(id){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:'Reabierta: respondió a la reactivación' });
+  var upd = { estado:'enviada', motivo_perdida:null, respondio:true, seg_proxima:hoyISO(), seg_historial:hist };
+  if (!x.fecha_primera_respuesta) upd.fecha_primera_respuesta = new Date().toISOString();
+  await segSave(id, upd, 'Reabierta: ya está en tu Seguimiento, en conversaciones');
 }
 function segBloquesDef(){
   var b=[];
