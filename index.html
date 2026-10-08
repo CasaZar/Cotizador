@@ -6333,7 +6333,8 @@ function segComparator(){
    Config editable en Supabase; si la tabla no responde, rigen estos valores. */
 /* corte y techo los ajusta el SISTEMA solo (config_seguimiento);
    las metas las decide Tomás desde el Manual (clave 'seguimiento'). */
-var CFG_SEG = { corte:400000, techo:60, metaLunes:8, metaNormal:20, metaSabado:0 };
+/* rescateDia: cuántos del bloque 3 suben cada día a la lista de Hoy, por grupo (08-10-2026) */
+var CFG_SEG = { corte:400000, techo:60, metaLunes:8, metaNormal:20, metaSabado:0, rescateDia:5 };
 async function cargarConfigSeg(){
   try{
     var r = await sbClient.from('config_seguimiento').select('*').limit(1);
@@ -6500,6 +6501,42 @@ async function correrCierreAutomatico(){
   if (localStorage.getItem('cz-cierre-auto') === hoy) return;    /* una vez al día basta */
   var cand = candidatasACerrar();
   localStorage.setItem('cz-cierre-auto', hoy);
+  /* ── NO CERRAR A QUIEN RECIBIÓ 1 O 2 MENSAJES (08-10-2026) ──
+     Desde el 01-09, 325 clientes se cerraron por silencio con un solo toque,
+     cuando la cadencia son 6. Si el cliente (mirando TODAS sus cotizaciones)
+     lleva 1 o 2 toques, no se cierra: vuelve a la lista con el toque agendado
+     para hoy. Una sola vez por cliente: si ya volvió antes, se cierra normal.
+     Sin ese tope se reviviría todos los días. Los nunca contactados (0 toques)
+     siguen su regla de siempre (backlog). */
+  var NOTA_REVIVE = 'Volvió a la lista: el cierre automático lo encontró con pocos toques';
+  var etapaCli = {}, revividoCli = {};
+  allRows.forEach(function(x){
+    if (x.eliminada) return;
+    var k = clientKey(x);
+    etapaCli[k] = Math.max(etapaCli[k] || 0, x.seg_etapa || 0);
+    (x.seg_historial || []).forEach(function(h){
+      if (h && h.fecha && String(h.nota||'').indexOf(NOTA_REVIVE) === 0 && String(h.fecha) > (revividoCli[k] || '')) revividoCli[k] = String(h.fecha).slice(0,10);
+    });
+  });
+  var revivir = cand.filter(function(x){
+    var k = clientKey(x), e = etapaCli[k] || 0;
+    return e >= 1 && e <= 2 && !revividoCli[k] && cotizContactada(x);
+  });
+  var idRev = {}; revivir.forEach(function(x){ idRev[x.id] = true; });
+  /* el que volvió a la lista tiene 30 días para trabajarse antes de cerrarse */
+  var margen = addDias(hoy, -30);
+  cand = cand.filter(function(x){
+    if (idRev[x.id]) return false;
+    var r = revividoCli[clientKey(x)];
+    return !(r && r > margen);
+  });
+  revivir.forEach(function(x){
+    var hist = Array.isArray(x.seg_historial)?x.seg_historial.slice():[];
+    hist.push({etapa:0, fecha:hoy, nota:NOTA_REVIVE+' ('+(etapaCli[clientKey(x)])+' de '+CADENCIA.length+')'});
+    sbClient.from('cotizaciones').update({seg_proxima:hoy, seg_historial:hist}).eq('id', x.id).then(function(){}, function(){});
+    x.seg_proxima = hoy; x.seg_historial = hist;
+  });
+  if (revivir.length) showToast(revivir.length+' cliente'+(revivir.length===1?' volvió':'s volvieron')+' a la lista en vez de cerrarse: llevaban solo 1 o 2 mensajes', true);
   if (!cand.length) return;
   var ids = cand.map(function(x){ return x.id; });
   try{
@@ -6715,9 +6752,32 @@ function clasificarHoy(groups, owners, cmp){
     if (d > hoy){ if (d<=lim) futuro.push(g); return; }
     if (esPrioritario(g)) b2.push(g); else b3.push(g);
   });
-  [b1,b1Viejos,b1Hoy,b2,b3,conv,futuro,hoyDone].forEach(function(a){ a.sort(cmp); });
-  b1.concat(b2,b3).forEach(function(g){ enJuego += g.valor; });
+  /* ── RESCATES (08-10-2026) ──
+     El bloque 3 no contaba para la meta y casi nunca se trabajaba: desde el
+     01-09, 325 clientes se cerraron solos por silencio después de UN solo
+     mensaje. Cada día suben a la lista de Hoy hasta CFG_SEG.rescateDia por
+     grupo, y cuentan para la meta. Se eligen los que cotizaron más reciente
+     (el 87% de las ventas se cierra en los primeros 7 días). El cupo se calcula
+     sobre los pendientes del bloque 3 MÁS los de ese bloque ya hechos hoy, con
+     un orden que no cambia al marcarlos: así, al hacer uno no sube otro, y el
+     cupo del día se cumple en vez de rellenarse sin fin. */
+  var rescate = [], rescSet = {}, cupo = {}, RESC = CFG_SEG.rescateDia || 0;
+  if (RESC > 0) {
+    b3.concat(hoyDone.filter(function(g){ return origenHoy(g).cls === 'b3'; }))
+      .sort(function(a,b){
+        return String(b.lead.fecha_creacion||'').localeCompare(String(a.lead.fecha_creacion||'')) ||
+               String(a.key).localeCompare(String(b.key));
+      })
+      .forEach(function(g){
+        cupo[g.owner] = cupo[g.owner] || 0;
+        if (cupo[g.owner] < RESC){ cupo[g.owner]++; rescSet[g.key] = true; }
+      });
+    b3 = b3.filter(function(g){ if (rescSet[g.key]){ rescate.push(g); return false; } return true; });
+  }
+  [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone].forEach(function(a){ a.sort(cmp); });
+  b1.concat(b2,rescate,b3).forEach(function(g){ enJuego += g.valor; });
   return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3,
+           rescate:rescate, rescSet:rescSet,
            conv:conv, futuro:futuro, hoyDone:hoyDone, enJuego:enJuego };
 }
 /* ── VISTA SEGUIMIENTO (un recuadro por cliente, bloques por vendedor / web) ── */
@@ -6739,7 +6799,7 @@ function renderSeguimiento(){
   var hoy=hoyISO(), lim=addDias(hoy,7);
   var C = clasificarHoy(groups, owners, cmp);
   var ballenas=C.ballenas, b1=C.b1, b1Viejos=C.b1Viejos, b1Hoy=C.b1Hoy, b2=C.b2, b3=C.b3,
-      conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego;
+      rescate=C.rescate, conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego;
   /* Progreso del día. La meta de toques cuenta TODO el seguimiento real del
      día: ballenas, conversaciones activas y bloque 2. Antes el texto decía que
      ballenas y conversaciones iban "fuera de la meta" pero el cálculo sí las
@@ -6767,7 +6827,11 @@ function renderSeguimiento(){
     var segHechos = hechos.filter(function(g){ return CUENTAN_META.indexOf(origenHoy(g).cls) !== -1; }).length;
     var nuevos = (S.b1);
     var segPend = (S.ballenas).length + (S.conv).length + (S.b2).length;
-    var meta = Math.min(metaHoy(), segHechos + segPend);
+    /* los rescates del día van ENCIMA del tope de metaHoy(): son la parte que
+       antes nunca entraba (08-10-2026) */
+    var rescHechos = hechos.filter(function(g){ return S.rescSet[g.key]; }).length;
+    var meta = Math.min(metaHoy(), segHechos + segPend) + rescHechos + S.rescate.length;
+    segHechos += rescHechos;
     /* la alerta de velocidad de antes (web sin primer contacto hace +24 h)
        vive ahora dentro de la línea de su grupo */
     var lentos = nuevos.filter(function(g){
@@ -6792,6 +6856,7 @@ function renderSeguimiento(){
   b1.forEach(function(g){ lista.push([g,'nuevo']); });
   conv.forEach(function(g){ lista.push([g,'conv']); });
   b2.forEach(function(g){ lista.push([g,'today']); });
+  rescate.forEach(function(g){ lista.push([g,'today']); });
   var enJuegoHoy = lista.reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
   function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
   function plegado(k, titulo, arr, cls, nota){
@@ -6813,7 +6878,7 @@ function renderSeguimiento(){
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
   html += plegado('b3', 'Cuando termines tu meta diaria, escríbeles a estos', b3, 'today',
-    'No cuentan para la meta. Si alguno vale la pena, ábrelo y márcalo como interesado: sube a la lista de hoy.');
+    'Cada día suben ' + (CFG_SEG.rescateDia || 0) + ' de estos a tu lista (los que cotizaron más reciente) y cuentan para la meta. Los demás no cuentan; si alguno vale la pena, márcalo como interesado y sube hoy.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
   html += plegado('hechos', 'Hechos hoy', hoyDone, 'donehoy', 'Si marcaste alguno por error, ábrelo y deshaz el contacto.');
   /* Encabezado: el día y la plata en juego, y debajo una línea por meta con
