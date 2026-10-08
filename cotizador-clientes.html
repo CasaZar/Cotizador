@@ -8142,12 +8142,28 @@ function renderActividad(){
     qs.forEach(function(q){ if (Array.isArray(q.seg_historial)) hist = hist.concat(q.seg_historial); });
     /* 1 · lo que le tocaba a ESTE CLIENTE, una vez por etapa */
     var base = fechaBaseISO(lead.fecha_creacion);
+    /* 08-10-2026: «Tocaban» se cuenta con la MISMA vara que la lista de Hoy
+       (dueDate). Antes se contaba cada toque de la cadencia en su fecha fija
+       desde la cotización, y el % no le calzaba a César: el 07-10 marcaba 10
+       de 34 (29%) cuando había cumplido su meta, porque de los 24 «pendientes»
+       9 eran clientes ya cerrados (perdidos o ganados) y 15 tenían otra fecha
+       (pospuestos o en pausa) o les faltaba el toque anterior, así que nunca
+       aparecieron en su lista ese día. Un toque que NO está hecho cuenta solo
+       si el cliente sigue abierto y es el siguiente que le toca, en la fecha
+       en que la lista se lo mostró (seg_proxima si se movió). */
+    var abierto = (lead.estado || 'enviada') === 'enviada';
+    var etapaAct = lead.seg_etapa || 0;
     for (var n=1; n<=CADENCIA.length; n++){
+      var hecho = hist.some(function(h){ return h.etapa===n; });
       var due = addDias(base, CADENCIA[n-1]);
+      if (!hecho) {
+        if (!abierto || n !== etapaAct + 1) continue;
+        if (lead.seg_proxima) due = String(lead.seg_proxima).slice(0,10);
+      }
       if (due > hoy || due < desde) continue;
       var c = celda(due, code);
       c.correspondian++;
-      if (hist.some(function(h){ return h.etapa===n; })) c.hechos++;
+      if (hecho) c.hechos++;
     }
     /* 2 · los toques que realmente se hicieron, en SU día.
        etapa 0 son las notas de "Pospuesto a", no son toques.
@@ -8229,7 +8245,7 @@ function renderActividad(){
     '<th>Toques hechos ese día</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>'+
     '<div class="ptier-note" style="border-radius:0 0 7px 7px">Últimos '+ACTIVIDAD_DIAS+' días · se cuenta por <strong>cliente</strong>, no por cotización. '+
-    '<strong>Tocaban / Atendidos / % cumplido</strong>: de los clientes cuyo seguimiento vencía ese día (cadencia '+CADENCIA.join('-')+' desde la cotización), cuántos ya tienen ese toque marcado — aunque se haya hecho otro día. '+
+    '<strong>Tocaban / Atendidos / % cumplido</strong>: de los clientes que la lista de Hoy te mostraba ese día (cadencia '+CADENCIA.join('-')+' desde la cotización, o la fecha a la que se pospuso), cuántos ya tienen ese toque marcado — aunque se haya hecho otro día. No cuentan los clientes ya cerrados ni los que esperaban el toque anterior. '+
     '<strong>Toques hechos ese día</strong>: los que se marcaron efectivamente ese día. Es el trabajo real del día.</div>';
 }
 /* ── 📖 MANUAL DE VALORES (solo admin) ──
