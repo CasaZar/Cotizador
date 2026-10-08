@@ -735,6 +735,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 /* respondió: la señal que más predice el cierre después de la recompra */
 .resp-badge { display:inline-block;background:#DCFCE7;color:#166534;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* llegó por anuncio: seguimiento desde el WhatsApp 0141 (ver chipAnuncio) */
+.med-aviso { background:#FFF7E6;border:1px solid #F0C36D;color:#7A4B00;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.4;margin:10px 0 4px; }
+.medida-badge { display:inline-block;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 .anuncio-badge { display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* de qué bloque salió un cliente ya contactado hoy */
 .org-badge { display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px;border:1px solid transparent; }
@@ -2598,10 +2600,51 @@ function finRestauracion(){
 /* ── LIVE PRICE ── */
 var fmt = function(n) { return '$' + Math.round(n).toLocaleString('es-CL'); };
 
+/* ── MEDIDAS EN MILÍMETROS (08-10-2026) ──
+   Gaddiel escribió 940 × 320 cm por peldaño (quería 94 × 32) y su cotización
+   salió en $296 millones; hubo otras dos así (peldaños de 1000 cm, cubierta
+   de 2000 cm). El panel ordena por monto, así que esos clientes subían como
+   "monto alto" y tapaban a los reales. Topes sacados de las 853 piezas
+   guardadas al 07-10: peldaños llegan a 200 × 105, puertas a 335 × 186 y la
+   pieza real más larga es una mesa de 722 cm. Pasado el tope solo se avisa:
+   no se bloquea, porque una pieza rara también puede ser real. */
+var MED_TOPE = { peldano:{ lg:300, an:120 }, granero:{ lg:400, an:300 }, maciza:{ lg:400, an:300 }, vidrios:{ lg:400, an:300 } };
+var MED_TOPE_DEF = { lg:800, an:250 };
+function medidasRaras() {
+  if (prod === 'revestimiento' || prod === 'revlibre') return [];
+  var t = MED_TOPE[prod] || MED_TOPE_DEF, out = [];
+  for (var i = 1; i <= nrows; i++) {
+    var lgE = document.getElementById('lg'+i), anE = document.getElementById('an'+i);
+    var lg = parseFloat(lgE && lgE.value) || 0, an = parseFloat(anE && anE.value) || 0;
+    if (lg > t.lg) out.push(lg);
+    else if (an > t.an) out.push(an);
+  }
+  return out;
+}
+function medidaAvisoSync() {
+  /* va justo bajo las filas de medidas (después de "+ Agregar pieza"), no
+     junto al precio: en el modo vendedor los extras lo dejaban lejísimos.
+     renderForm rehace el formulario y se lo lleva, así que se recrea. */
+  var el = document.getElementById('med-aviso');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'med-aviso'; el.className = 'med-aviso hidden'; el.setAttribute('role', 'status');
+  }
+  var ancla = document.getElementById('btn-add-row');
+  if (ancla && el.previousElementSibling !== ancla) ancla.insertAdjacentElement('afterend', el);
+  var r = medidasRaras();
+  if (!r.length) { el.classList.add('hidden'); el.textContent = ''; return; }
+  var v = Math.max.apply(null, r);
+  var num = function(x){ return x.toLocaleString('es-CL', { maximumFractionDigits: 2 }); };
+  el.textContent = '¿Escribiste en milímetros? ' + num(v) + ' cm son ' + num(v/100) + ' metros. Si eran ' + num(v/10) + ' cm, corrige la medida.';
+  el.classList.remove('hidden');
+}
+
 function calcLive() {
   var rangeEl = document.getElementById('live-range');
   var noteEl  = document.getElementById('live-note');
   if (!rangeEl) return;
+  medidaAvisoSync();
   /* mesa y revlibre (uso interno) se cotizan con valores que escribe el vendedor,
      no con la tabla de m²: mostrar "Ingresa las medidas" ahí seria mentir. */
   var wrapEl = rangeEl.closest('.live-price-wrap');
@@ -5576,6 +5619,9 @@ async function saveQuote(data, lineas) {
     var payload = Object.assign({}, data, { user_email: srcEmail, link: shareShortUrl || null });
     if (b2bDcto > 0) payload.b2b_dcto = b2bDcto;   /* solo cotizaciones B2B con descuento (requiere columna) */
     if (origenVisita && !vendorMode) payload.origen = origenVisita;
+    /* medida pasada del tope (¿milímetros?): queda marcada para que el panel no
+       la trate como monto alto. Va dentro de origen para no necesitar columna nueva. */
+    if (medidasRaras().length) payload.origen = Object.assign({}, payload.origen || {}, { medida_rara: true });
     /* sin .select(): con RLS el público solo puede insertar, no leer de vuelta la fila */
     var res = await sbClient.from('cotizaciones').insert(payload);
     /* si la columna "origen" no existiera (SQL sin aplicar), la cotización se
@@ -5947,8 +5993,9 @@ function buildSegGroups(){
     for (var i=0;i<qs.length;i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
     var hasVendor = qs.some(function(q){ return ownerCode(q); });
     var hasWeb = qs.some(isWeb);
-    var valor = qs.reduce(function(a,q){ return Math.max(a, q.total_alto||0); }, 0);
-    var suma = qs.reduce(function(a,q){ return a+(q.total_alto||0); }, 0);
+    /* una cotización con medidas imposibles no pesa en el monto (ver medidaRara) */
+    var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
+    var suma = qs.reduce(function(a,q){ return a+(medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
     var promedio = qs.length ? Math.round(suma/qs.length) : 0;
     groups.push({ key:k, quotes:qs, lead:lead, owner:owner, hasVendor:hasVendor, hasWeb:hasWeb, valor:valor, promedio:promedio });
   });
@@ -6261,6 +6308,7 @@ function segScore(g){
   if (dias > 30) s -= 30;
   var ticketAlto = g.quotes.some(function(q){
     if ((q.estado||'enviada') !== 'enviada') return false;
+    if (medidaRara(q)) return false;
     /* una combinada ("mesa+banca") cuenta si trae alguno de estos */
     if (String(q.producto || '').split('+').some(function(p){ return ['granero','maciza','vidrios','mesa'].includes(p); })) return true;
     return (q.total_alto||0) >= 800000;
@@ -6379,9 +6427,12 @@ function metaHoy(){
    atrasados, ordenado igual que el resto. */
 function montoAbierto(g){
   return g.quotes.reduce(function(a,q){
-    return a + (((q.estado||'enviada')==='enviada') ? (q.total_alto||0) : 0);
+    return a + (((q.estado||'enviada')==='enviada' && !medidaRara(q)) ? (q.total_alto||0) : 0);
   }, 0);
 }
+/* la marca la pone saveQuote cuando una medida pasa el tope (¿milímetros?);
+   esas cotizaciones no cuentan como monto alto ni ballena hasta que se corrijan */
+function medidaRara(q){ return !!(q && q.origen && q.origen.medida_rara); }
 function esBallena(g){
   if ((g.lead.estado||'enviada') !== 'enviada') return false;
   return esRecurrente(g) || montoAbierto(g) >= PEZ_GORDO;
@@ -7032,7 +7083,9 @@ function segBotonContacto(g, x, clase){
    5558. La etiqueta lo dice en la fila y en la ficha. */
 function chipAnuncio(g) {
   var deAnuncio = (g.quotes || []).some(function(q){ return vieneDeAnuncio(q.origen); });
-  return deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '';
+  var medida = (g.quotes || []).some(medidaRara)
+    ? '<span class="medida-badge" title="Tiene una medida fuera de rango (¿milímetros?). Su monto no cuenta como alto hasta que se corrija.">⚠ Revisar medidas</span>' : '';
+  return (deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '') + medida;
 }
 /* Fila de una línea. Ojo: NO puede ser un <button>, porque adentro lleva
    el botón de contacto y anidar interactivos es HTML inválido (y el clic
