@@ -1265,15 +1265,6 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s1 .pcard[data-prod="peldano"] { order: 1; }
 #s1 .pcard[data-prod="puertas"] { order: 2; }
 #s1 .pcard[data-prod="mesa"] { order: 3; }
-/* Mesas abre dos opciones dentro de la misma tarjeta (07-10-2026): la tarjeta
-   se ensancha a la fila completa, así la grilla no queda con un hueco. */
-.mesa-sub { display: none; }
-#s1 .pcard.mesa-abierta { grid-column: span 2; border: 2px solid var(--terracota); }
-#s1 .pcard.mesa-abierta .pcard-img { aspect-ratio: 16 / 8; }
-#s1 .pcard.mesa-abierta .mesa-sub { display: flex; gap: 8px; padding: 0 12px 12px; }
-.mesa-sub-op { flex: 1; min-height: 52px; padding: 10px 8px; border: 1px solid var(--bd); border-radius: 10px; background: #fff; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 14.5px; font-weight: 600; color: var(--tx); line-height: 1.25; }
-.mesa-sub-op small { display: block; font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 400; color: var(--tm); margin-top: 3px; }
-.mesa-sub-op:hover, .mesa-sub-op:focus-visible { border-color: var(--terracota); color: var(--terracota); }
 #s1 .pcard[data-prod="repisa"] { order: 4; }
 #s1 .pcard[data-prod="revestimiento"] { order: 5; }
 #s1 .pcard[data-prod="revlibre"], #s1 .pcard[data-prod="banca"], #s1 .pcard[data-prod="pcocina"] { order: 6; }
@@ -1449,15 +1440,17 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
-      <div class="pcard" id="pcard-mesa" data-prod="mesa">
-        <div class="pcard-img" id="img-mesa"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="6" width="19" height="2.6" rx=".8"/><path d="M5 8.6V19M19 8.6V19M5 13h14"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas</div><div class="psub">Comedor, terraza y centro</div></div><span class="parrow">→</span></div>
-        <!-- 07-10-2026: al tocar Mesas se elige primero la familia; cada botón
-             abre el formulario con ese catálogo ya filtrado (mesaTipo). -->
-        <div class="mesa-sub" id="mesa-sub">
-          <button type="button" class="mesa-sub-op" data-mtipo="comedor">Comedor y terraza<small>Para sentarse a comer, adentro o afuera</small></button>
-          <button type="button" class="mesa-sub-op" data-mtipo="centro">De centro<small>Baja, para el living</small></button>
-        </div>
+      <!-- 08-10-2026: dos tarjetas en vez de "Mesas" + elegir adentro. Un toque
+           menos, la foto calza con lo que dice, y cada una entra con su
+           catálogo ya filtrado (data-mtipo → mesaTipo). Llenan una fila justa. -->
+      <div class="pcard" id="pcard-mesa-comedor" data-prod="mesa" data-mtipo="comedor">
+        <div class="pcard-img" id="img-mesa-comedor"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="6" width="19" height="2.6" rx=".8"/><path d="M5 8.6V19M19 8.6V19M5 13h14"/></svg></div></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas de comedor</div><div class="psub">Para comer, adentro o en la terraza</div></div><span class="parrow">→</span></div>
+      </div>
+
+      <div class="pcard" id="pcard-mesa-centro" data-prod="mesa" data-mtipo="centro">
+        <div class="pcard-img" id="img-mesa"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="10" width="19" height="2.6" rx=".8"/><path d="M5 12.6V18M19 12.6V18"/></svg></div></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas de centro</div><div class="psub">Bajas, para el living</div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="revestimiento">
@@ -1635,7 +1628,9 @@ var FOTOS = {
   cubierta:      'https://cotizador.casazaru.cl/fotos/cubierta-wide.jpg',
   repisa:        'https://cotizador.casazaru.cl/fotos/repisa.jpg',
   peldano:       'https://cotizador.casazaru.cl/fotos/peldano.jpg',
-  mesa:          'https://cotizador.casazaru.cl/fotos/mesa.jpg',
+  mesa:          'https://cotizador.casazaru.cl/fotos/mesa.jpg',          /* tarjeta "Mesas de centro" */
+  /* 08-10-2026: foto de catálogo (estudio) mientras no haya una de un comedor real */
+  'mesa-comedor':'https://cotizador.casazaru.cl/fotos/mesas/rio-valdivia.jpg',
   puertas:       'https://cotizador.casazaru.cl/fotos/puertas.jpg',
   revestimiento: 'https://cotizador.casazaru.cl/fotos/revestimiento.jpg'
 };
@@ -1659,6 +1654,7 @@ var FOTO_ALT = {
   repisa:        'Repisa de madera montada en la pared con plantas',
   peldano:       'Peldaños de madera flotantes en una escalera',
   mesa:          'Mesa de centro de madera maciza en un living con vista al volcán',
+  'mesa-comedor':'Mesa de comedor Río Valdivia de madera maciza',
   puertas:       'Puerta de entrada de madera maciza instalada',
   revestimiento: 'Dormitorio con revestimiento de madera en muro y cielo'
 };
@@ -8724,16 +8720,8 @@ document.addEventListener('DOMContentLoaded', function() {
   applyLogo();
   applyFotos();
   document.querySelectorAll('.pcard').forEach(function(card) {
-    card.addEventListener('click', function(e) {
-      /* Mesas: el primer toque abre las dos familias; el botón elegido entra */
-      if (card.dataset.prod === 'mesa') {
-        var op = e.target.closest('.mesa-sub-op');
-        if (op) { initProd('mesa', op.dataset.mtipo); return; }
-        card.classList.toggle('mesa-abierta');
-        return;
-      }
-      initProd(card.dataset.prod);
-    });
+    /* las dos tarjetas de mesas traen su familia en data-mtipo */
+    card.addEventListener('click', function() { initProd(card.dataset.prod, card.dataset.mtipo); });
   });
   document.getElementById('btn-back').addEventListener('click', function() { show('s1'); });
   document.getElementById('btn-calc').addEventListener('click', generar);
