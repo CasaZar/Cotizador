@@ -7431,6 +7431,7 @@ function hoyFila(g, cls){
     mas = '<div class="hz-mas">'+resp+
       '<div class="hz-acc">'+
         '<span class="hz-contacto">'+escA(x.contacto||'sin contacto')+' · '+g.quotes.length+(g.quotes.length===1?' cotización':' cotizaciones')+'</span>'+
+        (cls !== 'donehoy' ? '<button class="hz-l" onclick="segLlameUI(\''+x.id+'\')">📞 Lo llamé</button>' : '')+
         '<button class="hz-l" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')">'+(interesado?'Quitar interesado':'★ Interesado')+'</button>'+
         '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
         '<button class="hz-l ok" onclick="updateEstado(\''+x.id+'\',\'ganado\')">Ganada</button>'+
@@ -7511,7 +7512,7 @@ function segClientCard(g, cls){
   for (var n=1;n<=CADENCIA.length && !compacta;n++){
     var h=null;
     for (var i=0;i<hist.length;i++){ if(hist[i].etapa===n){ h=hist[i]; break; } }
-    var fechaTq = ((h && h.fecha) ? '<span class="tq-fecha">'+fmtFechaCorta(h.fecha)+'</span>' : '') +
+    var fechaTq = ((h && h.fecha) ? '<span class="tq-fecha">'+(h.via === 'llamada' ? '📞 ' : '')+fmtFechaCorta(h.fecha)+'</span>' : '') +
                   ((h && h.resp) ? '<span class="tq-resp tq-resp-'+escA(h.resp)+'">'+escA(respTxt(h.resp))+'</span>' : '');
     toques += '<div class="seg-tq">'+
       '<label class="seg-tq-chk"><input type="checkbox"'+(etapa>=n?' checked':'')+' onchange="segCasilla(\''+x.id+'\','+n+',this)"><span>T'+n+' · día '+CADENCIA[n-1]+'</span>'+fechaTq+'</label>'+
@@ -7722,12 +7723,13 @@ async function segReactivar(id){
   if (ok) registrarToque(x, 0, 'cadencia');
 }
 /* marcar/desmarcar una de las casillas de toque */
-async function segMarcar(id, n, checked, resp){
+async function segMarcar(id, n, checked, resp, tipoFijo){
   var x=COTIS[id]; if(!x) return;
   var etapa = checked ? n : n-1;
   var hist = (checked && resp) ? histConRespuesta(x, n-1, resp)
                                : (Array.isArray(x.seg_historial)?x.seg_historial.slice():[]);
-  if (checked && !hist.some(function(h){ return h.etapa===n; })) hist.push({etapa:n, fecha:hoyISO()});
+  if (checked && !hist.some(function(h){ return h.etapa===n; }))
+    hist.push(tipoFijo === 'llamada' ? {etapa:n, fecha:hoyISO(), via:'llamada'} : {etapa:n, fecha:hoyISO()});
   var next=null;
   if (checked && etapa<CADENCIA.length && x.fecha_creacion){
     var porCad=addDias(fechaBaseISO(x.fecha_creacion), CADENCIA[etapa]), minimo=addDias(hoyISO(),2);
@@ -7747,18 +7749,18 @@ async function segMarcar(id, n, checked, resp){
      estadística de canales. El crédito del trabajo se resuelve aparte, con la
      tabla `toques`, que guarda quién hizo cada uno. */
   if (!checked && etapa === 0) updates.fecha_primer_contacto = null;   /* deshizo el único toque */
-  if (checked) registrarToque(x, n);          /* fase 2: fila en `toques` (fire-and-forget) */
+  if (checked) registrarToque(x, n, tipoFijo);   /* fase 2: fila en `toques` (fire-and-forget); 'llamada' si fue por teléfono */
   else borrarUltimoToque(x);
   /* "Está caro": en las perdidas por precio que se leyeron (07-10) la respuesta
      fue siempre "ok, gracias" sin ofrecer nada; el aviso lo recuerda */
   var pista = (checked && resp === 'precio') ? ' — ofrécele Pino Oregón, menos espesor o ajustar medidas' : '';
-  segSave(id, updates, checked ? 'Toque '+n+' registrado'+(resp ? ' · el anterior: '+respTxt(resp).toLowerCase() : '')+pista
+  segSave(id, updates, checked ? (tipoFijo === 'llamada' ? 'Llamada registrada (toque '+n+')' : 'Toque '+n+' registrado')+(resp ? (tipoFijo === 'llamada' ? ' · ' : ' · el anterior: ')+respTxt(resp).toLowerCase() : '')+pista
                                : 'Toque '+n+' desmarcado');
 }
 /* anota lo que contestó el cliente al toque anterior y registra el de hoy (n,
    o el siguiente de la cadencia). Si la respuesta termina el seguimiento, no
    se registra toque: la cotización pasa a perdida con ese motivo. */
-function segResponderYMarcar(id, resp, n){
+function segResponderYMarcar(id, resp, n, tipoFijo){
   var x = COTIS[id]; if (!x) return;
   var sig = n || (x.seg_etapa||0) + 1;
   var cierre = RESPUESTAS_CIERRE.filter(function(r){ return r.id === resp; })[0];
@@ -7770,7 +7772,29 @@ function segResponderYMarcar(id, resp, n){
   var pausaR = RESPUESTAS_PAUSA.filter(function(r){ return r.id === resp; })[0];
   if (pausaR) { segPausar(id, pausaR.pausa, histConRespuesta(x, sig-1, resp)); return; }
   if (sig > CADENCIA.length) return;
-  segMarcar(id, sig, true, resp);
+  segMarcar(id, sig, true, resp, tipoFijo);
+}
+/* ── LLAMADA (09-10-2026) ──
+   En las ventas grandes la llamada temprana aparece una y otra vez ("¿Te puedo
+   llamar?"), pero no quedaba registrada. "📞 Lo llamé" la anota como el toque
+   del día (tipo 'llamada' en `toques`, con quién llamó) y pregunta qué dijo,
+   con las mismas respuestas de siempre. Requiere el SQL toques-tipo-llamada.sql
+   (aplicado el 09-10-2026). */
+function segLlameUI(id){
+  var x = COTIS[id]; if (!x) return;
+  if ((x.seg_etapa||0) >= CADENCIA.length) { toastInterno('Ya tiene todos los toques de la cadencia', false); return; }
+  pModal('<h3>📞 ¿Qué te dijo '+escA(x.cliente||'el cliente')+' en la llamada?</h3>'+
+    respuestasBtns('segLlamadaResp', id)+
+    '<button class="mbtn cancel" onclick="segLlamadaResp(\''+id+'\',\'\')">Registrar la llamada sin anotar respuesta</button>'+
+    '<button class="mbtn cancel" onclick="pClose()">Cancelar</button>');
+}
+function segLlamadaResp(id, resp){
+  pClose();
+  if (typeof pendQuitar === 'function') pendQuitar(id);
+  hoyAbierto = null; hoyFicha = false;
+  var x = COTIS[id]; if (!x) return;
+  if (!resp) { segMarcar(id, (x.seg_etapa||0) + 1, true, '', 'llamada'); return; }
+  segResponderYMarcar(id, resp, null, 'llamada');
 }
 /* casilla marcada a mano (el mensaje se mandó por fuera del panel): desde el
    segundo toque pregunta lo mismo que el recuadro de vuelta del chat */
