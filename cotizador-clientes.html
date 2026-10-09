@@ -639,7 +639,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .mresp-h { font-size:11.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;margin:12px 2px 6px; }
 /* lo que contestó el cliente a ese toque, al lado de su fecha */
 .tq-resp { display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;background:var(--bg3);color:var(--tm); }
-.tq-resp-interesado, .tq-resp-pensando { background:#E3F2E8;color:#2D6A4F; }
+.tq-resp-interesado, .tq-resp-pensando, .tq-resp-fotos, .tq-resp-medidas { background:#E3F2E8;color:#2D6A4F; }
+.tq-resp-compra { background:#166534;color:#fff; }
 .tq-resp-precio { background:#FEF3C7;color:#92400E; }
 .tq-resp-pausa { background:#E0EEF7;color:#1E4E79; }
 .tq-resp-otro_lado, .tq-resp-numero { background:#FDE8E8;color:#991B1B; }
@@ -5712,11 +5713,18 @@ var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado
 /* Lo que el cliente había contestado al seguimiento anterior. Se pregunta al
    registrar el siguiente, que es cuando el vendedor tiene el chat abierto:
    anotar "no respondió" como un paso aparte era algo que nadie hacía. */
+/* 09-10-2026: + "Va a comprar", "Pidió fotos o muestras" y "Cambia las medidas",
+   que César escribía a mano en las notas ("Va a comprar", "Solicita fotos de
+   castaño", "Va a actualizar medidas") y así no se podían medir. "Precio alto"
+   pasa a decir "Está caro" (el id sigue siendo 'precio': no se pierde el histórico). */
 var RESPUESTAS_PREV = [
   { id:'nada',       txt:'No respondió' },
+  { id:'compra',     txt:'Va a comprar' },
   { id:'interesado', txt:'Interesado' },
+  { id:'fotos',      txt:'Pidió fotos o muestras' },
+  { id:'medidas',    txt:'Cambia las medidas' },
   { id:'pensando',   txt:'Lo está pensando' },
-  { id:'precio',     txt:'Precio alto' }
+  { id:'precio',     txt:'Está caro' }
 ];
 /* estas terminan el seguimiento: no se registra otro toque, se marca perdida */
 var RESPUESTAS_CIERRE = [
@@ -5729,7 +5737,7 @@ var RESPUESTAS_CIERRE = [
 var RESPUESTAS_PAUSA = [
   { id:'pausa', txt:'Proyecto en pausa', pausa:'proyecto_pausado' }
 ];
-var RESPUESTAS_CON_CONVERSACION = ['interesado', 'pensando', 'precio', 'otro_lado', 'pausa'];
+var RESPUESTAS_CON_CONVERSACION = ['compra', 'interesado', 'fotos', 'medidas', 'pensando', 'precio', 'otro_lado', 'pausa'];
 function respTxt(id){
   var r = RESPUESTAS_PREV.concat(RESPUESTAS_PAUSA, RESPUESTAS_CIERRE).filter(function(x){ return x.id === id; })[0];
   return r ? r.txt : '';
@@ -7731,6 +7739,8 @@ async function segMarcar(id, n, checked, resp){
   if (checked && RESPUESTAS_CON_CONVERSACION.indexOf(resp) !== -1 && !x.respondio) {
     updates.respondio = true; updates.fecha_primera_respuesta = new Date().toISOString();
   }
+  /* "Va a comprar" lo marca con ★: los interesados van primero en cada sección */
+  if (checked && resp === 'compra') updates.interesado = true;
   /* El canal de origen NO se toca: quien cotizó solo por la web queda como
      web para siempre, haga quien haga el seguimiento. Son dos cosas distintas
      —de dónde vino el cliente y quién lo trabajó— y mezclarlas ensucia la
@@ -7739,7 +7749,10 @@ async function segMarcar(id, n, checked, resp){
   if (!checked && etapa === 0) updates.fecha_primer_contacto = null;   /* deshizo el único toque */
   if (checked) registrarToque(x, n);          /* fase 2: fila en `toques` (fire-and-forget) */
   else borrarUltimoToque(x);
-  segSave(id, updates, checked ? 'Toque '+n+' registrado'+(resp ? ' · el anterior: '+respTxt(resp).toLowerCase() : '')
+  /* "Está caro": en las perdidas por precio que se leyeron (07-10) la respuesta
+     fue siempre "ok, gracias" sin ofrecer nada; el aviso lo recuerda */
+  var pista = (checked && resp === 'precio') ? ' — ofrécele Pino Oregón, menos espesor o ajustar medidas' : '';
+  segSave(id, updates, checked ? 'Toque '+n+' registrado'+(resp ? ' · el anterior: '+respTxt(resp).toLowerCase() : '')+pista
                                : 'Toque '+n+' desmarcado');
 }
 /* anota lo que contestó el cliente al toque anterior y registra el de hoy (n,
