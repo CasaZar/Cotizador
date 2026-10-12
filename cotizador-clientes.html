@@ -272,7 +272,15 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
    puertas tienen modelo con foto propia): nada genérico que se pueda leer
    como "esto es lo que compro" sin serlo. */
 .coti-foto { margin: 2px 0 12px; }
-.coti-foto img { width: 100%; max-height: 200px; object-fit: cover; object-position: center 55%; border-radius: 10px; border: 1px solid var(--bd); display: block; background: var(--crt); }
+/* 12-10-2026: la foto va ENTERA. Era un recuadro de 200 px de alto con
+   object-fit:cover, y las fotos de mesas son casi cuadradas (640×608, y las
+   de Shopify 1:1): se cortaba la cubierta arriba y las patas abajo, y la mesa
+   quedaba pegada al borde. Ahora manda la proporción de la foto, con tope de
+   alto, centrada. Regla general para que no pase con ningún modelo nuevo. */
+.coti-foto img { width: auto; max-width: 100%; height: auto; max-height: 300px; object-fit: contain; margin: 0 auto; border-radius: 10px; border: 1px solid var(--bd); display: block; background: #fff; }
+/* cuadrado y no 4:3: con 4:3 la Lago Riñihue, que llena más el encuadre,
+   quedaba con las patas al borde. Cuadrado deja aire en las dos de la tienda. */
+.coti-foto.alta img { width: 100%; aspect-ratio: 1 / 1; max-height: none; object-fit: cover; object-position: center 50%; }
 .coti-foto .cf-cap { font-size: 12px; color: var(--tm); text-align: center; margin-top: 5px; letter-spacing: .3px; }
 /* .vert = foto de producto PARADO (puertas): las fotos del catálogo son
    cuadradas con la puerta al centro, y el cover de 200px de alto les
@@ -4644,7 +4652,10 @@ function htmlMesa(cli, fecha) {
   /* la foto del modelo elegido abre la cotización; mesa libre va sin foto */
   var mFoto = mesaModeloActual();
   var fotoHtml = (mFoto && mFoto.foto)
-    ? '<div class="coti-foto"><img crossorigin="anonymous" src="' + mesaFotoUrl(mFoto) + '" alt="' + escA(mFoto.nombre) + '">' +
+    /* foto vertical (las de fondo blanco de la tienda, 1080×1350): la mesa
+       ocupa la franja del medio y el resto es blanco. Se marca .alta para
+       recortar ese sobrante; las demás van enteras (ver .coti-foto img). */
+    ? '<div class="coti-foto"><img crossorigin="anonymous" onload="if(this.naturalHeight>this.naturalWidth*1.15)this.parentNode.classList.add(\'alta\')" src="' + mesaFotoUrl(mFoto) + '" alt="' + escA(mFoto.nombre) + '">' +
       '<div class="cf-cap">' + escA(mFoto.nombre) + '</div></div>'
     : '';
   return shell(escA(M.nombre), cli, fecha,
