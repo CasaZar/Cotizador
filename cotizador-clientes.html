@@ -4464,7 +4464,7 @@ function htmlCubierta(cli, fecha) {
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
     fijoNota +
-    tierTable(tierRows, recWood(), porPeldano) +
+    tierTable(conCombinada(tierRows), recWood(), porPeldano) +
     extrasBlock(sumM2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+escA(esp)+'</div></div>' +
@@ -4830,7 +4830,9 @@ function tituloDoc(nombre) {
 var MADERA_FOTOS = {
   bajo:  [{f:'oregon',  n:'Pino Oregón'}],
   medio: [{f:'castano', n:'Castaño'}, {f:'cipres', n:'Ciprés'}, {f:'manio', n:'Mañío'}],
-  alto:  [{f:'coihue',  n:'Coihue'},  {f:'rauli',  n:'Raulí'},  {f:'lenga', n:'Lenga'}]
+  alto:  [{f:'coihue',  n:'Coihue'},  {f:'rauli',  n:'Raulí'},  {f:'lenga', n:'Lenga'}],
+  /* tarjeta "Maderas combinadas": una muestra clara y otra oscura de cada grupo */
+  combinada: [{f:'castano', n:'Castaño'}, {f:'coihue', n:'Coihue'}, {f:'rauli', n:'Raulí'}, {f:'lenga', n:'Lenga'}]
 };
 function maderaSwatches(tier) {
   var lista = MADERA_FOTOS[tier];
@@ -4840,6 +4842,14 @@ function maderaSwatches(tier) {
   }).join('') + '</span>';
 }
 
+/* MADERAS COMBINADAS (12-10-2026, pedido del usuario): en cubiertas, repisas y
+   peldanos se ofrece una cuarta opcion, al mismo valor que el tramo alto. Es
+   solo una tarjeta mas en el documento: tierRows sigue con sus tres filas,
+   que son las que se guardan (total_bajo/medio/alto) y las que usa WhatsApp. */
+function conCombinada(rows) {
+  if (['cubierta', 'repisa', 'peldano'].indexOf(prod) === -1 || !rows[2]) return rows;
+  return rows.concat([{ label: 'Maderas combinadas', tier: 'combinada', total: rows[2].total }]);
+}
 function tierTable(rows, recTier, desgloseFn) {
   return preciosCards(rows, recTier, desgloseFn || null,
     'Precios con IVA incluido · Envío según comuna · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
@@ -4870,6 +4880,7 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
       '<div class="pz-row">' +
         '<div class="pz-mad">' + sw +
           '<div class="pz-nom">' + String(r.label).replace(/ \/ /g, ' · ') + '</div>' +
+          (r.tier === 'combinada' ? '<span class="mesa-desglose">Mismo valor que Coihue, Raul\u00ed o Lenga</span>' : '') +
           (desgloseFn ? desgloseFn(r) : '') +
         '</div>' +
         '<div class="pz-der">' +
