@@ -6382,6 +6382,19 @@ function gruposReactivar(){
   });
   return out.sort(function(a,b){ return b.valor - a.valor; });
 }
+/* ── ＋ NUEVA COTIZACIÓN DESDE LA FICHA (12-10-2026) ──
+   Se está conversando con el cliente y pide otra medida u otro producto: abre
+   el cotizador de vendedores en otra pestaña con su nombre y contacto ya
+   puestos (ver "zaru_prefill" en la carga). Queda a nombre de quien tiene el
+   panel abierto; si es el admin, a nombre del dueño del cliente, y si el
+   cliente es web, sin vendedor (sigue siendo web). Como el contacto es el
+   mismo, el panel la junta sola con las otras cotizaciones del cliente. */
+function segNuevaCoti(id, owner){
+  var x = COTIS[id]; if (!x) return;
+  var v = panelSeller || sellerByCode(owner);
+  try { localStorage.setItem('zaru_prefill', JSON.stringify({ cli:x.cliente||'', con:x.contacto||'', t:Date.now() })); } catch (e) {}
+  window.open(BASE_URL + '/?pro=zr' + (v && v.src ? '&src=' + v.src : ''), '_blank');
+}
 function waMsgReactivar(x){
   /* mismo tono que waMsg (12-10-2026): nombre bien escrito, "una cubierta" y
      no "cubierta", firma quien tiene el panel abierto */
@@ -7527,6 +7540,7 @@ function hoyFila(g, cls){
       '<div class="hz-acc">'+
         '<span class="hz-contacto">'+escA(x.contacto||'sin contacto')+' · '+g.quotes.length+(g.quotes.length===1?' cotización':' cotizaciones')+'</span>'+
         (cls !== 'donehoy' ? '<button class="hz-l" onclick="segLlameUI(\''+x.id+'\')">📞 Lo llamé</button>' : '')+
+        '<button class="hz-l" onclick="segNuevaCoti(\''+x.id+'\',\''+escA(g.owner||'')+'\')" title="Abre el cotizador con su nombre y contacto ya escritos">＋ Nueva cotización</button>'+
         '<button class="hz-l" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')">'+(interesado?'Quitar interesado':'★ Interesado')+'</button>'+
         '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
         '<button class="hz-l ok" onclick="updateEstado(\''+x.id+'\',\'ganado\')">Ganada</button>'+
@@ -9144,6 +9158,20 @@ document.addEventListener('DOMContentLoaded', function() {
       var el = document.getElementById(id); if (el) el.classList.remove('hidden');
     });
   }
+  /* ── NUEVA COTIZACIÓN PARA UN CLIENTE DEL PANEL (12-10-2026) ──
+     El botón «＋ Nueva cotización» del panel abre esta página con el nombre y
+     el contacto del cliente ya escritos. Viajan por localStorage y no por la
+     URL: un teléfono en la barra de direcciones queda en el historial del
+     navegador. Se usa una sola vez y caduca a los 10 minutos. */
+  try {
+    var pf = JSON.parse(localStorage.getItem('zaru_prefill') || 'null');
+    localStorage.removeItem('zaru_prefill');
+    if (pf && params.get('pro') === 'zr' && (Date.now() - (pf.t || 0)) < 600000) {
+      if (String(pf.con || '').indexOf('@') !== -1) conModo(true);
+      document.getElementById('f-cli').value = pf.cli || '';
+      document.getElementById('f-con').value = pf.con || '';
+    }
+  } catch (e) {}
   if (params.get('pro') === 'zr') habilitarInternos();
   else {
     sbClient.auth.getSession().then(function(r){
