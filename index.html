@@ -4830,9 +4830,7 @@ function tituloDoc(nombre) {
 var MADERA_FOTOS = {
   bajo:  [{f:'oregon',  n:'Pino Oregón'}],
   medio: [{f:'castano', n:'Castaño'}, {f:'cipres', n:'Ciprés'}, {f:'manio', n:'Mañío'}],
-  alto:  [{f:'coihue',  n:'Coihue'},  {f:'rauli',  n:'Raulí'},  {f:'lenga', n:'Lenga'}],
-  /* tarjeta "Maderas combinadas": una muestra clara y otra oscura de cada grupo */
-  combinada: [{f:'castano', n:'Castaño'}, {f:'coihue', n:'Coihue'}, {f:'rauli', n:'Raulí'}, {f:'lenga', n:'Lenga'}]
+  alto:  [{f:'coihue',  n:'Coihue'},  {f:'rauli',  n:'Raulí'},  {f:'lenga', n:'Lenga'}]
 };
 function maderaSwatches(tier) {
   var lista = MADERA_FOTOS[tier];
@@ -4843,12 +4841,14 @@ function maderaSwatches(tier) {
 }
 
 /* MADERAS COMBINADAS (12-10-2026, pedido del usuario): en cubiertas, repisas y
-   peldanos se ofrece una cuarta opcion, al mismo valor que el tramo alto. Es
-   solo una tarjeta mas en el documento: tierRows sigue con sus tres filas,
-   que son las que se guardan (total_bajo/medio/alto) y las que usa WhatsApp. */
+   peldaños el cliente puede combinar las maderas que quiera, al mismo valor
+   que el tramo alto. NO es otra tarjeta (se probó y el usuario pidió dejar
+   tres): la del tramo alto lo dice bajo el nombre. tierRows no cambia, son
+   las filas que se guardan y las que usa WhatsApp; acá solo se marca la
+   tercera para que su tarjeta lo muestre. */
 function conCombinada(rows) {
   if (['cubierta', 'repisa', 'peldano'].indexOf(prod) === -1 || !rows[2]) return rows;
-  return rows.concat([{ label: 'Maderas combinadas', tier: 'combinada', total: rows[2].total }]);
+  return rows.map(function(r, i){ return i === 2 ? Object.assign({}, r, { combinada: true }) : r; });
 }
 function tierTable(rows, recTier, desgloseFn) {
   return preciosCards(rows, recTier, desgloseFn || null,
@@ -4880,7 +4880,7 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
       '<div class="pz-row">' +
         '<div class="pz-mad">' + sw +
           '<div class="pz-nom">' + String(r.label).replace(/ \/ /g, ' · ') + '</div>' +
-          (r.tier === 'combinada' ? '<span class="mesa-desglose">Mismo valor que Coihue, Raul\u00ed o Lenga</span>' : '') +
+          (r.combinada ? '<span class="mesa-desglose">o maderas combinadas</span>' : '') +
           (desgloseFn ? desgloseFn(r) : '') +
         '</div>' +
         '<div class="pz-der">' +
