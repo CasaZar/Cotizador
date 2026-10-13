@@ -6267,7 +6267,7 @@ function waMsg(x){
     else if (resp === 'compra')  m = hola + ', ¿seguimos con ' + suyo + '? Para partir la fabricación se confirma con el 70%. Dime y te mando los datos.';
     else if (resp === 'interesado') m = hola + ', ¿te quedó alguna duda de ' + suyo + '? Si quieres avanzar, me confirmas la madera y las medidas y te digo para cuándo estaría.';
     else if (v === 0)            m = hola + ', ¿cómo va todo? Te puedo mandar fotos de ' + P.fotos + ' que ya entregamos, en distintas maderas, para que veas cómo quedan los tonos de verdad. ¿Te las mando?';
-    else                         m = hola + ', una consulta corta: ¿ya tienes clara la madera o todavía estás entre opciones? Si quieres te mando fotos de ' + P.fotos + ' ya ' + P.gen + ' para comparar.';
+    else                         m = hola + ', una pregunta: ¿ya tienes clara la madera o todavía estás entre opciones? Si quieres te mando fotos de ' + P.fotos + ' ya ' + P.gen + ' para comparar.';
   } else if (toque === 3) {
     /* día 7: el precio tiene fecha, y eso es un dato real de su cotización */
     if (vence.vencida)           m = hola + ', el precio de tu cotización venció ' + vence.txt + '. Si todavía te interesa ' + suyo + ', dime y te la actualizo hoy mismo.';
