@@ -7393,6 +7393,7 @@ function pendPreguntar(){
       '. Toca lo que viste en el chat y queda registrado el seguimiento de hoy.</div>'+
       respuestasBtns('pendResponder', p.id)+
       '<button class="mbtn cancel" onclick="pendConfirmar(\''+p.id+'\',false)">No le escribí todavía</button>'+
+      pendPosponerHtml(p.id)+
       '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
     return;
   }
@@ -7401,7 +7402,24 @@ function pendPreguntar(){
     '. El toque se marca solo si confirmas que enviaste el mensaje.</div>'+
     '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',true)">Sí, ya le escribí</button>'+
     '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',false)">No, todavía no</button>'+
+    pendPosponerHtml(p.id)+
     '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
+}
+/* "Le escribo otro día" dentro de la misma pregunta (13-10): mañana, pasado
+   mañana o una fecha. Usa segPosponer, igual que el botón Posponer de la ficha. */
+function pendPosponerHtml(id){
+  return '<div class="pausa-sec" style="margin-top:10px">Dejarlo para otro día</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="mbtn" style="flex:1;margin:0" onclick="pendPosponer(\''+id+'\',1)">Mañana</button>'+
+      '<button class="mbtn" style="flex:1;margin:0" onclick="pendPosponer(\''+id+'\',2)">Pasado mañana</button>'+
+    '</div>'+
+    '<div class="fsec" style="margin-top:8px"><label class="flabel">O elige una fecha</label>'+
+      '<input class="finput" type="date" min="'+addDias(hoyISO(),1)+'" onchange="if(this.value)pendPosponer(\''+id+'\',0,this.value)"></div>';
+}
+function pendPosponer(id, dias, fechaISO){
+  pendQuitar(id);
+  segPosponer(id, dias, fechaISO);
+  setTimeout(pendPreguntar, 400);   /* si abrió varios chats, sigue con el próximo */
 }
 function pendResponder(id, resp){
   pClose();
