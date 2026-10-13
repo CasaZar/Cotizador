@@ -3622,7 +3622,44 @@ function rebordePrecioM2(tier) {
   if (prod === 'revestimiento') return tier === 'bajo' ? PR.revestimiento.cipres : PR.revestimiento.coihue;
   return PR.cubierta[tier];
 }
-function rebordeValor(tier) { return rbM2() * rebordePrecioM2(tier); }
+function rebordeSolo(tier) { return rbM2() * rebordePrecioM2(tier); }
+/* rebordeValor() es lo que suman TODOS los totales (formulario, cotización,
+   mesas, revestimiento): por eso el respaldo se agrega acá y no en cada suma. */
+function rebordeValor(tier) { return rebordeSolo(tier) + respaldoValor(tier); }
+/* ── RESPALDO DE CUBIERTA (13-10-2026) ──
+   La tira de madera que sube por el muro detrás de la cubierta, casi siempre
+   en cocinas: de 5 a 8 cm de alto, a veces 10. Se cobra igual que el reborde:
+   metros lineales × alto = m², al precio de cubierta de cada madera. Solo
+   aparece en cubiertas. */
+function rsMl() {
+  var el = document.getElementById('rs-ml');
+  return parseFloat((el&&el.value)||0)||0;
+}
+function rsAltoCm() {
+  var el = document.getElementById('rs-alto');
+  return el ? (parseFloat(el.value)||0) : 0;
+}
+function rsM2() { return rsMl() * rsAltoCm() / 100; }
+function respaldoValor(tier) { return rsM2() * PR.cubierta[tier]; }
+function rsDatos() {
+  var ml = rsMl();
+  if (ml <= 0 || rsAltoCm() <= 0) return null;
+  return { ml: ml, alto: rsAltoCm(), nombre: 'Respaldo de ' + rsAltoCm() + ' cm de alto (' + ml.toFixed(2).replace('.',',') + ' metros lineales)' };
+}
+function rsRefrescarHint() {
+  var el = document.getElementById('rs-hint');
+  if (!el) return;
+  if (!rsDatos()) { el.textContent = 'Escribe los metros de muro que lleva respaldo. Cada metro lineal se cobra como una cubierta de 100 × ' + (rsAltoCm()||5) + ' cm.'; return; }
+  el.innerHTML = 'Respaldo de ' + rsAltoCm() + ' cm · ' + rsM2().toFixed(2).replace('.',',') + ' m² · <strong>' + fmt(respaldoValor('bajo')) + ' a ' + fmt(respaldoValor('alto')) + '</strong> según la madera';
+}
+function rsSync() { rsRefrescarHint(); calcLive(); }
+/* botón "Usar el largo de las piezas": suma el largo de cada pieza por su cantidad */
+function rsUsarLargos() {
+  var total = 0;
+  rbPiezasActivas().forEach(function(p){ total += p.lg * p.ca; });
+  var el = document.getElementById('rs-ml');
+  if (el && total > 0) { el.value = (total/100).toFixed(2); rsSync(); }
+}
 /* detalle por pieza para la cotización: solo las que llevan reborde */
 function rbDetallePiezas() {
   var parts = [];
@@ -3649,7 +3686,7 @@ function rbRefrescarHint() {
   var ml = rbMl();
   var altoCm = Math.round(rbAltoM()*100);
   if (ml <= 0) { el.textContent = 'Marca los cantos de cada pieza. Cada metro lineal se cobra como una cubierta de 100 × '+altoCm+' cm.'; return; }
-  var vB = rebordeValor('bajo'), vA = rebordeValor('alto');
+  var vB = rebordeSolo('bajo'), vA = rebordeSolo('alto');
   var nP = rbDetallePiezas().length;
   var quien = rbManual ? 'total escrito a mano' : (nP === 1 ? '1 pieza con reborde' : nP + ' piezas con reborde');
   el.innerHTML = quien + ' · reborde de ' + altoCm + ' cm · ' + rbM2().toFixed(2).replace('.',',') + ' m² · <strong>' + fmt(vB) + ' a ' + fmt(vA) + '</strong> según la madera';
@@ -3703,6 +3740,19 @@ function vExtrasFieldHtml() {
       '</div>' +
       '<div class="finput-hint" id="rb-hint">Marca los cantos de cada pieza. Cada metro lineal se cobra como una cubierta de 100 × 4 cm.</div>' +
     '</div>' +
+    (prod === 'cubierta' ?
+    '<div class="vx-sub">' +
+      '<div class="vx-sub-h">Respaldo — la tira que sube por el muro, por metro lineal</div>' +
+      '<div class="col-labels"><div class="col-lbl">Alto del respaldo</div><div class="col-lbl">Metros lineales</div></div>' +
+      '<div class="dim-row">' +
+        '<select class="finput" id="rs-alto" onchange="rsSync()">' +
+          [5,6,7,8,9,10].map(function(a){ return '<option value="'+a+'">'+a+' cm</option>'; }).join('') +
+        '</select>' +
+        '<input type="number" inputmode="decimal" step="0.01" min="0" id="rs-ml" placeholder="0" oninput="rsSync()">' +
+      '</div>' +
+      '<button class="btn-add" type="button" onclick="rsUsarLargos()" style="margin:0 0 8px">Usar el largo de las piezas</button>' +
+      '<div class="finput-hint" id="rs-hint">Escribe los metros de muro que lleva respaldo. Cada metro lineal se cobra como una cubierta de 100 × 5 cm.</div>' +
+    '</div>' : '') +
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Teñido</div>' +
       '<div class="dim-row">' +
@@ -3758,11 +3808,18 @@ function vExtrasNoteHtml(list) {
 /* nota del reborde: su monto ya está incluido en cada precio de la tabla,
    por eso se muestra el rango y no un valor único. */
 function rbNoteHtml() {
+  var out = '';
   var rb = rbDatos();
-  if (!rb) return '';
-  var vB = rebordeValor('bajo'), vA = rebordeValor('alto');
-  var monto = (Math.round(vB) === Math.round(vA)) ? fmt(vA) : (fmt(vB) + ' a ' + fmt(vA) + ' según la madera');
-  return '<div class="info-bar">Extra: <strong>'+escA(rb.nombre)+'</strong> — '+monto+'</div>';
+  if (rb) {
+    var vB = rebordeSolo('bajo'), vA = rebordeSolo('alto');
+    var monto = (Math.round(vB) === Math.round(vA)) ? fmt(vA) : (fmt(vB) + ' a ' + fmt(vA) + ' según la madera');
+    out += '<div class="info-bar">Extra: <strong>'+escA(rb.nombre)+'</strong> — '+monto+'</div>';
+  }
+  var rs = rsDatos();
+  if (rs) {
+    out += '<div class="info-bar">Extra: <strong>'+escA(rs.nombre)+'</strong> — '+fmt(respaldoValor('bajo'))+' a '+fmt(respaldoValor('alto'))+' según la madera</div>';
+  }
+  return out;
 }
 function rvDatos() {
   function v(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
@@ -5322,6 +5379,7 @@ function getShareDataProducto(conValores) {
       });
       data.rb = { ml: rbMlNow, manual: rbManual, piezas: rbPz, alto: Math.round(rbAltoM()*100) };
     }
+    var rsNow = rsDatos(); if (rsNow) data.rs = { ml: rsNow.ml, alto: rsNow.alto };   /* respaldo */
     var vEspNow = vEspesorFinal(); if (vEspNow) data.espFinal = vEspNow;
   }
   if (['cubierta','repisa','peldano','mesa','banca','pcocina'].includes(prod)) {
@@ -5523,6 +5581,12 @@ function restoreProducto(d) {
 }
 /* Restaura el reborde de un link compartido. Requiere que las piezas ya existan. */
 function rbRestaurar(d) {
+  if (d.rs && d.rs.ml > 0) {              /* respaldo */
+    var rsA = document.getElementById('rs-alto'), rsM = document.getElementById('rs-ml');
+    if (rsA && d.rs.alto > 0) rsA.value = String(d.rs.alto);
+    if (rsM) rsM.value = d.rs.ml;
+    rsRefrescarHint();
+  }
   if (!d.rb || !(d.rb.ml > 0)) return;
   /* el alto va antes que todo: de él dependen los m² y el precio */
   var selAlto = document.getElementById('rb-alto');
