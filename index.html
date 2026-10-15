@@ -5663,13 +5663,13 @@ function showToast(msg, ok) {
 }
 /* Estado del guardado en Supabase: es telemetría interna, no le dice nada al cliente.
    Solo se muestra en el cotizador de vendedores; para el público queda en la consola. */
-/* â”€â”€ A NOMBRE DE QUIÃ‰N QUEDA LO QUE COTIZA EL EQUIPO (15-10-2026) â”€â”€
+/* ── A NOMBRE DE QUIÉN QUEDA LO QUE COTIZA EL EQUIPO (15-10-2026) ──
    Antes solo el link ?src= guardaba el correo del vendedor. Entrando con
-   ?pro=zr o con la sesiÃ³n iniciada, la cotizaciÃ³n se guardaba SIN correo y el
-   panel la contaba como cliente web: desde el 04-10 casi todo lo de CÃ©sar
-   caÃ­a en Â«Clientes webÂ». Ahora, si es alguien del equipo, se guarda con el
-   correo de su vendedor (el mismo que pone su ?src=); sin sesiÃ³n o con una
-   cuenta que no es de vendedor, con el del primero de la lista (CÃ©sar), que es
+   ?pro=zr o con la sesión iniciada, la cotización se guardaba SIN correo y el
+   panel la contaba como cliente web: desde el 04-10 casi todo lo de César
+   caía en «Clientes web». Ahora, si es alguien del equipo, se guarda con el
+   correo de su vendedor (el mismo que pone su ?src=); sin sesión o con una
+   cuenta que no es de vendedor, con el del primero de la lista (César), que es
    quien usa ?pro=zr. Un cliente nunca entra en vendorMode: sigue en null. */
 var sesionEmail = null;
 function correoEquipo() {
