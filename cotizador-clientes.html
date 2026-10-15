@@ -5663,6 +5663,20 @@ function showToast(msg, ok) {
 }
 /* Estado del guardado en Supabase: es telemetría interna, no le dice nada al cliente.
    Solo se muestra en el cotizador de vendedores; para el público queda en la consola. */
+/* â”€â”€ A NOMBRE DE QUIÃ‰N QUEDA LO QUE COTIZA EL EQUIPO (15-10-2026) â”€â”€
+   Antes solo el link ?src= guardaba el correo del vendedor. Entrando con
+   ?pro=zr o con la sesiÃ³n iniciada, la cotizaciÃ³n se guardaba SIN correo y el
+   panel la contaba como cliente web: desde el 04-10 casi todo lo de CÃ©sar
+   caÃ­a en Â«Clientes webÂ». Ahora, si es alguien del equipo, se guarda con el
+   correo de su vendedor (el mismo que pone su ?src=); sin sesiÃ³n o con una
+   cuenta que no es de vendedor, con el del primero de la lista (CÃ©sar), que es
+   quien usa ?pro=zr. Un cliente nunca entra en vendorMode: sigue en null. */
+var sesionEmail = null;
+function correoEquipo() {
+  if (!vendorMode) return null;
+  var v = VENDEDORES.find(function(s){ return sesionEmail && (s.email === sesionEmail || s.srcEmail === sesionEmail); }) || VENDEDORES[0];
+  return v ? (v.srcEmail || v.email) : null;
+}
 function toastInterno(msg, ok) {
   if (!srcEmail && !vendorMode) return;
   showToast(msg, ok);
@@ -5703,7 +5717,7 @@ async function saveQuote(data, lineas) {
   try {
     /* el link ya se construyó en confirmar() (shareShortUrl); lo guardamos en el mismo insert
        para no necesitar permiso público de "update" en la tabla. */
-    var payload = Object.assign({}, data, { user_email: srcEmail, link: shareShortUrl || null });
+    var payload = Object.assign({}, data, { user_email: srcEmail || correoEquipo(), link: shareShortUrl || null });
     if (b2bDcto > 0) payload.b2b_dcto = b2bDcto;   /* solo cotizaciones B2B con descuento (requiere columna) */
     if (origenVisita && !vendorMode) payload.origen = origenVisita;
     /* medida pasada del tope (¿milímetros?): queda marcada para que el panel no
@@ -9277,11 +9291,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   } catch (e) {}
   if (params.get('pro') === 'zr') habilitarInternos();
-  else {
-    sbClient.auth.getSession().then(function(r){
-      if (r && r.data && r.data.session) habilitarInternos();
-    }).catch(function(){});
-  }
+  /* la sesión se consulta siempre: además de destapar lo interno, dice QUIÉN
+     cotiza, para guardarlo a su nombre (ver correoEquipo) */
+  sbClient.auth.getSession().then(function(r){
+    if (r && r.data && r.data.session) { sesionEmail = r.data.session.user.email || null; habilitarInternos(); }
+  }).catch(function(){});
   var pmb = document.getElementById('pmodal-bg');
   if (pmb) pmb.addEventListener('click', function(e){ if(e.target===this) pClose(); });
   var pcode = params.get('panel'), pOK = false;
