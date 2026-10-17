@@ -790,7 +790,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .btn-pdf:disabled { opacity:.6;cursor:wait; }
 
 @media print {
-  #s1, #s2, .logo-bar { display: none !important; }
+  #s1, #s2, #s-intro, .logo-bar { display: none !important; }
   body { background: white; }
   .coti { padding: 8px; max-width: 100%; }
   /* ── LO QUE NO VA EN EL PDF ──
@@ -1235,6 +1235,27 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s3 .logo-bar { background: transparent; border-bottom: 0; padding: 10px 16px 4px; min-height: 44px; }
 #s3 .logo-bar .logotype, #s3 .logo-bar .badge { display: none; }
 #s3 .btn-nav-sm { border-color: var(--bd); color: var(--tm); font-size: 12.5px; letter-spacing: .2px; }
+/* presentación para el anuncio de cubiertas (s-intro) */
+#s-intro { --verde:#485B3D; --terracota:#A85D2A; --terracota-osc:#8F4E22; --tx:#2B2A24; --tm:#6B6658; --bd:#E1D8C8;
+  font-family:'Poppins',sans-serif; color:var(--tx); background:#F7F3EA; min-height:100vh; max-width:560px; margin:0 auto; }
+#s-intro * { font-family:inherit; }
+#s-intro .logo-bar { background:var(--verde); border-bottom:0; padding:14px 16px 12px; }
+#s-intro .intro-hero { display:block; width:100%; height:230px; object-fit:cover; }
+#s-intro .intro-body { padding:20px 16px 28px; }
+#s-intro h2 { font-family:'Nanum Myeongjo',serif; font-weight:800; font-size:25px; line-height:1.25; color:#2F3B28; margin:0; }
+#s-intro .intro-lead { font-size:14px; color:var(--tm); line-height:1.55; margin:8px 0 0; }
+#s-intro .intro-dato { margin-top:12px; background:#fff; border:1px solid var(--bd); border-left:4px solid var(--terracota); border-radius:10px; padding:10px 12px; font-size:14px; }
+#s-intro .intro-dato b { font-size:19px; color:var(--terracota); margin-right:4px; }
+#s-intro .intro-maderas { display:flex; gap:6px; margin:14px 0 6px; }
+#s-intro .intro-maderas div { flex:1; height:42px; border-radius:8px; background-size:cover; background-position:center; }
+#s-intro .intro-razon { display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--bd); }
+#s-intro .intro-razon:last-of-type { border-bottom:0; }
+#s-intro .intro-ico { flex:0 0 32px; height:32px; border-radius:50%; background:#E7ECE2; color:var(--verde); display:flex; align-items:center; justify-content:center; font-weight:600; }
+#s-intro .intro-razon b { display:block; font-size:14px; font-weight:600; }
+#s-intro .intro-razon span:not(.intro-ico) { font-size:12.5px; color:var(--tm); line-height:1.45; }
+#s-intro .intro-btn { position:sticky; bottom:12px; z-index:5; box-shadow:0 6px 18px rgba(0,0,0,.18); display:block; width:100%; margin-top:16px; background:var(--terracota); color:#fff; border:0; border-radius:12px; padding:15px; font-size:16px; font-weight:600; cursor:pointer; }
+#s-intro .intro-btn:hover { background:var(--terracota-osc); }
+#s-intro .intro-mini { font-size:11.5px; color:var(--tm); text-align:center; margin-top:9px; }
 /* títulos en Playfair */
 #s1 .dash-body h2, #s2 .form-hdr h2, #s2 .datos-h, .marca .coti-title, .marca .combo-item-h, .marca .combo-total-h {
   font-family: 'Nanum Myeongjo', serif; font-weight: 800; color: #2F3B28; letter-spacing: 0;
@@ -1305,7 +1326,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .marca .coti-logo { color: #fff; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 300; letter-spacing: 2px; }
 .marca .coti-logo b { font-family: 'Nanum Myeongjo', serif; font-weight: 700; }
 /* el logo real en blanco (06-10-2026): franja verde de arriba y encabezado de la cotización */
-#s-cargando .logotype .logo-blanco, #s1 .logotype .logo-blanco, #s2 .logotype .logo-blanco { height: 26px; }
+#s-cargando .logotype .logo-blanco, #s-intro .logotype .logo-blanco, #s1 .logotype .logo-blanco, #s2 .logotype .logo-blanco { height: 26px; }
 .marca .coti-logo .logo-blanco { display: block; height: 22px; width: auto; margin: 2px auto; }
 .marca .coti-title { font-size: 24px; line-height: 1.2; margin-top: 2px; }
 .marca .coti-para { font-size: 12.5px; margin-bottom: 0; }
@@ -1412,6 +1433,35 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
   <div class="carga-box">
     <div class="carga-spin"></div>
     <div class="carga-txt" id="carga-txt">Cargando…</div>
+  </div>
+</div>
+
+<!-- ══ s-intro: PRESENTACIÓN PARA QUIEN LLEGA DEL ANUNCIO DE CUBIERTAS (17-10-2026) ══
+     Solo con ?prod=cubierta y utm_medium=paid (ver la entrada pública). Opción A
+     del boceto, elegida por el usuario. Textos: «Mensajes aprobados» del brief de
+     anuncios; «más de 1.500 cubiertas» lo confirmó el usuario el 17-10. -->
+<div id="s-intro" class="hidden">
+  <div class="logo-bar">
+    <div class="logotype"><img class="logo-img logo-blanco" src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"></div>
+  </div>
+  <img class="intro-hero" src="fotos/cubierta-wide.jpg" alt="Cubierta de cocina en madera nativa">
+  <div class="intro-body">
+    <h2>Cubiertas de madera nativa, hechas a tu medida</h2>
+    <p class="intro-lead">Somos Casa Zaru, un taller en Villarrica. Fabricamos a mano con madera maciza del sur de Chile, hecha para durar años.</p>
+    <div class="intro-dato"><b>+1.500</b> cubiertas entregadas en todo Chile</div>
+    <div class="intro-maderas">
+      <div style="background-image:url(fotos/maderas/oregon.jpg)"></div>
+      <div style="background-image:url(fotos/maderas/castano.jpg)"></div>
+      <div style="background-image:url(fotos/maderas/cipres.jpg)"></div>
+      <div style="background-image:url(fotos/maderas/coihue.jpg)"></div>
+      <div style="background-image:url(fotos/maderas/lenga.jpg)"></div>
+    </div>
+    <div class="intro-razon"><span class="intro-ico">✓</span><div><b>Madera 100% sólida</b><span>Sin MDF ni enchapado.</span></div></div>
+    <div class="intro-razon"><span class="intro-ico">✓</span><div><b>Llega lista para usar</b><span>Terminada, con protector hidrorrepelente y antimanchas. No tienes que barnizar nada.</span></div></div>
+    <div class="intro-razon"><span class="intro-ico">✓</span><div><b>Garantía de 5 años</b><span>Si llega con daño, la reponemos.</span></div></div>
+    <div class="intro-razon"><span class="intro-ico">✓</span><div><b>Te mostramos tu pieza</b><span>Te mandamos una foto antes de embalarla.</span></div></div>
+    <button class="intro-btn" type="button" onclick="introSeguir()">Ver el precio de mi cubierta →</button>
+    <div class="intro-mini">Precio al instante · 7 a 15 días hábiles · Despacho a todo Chile</div>
   </div>
 </div>
 
@@ -2522,13 +2572,13 @@ var LOGO_URL = 'fotos/logo-casa-zaru.svg';
    encabezado de la cotización. Antes ahí iba una imitación en letras. */
 var LOGO_BLANCO_URL = 'fotos/logo-casa-zaru-blanco.svg';
 function applyLogo() {
-  document.querySelectorAll('#s-cargando .logotype, #s1 .logotype, #s2 .logotype').forEach(function(el) {
+  document.querySelectorAll('#s-cargando .logotype, #s-intro .logotype, #s1 .logotype, #s2 .logotype').forEach(function(el) {
     el.innerHTML = '<img class="logo-img logo-blanco" src="' + LOGO_BLANCO_URL + '" alt="Casa Zaru">';
   });
   var probe = new Image();
   probe.onload = function() {
     document.querySelectorAll('.logotype').forEach(function(el) {
-      if (el.closest('#s-cargando, #s1, #s2, #s3')) return;
+      if (el.closest('#s-cargando, #s-intro, #s1, #s2, #s3')) return;
       el.innerHTML = '<img class="logo-img" src="' + LOGO_URL + '" alt="Casa Zaru">';
     });
   };
@@ -2591,7 +2641,7 @@ async function nextQ() {
 var restaurando = false;
 function show(id) {
   if (restaurando && id !== 's3') return;
-  ['s-cargando','s1','s2','s3','s-dash','s-login'].forEach(function(i) {
+  ['s-cargando','s-intro','s1','s2','s3','s-dash','s-login'].forEach(function(i) {
     var el = document.getElementById(i); if (el) el.classList.add('hidden');
   });
   document.getElementById(id).classList.remove('hidden');
@@ -5081,6 +5131,8 @@ function vieneDeAnuncio(o) {
   if (o.gclid || o.gbraid || o.wbraid) return true;
   return /^(paid|cpc|ppc|cpm|paid_social|paidsocial|ads?)$/i.test(String(o.utm_medium || ''));
 }
+/* boton de la presentacion del anuncio (s-intro): sigue al formulario de cubiertas */
+function introSeguir() { initProd('cubierta'); }
 function waNumero() {
   if (waDestino) return waDestino;
   if (vendorMode || srcEmail) return WA_WEB;   /* lo que cotiza un vendedor sigue con el número de siempre */
@@ -9365,7 +9417,9 @@ document.addEventListener('DOMContentLoaded', function() {
     embudoCanal = String(params.get('src') || params.get('utm_source') || 'web').slice(0, 40);
     origenCapturar(params);
     embudoArrancar();
-    if (prodDirecto) initProd(prodDirecto); else show('s1');
+    /* anuncio de cubiertas: primero la presentacion (s-intro), despues el formulario */
+    if (prodDirecto === 'cubierta' && !vendorMode && vieneDeAnuncio(origenVisita)) show('s-intro');
+    else if (prodDirecto) initProd(prodDirecto); else show('s1');
   }
 });
 </script>
