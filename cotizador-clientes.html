@@ -4405,20 +4405,33 @@ var STK_KG_BASE = {
   'Mesa de Centro Río Maullín': 25, 'Mesa de Centro Lago Toltén': 15
 };
 var STK_KG_BASE_TIPO = { fierro: 20, madera: 30 };   /* las bases de fierro de la web pesan 18–25 kg */
+/* Banca: el asiento (4 cm) más dos patas de panel del fondo del asiento y un
+   travesaño a lo largo, todo en la misma madera. Peso inferido el 17-10-2026
+   porque la web tiene las banquetas en 0 kg: las banquetas publicadas
+   (Llanquihue, Futrono) miden 45 cm de alto, así que las patas quedan de 41 cm
+   bajo el asiento; el travesaño se toma de 10 cm. Una banca de 150 × 35 da
+   29 kg; la banqueta de 50 × 25 de la web, 12 kg. */
+var STK_BANCA_PATA_M = 0.41;       /* alto de cada pata, en metros */
+var STK_BANCA_TRAVESANO_M = 0.10;  /* ancho del travesaño, en metros */
 
 /* kilos del producto que está en el formulario (el que se va a cotizar) */
 function stkKgActual() {
-  function filasM2() {
-    var s = 0;
+  function filas() {
+    var out = [];
     for (var k = 1; k <= nrows; k++) {
       var lgE = document.getElementById('lg'+k), anE = document.getElementById('an'+k), caE = document.getElementById('ca'+k);
       if (!lgE || !lgE.value || !anE || !anE.value) continue;
-      s += (parseFloat(lgE.value)||0)/100 * (parseFloat(anE.value)||0)/100 * (parseInt((caE&&caE.value)||1)||1);
+      out.push({ lg: (parseFloat(lgE.value)||0)/100, an: (parseFloat(anE.value)||0)/100, ca: parseInt((caE&&caE.value)||1)||1 });
     }
-    return s;
+    return out;
   }
+  function filasM2() { return filas().reduce(function(a, f){ return a + f.lg * f.an * f.ca; }, 0); }
   var kg = 0;
-  if (['cubierta','repisa','peldano','banca','pcocina'].includes(prod)) {
+  if (prod === 'banca') {
+    kg = filas().reduce(function(a, f){
+      return a + (f.lg * f.an + 2 * STK_BANCA_PATA_M * f.an + STK_BANCA_TRAVESANO_M * f.lg) * f.ca;
+    }, 0) * STK_KG_M2;
+  } else if (['cubierta','repisa','peldano','pcocina'].includes(prod)) {
     kg = filasM2() * STK_KG_M2;
     var ct = contraDatos(); if (ct) kg += ct.m2 * STK_KG_M2;
   } else if (['granero','maciza','vidrios'].includes(prod)) {
