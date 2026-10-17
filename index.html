@@ -350,6 +350,26 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .spec { min-width: 0; }
 .spec .sl { font-size: 11.5px; font-weight: 600; color: var(--tm); letter-spacing: .2px; }
 .spec .sv { font-size: 13.5px; color: var(--tx); margin-top: 1px; line-height: 1.35; }
+/* ── ENVÍO STARKEN en la cotización (solo vendedores, 17-10-2026) ──
+   Tarjeta bajo las specs: buscador de comuna y el precio a domicilio que
+   devuelve Starken. El cliente no la ve (ver stkMontar). */
+.envio-stk { border: 1px solid var(--bd); border-radius: 12px; padding: 12px 14px; margin: -6px 0 18px; background: #fff; }
+.envio-stk .es-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.envio-stk .es-t { font-size: 13.5px; font-weight: 600; color: var(--tx); }
+.envio-stk .es-tag { font-size: 10.5px; color: var(--tm); background: var(--bg3); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+.envio-stk .es-busca { position: relative; }
+.envio-stk .es-in { width: 100%; font: 15px 'Jost', sans-serif; padding: 11px 12px; border: 1px solid var(--bd); border-radius: 10px; background: #fff; color: var(--tx); }
+.envio-stk .es-lista { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid var(--bd); border-radius: 10px; box-shadow: 0 6px 18px rgba(44,26,8,.12); z-index: 5; overflow: hidden; }
+.envio-stk .es-lista button { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--bg3); padding: 10px 12px; font: 15px 'Jost', sans-serif; color: var(--tx); cursor: pointer; }
+.envio-stk .es-lista button:hover { background: var(--bg3); }
+.envio-stk .es-lista small, .envio-stk .es-nada { color: var(--tm); font-size: 12.5px; }
+.envio-stk .es-nada { padding: 10px 12px; }
+.envio-stk .es-res { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
+.envio-stk .es-p { font-size: 24px; font-weight: 600; color: var(--tx); }
+.envio-stk .es-d { font-size: 13px; color: var(--tm); }
+.envio-stk .es-n { font-size: 12px; color: var(--tm); margin-top: 5px; line-height: 1.45; }
+.envio-stk .es-wait, .envio-stk .es-err { display: block; font-size: 13px; color: var(--tm); margin-top: 10px; }
+.envio-stk .es-err { color: #B45309; }
 .iboxes { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
 .ibox { border: 1px solid var(--bd); border-radius: 7px; overflow: hidden; box-shadow: 0 1px 3px rgba(44,26,8,.06); }
 .ibox-h { background: var(--ac); color: white; padding: 7px 10px; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; text-align: center; }
@@ -799,7 +819,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
      ademas sale como un rectángulo verde vacío y el link no se puede tocar
      en papel. La garantía y las specs sí van: son parte de la oferta. */
   .wa-block, .muest-block, .btn-copy-link, .btn-pdf, .nota-asesor,
-  .btn-nav-sm, .cta-dock { display: none !important; }
+  .btn-nav-sm, .cta-dock, .envio-stk { display: none !important; }
   /* que no se parta un bloque de precio ni una tabla a la mitad de la hoja */
   .pz, .specs, .warranty, .ptable, .info-bar { break-inside: avoid; page-break-inside: avoid; }
   .coti-hdr { break-after: avoid; page-break-after: avoid; }
@@ -2744,7 +2764,13 @@ function calcLive() {
       mM2 += (parseFloat(lgm.value)||0)/100*(parseFloat(anm.value)||0)/100*ca3;
       mCant += ca3;
     }
-    mM2 += mesaParM2();   /* el conjunto Río Bueno: la cubierta de la mesa de abajo */
+    /* el conjunto Río Bueno: la mesa de abajo y las patas. SOLO en el modelo par:
+       mesaParDims() calcula medidas para cualquier mesa, y sin esta condición el
+       precio en vivo de todas las mesas salía casi al doble (17-10-2026: una
+       Río Bueno de 200 × 100 mostraba $1.626.009 en vez de $803.680; el
+       documento final, que sí filtra por par, estaba bien). */
+    var mParLive = mesaModeloActual();
+    if (mParLive && mParLive.par) mM2 += mesaParM2();
     if (mM2 > 0) {
       var mSug = mesaSugerido();
       bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
@@ -3501,7 +3527,9 @@ function vxM2Actual() {
     if (!lgEl||!lgEl.value||!anEl||!anEl.value) continue;
     m2 += (parseFloat(lgEl.value)||0)/100*(parseFloat(anEl.value)||0)/100*(parseInt((caEl&&caEl.value)||1)||1);
   }
-  if (prod === 'mesa') m2 += mesaParM2();
+  /* solo el modelo par tiene mesa de abajo y patas (misma condición que calcLive y htmlMesa) */
+  var mPar = (prod === 'mesa') ? mesaModeloActual() : null;
+  if (mPar && mPar.par) m2 += mesaParM2();
   return m2;
 }
 /* teñido por tarifa: el valor se recalcula solo cuando cambian las medidas
@@ -4352,6 +4380,184 @@ function conPrefijo() {
   if (inp && !conModoCorreo && !inp.value.trim()) inp.value = '+56 9 ';
 }
 
+/* ── ENVÍO STARKEN (solo vendedores, 17-10-2026) ──
+   En la cotización, bajo las specs, el vendedor elige la comuna de entrega y ve
+   lo que cobra Starken a domicilio. El precio lo pide la Edge Function
+   starken-tarifa del proyecto del Cotizador, que es la que guarda las
+   credenciales: acá nunca llegan (el repo es público). Se cotiza SOLO POR
+   KILOS, igual que el plugin de Starken en casazaru.cl (manda un cubo de
+   2.500 cm³ por kilo, no las medidas reales): así una mesa con base sale al
+   mismo precio que en la web. Peso: 30 kg por m² de madera + 0,5 kg de
+   embalaje por m² (regla del taller, 12-10-2026), y la base de la mesa aparte.
+   El cliente no lo ve (vendorMode) hasta que el precio se haya comparado con
+   las facturas de Starken. */
+var STK_URL = SB_URL + '/functions/v1/starken-tarifa';
+var STK_KG_M2 = 30.5;      /* madera + embalaje, por m² */
+var STK_KG_REV_M2 = 10;    /* revestimiento: el mismo peso que ya muestra su cotización */
+/* Peso de la base por modelo, cuando el vendedor no escribió los metros de
+   fierro ni el peso de la base de madera. Sale del catálogo web (peso del
+   producto en Shopify menos la cubierta a 30 kg/m²), 17-10-2026. Los modelos
+   que la web tiene en 70 kg fijos para todos los tamaños (Riñihue, Fuy,
+   Puyehue, Maihue, Petrohué, Puelo) no se copian: usan el peso por tipo. */
+var STK_KG_BASE = {
+  'Mesa Río Bueno': 18, 'Mesa Lago Llanquihue': 23, 'Mesa Río Trancura': 28, 'Mesa Río Cochrane': 41,
+  'Mesa Lago Calafquén': 16, 'Mesa Río Maullín': 16, 'Mesa Río Backer': 26,
+  'Mesa de Centro Río Maullín': 25, 'Mesa de Centro Lago Toltén': 15
+};
+var STK_KG_BASE_TIPO = { fierro: 20, madera: 30 };   /* las bases de fierro de la web pesan 18–25 kg */
+
+/* kilos del producto que está en el formulario (el que se va a cotizar) */
+function stkKgActual() {
+  function filasM2() {
+    var s = 0;
+    for (var k = 1; k <= nrows; k++) {
+      var lgE = document.getElementById('lg'+k), anE = document.getElementById('an'+k), caE = document.getElementById('ca'+k);
+      if (!lgE || !lgE.value || !anE || !anE.value) continue;
+      s += (parseFloat(lgE.value)||0)/100 * (parseFloat(anE.value)||0)/100 * (parseInt((caE&&caE.value)||1)||1);
+    }
+    return s;
+  }
+  var kg = 0;
+  if (['cubierta','repisa','peldano','banca','pcocina'].includes(prod)) {
+    kg = filasM2() * STK_KG_M2;
+    var ct = contraDatos(); if (ct) kg += ct.m2 * STK_KG_M2;
+  } else if (['granero','maciza','vidrios'].includes(prod)) {
+    kg = (filasM2() + getMarcoTotals().m2) * STK_KG_M2;
+  } else if (prod === 'mesa') {
+    var M = mesaDatos(), m = mesaModeloActual();
+    /* las piezas del par (mesa de abajo y patas) solo existen en el modelo par:
+       mesaParDims() calcula medidas para cualquier mesa, igual que hace htmlMesa */
+    kg = (filasM2() + ((m && m.par) ? mesaParM2() : 0)) * STK_KG_M2;
+    /* una base por mesa, igual que en htmlMesa; las piezas del par no suman base */
+    var nBases = 0;
+    for (var i = 1; i <= nrows; i++) {
+      var lE = document.getElementById('lg'+i), cE = document.getElementById('ca'+i);
+      if (lE && lE.value) nBases += parseInt((cE&&cE.value)||1)||1;
+    }
+    nBases = nBases || 1;
+    var esMadera = M.baseTipo === 'madera';
+    var kgBase = esMadera ? M.pesoBase : M.metros * FIERRO_KG_M;   /* lo que escribió el vendedor manda */
+    if (!(kgBase > 0)) {
+      var cfg = m ? MESA_BASES[m.nombre] : null;
+      if (cfg && cfg.modo === 'enCubierta') {
+        kgBase = 0;   /* el par: sus patas ya van como filas */
+      } else if (cfg && cfg.modo === 'cubiertas') {
+        /* Río Fuy: las patas son dos cubiertas, 40 cm más angostas que la principal */
+        var anE1 = document.getElementById('an1');
+        var anchoPata = (parseFloat((anE1&&anE1.value)||0)||0)/100 - cfg.menosAncho;
+        kgBase = anchoPata > 0 ? 2 * cfg.altoPata * anchoPata * STK_KG_M2 : STK_KG_BASE_TIPO.madera;
+      } else {
+        kgBase = (m && STK_KG_BASE[m.nombre]) || STK_KG_BASE_TIPO[esMadera ? 'madera' : 'fierro'];
+      }
+    }
+    kg += kgBase * nBases;
+  } else if (prod === 'revestimiento') {
+    var rmEl = document.getElementById('rm');
+    kg = (parseFloat((rmEl&&rmEl.value)||0)||0) * STK_KG_REV_M2;
+  }
+  return Math.round(kg * 10) / 10;
+}
+
+/* las comunas de Starken: [{c:'NUNOA', ciudad:'SANTIAGO', cod:1}], un día en caché */
+var stkComunas = null;
+function stkNorm(s) { return String(s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+function stkTitulo(s) { return String(s).toLowerCase().replace(/(^|[\s(\/-])\S/g, function(m){ return m.toUpperCase(); }); }
+function stkPedir(body) {
+  return fetch(STK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY }, body: JSON.stringify(body) })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d || {} }; }); });
+}
+function stkDestinos() {
+  if (stkComunas) return Promise.resolve(stkComunas);
+  function armar(ciudades) {
+    var out = [];
+    ciudades.forEach(function(ci){
+      (ci.comunas || []).forEach(function(nombre){
+        /* "LA LIGUA DOMICILIO" es la misma comuna con otra cobertura: una sola entrada */
+        var n = String(nombre).replace(/\s+DOMICILIO$/i, '').trim();
+        if (!out.some(function(o){ return o.c === n && o.cod === ci.codigo; })) out.push({ c: n, ciudad: ci.nombre, cod: ci.codigo });
+      });
+    });
+    out.sort(function(a, b){ return a.c.localeCompare(b.c); });
+    return out;
+  }
+  var cache = null;
+  try { cache = JSON.parse(localStorage.getItem('zaru_stk_destinos') || 'null'); } catch (e) {}
+  if (cache && cache.ciudades && (Date.now() - (cache.t || 0)) < 86400000) {
+    stkComunas = armar(cache.ciudades);
+    return Promise.resolve(stkComunas);
+  }
+  return stkPedir({ accion: 'destinos' }).then(function(res){
+    if (!res.ok || !res.d.ciudades) throw new Error(res.d.error || 'Starken no respondió');
+    try { localStorage.setItem('zaru_stk_destinos', JSON.stringify({ t: Date.now(), ciudades: res.d.ciudades })); } catch (e) {}
+    stkComunas = armar(res.d.ciudades);
+    return stkComunas;
+  });
+}
+/* arma la tarjeta en la cotización recién generada (solo vendedores) */
+function stkMontar(qOut) {
+  if (!vendorMode || !qOut) return;
+  var kg = combo.length ? combo.reduce(function(a, it){ return a + (it.kg || 0); }, 0) + stkKgActual() : stkKgActual();
+  if (!(kg > 0)) return;
+  var box = document.createElement('div');
+  box.className = 'envio-stk';
+  box.dataset.kg = kg;
+  box.innerHTML =
+    '<div class="es-h"><span class="es-t">Envío Starken a domicilio</span><span class="es-tag">modo vendedor</span></div>' +
+    '<div class="es-busca"><input type="text" class="es-in" id="stk-comuna" placeholder="Comuna de entrega…" autocomplete="off" oninput="stkBuscar(this.value)">' +
+    '<div class="es-lista hidden" id="stk-lista"></div></div>' +
+    '<div class="es-out" id="stk-out"></div>';
+  var ancla = qOut.querySelector('.iboxes');   /* «Tu pedido incluye», que va una vez en todo documento */
+  if (ancla) ancla.parentNode.insertBefore(box, ancla); else qOut.appendChild(box);
+  stkDestinos().catch(function(e){ stkOut('<span class="es-err">No pude cargar las comunas de Starken: ' + escA(e.message) + '</span>'); });
+  /* la última comuna que usó el vendedor en esta pestaña: cotiza de inmediato */
+  var ult = null;
+  try { ult = JSON.parse(sessionStorage.getItem('zaru_stk_ult') || 'null'); } catch (e) {}
+  if (ult && ult.c && ult.cod) stkElegir(ult);
+}
+function stkOut(html) { var o = document.getElementById('stk-out'); if (o) o.innerHTML = html; }
+function stkBuscar(txt) {
+  var lista = document.getElementById('stk-lista'); if (!lista) return;
+  var q = stkNorm(txt.trim());
+  if (q.length < 2 || !stkComunas) { lista.classList.add('hidden'); lista.innerHTML = ''; return; }
+  var hits = stkComunas.filter(function(o){ return stkNorm(o.c).indexOf(q) === 0; });
+  if (hits.length < 8) hits = hits.concat(stkComunas.filter(function(o){ return stkNorm(o.c).indexOf(q) > 0; }));
+  hits = hits.slice(0, 8);
+  lista.innerHTML = hits.length
+    ? hits.map(function(o){
+        var ciudad = (o.ciudad !== o.c) ? ' <small>· ' + escA(stkTitulo(o.ciudad)) + '</small>' : '';
+        return '<button type="button" onclick="stkElegirIdx(' + stkComunas.indexOf(o) + ')">' + escA(stkTitulo(o.c)) + ciudad + '</button>';
+      }).join('')
+    : '<div class="es-nada">Starken no tiene esa comuna</div>';
+  lista.classList.remove('hidden');
+}
+function stkElegirIdx(i) { if (stkComunas && stkComunas[i]) stkElegir(stkComunas[i]); }
+function stkElegir(o) {
+  var inp = document.getElementById('stk-comuna'), lista = document.getElementById('stk-lista');
+  if (inp) inp.value = stkTitulo(o.c) + (o.ciudad !== o.c ? ' · ' + stkTitulo(o.ciudad) : '');
+  if (lista) { lista.classList.add('hidden'); lista.innerHTML = ''; }
+  try { sessionStorage.setItem('zaru_stk_ult', JSON.stringify(o)); } catch (e) {}
+  stkCotizar(o);
+}
+var stkPedido = 0;   /* si el vendedor cambia de comuna rápido, manda la última respuesta */
+function stkCotizar(o) {
+  var box = document.querySelector('.envio-stk'); if (!box) return;
+  var kg = parseFloat(box.dataset.kg) || 0;
+  var n = ++stkPedido;
+  stkOut('<span class="es-wait">Consultando a Starken…</span>');
+  stkPedir({ accion: 'tarifa', destino: o.cod, kilos: kg }).then(function(res){
+    if (n !== stkPedido) return;
+    if (!res.ok || res.d.error) { stkOut('<span class="es-err">' + escA(res.d.error || 'Starken no respondió') + '</span>'); return; }
+    var tarifas = res.d.tarifas || [];
+    var dom = tarifas.find(function(t){ return /DOMICILIO/i.test(t.entrega); });
+    var age = tarifas.find(function(t){ return /AGENCIA/i.test(t.entrega); });
+    var t = dom || age;
+    if (!t) { stkOut('<span class="es-err">Starken no llega a esa comuna</span>'); return; }
+    var nota = !dom ? 'solo retiro en agencia' : (age && age.total !== dom.total ? 'agencia ' + fmt(age.total) : 'igual en agencia');
+    stkOut('<div class="es-res"><span class="es-p">' + fmt(t.total) + '</span><span class="es-d">' + (t.dias ? t.dias + ' días · ' : '') + nota + '</span></div>' +
+      '<div class="es-n">1 bulto · ' + _n(kg) + ' kg · IVA incluido · se paga aparte del producto</div>');
+  }).catch(function(){ if (n === stkPedido) stkOut('<span class="es-err">Starken no respondió</span>'); });
+}
+
 async function confirmar() {
   if (confirming) return;   /* ya se está procesando este clic */
   confirming = true;
@@ -4380,6 +4586,7 @@ async function confirmar() {
     /* la validez, justo sobre los precios: ahí ayuda a decidir */
     if (bloquesPrecio.length) bloquesPrecio[bloquesPrecio.length - 1].insertAdjacentHTML('beforebegin',
       '<p class="elige-madera">Elige tu madera · ' + validezHtml() + '</p>');
+    stkMontar(qOut);   /* envío Starken: solo vendedores, se arma solo si hay kilos */
     show('s3');
     embudoTick('cotizacion');
     /* La URL del navegador solo se reemplaza por el link compartible cuando NO
@@ -4423,7 +4630,7 @@ var comboCaptura = null;  /* el producto que se está capturando en este momento
 var comboShare = null;    /* productos del documento a la vista, para el link compartido */
 var comboDoc = null;      /* productos del documento mientras se arma su pie común */
 function comboCapturar() {
-  var it = { p: prod, uso: uso, share: getShareDataProducto(false) };
+  var it = { p: prod, uso: uso, share: getShareDataProducto(false), kg: stkKgActual() };
   comboCaptura = it;
   try { htmlProducto('', ''); } finally { comboCaptura = null; }
   return it;
