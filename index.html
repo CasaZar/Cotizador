@@ -350,20 +350,23 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .spec { min-width: 0; }
 .spec .sl { font-size: 11.5px; font-weight: 600; color: var(--tm); letter-spacing: .2px; }
 .spec .sv { font-size: 13.5px; color: var(--tx); margin-top: 1px; line-height: 1.35; }
-/* ── ENVÍO STARKEN en la cotización (solo vendedores, 17-10-2026) ──
-   Tarjeta bajo las specs: buscador de comuna y el precio a domicilio que
-   devuelve Starken. El cliente no la ve (ver stkMontar). */
+/* ── ENVÍO STARKEN (17-10-2026) ──
+   La comuna de entrega se pide en el formulario (opcional, cliente y vendedor)
+   y la cotización trae la tarjeta con el precio a domicilio que devuelve
+   Starken (ver stkMontar). El buscador de comuna es el mismo en los dos lados. */
+.es-busca { position: relative; }
+.es-lista { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid var(--bd); border-radius: 10px; box-shadow: 0 6px 18px rgba(44,26,8,.12); z-index: 5; overflow: hidden; }
+.es-lista button { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--bg3); padding: 10px 12px; font: 15px 'Jost', sans-serif; color: var(--tx); cursor: pointer; }
+.es-lista button:hover { background: var(--bg3); }
+.es-lista small, .es-nada { color: var(--tm); font-size: 12.5px; }
+.es-nada { padding: 10px 12px; }
+.flabel .flabel-op { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--tm); font-size: 12px; margin-left: 4px; }
 .envio-stk { border: 1px solid var(--bd); border-radius: 12px; padding: 12px 14px; margin: -6px 0 18px; background: #fff; }
 .envio-stk .es-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
 .envio-stk .es-t { font-size: 13.5px; font-weight: 600; color: var(--tx); }
-.envio-stk .es-tag { font-size: 10.5px; color: var(--tm); background: var(--bg3); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
-.envio-stk .es-busca { position: relative; }
 .envio-stk .es-in { width: 100%; font: 15px 'Jost', sans-serif; padding: 11px 12px; border: 1px solid var(--bd); border-radius: 10px; background: #fff; color: var(--tx); }
-.envio-stk .es-lista { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid var(--bd); border-radius: 10px; box-shadow: 0 6px 18px rgba(44,26,8,.12); z-index: 5; overflow: hidden; }
-.envio-stk .es-lista button { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--bg3); padding: 10px 12px; font: 15px 'Jost', sans-serif; color: var(--tx); cursor: pointer; }
-.envio-stk .es-lista button:hover { background: var(--bg3); }
-.envio-stk .es-lista small, .envio-stk .es-nada { color: var(--tm); font-size: 12.5px; }
-.envio-stk .es-nada { padding: 10px 12px; }
+.envio-stk .es-elegida { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; color: var(--tx); }
+.envio-stk .es-cambiar { background: none; border: 0; padding: 0; font: 12.5px 'Jost', sans-serif; color: var(--tm); text-decoration: underline; cursor: pointer; }
 .envio-stk .es-res { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
 .envio-stk .es-p { font-size: 24px; font-weight: 600; color: var(--tx); }
 .envio-stk .es-d { font-size: 13px; color: var(--tm); }
@@ -819,7 +822,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
      ademas sale como un rectángulo verde vacío y el link no se puede tocar
      en papel. La garantía y las specs sí van: son parte de la oferta. */
   .wa-block, .muest-block, .btn-copy-link, .btn-pdf, .nota-asesor,
-  .btn-nav-sm, .cta-dock, .envio-stk { display: none !important; }
+  .btn-nav-sm, .cta-dock { display: none !important; }
+  /* el envío sí va en el PDF cuando hay comuna y precio (es parte de la oferta);
+     sin comuna la tarjeta es solo un buscador y no aporta en papel */
+  .envio-stk .es-busca, .envio-stk .es-cambiar, .envio-stk.sin-envio { display: none !important; }
   /* que no se parta un bloque de precio ni una tabla a la mitad de la hoja */
   .pz, .specs, .warranty, .ptable, .info-bar { break-inside: avoid; page-break-inside: avoid; }
   .coti-hdr { break-after: avoid; page-break-after: avoid; }
@@ -1604,7 +1610,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
         <label class="flabel" for="f-cli">Tu nombre</label>
         <input class="finput" type="text" id="f-cli" placeholder="Ej. Camila Muñoz" autocomplete="name">
       </div>
-      <div class="fsec" style="margin-bottom:0">
+      <div class="fsec" style="margin-bottom:14px">
         <label class="flabel" for="f-con" id="f-con-lbl">Tu WhatsApp</label>
         <!-- type="tel": abre el teclado numérico (con type="text" salía el de letras) -->
         <input class="finput" type="tel" inputmode="tel" id="f-con" placeholder="+56 9 1234 5678" autocomplete="tel">
@@ -1617,6 +1623,16 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
              aparte, con casilla desmarcada. -->
         <div class="finput-hint">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.
           <a href="#" class="con-modo" id="f-con-modo" onclick="conModo(); return false;">Prefiero dejar mi correo</a></div>
+      </div>
+      <!-- comuna de entrega (17-10-2026): opcional. Con ella la cotización trae el
+           valor del envío Starken a domicilio (ver stkMontar). -->
+      <div class="fsec" style="margin-bottom:0">
+        <label class="flabel" for="stk-form-comuna">¿A qué comuna lo enviamos?<span class="flabel-op">opcional</span></label>
+        <div class="es-busca">
+          <input class="finput" type="text" id="stk-form-comuna" placeholder="Ej. Ñuñoa" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, 'form')" onblur="stkAutoElegir('form')">
+          <div class="es-lista hidden" id="stk-lista-form"></div>
+        </div>
+        <div class="finput-hint">Para mostrarte el valor del envío a domicilio con Starken junto a tu cotización.</div>
       </div>
     </div>
     <div class="msg-err hidden" id="f-err"></div>
@@ -4380,17 +4396,16 @@ function conPrefijo() {
   if (inp && !conModoCorreo && !inp.value.trim()) inp.value = '+56 9 ';
 }
 
-/* ── ENVÍO STARKEN (solo vendedores, 17-10-2026) ──
-   En la cotización, bajo las specs, el vendedor elige la comuna de entrega y ve
-   lo que cobra Starken a domicilio. El precio lo pide la Edge Function
-   starken-tarifa del proyecto del Cotizador, que es la que guarda las
+/* ── ENVÍO STARKEN (17-10-2026) ──
+   El formulario pregunta la comuna de entrega (opcional) y la cotización trae,
+   bajo las specs, lo que cobra Starken a domicilio. Cliente y vendedor ven lo
+   mismo; el link compartido conserva la comuna. El precio lo pide la Edge
+   Function starken-tarifa del proyecto del Cotizador, que es la que guarda las
    credenciales: acá nunca llegan (el repo es público). Se cotiza SOLO POR
    KILOS, igual que el plugin de Starken en casazaru.cl (manda un cubo de
    2.500 cm³ por kilo, no las medidas reales): así una mesa con base sale al
    mismo precio que en la web. Peso: 30 kg por m² de madera + 0,5 kg de
-   embalaje por m² (regla del taller, 12-10-2026), y la base de la mesa aparte.
-   El cliente no lo ve (vendorMode) hasta que el precio se haya comparado con
-   las facturas de Starken. */
+   embalaje por m² (regla del taller, 12-10-2026), y la base de la mesa aparte. */
 var STK_URL = SB_URL + '/functions/v1/starken-tarifa';
 var STK_KG_M2 = 30.5;      /* madera + embalaje, por m² */
 var STK_KG_REV_M2 = 10;    /* revestimiento: el mismo peso que ya muestra su cotización */
@@ -4473,6 +4488,23 @@ function stkKgActual() {
 
 /* las comunas de Starken: [{c:'NUNOA', ciudad:'SANTIAGO', cod:1}], un día en caché */
 var stkComunas = null;
+/* la comuna elegida para esta cotización (formulario o tarjeta), o null */
+var stkComuna = null;
+function stkEtiqueta(o) { return stkTitulo(o.c) + (o.ciudad !== o.c ? ' · ' + stkTitulo(o.ciudad) : ''); }
+/* al abrir: la última comuna usada en esta pestaña vuelve al formulario */
+function stkInicio() {
+  var ult = null;
+  try { ult = JSON.parse(sessionStorage.getItem('zaru_stk_ult') || 'null'); } catch (e) {}
+  if (ult && ult.c && ult.cod) stkRestaurar(ult);
+}
+/* comuna que viene de un link compartido (o de la sesión): se acepta solo con la forma esperada */
+function stkRestaurar(o) {
+  if (!o || typeof o.c !== 'string' || !(Number(o.cod) > 0)) return;
+  stkComuna = { c: o.c, ciudad: String(o.ciudad || o.c), cod: Number(o.cod) };
+  var inp = document.getElementById('stk-form-comuna');
+  if (inp) inp.value = stkEtiqueta(stkComuna);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stkInicio); else stkInicio();
 function stkNorm(s) { return String(s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 function stkTitulo(s) { return String(s).toLowerCase().replace(/(^|[\s(\/-])\S/g, function(m){ return m.toUpperCase(); }); }
 function stkPedir(body) {
@@ -4506,50 +4538,108 @@ function stkDestinos() {
     return stkComunas;
   });
 }
-/* arma la tarjeta en la cotización recién generada (solo vendedores) */
+/* arma la tarjeta en la cotización recién generada (cliente y vendedor) */
 function stkMontar(qOut) {
-  if (!vendorMode || !qOut) return;
+  if (!qOut) return;
   var kg = combo.length ? combo.reduce(function(a, it){ return a + (it.kg || 0); }, 0) + stkKgActual() : stkKgActual();
   if (!(kg > 0)) return;
   var box = document.createElement('div');
-  box.className = 'envio-stk';
+  box.className = 'envio-stk sin-envio';
   box.dataset.kg = kg;
+  var elegida = stkComuna ? stkEtiqueta(stkComuna) : '';
   box.innerHTML =
-    '<div class="es-h"><span class="es-t">Envío Starken a domicilio</span><span class="es-tag">modo vendedor</span></div>' +
-    '<div class="es-busca"><input type="text" class="es-in" id="stk-comuna" placeholder="Comuna de entrega…" autocomplete="off" oninput="stkBuscar(this.value)">' +
+    '<div class="es-h"><span class="es-t">Envío Starken a domicilio</span></div>' +
+    '<div class="es-elegida' + (stkComuna ? '' : ' hidden') + '" id="stk-elegida"><span id="stk-elegida-txt">' + escA(elegida) + '</span>' +
+      '<button type="button" class="es-cambiar" onclick="stkCambiar()">cambiar comuna</button></div>' +
+    '<div class="es-busca' + (stkComuna ? ' hidden' : '') + '" id="stk-busca"><input type="text" class="es-in" id="stk-comuna" placeholder="Escribe tu comuna para ver el envío" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, \'doc\')" onblur="stkAutoElegir(\'doc\')">' +
     '<div class="es-lista hidden" id="stk-lista"></div></div>' +
     '<div class="es-out" id="stk-out"></div>';
   var ancla = qOut.querySelector('.iboxes');   /* «Tu pedido incluye», que va una vez en todo documento */
   if (ancla) ancla.parentNode.insertBefore(box, ancla); else qOut.appendChild(box);
-  stkDestinos().catch(function(e){ stkOut('<span class="es-err">No pude cargar las comunas de Starken: ' + escA(e.message) + '</span>'); });
-  /* la última comuna que usó el vendedor en esta pestaña: cotiza de inmediato */
-  var ult = null;
-  try { ult = JSON.parse(sessionStorage.getItem('zaru_stk_ult') || 'null'); } catch (e) {}
-  if (ult && ult.c && ult.cod) stkElegir(ult);
+  if (stkComuna) stkCotizar(stkComuna);
+  else stkDestinos().catch(function(e){ stkOut('<span class="es-err">No pude cargar las comunas de Starken: ' + escA(e.message) + '</span>'); });
 }
 function stkOut(html) { var o = document.getElementById('stk-out'); if (o) o.innerHTML = html; }
-function stkBuscar(txt) {
-  var lista = document.getElementById('stk-lista'); if (!lista) return;
-  var q = stkNorm(txt.trim());
-  if (q.length < 2 || !stkComunas) { lista.classList.add('hidden'); lista.innerHTML = ''; return; }
+/* «cambiar comuna» en la tarjeta: vuelve a mostrar el buscador */
+function stkCambiar() {
+  var b = document.getElementById('stk-busca'), e = document.getElementById('stk-elegida'), inp = document.getElementById('stk-comuna');
+  if (b) b.classList.remove('hidden');
+  if (e) e.classList.add('hidden');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+/* donde: 'form' (campo del formulario) o 'doc' (tarjeta de la cotización) */
+function stkIds(donde) {
+  return donde === 'form'
+    ? { input: 'stk-form-comuna', lista: 'stk-lista-form' }
+    : { input: 'stk-comuna', lista: 'stk-lista' };
+}
+function stkCoincidencias(txt) {
+  var q = stkNorm(String(txt || '').trim());
+  if (q.length < 2 || !stkComunas) return { q: q, hits: [] };
   var hits = stkComunas.filter(function(o){ return stkNorm(o.c).indexOf(q) === 0; });
   if (hits.length < 8) hits = hits.concat(stkComunas.filter(function(o){ return stkNorm(o.c).indexOf(q) > 0; }));
-  hits = hits.slice(0, 8);
-  lista.innerHTML = hits.length
-    ? hits.map(function(o){
+  return { q: q, hits: hits.slice(0, 8) };
+}
+function stkBuscar(txt, donde) {
+  var ids = stkIds(donde), lista = document.getElementById(ids.lista); if (!lista) return;
+  var r = stkCoincidencias(txt);
+  if (!r.q.length || r.q.length < 2) { lista.classList.add('hidden'); lista.innerHTML = ''; return; }
+  if (!stkComunas) {
+    lista.innerHTML = '<div class="es-nada">Cargando comunas…</div>'; lista.classList.remove('hidden');
+    /* al llegar la lista se vuelve a buscar, pero solo si el campo sigue con el foco */
+    stkDestinos().then(function(){
+      var inp = document.getElementById(ids.input);
+      if (inp && document.activeElement === inp) stkBuscar(inp.value, donde); else { lista.classList.add('hidden'); lista.innerHTML = ''; }
+    }).catch(function(){ lista.classList.add('hidden'); lista.innerHTML = ''; });
+    return;
+  }
+  /* onmousedown y no onclick: el blur del campo (stkAutoElegir) corre antes del click */
+  lista.innerHTML = r.hits.length
+    ? r.hits.map(function(o){
         var ciudad = (o.ciudad !== o.c) ? ' <small>· ' + escA(stkTitulo(o.ciudad)) + '</small>' : '';
-        return '<button type="button" onclick="stkElegirIdx(' + stkComunas.indexOf(o) + ')">' + escA(stkTitulo(o.c)) + ciudad + '</button>';
+        return '<button type="button" onmousedown="stkElegirIdx(' + stkComunas.indexOf(o) + ', \'' + donde + '\')">' + escA(stkTitulo(o.c)) + ciudad + '</button>';
       }).join('')
     : '<div class="es-nada">Starken no tiene esa comuna</div>';
   lista.classList.remove('hidden');
 }
-function stkElegirIdx(i) { if (stkComunas && stkComunas[i]) stkElegir(stkComunas[i]); }
-function stkElegir(o) {
-  var inp = document.getElementById('stk-comuna'), lista = document.getElementById('stk-lista');
-  if (inp) inp.value = stkTitulo(o.c) + (o.ciudad !== o.c ? ' · ' + stkTitulo(o.ciudad) : '');
-  if (lista) { lista.classList.add('hidden'); lista.innerHTML = ''; }
-  try { sessionStorage.setItem('zaru_stk_ult', JSON.stringify(o)); } catch (e) {}
-  stkCotizar(o);
+function stkElegirIdx(i, donde) { if (stkComunas && stkComunas[i]) stkElegir(stkComunas[i], donde); }
+/* al salir del campo sin elegir: si lo escrito calza con una sola comuna, se toma esa */
+function stkAutoElegir(donde) {
+  setTimeout(function(){
+    var ids = stkIds(donde), inp = document.getElementById(ids.input), lista = document.getElementById(ids.lista);
+    if (lista) { lista.classList.add('hidden'); lista.innerHTML = ''; }
+    if (!inp) return;
+    var txt = inp.value.trim();
+    if (!txt) { if (donde === 'form') stkComuna = null; return; }
+    if (stkComuna && txt === stkEtiqueta(stkComuna)) return;
+    var resolver = function() {
+      var r = stkCoincidencias(txt);
+      var exactas = r.hits.filter(function(o){ return stkNorm(o.c) === r.q; });
+      if (exactas.length === 1) stkElegir(exactas[0], donde);
+      else if (r.hits.length === 1) stkElegir(r.hits[0], donde);
+      else if (donde === 'form') stkComuna = null;   /* texto suelto: sin comuna hasta que elija una */
+    };
+    /* si escribió rápido y la lista aún no llegó, se resuelve cuando llegue (aunque ya
+       haya tocado «Ver precio»: stkElegir actualiza la tarjeta si ya está en pantalla) */
+    if (stkComunas) resolver();
+    else stkDestinos().then(resolver).catch(function(){ if (donde === 'form') stkComuna = null; });
+  }, 200);
+}
+function stkElegir(o, donde) {
+  stkComuna = { c: o.c, ciudad: o.ciudad, cod: o.cod };
+  var etq = stkEtiqueta(stkComuna);
+  ['stk-form-comuna', 'stk-comuna'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = etq; });
+  ['stk-lista-form', 'stk-lista'].forEach(function(id){ var el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.innerHTML = ''; } });
+  try { sessionStorage.setItem('zaru_stk_ult', JSON.stringify(stkComuna)); } catch (e) {}
+  /* si la cotización ya está en pantalla, se vuelve a cotizar el envío */
+  var box = document.querySelector('.envio-stk');
+  if (box) {
+    var e = document.getElementById('stk-elegida'), t = document.getElementById('stk-elegida-txt'), b = document.getElementById('stk-busca');
+    if (t) t.textContent = etq;
+    if (e) e.classList.remove('hidden');
+    if (b) b.classList.add('hidden');
+    stkCotizar(stkComuna);
+  }
 }
 var stkPedido = 0;   /* si el vendedor cambia de comuna rápido, manda la última respuesta */
 function stkCotizar(o) {
@@ -4567,7 +4657,8 @@ function stkCotizar(o) {
     if (!t) { stkOut('<span class="es-err">Starken no llega a esa comuna</span>'); return; }
     var nota = !dom ? 'solo retiro en agencia' : (age && age.total !== dom.total ? 'agencia ' + fmt(age.total) : 'igual en agencia');
     stkOut('<div class="es-res"><span class="es-p">' + fmt(t.total) + '</span><span class="es-d">' + (t.dias ? t.dias + ' días · ' : '') + nota + '</span></div>' +
-      '<div class="es-n">1 bulto · ' + _n(kg) + ' kg · IVA incluido · se paga aparte del producto</div>');
+      '<div class="es-n">Se paga aparte del producto · IVA incluido · 1 bulto de ' + _n(kg) + ' kg</div>');
+    box.classList.remove('sin-envio');   /* con precio, la tarjeta sí va en el PDF */
   }).catch(function(){ if (n === stkPedido) stkOut('<span class="es-err">Starken no respondió</span>'); });
 }
 
@@ -5616,6 +5707,7 @@ function getShareData(conValores) {
       if (Object.keys(valsC).length) d.vals = valsC;
     }
     if (b2bDcto > 0) d.b2b = b2bDcto;
+    if (stkComuna) d.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };
     if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
     return d;
   }
@@ -5632,6 +5724,7 @@ function getShareDataProducto(conValores) {
     if (Object.keys(vals).length) data.vals = vals;
   }
   if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
+  if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   var ctNow = contraDatos();
   if (ctNow) data.ct = { alto: ctNow.alto, cant: ctNow.cant, manual: ctNow.manual ? 1 : 0 };
@@ -5728,6 +5821,7 @@ function restoreFromData(d) {
   document.getElementById('f-cli').value = d.cli || '';
   document.getElementById('f-con').value = d.con || '';
   conModo(/@/.test(d.con || ''));   /* si el cliente dejó correo, el campo vuelve en modo correo */
+  if (d.com) stkRestaurar(d.com);   /* la comuna de entrega viaja en el link: el envío se ve igual al abrirlo */
   combo = [];
   if (d.combo && d.combo.length) {
     /* cotización con varios productos: cada uno se rearma en el formulario y
