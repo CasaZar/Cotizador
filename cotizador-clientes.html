@@ -4509,7 +4509,13 @@ function stkNorm(s) { return String(s).toUpperCase().normalize('NFD').replace(/[
 function stkTitulo(s) { return String(s).toLowerCase().replace(/(^|[\s(\/-])\S/g, function(m){ return m.toUpperCase(); }); }
 function stkPedir(body) {
   return fetch(STK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY }, body: JSON.stringify(body) })
-    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d || {} }; }); });
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, status: r.status, d: d || {} }; }); });
+}
+/* lo que ve la persona cuando no hay precio: nunca el texto técnico de Starken */
+function stkMensajeError(status) {
+  if (status === 422) return 'Starken no tiene tarifa para esa comuna';
+  if (status === 429) return 'Muchas consultas seguidas: espera un minuto y vuelve a intentar';
+  return 'No pudimos cotizar el envío ahora; te lo confirmamos por WhatsApp';
 }
 function stkDestinos() {
   if (stkComunas) return Promise.resolve(stkComunas);
@@ -4557,7 +4563,7 @@ function stkMontar(qOut) {
   var ancla = qOut.querySelector('.iboxes');   /* «Tu pedido incluye», que va una vez en todo documento */
   if (ancla) ancla.parentNode.insertBefore(box, ancla); else qOut.appendChild(box);
   if (stkComuna) stkCotizar(stkComuna);
-  else stkDestinos().catch(function(e){ stkOut('<span class="es-err">No pude cargar las comunas de Starken: ' + escA(e.message) + '</span>'); });
+  else stkDestinos().catch(function(e){ console.error('starken destinos', e); stkOut('<span class="es-err">' + stkMensajeError(0) + '</span>'); });
 }
 function stkOut(html) { var o = document.getElementById('stk-out'); if (o) o.innerHTML = html; }
 /* «cambiar comuna» en la tarjeta: vuelve a mostrar el buscador */
@@ -4649,17 +4655,21 @@ function stkCotizar(o) {
   stkOut('<span class="es-wait">Consultando a Starken…</span>');
   stkPedir({ accion: 'tarifa', destino: o.cod, kilos: kg }).then(function(res){
     if (n !== stkPedido) return;
-    if (!res.ok || res.d.error) { stkOut('<span class="es-err">' + escA(res.d.error || 'Starken no respondió') + '</span>'); return; }
+    if (!res.ok || res.d.error) {
+      console.error('starken-tarifa', res.status, res.d.error);   /* el detalle queda en la consola */
+      stkOut('<span class="es-err">' + stkMensajeError(res.status) + '</span>');
+      return;
+    }
     var tarifas = res.d.tarifas || [];
     var dom = tarifas.find(function(t){ return /DOMICILIO/i.test(t.entrega); });
     var age = tarifas.find(function(t){ return /AGENCIA/i.test(t.entrega); });
     var t = dom || age;
-    if (!t) { stkOut('<span class="es-err">Starken no llega a esa comuna</span>'); return; }
+    if (!t) { stkOut('<span class="es-err">' + stkMensajeError(422) + '</span>'); return; }
     var nota = !dom ? 'solo retiro en agencia' : (age && age.total !== dom.total ? 'agencia ' + fmt(age.total) : 'igual en agencia');
     stkOut('<div class="es-res"><span class="es-p">' + fmt(t.total) + '</span><span class="es-d">' + (t.dias ? t.dias + ' días · ' : '') + nota + '</span></div>' +
       '<div class="es-n">Se paga aparte del producto · IVA incluido · 1 bulto de ' + _n(kg) + ' kg</div>');
     box.classList.remove('sin-envio');   /* con precio, la tarjeta sí va en el PDF */
-  }).catch(function(){ if (n === stkPedido) stkOut('<span class="es-err">Starken no respondió</span>'); });
+  }).catch(function(){ if (n === stkPedido) stkOut('<span class="es-err">' + stkMensajeError(0) + '</span>'); });
 }
 
 async function confirmar() {
@@ -5821,7 +5831,11 @@ function restoreFromData(d) {
   document.getElementById('f-cli').value = d.cli || '';
   document.getElementById('f-con').value = d.con || '';
   conModo(/@/.test(d.con || ''));   /* si el cliente dejó correo, el campo vuelve en modo correo */
-  if (d.com) stkRestaurar(d.com);   /* la comuna de entrega viaja en el link: el envío se ve igual al abrirlo */
+  /* la comuna de entrega viaja en el link: el envío se ve igual al abrirlo. Y si el link no
+     la trae, no se hereda la que esta pestaña usó antes: un link es la foto de ESA cotización */
+  stkComuna = null;
+  var stkInp = document.getElementById('stk-form-comuna'); if (stkInp) stkInp.value = '';
+  if (d.com) stkRestaurar(d.com);
   combo = [];
   if (d.combo && d.combo.length) {
     /* cotización con varios productos: cada uno se rearma en el formulario y
