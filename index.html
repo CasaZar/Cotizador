@@ -6052,8 +6052,23 @@ function pospuestoAMano(g){
 function dueDate(x){
   if ((x.estado||'enviada')!=='enviada') return null;
   var due;
-  if (x.seg_proxima) due = String(x.seg_proxima).slice(0,10);
-  else {
+  if (x.seg_proxima) {
+    due = String(x.seg_proxima).slice(0,10);
+    /* ── CADENCIA AGOTADA = DORMIDO (17-10-2026) ──
+       Con los 4 toques hechos, una fecha guardada solo vale si alguien la puso
+       a propósito DESPUÉS (pausa con motivo o «Pospuesto a…»), y deja de valer
+       en cuanto se le escribe desde Dormidos. Antes valía cualquier fecha:
+       quedaban fechas de la cadencia vieja de 6 toques (ej. 01-11) y, como
+       escribirle no la borraba, el cliente salía en Hoy todos los días. A
+       Bernardita Lihn, Fabrizio y Rodrigo Morras se les escribió el 14, el 15
+       y el 16 seguidos. */
+    if (cadenciaAgotada(x)) {
+      var hist = Array.isArray(x.seg_historial) ? x.seg_historial : [];
+      var puesta = !!x.motivo_pausa || hist.some(function(h){ return h && h.nota && h.nota.indexOf('Pospuesto a '+due) !== -1; });
+      var reactivado = hist.some(function(h){ return h && h.nota === NOTA_REACTIVACION && h.fecha >= due; });
+      if (!puesta || reactivado) return null;
+    }
+  } else {
     var etapa = x.seg_etapa||0;
     if (etapa>=CADENCIA.length || !x.fecha_creacion) return null;
     var base = fechaBaseISO(x.fecha_creacion);
@@ -7062,7 +7077,12 @@ function clasificarHoy(groups, owners, cmp){
        sus 6 toques hechos — y además salía duplicado en Dormidos.
        Para volver a trabajarlo: desde Dormidos, posponer o pausar con fecha. */
     var d=dueDate(g.lead); if(!d) return;
-    if (enConversacion(g)){ conv.push(g); return; }
+    /* La conversación también espera su fecha (17-10-2026): antes salía en
+       Hoy TODOS los días desde que el cliente contestaba una vez, aunque su
+       próximo toque fuera en una semana, y se le terminaba escribiendo a
+       diario. Si el cliente vuelve a escribir, se le contesta en WhatsApp;
+       la lista de Hoy es para los que hay que buscar. */
+    if (enConversacion(g)){ if (d <= hoy) conv.push(g); else if (d <= lim) futuro.push(g); return; }
     /* Marcado con ★: sale TODOS los días, sin esperar la fecha de la
        cadencia. Antes, si su próximo toque caía en 3 días, se iba a la
        sección "Esta semana" (colapsada) y no se veía — o sea, marcarlo no
@@ -7944,7 +7964,8 @@ async function segReactivar(id){
   var x = COTIS[id]; if (!x) return;
   var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
   hist.push({ etapa:0, fecha:hoyISO(), nota:NOTA_REACTIVACION });
-  var ok = await segSave(id, { seg_historial:hist }, 'Anotado — queda en Dormidos hasta que conteste');
+  /* seg_proxima se borra: la fecha que lo trajo ya se usó (ver dueDate) */
+  var ok = await segSave(id, { seg_historial:hist, seg_proxima:null }, 'Anotado — queda en Dormidos hasta que conteste');
   /* en la bitácora va como 'cadencia': el check de la tabla `toques` no
      conoce otro tipo. Lo que la distingue es la nota del historial. */
   if (ok) registrarToque(x, 0, 'cadencia');
