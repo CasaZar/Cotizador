@@ -7558,7 +7558,9 @@ function renderSeguimiento(){
     }).length;
     var nom = b.o === 'web' ? 'Web' : (isPanelAdmin() ? b.t.replace(/^\S+\s+/, '') : 'Tus clientes');
     return { o:b.o, t:nom, total:n1Hechos + nuevos.length + meta, hecho:n1Hechos + Math.min(segHechos, meta),
-             nuevos:nuevos.length, seg:Math.max(0, meta - segHechos), lentos:lentos };
+             nuevos:nuevos.length, seg:Math.max(0, meta - segHechos), lentos:lentos,
+             /* todo lo que sigue en la lista, esté o no dentro de la meta */
+             pend:(S.ballenas).length + nuevos.length + (S.b1Viejos).length + (S.conv).length + (S.b2).length + (S.rescate).length + (S.b3).length };
   }).filter(function(m){ return m.total > 0; });
   /* Tomás trabaja sobre todo los web: en el panel admin van primero */
   if (isPanelAdmin()) metas.sort(function(a,b){ return (b.o === 'web') - (a.o === 'web'); });
@@ -7576,6 +7578,14 @@ function renderSeguimiento(){
   conv.forEach(function(g){ lista.push([g,'conv']); });
   b2.forEach(function(g){ lista.push([g,'today']); });
   rescate.forEach(function(g){ lista.push([g,'today']); });
+  /* ── NADIE SE ESCONDE POR LA META (19-10-2026, pedido del usuario) ──
+     Antes el bloque 3 iba plegado en «Cuando termines tu meta diaria» y los
+     que llevaban más de 7 días sin primer contacto se iban a Backlog: el que
+     no cabía en la meta dejaba de verse. Ahora TODO el que necesita
+     seguimiento va en la misma lista, al final y en orden. La meta solo mide
+     cuánto se hizo; no decide quién aparece. */
+  b3.forEach(function(g){ lista.push([g,'today']); });
+  b1Viejos.forEach(function(g){ lista.push([g,'nuevo']); });
   var enJuegoHoy = lista.reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
   function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
   function plegado(k, titulo, arr, cls, nota){
@@ -7590,14 +7600,8 @@ function renderSeguimiento(){
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
                   : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>')+
     '</div>';
-  if (b1Viejos.length){
-    html += '<div class="hz-aviso" onclick="setDashView(\'backlog\')">'+b1Viejos.length+
-      ' llevan más de '+BACKLOG_DIAS+' días sin primer contacto: están en <strong>Backlog</strong>, para cuando termines esta lista →</div>';
-  }
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
-  html += plegado('b3', 'Cuando termines tu meta diaria, escríbeles a estos', b3, 'today',
-    'Cada día suben ' + (CFG_SEG.rescateDia || 0) + ' de estos a tu lista (los que cotizaron más reciente) y cuentan para la meta. Los demás no cuentan; si alguno vale la pena, márcalo como interesado y sube hoy.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
   html += plegado('hechos', 'Hechos hoy', hoyDone, 'donehoy', 'Si marcaste alguno por error, ábrelo y deshaz el contacto.');
   /* Encabezado: el día y la plata en juego, y debajo una línea por meta con
@@ -7610,7 +7614,9 @@ function renderSeguimiento(){
     var falta = [];
     if (m.nuevos) falta.push(m.nuevos + (m.nuevos === 1 ? ' nuevo' : ' nuevos') + (m.lentos ? ' (' + m.lentos + ' con más de 24 h)' : ''));
     if (m.seg) falta.push(m.seg + (m.seg === 1 ? ' seguimiento' : ' seguimientos'));
-    var sub = listo ? 'Listo ✓' : ((m.nuevos + m.seg === 1) ? 'Falta ' : 'Faltan ') + falta.join(' y ');
+    var sub = listo ? (m.pend ? 'Meta cumplida ✓ · quedan ' + m.pend + ' en la lista' : 'Listo ✓')
+                    : ((m.nuevos + m.seg === 1) ? 'Falta ' : 'Faltan ') + falta.join(' y ') +
+                      (m.pend > m.nuevos + m.seg ? ' · ' + m.pend + ' en la lista' : '');
     var on = (segBloque === m.o);
     return '<div class="hz-meta' + (listo ? ' ok' : '') + (on ? ' on' : '') + '" onclick="setSegBloque(\'' + (on ? '' : m.o) + '\')" title="' + (on ? 'Toca para ver todos' : 'Toca para ver solo este grupo') + '">' +
       '<div class="hz-meta-l"><strong>' + m.t + '</strong> · llevas ' + m.hecho + ' de ' + m.total + '<span>' + sub + '</span></div>' +
@@ -7620,7 +7626,7 @@ function renderSeguimiento(){
     '<div class="hz-top'+(diaVerde?' ok':'')+'">'+
       '<div class="hz-top-l">'+
         '<div class="hz-dia">'+(diaVerde ? 'Listo por hoy, '+diaNom : 'Hoy '+diaNom)+'</div>'+
-        (diaVerde ? '<div class="hz-sub">Metas cumplidas. Si quieres seguir, abre «Cuando termines tu meta diaria».</div>' : '')+
+        (diaVerde ? '<div class="hz-sub">Metas cumplidas. Si quieres seguir, la lista de abajo tiene a todos los que quedan.</div>' : '')+
       '</div>'+
       '<div class="hz-plata">'+fmtM(enJuegoHoy)+'<span>en juego hoy</span></div>'+
     '</div>'+
