@@ -1765,7 +1765,13 @@ var FOTO_ALT = {
 var PR = {
   cubierta:  { alto: 362145, medio: 333184, bajo: 241890 },
   repisa:    { alto: 315066, medio: 289870, bajo: 210444 },
-  peldano:   { alto: 362145, medio: 333184, bajo: 241890 },
+  /* Peldaños con tabla propia (propuesta 20-10-2026): eran 180 cotizaciones y
+     1 venta, y en Coihue/Lenga quedaban 60-90% sobre Kalafquén. Bajan más las
+     maderas caras; el Coihue sigue sobre el Castaño. Margen con la especie más
+     cara de cada grupo, pagando por transferencia y con 2% de comisión:
+     alto 42% · medio 46% · bajo 45% (con cubierta: 50 · 52 · 48).
+     El de 2 cm sale de esta tabla (ver peldano2cm). Rige lo guardado en el Manual. */
+  peldano:   { alto: 309900, medio: 299900, bajo: 229900 },
   /* Solo vendedores (oct 2026). No tienen tabla de m² propia: la banca cobra
      el asiento como cubierta de 4 cm y la puerta de cocina como repisa de 2 cm
      (ver currentPR). Aquí va solo el fijo POR UNIDAD, editable en el Manual:
@@ -2518,8 +2524,16 @@ function getPeldanoEspesor() {
   if (el && el.value) peldanoEspesor = el.value;
   return peldanoEspesor;
 }
+/* peldaño de 2 cm: el valor del peldaño con la misma rebaja que la repisa
+   tiene sobre la cubierta (~13%). Antes era PR.repisa directo, y con la tabla
+   de peldaños más baja el de 2 cm habría quedado más caro que el de 4. */
+function peldano2cm() {
+  var r = {};
+  ['bajo','medio','alto'].forEach(function(t){ r[t] = PR.peldano[t] * PR.repisa[t] / PR.cubierta[t]; });
+  return r;
+}
 function currentPR() {
-  if (prod === 'peldano') return getPeldanoEspesor() === '2' ? PR.repisa : PR.cubierta;
+  if (prod === 'peldano') return getPeldanoEspesor() === '2' ? peldano2cm() : PR.peldano;
   if (prod === 'mesa') return PR.cubierta;   /* la cubierta de la mesa se cotiza como cubierta */
   if (prod === 'banca') return PR.cubierta;  /* asiento de 4 cm = cubierta */
   if (prod === 'pcocina') return PR.repisa;  /* puerta de 2 cm = repisa */
@@ -2854,8 +2868,10 @@ function recWood() {
   if (prod === 'banca' || prod === 'pcocina') return null;
   if (prod === 'mesa') return 'alto';   /* mesas y arrimos: la madera noble luce más */
   if (['granero','maciza','vidrios'].includes(prod)) return 'alto';
-  /* baño y exterior → medio (Ciprés/Castaño, los que mejor aguantan humedad) */
-  var map = { cocina:'alto', peldanos:'alto', quincho:'medio', bano:'medio', exterior:'medio',
+  /* baño y exterior → medio (Ciprés/Castaño, los que mejor aguantan humedad).
+     Peldaños → medio (20-10-2026): la única venta fue en Mañío, y en Castaño/Mañío
+     el precio queda a la par del mercado; en Coihue seguimos bastante arriba. */
+  var map = { cocina:'alto', peldanos:'medio', quincho:'medio', bano:'medio', exterior:'medio',
               comedor:'medio', escritorio:'medio', repisa:'bajo', otro:'medio' };
   return map[uso] || 'medio';
 }
@@ -2873,6 +2889,8 @@ function usoAviso(){
 /* texto del badge: la más pedida, según uso/producto (prueba social en vez de "para ti") */
 function recBadgeText() {
   if (['granero','maciza','vidrios'].includes(prod)) return '★ La más pedida para puertas';
+  /* peldaños: con una sola venta no hay "la más pedida" que decir */
+  if (prod === 'peldano' || uso === 'peldanos') return '★ Recomendada para peldaños';
   var usoLbl = { cocina:'cubiertas de cocina', bano:'baños', quincho:'quinchos y bares', peldanos:'peldaños',
                  comedor:'comedores y mesas', escritorio:'escritorios', repisa:'repisas y muebles livianos', exterior:'exteriores' };
   if (usoLbl[uso]) return '★ La más pedida para ' + usoLbl[uso];
@@ -9193,7 +9211,8 @@ function renderManual() {
       'Las reglas del taller que <strong>no son un número</strong>: cómo se fabrica cada cosa. El cotizador no calcula con ellas — están para que la regla quede escrita en un solo lugar y no se pierda en un WhatsApp. Agrega las que vayan apareciendo. <strong>Los cambios se guardan recién al apretar Guardar</strong>, abajo.') +
 
     mvSec('Cubiertas, repisas y peldaños — $ por m² (con IVA, precio tarjeta)', 'pr',
-      '<div class="mv-sub">Cubiertas y peldaños (4 cm)</div>' + mvFila3('mv-cub', PR.cubierta) +
+      '<div class="mv-sub">Cubiertas (4 cm)</div>' + mvFila3('mv-cub', PR.cubierta) +
+      '<div class="mv-sub">Peldaños (4 cm) · el de 2 cm sale con la misma rebaja que la repisa</div>' + mvFila3('mv-pel', PR.peldano) +
       '<div class="mv-sub">Repisas / cubierta 2 cm</div>' + mvFila3('mv-rep', PR.repisa) +
       '<div class="mv-sub">Puertas — $ por m²</div>' +
       '<div class="mv-grid3">' +
@@ -9294,7 +9313,7 @@ async function guardarValores(clave) {
   if (clave === 'pr') {
     v = {
       cubierta: { bajo: mvLee('mv-cub-bajo'), medio: mvLee('mv-cub-medio'), alto: mvLee('mv-cub-alto') },
-      peldano:  { bajo: mvLee('mv-cub-bajo'), medio: mvLee('mv-cub-medio'), alto: mvLee('mv-cub-alto') },
+      peldano:  { bajo: mvLee('mv-pel-bajo'), medio: mvLee('mv-pel-medio'), alto: mvLee('mv-pel-alto') },
       repisa:   { bajo: mvLee('mv-rep-bajo'), medio: mvLee('mv-rep-medio'), alto: mvLee('mv-rep-alto') },
       granero:  { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-gr-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-gr-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-gr-fijo')} },
       maciza:   { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
