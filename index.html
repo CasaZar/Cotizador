@@ -339,6 +339,15 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .pz-der { text-align: right; flex-shrink: 0; }
 /* el precio es el dato por el que el cliente entró al cotizador: pesa más que todo lo que lo rodea */
 .pz-precio { font-size: 19px; font-weight: 700; color: var(--tx); line-height: 1.2; }
+/* descuento especial (20-10-2026) */
+.pz-antes { font-size: 12px; color: #9A948A; text-decoration: line-through; line-height: 1.2; }
+.dcto-banda { background: #A85D2A; color: #fff; text-align: center; border-radius: 12px; padding: 13px 14px; margin: 4px 0 12px; font-size: 14px; line-height: 1.4; }
+.dcto-banda .dcto-big { display: block; font-family: 'Nanum Myeongjo', serif; font-weight: 800; font-size: 22px; margin: 3px 0; }
+.dcto-banda .dcto-hasta { display: block; font-size: 13px; opacity: .92; }
+.dcto-seg { display: flex; border: 1.5px solid var(--bd); border-radius: 10px; overflow: hidden; }
+.dcto-seg .dcto-op { flex: 1; background: #fff; border: 0; border-right: 1px solid var(--bd); padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--tm); cursor: pointer; font-family: inherit; }
+.dcto-seg .dcto-op:last-child { border-right: 0; }
+.dcto-seg .dcto-op.on { background: #485B3D; color: #fff; }
 .pz-trans { font-size: 13px; font-weight: 600; color: #2D6A4F; margin-top: 3px; line-height: 1.25; }
 .pz-trans small { display: block; font-size: 11px; font-weight: 500; }
 .precios-nota { font-size: 11.5px; color: var(--tm); text-align: center; line-height: 1.5; margin-top: 2px; }
@@ -768,6 +777,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .resp-badge { display:inline-block;background:#DCFCE7;color:#166534;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* llegó por anuncio: seguimiento desde el WhatsApp 0141 (ver chipAnuncio) */
 .med-aviso { background:#FFF7E6;border:1px solid #F0C36D;color:#7A4B00;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.4;margin:10px 0 4px; }
+.dcto-badge { display:inline-block;background:#FCEFE4;color:#8F4E22;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 .medida-badge { display:inline-block;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 .anuncio-badge { display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-family:'Jost',sans-serif;letter-spacing:.4px; }
 /* de qué bloque salió un cliente ya contactado hoy */
@@ -2517,6 +2527,52 @@ var cubiertaSolo = false; /* true con ?prod=cubierta: además de simplificado, c
 var prodSolo = false;
 var mesaTipo = 'comedor'; /* pestaña del catálogo de mesas: 'comedor' o 'centro' */
 var b2bDcto = 0;          /* % extra Casa Zaru Profesionales (0-5); >0 aplica descuento aunque no se vea el selector (link compartido) */
+/* ── DESCUENTO ESPECIAL (20-10-2026) ──
+   Lo pone SOLO el vendedor (selector en «Extras», que el público no ve), de
+   5% o 10%. Baja TODOS los precios, el de tarjeta y el de transferencia: se
+   multiplica, así que 10% especial + 5% de transferencia = 14,5% sobre el
+   precio con tarjeta (el usuario: «nuestro precio real es el de la
+   transferencia, el extra es por las comisiones de Mercado Pago»).
+   Se aplica en tres puntos y en ningún otro, para no tocar el cálculo de cada
+   producto: preciosCards (lo que se ve), saveQuote (lo que se guarda) y
+   whatsappCTA (el mensaje). El link lo conserva (data.de) y el panel lo
+   marca (origen.dcto_especial). Solo se aceptan 5 y 10: quote_links lo puede
+   escribir cualquiera con la llave pública, y un link armado a mano no puede
+   inventar un 90%. */
+var dctoEsp = 0;
+var DCTO_OPCIONES = [5, 10];
+function dctoValido(v) { v = parseInt(v, 10) || 0; return DCTO_OPCIONES.indexOf(v) !== -1 ? v : 0; }
+function dctoFactor() { return dctoEsp > 0 ? 1 - dctoEsp / 100 : 1; }
+/* monto rebajado, redondeado igual que lo guarda saveQuote (primero el total, despues el descuento): asi el precio que se ve, el del mensaje y el del panel son el mismo peso */
+function dctoMonto(x) { return dctoEsp > 0 ? Math.round(Math.round(x) * dctoFactor()) : x; }
+function dctoSel(v) {
+  dctoEsp = dctoValido(v);
+  document.querySelectorAll('.dcto-op').forEach(function(b){
+    b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
+  });
+}
+function dctoSelHtml() {
+  return '<div class="vx-sub">' +
+    '<div class="vx-sub-h">Descuento especial</div>' +
+    '<div class="dcto-seg">' +
+      [0].concat(DCTO_OPCIONES).map(function(v){
+        return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + '%' : 'Sin') + '</button>';
+      }).join('') +
+    '</div>' +
+    '<div class="finput-hint">Baja los precios de las 3 maderas y se suma al de transferencia. El cliente ve «esta cotización tiene un descuento especial». Elígelo antes de «Ver precio por madera».</div>' +
+  '</div>';
+}
+/* la franja que ve el cliente arriba de su cotización */
+function dctoBannerHtml(cli) {
+  if (!(dctoEsp > 0)) return '';
+  var nom = String(cli || '').trim().split(/\s+/)[0] || '';
+  nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
+  var vence = new Date(fechaDocDate().getTime() + VALIDEZ_DIAS * 86400000);
+  var hasta = Date.now() <= vence.getTime()
+    ? '<span class="dcto-hasta">válido hasta el ' + ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][vence.getDay()] + ' ' + vence.getDate() + ' de ' + vence.toLocaleDateString('es-CL', {month:'long'}) + '</span>' : '';
+  return '<div class="dcto-banda">' + (nom ? escA(nom) + ', esta' : 'Esta') + ' cotización tiene un' +
+    '<span class="dcto-big">descuento especial de ' + dctoEsp + '%</span>' + hasta + '</div>';
+}
 /* fuente de verdad = lo que el cliente ve en el selector; la variable se usa de respaldo
    (antes se desincronizaba al reentrar al producto o al abrir la cotización desde un link) */
 function getPeldanoEspesor() {
@@ -3840,6 +3896,7 @@ function vExtrasFieldHtml() {
   tnAuto = false;       /* el select de tarifa nace en "Valor manual" */
   return '<div class="mesa-box'+(vendorMode?'':' hidden')+'">' +
     '<div class="mesa-h">Extras (opcional)</div>' +
+    dctoSelHtml() +
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Reborde — simula mayor espesor, por metro lineal</div>' +
       '<div class="col-labels"><div class="col-lbl">Alto del reborde</div></div>' +
@@ -5231,6 +5288,7 @@ function shell(nombre, cli, fecha, body) {
      número; sigue guardado). Número y fecha bajan al final (coti-fin, en
      whatsappCTA) y la validez sube junto a los precios (confirmar). */
   return '<div class="coti-hdr"><div class="coti-logo"><img class="logo-blanco" src="' + LOGO_BLANCO_URL + '" alt="Casa Zaru"></div></div>' +
+  dctoBannerHtml(cli) +
   '<div class="coti-title">' + tituloDoc(nombre) + '</div>' +
   '<div class="coti-para">Para ' + escA(cli) + '</div>' +
   llegaListaHtml() +
@@ -5323,6 +5381,16 @@ function maderaSwatchUna(nombre) {
    lleva borde y su etiqueta montada encima. Los rótulos de columna que había
    ("Con tarjeta", "Transferencia −5%") van dentro de la tarjeta y en la nota. */
 function preciosCards(rows, recTier, desgloseFn, nota) {
+  /* descuento especial: se muestra el precio rebajado y el de antes tachado.
+     Se rebaja una copia de cada fila (también madera y base, que usa el
+     desglose de las mesas) para que el desglose y «por peldaño» calcen. */
+  var fd = dctoFactor();
+  if (fd < 1) rows = rows.map(function(r){
+    var c = Object.assign({}, r, { antes: r.total, total: dctoMonto(r.total) });
+    if (typeof r.madera === 'number') c.madera = r.madera * fd;
+    if (typeof r.base === 'number') c.base = r.base * fd;
+    return c;
+  });
   var tf = transferFactor();
   var lt = transfLabel();
   var conTransf = 'con ' + lt.charAt(0).toLowerCase() + lt.slice(1);
@@ -5338,6 +5406,7 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
           (desgloseFn ? desgloseFn(r) : '') +
         '</div>' +
         '<div class="pz-der">' +
+          (r.antes ? '<div class="pz-antes">antes ' + fmt(r.antes) + '</div>' : '') +
           '<div class="pz-precio">' + fmt(r.total) + '</div>' +
           '<div class="pz-trans">' + fmt(r.total * tf) + '<small>' + conTransf + '</small></div>' +
         '</div>' +
@@ -5492,7 +5561,9 @@ function waNumero() {
    supabase-cotizador/embudo-whatsapp.sql; sin él la base lo rechaza callada). */
 function whatsappCTA(bajo, alto, det, nombreProd) {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
-  var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA') : '';
+  if (dctoEsp > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
+  var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA' +
+    (dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
@@ -5506,7 +5577,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   var urlMuest = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
     'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
   return '<div class="wa-block">' +
-    '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + '</a>' +
+    '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + (dctoEsp > 0 ? ' con descuento' : '') + '</a>' +
     '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
     '<div class="wa-otras">' +
       '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'duda\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
@@ -5743,6 +5814,7 @@ function getShareData(conValores) {
       if (Object.keys(valsC).length) d.vals = valsC;
     }
     if (b2bDcto > 0) d.b2b = b2bDcto;
+    if (dctoEsp > 0) d.de = dctoEsp;   /* descuento especial del vendedor */
     if (stkComuna) d.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };
     if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
     return d;
@@ -5760,6 +5832,7 @@ function getShareDataProducto(conValores) {
     if (Object.keys(vals).length) data.vals = vals;
   }
   if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
+  if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   var ctNow = contraDatos();
@@ -5851,6 +5924,7 @@ function restoreFromData(d) {
   congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
   b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
+  dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
   /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
   conStr = d.con || '';
@@ -6129,6 +6203,13 @@ async function saveQuote(data, lineas) {
     /* medida pasada del tope (¿milímetros?): queda marcada para que el panel no
        la trate como monto alto. Va dentro de origen para no necesitar columna nueva. */
     if (medidasRaras().length) payload.origen = Object.assign({}, payload.origen || {}, { medida_rara: true });
+    /* descuento especial del vendedor: se guarda el precio rebajado (lo que de
+       verdad paga el cliente) y la marca va en origen, para no necesitar columna */
+    if (dctoEsp > 0) {
+      var fdS = dctoFactor();
+      ['total_bajo','total_medio','total_alto'].forEach(function(k){ if (payload[k]) payload[k] = Math.round(payload[k] * fdS); });
+      payload.origen = Object.assign({}, payload.origen || {}, { dcto_especial: dctoEsp });
+    }
     /* sin .select(): con RLS el público solo puede insertar, no leer de vuelta la fila */
     var res = await sbClient.from('cotizaciones').insert(payload);
     /* si la columna "origen" no existiera (SQL sin aplicar), la cotización se
@@ -7919,7 +8000,10 @@ function chipAnuncio(g) {
   var deAnuncio = (g.quotes || []).some(function(q){ return vieneDeAnuncio(q.origen); });
   var medida = (g.quotes || []).some(medidaRara)
     ? '<span class="medida-badge" title="Tiene una medida fuera de rango (¿milímetros?). Su monto no cuenta como alto hasta que se corrija.">⚠ Revisar medidas</span>' : '';
-  return (deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '') + medida;
+  /* descuento especial que puso el vendedor (el mayor, si hubo varias cotizaciones) */
+  var dcto = (g.quotes || []).reduce(function(a, q){ return Math.max(a, (q.origen && parseInt(q.origen.dcto_especial, 10)) || 0); }, 0);
+  var dctoChip = dcto ? '<span class="dcto-badge" title="Se le envió con descuento especial: los montos ya están rebajados">🏷 Con descuento ' + dcto + '%</span>' : '';
+  return (deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '') + medida + dctoChip;
 }
 /* Fila de una línea. Ojo: NO puede ser un <button>, porque adentro lleva
    el botón de contacto y anidar interactivos es HTML inválido (y el clic
