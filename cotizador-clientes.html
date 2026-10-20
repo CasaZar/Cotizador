@@ -3185,7 +3185,7 @@ function renderForm(p) {
         '</div>' +
         '<div class="fsec">' +
           '<label class="flabel">Perfil del fierro</label>' +
-          '<input class="finput" type="text" id="ms-perfil" placeholder="Ej. Tubular 40×40 mm">' +
+          '<input class="finput" type="text" id="ms-perfil" placeholder="80 × 40 mm (el de siempre)">' +
         '</div>' +
         '<div class="fsec">' +
           '<label class="flabel">Color</label>' +
@@ -3283,6 +3283,10 @@ function renderForm(p) {
   }
 }
 /* datos de la base (fierro o madera) que escribe el vendedor */
+/* perfil del fierro de todas las bases (confirmado por el usuario, 20-10-2026).
+   Sale en la cotización aunque el vendedor no lo escriba; si una base lleva
+   otro, se escribe en el campo y manda ese. */
+var PERFIL_FIERRO = '80 × 40 mm';
 function mesaDatos() {
   function v(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
   return {
@@ -3292,7 +3296,7 @@ function mesaDatos() {
     baseTipo: v('ms-base-tipo') || 'fierro',
     valor:  parseInt(v('ms-valor'), 10) || 0,
     altura: v('ms-altura'),
-    perfil: v('ms-perfil'),
+    perfil: v('ms-perfil') || PERFIL_FIERRO,   /* vacío = el de siempre */
     color:  v('ms-color'),
     metros: parseFloat(v('ms-metros')) || 0,
     espesorBase: v('ms-esp-madera'),
