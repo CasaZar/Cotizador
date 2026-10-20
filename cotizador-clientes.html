@@ -4646,7 +4646,7 @@ function stkMontar(qOut) {
   box.dataset.kg = kg;
   var elegida = stkComuna ? stkEtiqueta(stkComuna) : '';
   box.innerHTML =
-    '<button type="button" class="es-abrir" onclick="stkAbrir()">🚚 ¿Cuánto sale el envío a tu comuna? →</button>' +
+    '<button type="button" class="es-abrir" onclick="stkAbrir()">🚚 ¿Cuál es el valor de envío a tu comuna? →</button>' +
     '<div class="es-h"><span class="es-t">🚚 Envío Starken a domicilio</span></div>' +
     '<div class="es-elegida' + (stkComuna ? '' : ' hidden') + '" id="stk-elegida"><span id="stk-elegida-txt">' + escA(elegida) + '</span>' +
       '<button type="button" class="es-cambiar" onclick="stkCambiar()">cambiar comuna</button></div>' +
