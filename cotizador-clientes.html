@@ -7026,7 +7026,7 @@ function reactFila(g){
   var dias = Math.max(0, Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000));
   var boton = phone
     ? '<a class="hz-btn wa" target="_blank" onclick="reactEscribi(\''+x.id+'\')" href="https://wa.me/'+phone+'?text='+encodeURIComponent(waMsgReactivar(x))+'">💬 WhatsApp</a>'
-    : '<a class="hz-btn mail" target="_blank" onclick="reactEscribi(\''+x.id+'\')" href="'+escA(correoUrl(x, g))+'">✉ Correo</a>';
+    : '<a class="hz-btn mail" target="_blank" onclick="reactEscribi(\''+x.id+'\');correoCopiar(\''+x.id+'\')" href="'+escA(correoUrl(x, g))+'">✉ Correo</a>';
   return '<div class="hz-fila"><div class="hz-linea">'+
     '<div class="hz-main" style="cursor:default"><span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
       '<span class="hz-txt"><span class="hz-nom">'+escA(x.cliente||'Sin nombre')+'<span class="hz-monto">'+fmtM(g.valor)+'</span></span>'+
@@ -7858,6 +7858,19 @@ function correoAsunto(x){
    cuenta correcta aunque en el Chrome haya varias sesiones abiertas. El
    cuerpo es el MISMO texto del toque que se manda por WhatsApp, para que
    no existan dos versiones del mensaje que se desincronicen. */
+/* ya se le escribió antes (algún toque registrado): hay un hilo que seguir */
+function correoYaEscrito(x){ return (x.seg_etapa || 0) >= 1 || !!x.fecha_primer_contacto; }
+var correoCuerpoCache = {};
+/* copia el mensaje del toque al portapapeles al abrir el hilo en Gmail */
+function correoCopiar(id){
+  var txt = correoCuerpoCache[id];
+  if (!txt) return;
+  var ok = function(){ showToast('Mensaje copiado. En Gmail abre el último correo, toca «Responder» y pégalo (Ctrl+V)', true); };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function(){});
+    else { var t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); ok(); }
+  } catch(e) {}
+}
 function correoUrl(x, g){
   /* Quién firma: el que está TRABAJANDO la cola, no el dueño del registro.
      Un cliente que llegó por la web no tiene vendedor asignado, así que
@@ -7878,6 +7891,15 @@ function correoUrl(x, g){
   /* waMsg ya arma el mensaje completo con su bloque de link, igual para los dos
      canales. Acá solo se le agrega la firma, que es lo único propio del correo. */
   var cuerpo = waMsg(x) + '\n\n—\n' + firma + (cargo ? '\n' + cargo : '') + '\nCasa Zaru';
+  /* ── EL MISMO HILO (20-10-2026, pedido del usuario) ──
+     Un correo nuevo, aunque lleve el mismo asunto, al cliente le puede llegar
+     como conversación aparte. Desde el segundo toque el botón abre en Gmail
+     los correos ya enviados a esa dirección, para responder DENTRO del hilo,
+     y deja el mensaje copiado (correoCopiar) para pegarlo con Ctrl+V. */
+  if (correoYaEscrito(x)) {
+    correoCuerpoCache[x.id] = cuerpo;
+    return 'https://mail.google.com/mail/?authuser=hola@casazaru.cl#search/' + encodeURIComponent('to:' + correoDe(x));
+  }
   return 'https://mail.google.com/mail/?authuser=hola@casazaru.cl&view=cm&fs=1' +
          '&to=' + encodeURIComponent(correoDe(x)) +
          '&su=' + encodeURIComponent(correoAsunto(x)) +
@@ -8003,7 +8025,7 @@ function segBotonContacto(g, x, clase){
   }
   if (correoDe(x)) {
     return '<a class="'+clase+' mail'+(esperando?' esperando':'')+'" target="_blank" '+
-           'onclick="event.stopPropagation();'+accion('mail')+'" '+
+           'onclick="event.stopPropagation();'+accion('mail')+'correoCopiar(\''+x.id+'\');" '+
            'href="'+escA(correoUrl(x, g))+'">'+
            (esperando ? '⏳ ¿Le escribiste?' : '✉ Correo')+'</a>';
   }
