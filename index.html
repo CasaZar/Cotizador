@@ -4433,6 +4433,10 @@ var STK_KG_BASE_TIPO = { fierro: 20, madera: 30 };   /* las bases de fierro de l
 var STK_BANCA_PATA_M = 0.41;       /* alto de cada pata, en metros */
 var STK_BANCA_TRAVESANO_M = 0.10;  /* ancho del travesaño, en metros */
 
+/* Regla del taller (20-10-2026): las piezas de 2 cm (repisas y puertas de
+   mueble de cocina, que se cobran como repisa) pesan la mitad que una de 4 cm. */
+function stkFactorEspesor(p) { return (p === 'repisa' || p === 'pcocina') ? 0.5 : 1; }
+
 /* kilos del producto que está en el formulario (el que se va a cotizar) */
 function stkKgActual() {
   function filas() {
@@ -4451,8 +4455,8 @@ function stkKgActual() {
       return a + (f.lg * f.an + 2 * STK_BANCA_PATA_M * f.an + STK_BANCA_TRAVESANO_M * f.lg) * f.ca;
     }, 0) * STK_KG_M2;
   } else if (['cubierta','repisa','peldano','pcocina'].includes(prod)) {
-    kg = filasM2() * STK_KG_M2;
-    var ct = contraDatos(); if (ct) kg += ct.m2 * STK_KG_M2;
+    kg = filasM2() * STK_KG_M2 * stkFactorEspesor(prod);
+    var ct = contraDatos(); if (ct) kg += ct.m2 * STK_KG_M2 * 0.5;   /* contrahuellas de 2 cm */
   } else if (['granero','maciza','vidrios'].includes(prod)) {
     kg = (filasM2() + getMarcoTotals().m2) * STK_KG_M2;
   } else if (prod === 'mesa') {
@@ -4903,7 +4907,7 @@ function htmlCubierta(cli, fecha) {
       (prod === 'banca' ? '<div class="spec"><div class="sl">Patas</div><div class="sv">Según diseño · incluidas en el valor</div></div>' : '') +
       '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
-      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30 + (ct ? ct.m2*15 : 0))+' kg</div></div>' +
+      '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30*stkFactorEspesor(prod) + (ct ? ct.m2*15 : 0))+' kg</div></div>' +
     '</div>' +
     boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total,
       esPeld ? (nUnid + ' peldaños' + (ct ? ' + contrahuellas' : '')) : (sumM2.toFixed(2) + ' m²'))
