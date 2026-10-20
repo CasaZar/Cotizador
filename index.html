@@ -370,14 +370,19 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .es-lista small, .es-nada { color: var(--tm); font-size: 12.5px; }
 .es-nada { padding: 10px 12px; }
 .flabel .flabel-op { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--tm); font-size: 12px; margin-left: 4px; }
-.envio-stk { border: 1px solid var(--bd); border-radius: 12px; padding: 12px 14px; margin: -6px 0 18px; background: #fff; }
-.envio-stk .es-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.envio-stk { border: 1px solid var(--bd); border-radius: 12px; padding: 11px 14px; margin: 0 0 14px; background: #fff; }
+.envio-stk .es-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+/* sin comuna: solo el enlace, para no empujar el botón de WhatsApp */
+.envio-stk .es-abrir { display: none; }
+.envio-stk.plegado { border: 1.5px dashed var(--bd); padding: 0; }
+.envio-stk.plegado > :not(.es-abrir) { display: none; }
+.envio-stk.plegado .es-abrir { display: block; width: 100%; background: none; border: 0; padding: 12px 10px; font: 600 14px 'Poppins', sans-serif; color: #A85D2A; cursor: pointer; text-align: center; }
 .envio-stk .es-t { font-size: 13.5px; font-weight: 600; color: var(--tx); }
 .envio-stk .es-in { width: 100%; font: 15px 'Jost', sans-serif; padding: 11px 12px; border: 1px solid var(--bd); border-radius: 10px; background: #fff; color: var(--tx); }
 .envio-stk .es-elegida { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; color: var(--tx); }
 .envio-stk .es-cambiar { background: none; border: 0; padding: 0; font: 12.5px 'Jost', sans-serif; color: var(--tm); text-decoration: underline; cursor: pointer; }
-.envio-stk .es-res { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
-.envio-stk .es-p { font-size: 24px; font-weight: 600; color: var(--tx); }
+.envio-stk .es-res { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+.envio-stk .es-p { font-size: 20px; font-weight: 600; color: var(--tx); }
 .envio-stk .es-d { font-size: 13px; color: var(--tm); }
 .envio-stk .es-n { font-size: 12px; color: var(--tm); margin-top: 5px; line-height: 1.45; }
 .envio-stk .es-wait, .envio-stk .es-err { display: block; font-size: 13px; color: var(--tm); margin-top: 10px; }
@@ -835,7 +840,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
   .btn-nav-sm, .cta-dock { display: none !important; }
   /* el envío sí va en el PDF cuando hay comuna y precio (es parte de la oferta);
      sin comuna la tarjeta es solo un buscador y no aporta en papel */
-  .envio-stk .es-busca, .envio-stk .es-cambiar, .envio-stk.sin-envio { display: none !important; }
+  .envio-stk .es-busca, .envio-stk .es-cambiar, .envio-stk .es-abrir, .envio-stk.sin-envio { display: none !important; }
   /* que no se parta un bloque de precio ni una tabla a la mitad de la hoja */
   .pz, .specs, .warranty, .ptable, .info-bar { break-inside: avoid; page-break-inside: avoid; }
   .coti-hdr { break-after: avoid; page-break-after: avoid; }
@@ -4633,22 +4638,33 @@ function stkMontar(qOut) {
   var kg = combo.length ? combo.reduce(function(a, it){ return a + (it.kg || 0); }, 0) + stkKgActual() : stkKgActual();
   if (!(kg > 0)) return;
   var box = document.createElement('div');
-  box.className = 'envio-stk sin-envio';
+  /* ── ARRIBA DEL WHATSAPP (20-10-2026, boceto aprobado) ──
+     El envío va justo antes de «Quiero mi…»: el cliente decide viendo el
+     total. Para no empujar el botón hacia abajo, sin comuna se muestra solo
+     un enlace corto («plegado») que abre el buscador al tocarlo. */
+  box.className = 'envio-stk sin-envio' + (stkComuna ? '' : ' plegado');
   box.dataset.kg = kg;
   var elegida = stkComuna ? stkEtiqueta(stkComuna) : '';
   box.innerHTML =
-    '<div class="es-h"><span class="es-t">Envío Starken a domicilio</span></div>' +
+    '<button type="button" class="es-abrir" onclick="stkAbrir()">🚚 ¿Cuánto sale el envío a tu comuna? →</button>' +
+    '<div class="es-h"><span class="es-t">🚚 Envío Starken a domicilio</span></div>' +
     '<div class="es-elegida' + (stkComuna ? '' : ' hidden') + '" id="stk-elegida"><span id="stk-elegida-txt">' + escA(elegida) + '</span>' +
       '<button type="button" class="es-cambiar" onclick="stkCambiar()">cambiar comuna</button></div>' +
     '<div class="es-busca' + (stkComuna ? ' hidden' : '') + '" id="stk-busca"><input type="text" class="es-in" id="stk-comuna" placeholder="Escribe tu comuna para ver el envío" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, \'doc\')" onblur="stkAutoElegir(\'doc\')">' +
     '<div class="es-lista hidden" id="stk-lista"></div></div>' +
     '<div class="es-out" id="stk-out"></div>';
-  var ancla = qOut.querySelector('.iboxes');   /* «Tu pedido incluye», que va una vez en todo documento */
+  /* antes del bloque de WhatsApp; si no hubiera, antes de «Tu pedido incluye» */
+  var ancla = qOut.querySelector('.wa-block') || qOut.querySelector('.iboxes');
   if (ancla) ancla.parentNode.insertBefore(box, ancla); else qOut.appendChild(box);
   if (stkComuna) stkCotizar(stkComuna);
   else stkDestinos().catch(function(e){ console.error('starken destinos', e); stkOut('<span class="es-err">' + stkMensajeError(0) + '</span>'); });
 }
 function stkOut(html) { var o = document.getElementById('stk-out'); if (o) o.innerHTML = html; }
+/* el enlace «¿Cuánto sale el envío…?» despliega el buscador */
+function stkAbrir() {
+  var box = document.querySelector('.envio-stk'); if (box) box.classList.remove('plegado');
+  var inp = document.getElementById('stk-comuna'); if (inp) inp.focus();
+}
 /* «cambiar comuna» en la tarjeta: vuelve a mostrar el buscador */
 function stkCambiar() {
   var b = document.getElementById('stk-busca'), e = document.getElementById('stk-elegida'), inp = document.getElementById('stk-comuna');
