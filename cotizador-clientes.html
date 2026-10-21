@@ -6812,6 +6812,7 @@ function waMsg(x){
     if (v === 0) m = hola + ', no te quiero llenar de mensajes. ¿' + Suyo + (W.pl ? ' siguen en pie o quedaron' : ' sigue en pie o quedó') + ' para más adelante? Con un sí o un no me basta. Y si es para después, dime más o menos cuándo y te escribo ahí.';
     else         m = hola + ', último mensaje de mi parte por ' + suyo + '. ¿Lo retomamos o lo dejamos para más adelante? Cualquiera de las dos me sirve saberlo, así no te molesto.';
   }
+  m = waParrafos(m);   /* siempre en párrafos (pedido del usuario, 21-10-2026) */
   /* el link va siempre, corto y al final: el chat se entierra rápido y así
      la cotización queda a mano */
   if (link) m += (toque === 1 ? '\n\nTe dejo tu cotización por si la quieres revisar:\n' : '\n\nTu cotización:\n') + link;
@@ -6822,6 +6823,29 @@ function waMsg(x){
    no vale la pena arriesgar la cara del mensaje al cliente. Se sacan del texto
    antes de armar el wa.me y se limpian los espacios que quedan dobles.
    Los guiones y signos españoles (— ¿ ¡ ó) son del plano básico y no se tocan. */
+/* ── MENSAJES EN PÁRRAFOS (21-10-2026, pedido del usuario: «desde ahora
+   siempre separen párrafo todos esos mensajes») ──
+   Un bloque de texto seguido se lee como plantilla. Se parte así:
+   1) el saludo y la presentación («…de Casa Zaru.») van solos; si no hay
+      presentación, va sola la primera frase («Hola Ana, ¿pudiste ver las fotos?»);
+   2) si lo que queda tiene 3 frases o más, la última (la pregunta o el cierre)
+      va en su propio párrafo.
+   Los mensajes que ya traen párrafos (\n\n) no se tocan. */
+function waParrafos(m){
+  m = String(m || '');
+  if (m.indexOf('\n\n') !== -1) return m;
+  var corte = m.indexOf('de Casa Zaru. ');
+  var cab, cuerpo;
+  if (corte !== -1) { cab = m.slice(0, corte + 13); cuerpo = m.slice(corte + 14); }
+  else {
+    var r = /[.?!]\s+(?=[¿¡A-ZÁÉÍÓÚÑ])/.exec(m);
+    if (!r) return m;
+    cab = m.slice(0, r.index + 1); cuerpo = m.slice(r.index + r[0].length);
+  }
+  var frases = cuerpo.split(/(?<=[.?!])\s+(?=[¿¡A-ZÁÉÍÓÚÑ])/);
+  if (frases.length >= 3) cuerpo = frases.slice(0, -1).join(' ') + '\n\n' + frases[frases.length - 1];
+  return cab + '\n\n' + cuerpo;
+}
 function waLimpio(s){
   return String(s||'')
     .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')   /* pares suplentes = todo emoji moderno */
@@ -7019,7 +7043,7 @@ function waMsgReactivar(x){
   var nom = waNombre(x);
   var W = WA_PROD[String(x.producto||'')] || { un:'un proyecto' };
   var m = (nom ? 'Hola '+nom : 'Hola')+', ¿cómo estás? Soy '+waQuien()+', de Casa Zaru. Hace unas semanas cotizaste '+W.un+' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
-  return waLimpio(m);
+  return waLimpio(waParrafos(m));
 }
 function reactFila(g){
   var x = g.lead, phone = waPhone(x.contacto);
