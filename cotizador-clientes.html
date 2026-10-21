@@ -8049,7 +8049,7 @@ function pendConfirmar(id, si){
    volviendo a cotizar, y el muestrario. Fuera: los que compraron, los que
    compraron en otro lado y los números que no funcionan. Escribirle deja la
    nota CAMPANA.nota en su historial y ya no se vuelve a pedir. */
-var CAMPANA = { nota:'Campaña peldaños', desde:'2026-10-21', hasta:'2026-10-31' };
+var CAMPANA = { nota:'Campaña peldaños', desde:'2026-10-21', hasta:'2026-10-30' };   /* el 10% vale hasta el 30-10 */
 function campanaActiva(){ var h = hoyISO(); return h >= CAMPANA.desde && h <= CAMPANA.hasta; }
 function campanaClientes(){
   var map = {};
@@ -8079,17 +8079,15 @@ function campanaClientes(){
    la idea es justamente recotizar con el precio nuevo */
 function campanaMsg(x){
   var nom = waNombre(x), hola = nom ? 'Hola ' + nom : 'Hola';
-  var c = waCuando(x);
+  /* Texto del usuario (21-10-2026): corto, en párrafos, sin decir «escalera».
+     El 10% es SOLO para los que ya habían cotizado, sobre compras de
+     $1.000.000 y hasta el 30-10; César lo aplica al recotizar con el
+     «descuento especial» del modo vendedor. */
   var dias = Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000);
-  var cuando = dias > 45 ? 'Hace unos meses' : (c.indexOf('el ') === 0 ? 'El ' + c.slice(3) : c.charAt(0).toUpperCase() + c.slice(1));
-  /* tres párrafos (pedido del usuario, 21-10): saludo, lo de la escalera y el muestrario */
-  var saludo = hola + ', ¿cómo estás? Soy César, de Casa Zaru.';
-  var muestra = 'Y si quieres ver la madera antes de decidir, tenemos un muestrario que te llega a la casa por $20.000 con envío, y se descuenta si compras.';
-  /* a quien cotizó hace pocos días no se le pregunta si «sigue en pie» */
-  var cuerpo = (dias <= 7)
-    ? cuando + ' cotizaste peldaños con nosotros. Te cuento que ajustamos los precios de los peldaños, así que si volvemos a cotizar te sale con descuento. ¿Para cuándo necesitas la escalera?'
-    : cuando + ' cotizaste peldaños con nosotros y quería saber si el proyecto de la escalera sigue en pie. Si es así, podemos ver un descuento volviendo a cotizar.';
-  return waLimpio(saludo + '\n\n' + cuerpo + '\n\n' + muestra);
+  return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru.' +
+    '\n\n' + (dias <= 7 ? 'Hace unos días' : 'Hace un tiempo') + ' cotizaste unos peldaños con nosotros y quería saber si el proyecto sigue en pie.' +
+    '\n\nSi es así, estamos con un 10% de descuento en peldaños para compras sobre $1.000.000, hasta el 30 de octubre. Coméntame y te actualizo la cotización con el descuento.' +
+    '\n\nSaludos.');
 }
 function campanaHtml(){
   if (!campanaActiva()) return '';
@@ -8112,7 +8110,8 @@ function campanaHtml(){
   return '<details class="hz-pleg"' + detAttrs('campana') + ' open><summary>🪜 Campaña peldaños · ' + pend + ' por escribir' +
     '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
     '<div class="hz-pleg-nota">Todos los que cotizaron peldaños, menos los que compraron, compraron en otro lado o tienen el número malo. ' +
-    'El mensaje pregunta si la escalera sigue en pie, ofrece ver un descuento volviendo a cotizar (el precio de peldaños bajó el 21-10) y recuerda el muestrario. ' +
+    'El mensaje pregunta si el proyecto sigue en pie y ofrece <strong>10% de descuento en compras sobre $1.000.000, hasta el 30 de octubre</strong> (solo para estos clientes). ' +
+    'Al recotizar, aplica el descuento especial de 10% si el total pasa el millón. ' +
     'Si contesta, búscalo arriba o en Reactivar y sigue la conversación; para recotizar usa «＋ Nueva cotización».</div>' +
     '<div class="hz-lista">' + filas + '</div></details>';
 }
