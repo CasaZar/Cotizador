@@ -7723,6 +7723,7 @@ function renderSeguimiento(){
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
                   : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>')+
     '</div>';
+  html = campanaHtml() + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
@@ -7949,6 +7950,14 @@ function pendPreguntar(){
   var x = COTIS[p.id];
   var quien = escA(p.nombre || (x && x.cliente) || 'este cliente');
   var canal = p.canal === 'mail' ? 'el correo' : 'WhatsApp';
+  if (p.canal === 'camp') {   /* campaña peldaños: solo el sí o el no */
+    pModal('<h3>¿Le escribiste a '+quien+'?</h3>'+
+      '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña de peldaños. Queda anotado y no se vuelve a pedir.</div>'+
+      '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',true)">Sí, ya le escribí</button>'+
+      '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',false)">No, todavía no</button>'+
+      '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
+    return;
+  }
   /* desde el segundo toque: lo que se ve en el chat al volver es justo lo que
      contestó (o no) al anterior, así que la misma respuesta confirma el envío.
      Con la cadencia agotada no: es una reactivación y basta con el sí o no. */
@@ -7994,8 +8003,9 @@ function pendResponder(id, resp){
 }
 function pendConfirmar(id, si){
   pClose();
+  var esCamp = pendLeer().some(function(p){ return p.id === id && p.canal === 'camp'; });
   pendQuitar(id);
-  if (si) segHecho(id);
+  if (si) { if (esCamp) campanaAnotar(id); else segHecho(id); }
   else { renderVistaActual(); showToast('Sin marcar — queda pendiente para hoy', true); }
   setTimeout(pendPreguntar, 400);   /* si abrió varios chats, sigue con el próximo */
 }
@@ -8006,6 +8016,86 @@ function pendConfirmar(id, si){
 })();
 /* El botón de contacto, uno solo: WhatsApp si hay teléfono, Correo si hay
    dirección. Deja el toque EN ESPERA de confirmación, no lo marca. */
+/* ── CAMPAÑA PELDAÑOS (21-10-2026) ──
+   Peldaños convertía 1 de 144. Desde el 21-10 rige un precio propio más bajo
+   (PR.peldano en el Manual), así que volver a cotizar sale más barato. La
+   campaña junta en un bloque, arriba de la lista de Hoy, a TODOS los que
+   cotizaron peldaños —abiertos y cerrados— para escribirles una vez con el
+   mensaje que pidió el usuario: ¿sigue en pie la escalera?, descuento
+   volviendo a cotizar, y el muestrario. Fuera: los que compraron, los que
+   compraron en otro lado y los números que no funcionan. Escribirle deja la
+   nota CAMPANA.nota en su historial y ya no se vuelve a pedir. */
+var CAMPANA = { nota:'Campaña peldaños', desde:'2026-10-21', hasta:'2026-10-31' };
+function campanaActiva(){ var h = hoyISO(); return h >= CAMPANA.desde && h <= CAMPANA.hasta; }
+function campanaClientes(){
+  var map = {};
+  (dashRows || []).forEach(function(x){ if (x.eliminada) return; var k = clientKey(x); (map[k] = map[k] || []).push(x); });
+  var out = [];
+  Object.keys(map).forEach(function(k){
+    var qs = map[k];
+    var pel = qs.filter(function(q){ return String(q.producto || '').indexOf('peldan') !== -1; })
+                .sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
+    if (!pel.length) return;
+    if (pel.some(function(q){ return q.estado === 'ganado'; })) return;
+    var x = pel[0];
+    if (/otro lado|no funciona/i.test(x.motivo_perdida || '')) return;
+    if (!waPhone(x.contacto)) return;
+    var hecho = qs.some(function(q){ return (q.seg_historial || []).some(function(h){ return h && h.nota === CAMPANA.nota; }); });
+    out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
+  });
+  out.sort(function(a,b){
+    return (a.hecho - b.hecho) || (b.abierta - a.abierta) ||
+           String(b.x.fecha_creacion || '').localeCompare(String(a.x.fecha_creacion || ''));
+  });
+  return out;
+}
+/* sin el link de la cotización: el link guarda el precio de cuando cotizó, y
+   la idea es justamente recotizar con el precio nuevo */
+function campanaMsg(x){
+  var nom = waNombre(x), hola = nom ? 'Hola ' + nom : 'Hola';
+  var c = waCuando(x);
+  var dias = Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000);
+  var cuando = dias > 45 ? 'Hace unos meses' : (c.indexOf('el ') === 0 ? 'El ' + c.slice(3) : c.charAt(0).toUpperCase() + c.slice(1));
+  var muestra = ' Y si quieres ver la madera antes de decidir, tenemos un muestrario que te llega a la casa por $20.000 con envío, y se descuenta si compras.';
+  /* a quien cotizó hace pocos días no se le pregunta si «sigue en pie» */
+  if (dias <= 7) return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru. ' + cuando +
+    ' cotizaste peldaños con nosotros. Te cuento que ajustamos los precios de los peldaños, así que si volvemos a cotizar te sale con descuento. ¿Para cuándo necesitas la escalera?' + muestra);
+  return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru. ' + cuando +
+    ' cotizaste peldaños con nosotros y quería saber si el proyecto de la escalera sigue en pie. ' +
+    'Si es así, podemos ver un descuento volviendo a cotizar.' + muestra);
+}
+function campanaHtml(){
+  if (!campanaActiva()) return '';
+  var L = campanaClientes(); if (!L.length) return '';
+  var pend = L.filter(function(c){ return !c.hecho; }).length;
+  var filas = L.map(function(c){
+    var x = c.x, nom = String(x.cliente || '').replace(/'/g, ''), esperando = pendTiene(x.id);
+    var anuncio = c.qs.some(function(q){ return vieneDeAnuncio(q.origen); }) ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
+    var boton = c.hecho ? '<span class="hz-btn sec" style="cursor:default">✓ Escrito</span>'
+      : '<a class="hz-btn wa' + (esperando ? ' esperando' : '') + '" target="_blank" ' +
+        'onclick="pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\');renderVistaActual();" ' +
+        'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x)) + '">' +
+        (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp') + '</a>';
+    return '<div class="hz-fila"><div class="hz-linea">' +
+      '<span class="hz-main" style="cursor:default"><span class="hz-ini">' + escA(hoyIniciales(x.cliente)) + '</span>' +
+        '<span class="hz-txt"><span class="hz-nom">' + escA(x.cliente || '—') + ' <span class="hz-monto">' + fmt(x.total_medio || 0) + '</span></span>' +
+        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + (c.abierta ? 'abierta' : 'cerrada') + anuncio + '</span></span></span>' +
+      '<span class="hz-act">' + boton + '</span></div></div>';
+  }).join('');
+  return '<details class="hz-pleg"' + detAttrs('campana') + ' open><summary>🪜 Campaña peldaños · ' + pend + ' por escribir' +
+    '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
+    '<div class="hz-pleg-nota">Todos los que cotizaron peldaños, menos los que compraron, compraron en otro lado o tienen el número malo. ' +
+    'El mensaje pregunta si la escalera sigue en pie, ofrece ver un descuento volviendo a cotizar (el precio de peldaños bajó el 21-10) y recuerda el muestrario. ' +
+    'Si contesta, búscalo arriba o en Reactivar y sigue la conversación; para recotizar usa «＋ Nueva cotización».</div>' +
+    '<div class="hz-lista">' + filas + '</div></details>';
+}
+async function campanaAnotar(id){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:CAMPANA.nota });
+  var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña de peldaños');
+  if (ok) registrarToque(x, 0, 'cadencia');
+}
 function segBotonContacto(g, x, clase){
   var etapa = x.seg_etapa||0;
   var nom = String(x.cliente||'').replace(/'/g,'');
