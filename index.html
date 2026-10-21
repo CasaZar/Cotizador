@@ -8040,6 +8040,8 @@ function campanaClientes(){
     var x = pel[0];
     if (/otro lado|no funciona/i.test(x.motivo_perdida || '')) return;
     if (!waPhone(x.contacto)) return;
+    /* cotizó con el precio nuevo ya puesto: no hay descuento que ofrecerle */
+    if (fechaBaseISO(x.fecha_creacion) >= CAMPANA.desde) return;
     var hecho = qs.some(function(q){ return (q.seg_historial || []).some(function(h){ return h && h.nota === CAMPANA.nota; }); });
     out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
   });
@@ -8056,13 +8058,14 @@ function campanaMsg(x){
   var c = waCuando(x);
   var dias = Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000);
   var cuando = dias > 45 ? 'Hace unos meses' : (c.indexOf('el ') === 0 ? 'El ' + c.slice(3) : c.charAt(0).toUpperCase() + c.slice(1));
-  var muestra = ' Y si quieres ver la madera antes de decidir, tenemos un muestrario que te llega a la casa por $20.000 con envío, y se descuenta si compras.';
+  /* tres párrafos (pedido del usuario, 21-10): saludo, lo de la escalera y el muestrario */
+  var saludo = hola + ', ¿cómo estás? Soy César, de Casa Zaru.';
+  var muestra = 'Y si quieres ver la madera antes de decidir, tenemos un muestrario que te llega a la casa por $20.000 con envío, y se descuenta si compras.';
   /* a quien cotizó hace pocos días no se le pregunta si «sigue en pie» */
-  if (dias <= 7) return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru. ' + cuando +
-    ' cotizaste peldaños con nosotros. Te cuento que ajustamos los precios de los peldaños, así que si volvemos a cotizar te sale con descuento. ¿Para cuándo necesitas la escalera?' + muestra);
-  return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru. ' + cuando +
-    ' cotizaste peldaños con nosotros y quería saber si el proyecto de la escalera sigue en pie. ' +
-    'Si es así, podemos ver un descuento volviendo a cotizar.' + muestra);
+  var cuerpo = (dias <= 7)
+    ? cuando + ' cotizaste peldaños con nosotros. Te cuento que ajustamos los precios de los peldaños, así que si volvemos a cotizar te sale con descuento. ¿Para cuándo necesitas la escalera?'
+    : cuando + ' cotizaste peldaños con nosotros y quería saber si el proyecto de la escalera sigue en pie. Si es así, podemos ver un descuento volviendo a cotizar.';
+  return waLimpio(saludo + '\n\n' + cuerpo + '\n\n' + muestra);
 }
 function campanaHtml(){
   if (!campanaActiva()) return '';
