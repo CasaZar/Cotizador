@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Tu cuenta · Casa Zaru</title>
+<link rel="icon" href="fotos/logo-casa-zaru-og-200.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--verde:#485B3D;--terra:#B5652E;--dorado:#D4AC74;--dorado-cl:#EBD9BC;--crema:#F1ECE4;--crema2:#E8E1D5;--blanco:#fff;--tinta:#1F1D24;--tinta2:#5D5750;--tinta3:#8E877E;--borde:rgba(72,91,61,.14);--r:12px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--crema);color:var(--tinta);font-family:Poppins,-apple-system,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+h1{font-family:'Playfair Display',Georgia,serif}
+.top{background:var(--verde);padding:22px 20px 18px;text-align:center}
+.top img{width:150px;display:block;margin:0 auto 10px}
+.top .t{color:var(--crema);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.wrap{max-width:520px;margin:0 auto;padding:18px 20px 32px}
+h1{font-size:24px;margin:0 0 2px;color:var(--verde);font-weight:700;overflow-wrap:anywhere}
+.sub{font-size:12px;color:var(--tinta2);margin-bottom:14px}
+.big{background:var(--blanco);border-radius:14px;padding:16px;border:1px solid var(--borde);text-align:center;margin-bottom:12px}
+.big .l{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta3)}
+.big .v{font-size:30px;font-weight:700;color:var(--verde);margin:4px 0;font-family:'Playfair Display',serif}
+.big .d{font-size:12.5px;color:var(--tinta2)}
+.bar{height:10px;background:var(--crema2);border-radius:5px;margin:8px 0 4px;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--dorado),var(--terra));border-radius:5px;transition:width .6s}
+.bar b{position:absolute;top:-2px;width:2px;height:14px;background:var(--verde);left:50%}
+.leg{display:flex;justify-content:space-between;font-size:11px;color:var(--tinta3);gap:8px}
+.tramos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}
+.tramo{border-radius:10px;padding:10px;border:1px solid var(--borde);background:var(--blanco);font-size:12px}
+.tramo.on{background:var(--verde);color:var(--crema);border-color:var(--verde)}
+.tramo .p{font-size:20px;font-weight:700;font-family:'Playfair Display',serif}
+.ciclo{font-size:12px;color:var(--tinta2);margin-bottom:12px}
+.lbl{font-size:11px;color:var(--tinta3);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+td{padding:7px 4px;border-top:1px solid var(--borde);vertical-align:top}
+td.r{text-align:right;font-weight:600;white-space:nowrap}
+.src{font-size:10px;color:var(--tinta3)}
+.cta{display:block;text-align:center;background:var(--terra);color:#fff;font-weight:600;padding:12px;border-radius:var(--r);margin:8px 0;text-decoration:none}
+.cta.sec{background:var(--blanco);color:var(--verde);border:1px solid var(--verde)}
+.foot{font-size:11px;color:var(--tinta3);text-align:center;margin-top:16px;line-height:1.5}
+.cond{font-size:11.5px;color:var(--tinta2);background:var(--blanco);border:1px solid var(--borde);border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.5}
+.estado{text-align:center;padding:40px 20px;color:var(--tinta2)}
+.estado h1{font-size:20px}
+</style>
+</head>
+<body>
+<div class="top"><img src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"><div class="t">Cuenta empresa</div></div>
+<div class="wrap" id="app"><div class="estado">Cargando tu cuenta…</div></div>
+<script>
+/* Lee UNA cuenta por su token (b2b_estado, proyecto de Gestión). La llave
+   pública solo puede ejecutar esa función: no lista ni lee nada más. */
+var SB_URL='https://padnttpgzuotxeipjrry.supabase.co';
+var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
+var WA='56956375558';
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function clp(n){n=Math.round(Number(n)||0);return (n<0?'-':'')+'$'+Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function fecha(d,larga){if(!d)return '';var x=new Date(String(d).slice(0,10)+'T12:00:00');return x.toLocaleDateString('es-CL',larga?{day:'numeric',month:'long',year:'numeric'}:{day:'2-digit',month:'short',year:'2-digit'});}
+function rutFmt(r){r=String(r||'');var c=r.split('-');if(c.length!==2)return r;return c[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+c[1];}
+function estado(msg,sub){document.getElementById('app').innerHTML='<div class="estado"><h1>'+esc(msg)+'</h1><div>'+esc(sub||'')+'</div><a class="cta sec" style="margin-top:18px" href="https://wa.me/'+WA+'">Escribirnos por WhatsApp</a></div>';}
+function render(c){
+  var t=Number(c.tramo_pct)||0,acum=Number(c.acumulado)||0;
+  var pct=Math.min(100,Math.round(acum/3000000*100));
+  var falta=t===5?'tramo máximo alcanzado':(t===2?'faltan '+clp(c.falta_5)+' para 5 %':'faltan '+clp(c.falta_2)+' para 2 %');
+  var compras=(c.compras||[]);
+  var nombre=(c.contacto||'').trim();
+  var html='<h1>'+esc(c.razon_social)+'</h1>'+
+    '<div class="sub">RUT '+esc(rutFmt(c.rut))+(nombre?' · a cargo de '+esc(nombre):'')+'</div>'+
+    '<div class="big"><div class="l">Descuento vigente</div><div class="v">'+(t?t+' %':'0 %')+'</div>'+
+      '<div class="d">'+(t?'en tu próxima compra, además del 5 % por transferencia':'a partir de $1.500.000 acumulados tienes 2 %, además del 5 % por transferencia')+'</div></div>'+
+    '<div class="bar"><i style="width:'+pct+'%"></i><b></b></div>'+
+    '<div class="leg"><span>'+clp(acum)+' acumulado</span><span>'+falta+'</span></div>'+
+    '<div class="tramos">'+
+      '<div class="tramo'+(t>=2?' on':'')+'"><div class="p">2 %</div>sobre $1.500.000<br>'+(t>=2?'✓ alcanzado':'te faltan '+clp(c.falta_2))+'</div>'+
+      '<div class="tramo'+(t>=5?' on':'')+'"><div class="p">5 %</div>sobre $3.000.000<br>'+(t>=5?'✓ alcanzado':'te faltan '+clp(c.falta_5))+'</div>'+
+    '</div>'+
+    '<div class="ciclo">Tu ciclo va del '+esc(fecha(c.ciclo_inicio,true))+' al '+esc(fecha(c.ciclo_fin,true))+'. Al cumplirse el año el acumulado parte de nuevo.</div>'+
+    '<div class="lbl">Compras del ciclo</div>'+
+    (compras.length?'<table>'+compras.map(function(k){
+      return '<tr><td>'+esc(fecha(k.fecha))+'</td><td>'+esc(k.detalle||(k.tipo==='NC'?'Nota de crédito':'Compra'))+(k.folio?'<br><span class="src">'+(k.tipo==='NC'?'Nota de crédito':'Factura')+' '+esc(k.folio)+'</span>':'')+'</td><td class="r">'+clp(k.monto)+'</td></tr>';
+    }).join('')+'</table>':'<div class="ciclo">Todavía no hay compras en este ciclo.</div>')+
+    '<a class="cta" href="./?utm_source=cuenta&utm_medium=link&utm_campaign=cuenta-empresa">Cotizar un proyecto</a>'+
+    '<a class="cta sec" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, escribo por la cuenta empresa de '+c.razon_social)+'">Escribirnos por WhatsApp</a>'+
+    '<div class="cond">El descuento se aplica sobre el valor de lista del cotizador en las compras que hagas después de alcanzar cada tramo, y se suma al 5 % por pago con transferencia. Las cifras son los totales de tus facturas, IVA incluido.</div>'+
+    '<div class="foot">Este enlace es privado, solo lo tienes tú.<br>Casa Zaru · Villarrica · casazaru.cl</div>';
+  document.getElementById('app').innerHTML=html;
+}
+(async function(){
+  var t=new URLSearchParams(location.search).get('t')||'';
+  if(!/^[0-9a-f]{16,64}$/.test(t)){estado('Este enlace no es válido','Pídenos el link de tu cuenta por WhatsApp.');return;}
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/rpc/b2b_estado',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON},body:JSON.stringify({p_token:t})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var c=await r.json();
+    if(!c){estado('No encontramos esta cuenta','Puede que el enlace esté incompleto o la cuenta se haya cerrado.');return;}
+    document.title=c.razon_social+' · Casa Zaru';
+    render(c);
+  }catch(e){estado('No pudimos cargar tu cuenta','Intenta de nuevo en un momento. Si sigue igual, escríbenos.');}
+})();
+</script>
+</body>
+</html>
