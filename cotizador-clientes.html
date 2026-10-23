@@ -6242,6 +6242,19 @@ async function saveQuote(data, lineas) {
     var payload = Object.assign({}, data, { user_email: srcEmail || correoEquipo(), link: shareShortUrl || null });
     if (b2bDcto > 0) payload.b2b_dcto = b2bDcto;   /* solo cotizaciones B2B con descuento (requiere columna) */
     if (origenVisita && !vendorMode) payload.origen = origenVisita;
+    /* 23-10-2026: la sesión del embudo, para saber después si este cliente tocó
+       «Quiero mi cubierta» u otro botón de WhatsApp (embudo_eventos guarda el
+       clic con la misma sesión). Los que no lo tocan se siguen desde el 0141. */
+    if (!vendorMode) {
+      try {
+        var sesE = sessionStorage.getItem('zaru_embudo_ses');
+        if (!sesE) {
+          sesE = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+          sessionStorage.setItem('zaru_embudo_ses', sesE);
+        }
+        payload.origen = Object.assign({}, payload.origen || {}, { ses: sesE });
+      } catch (e) {}
+    }
     /* medida pasada del tope (¿milímetros?): queda marcada para que el panel no
        la trate como monto alto. Va dentro de origen para no necesitar columna nueva. */
     if (medidasRaras().length) payload.origen = Object.assign({}, payload.origen || {}, { medida_rara: true });
@@ -7580,6 +7593,20 @@ async function loadDash() {
 /* Clasifica la cola del día. Salió de renderSeguimiento el 06-10-2026 para
    poder contarla dos veces: con los filtros de la vista (la lista que se ve)
    y sin ellos (las metas del encabezado, que no cambian por filtrar). */
+/* ── COMPRÓ HACE POCO = NO SE LE PERSIGUE (23-10-2026) ──
+   Carolina Hito compró el 13-10 y seguía en Hoy por otras cotizaciones del
+   mismo proyecto (la última del 20-10). Si el cliente tiene una venta cerrada
+   hasta 30 días antes de su última cotización —o después—, esas cotizaciones
+   son parte de esa compra: sale de la lista. El que vuelve meses después sí
+   se sigue (es el «ya compró» que sube arriba). */
+var COMPRA_RECIENTE_DIAS = 30;
+function compraReciente(quotes, lead){
+  if (!lead || !lead.fecha_creacion) return false;
+  var desde = addDias(fechaBaseISO(lead.fecha_creacion), -COMPRA_RECIENTE_DIAS);
+  return (quotes||[]).some(function(q){
+    return q && !q.eliminada && q.estado === 'ganado' && q.fecha_concretada && fechaBaseISO(q.fecha_concretada) >= desde;
+  });
+}
 function clasificarHoy(groups, owners, cmp){
   var hoy=hoyISO(), lim=addDias(hoy,7);
   /* ── Clasificación en los tres bloques del spec §5.2 ──
@@ -7593,7 +7620,7 @@ function clasificarHoy(groups, owners, cmp){
      valioso es la forma más rápida de quemarlo. Ahora se le da aire: reaparece
      recién a las 48 h, un día antes de romper el acuerdo de las 72. */
   var porDueno = {};
-  var ballenas = groups.filter(function(g){ return owners[g.owner] && esBallena(g) && !dormido(g) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
+  var ballenas = groups.filter(function(g){ return owners[g.owner] && esBallena(g) && !dormido(g) && !compraReciente(g.quotes, g.lead) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
     .sort(function(a,b){ return montoAbierto(b)-montoAbierto(a); })
     /* máximo 3 POR GRUPO (06-10-2026): con un tope global, en la vista Todos
        las del vendedor tapaban a las web y la lista no calzaba con su meta */
@@ -7603,6 +7630,7 @@ function clasificarHoy(groups, owners, cmp){
   groups.forEach(function(g){
     if (!owners[g.owner]) return;
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
+    if (compraReciente(g.quotes, g.lead)) return;       /* compró hace poco: no es seguimiento */
     if (esBall[g.key]) return;                          /* ya va fija arriba */
     if (sinPrimerContacto(g)){
       /* Respondió sin toque registrado: hay conversación igual —el cliente
@@ -9280,7 +9308,7 @@ function renderActividad(){
        aparecieron en su lista ese día. Un toque que NO está hecho cuenta solo
        si el cliente sigue abierto y es el siguiente que le toca, en la fecha
        en que la lista se lo mostró (seg_proxima si se movió). */
-    var abierto = (lead.estado || 'enviada') === 'enviada';
+    var abierto = (lead.estado || 'enviada') === 'enviada' && !compraReciente(qs, lead);
     var etapaAct = lead.seg_etapa || 0;
     for (var n=1; n<=CADENCIA.length; n++){
       var hHecho = null;
