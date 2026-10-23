@@ -9283,8 +9283,17 @@ function renderActividad(){
     var abierto = (lead.estado || 'enviada') === 'enviada';
     var etapaAct = lead.seg_etapa || 0;
     for (var n=1; n<=CADENCIA.length; n++){
-      var hecho = hist.some(function(h){ return h.etapa===n; });
+      var hHecho = null;
+      hist.some(function(h){ if (h && h.etapa===n){ hHecho = h; return true; } return false; });
+      var hecho = !!hHecho;
       var due = addDias(base, CADENCIA[n-1]);
+      /* 23-10-2026: un toque hecho ANTES de su fecha se cuenta el día en que se
+         hizo. Si no, a las 7 AM el día ya salía con «atendidos» que eran toques
+         adelantados ayer, y esos clientes ni siquiera estaban en la lista de hoy. */
+      if (hecho && hHecho.fecha) {
+        var fHecho = fechaBaseISO(hHecho.fecha);
+        if (fHecho && fHecho < due) due = fHecho;
+      }
       if (!hecho) {
         if (!abierto || n !== etapaAct + 1) continue;
         if (lead.seg_proxima) due = String(lead.seg_proxima).slice(0,10);
