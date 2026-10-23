@@ -1085,6 +1085,12 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-btn.wa { background:#16A34A; border-color:#16A34A; color:#fff; }
 .hz-btn.mail { background:#fff; border-color:#16A34A; color:#166534; }
 .hz-btn.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
+/* flujo 0141 (23-10-2026): se escribe desde el otro WhatsApp, el botón es morado */
+.hz-btn.wa.b0141, .sbtn.wa.b0141 { background:#6D28D9; border-color:#6D28D9; color:#fff; }
+.hz-btn.wa.b0141.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
+.hz-sec0141 { display:flex; justify-content:space-between; align-items:center; margin:4px 2px 8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#6D28D9; }
+.hz-sec0141 span { font-weight:600; }
+.hz-bloque0141 { margin-bottom:16px; }
 .hz-mas { padding:2px 14px 14px 62px; }
 .hz-preg { font-size:14px; color:var(--tx); margin-bottom:8px; }
 .hz-preg span { color:var(--tm); font-size:13px; }
@@ -6339,6 +6345,29 @@ var CADENCIA = [1, 3, 7, 14];   /* días desde la cotización para los 4 toques 
    lista diaria (Dormidos): los que venían de la cadencia vieja con 20 o 30
    días no se le cargan de golpe al vendedor */
 var CADENCIA_GRACIA = 7;
+/* ── FLUJO 0141: LOS QUE SOLO COTIZARON (23-10-2026, pedido del usuario) ──
+   El que cotiza en la web y no toca ningún botón de WhatsApp («Quiero mi
+   cubierta», dudas, muestrario) nunca nos habló. A esos se les escribe desde
+   el WhatsApp nuevo (+56 9 2766 0141), con su propia cadencia: día 1, día 3
+   y día 15. Entre medio y después duermen: no salen en Hoy ni en la meta.
+   Solo para los que cotizan desde DESDE_0141: la cotización guarda la sesión
+   del embudo (origen.ses) y el clic queda en embudo_eventos con esa sesión.
+   Si los clics no se pudieron leer (CLICS_WA null), nadie entra al flujo:
+   ante la duda, el seguimiento normal. */
+var CAD_0141 = [1, 3, 15];
+var DESDE_0141 = '2026-10-23';
+var PASOS_CLIC_WA = ['whatsapp', 'duda', 'muestrario'];
+var CLICS_WA = null;   /* sesión → true si tocó algún botón de WhatsApp */
+var LEAD0141 = {};     /* id de la cotización líder → true si su cliente va por el 0141 */
+function sinClicWa(q){
+  if (!CLICS_WA || !q || q.eliminada || !isWeb(q)) return false;
+  if (!waPhone(q.contacto)) return false;   /* sin WhatsApp no hay 0141: va por correo, como siempre */
+  var ses = q.origen && q.origen.ses;
+  if (!ses || !q.fecha_creacion || fechaBaseISO(q.fecha_creacion) < DESDE_0141) return false;
+  return !CLICS_WA[ses];
+}
+/* la cadencia de ESTA cotización: la del 0141 o la de siempre */
+function cadDe(x){ return (x && LEAD0141[x.id]) ? CAD_0141 : CADENCIA; }
 /* Horas que descansa una ballena después de un toque antes de volver a la
    lista. 48 h deja un día de margen antes del acuerdo de las 72 h, y evita
    insistirle a diario justo al cliente que más cuesta perder. */
@@ -6611,12 +6640,12 @@ function dueDate(x){
       if (!puesta || reactivado) return null;
     }
   } else {
-    var etapa = x.seg_etapa||0;
-    if (etapa>=CADENCIA.length || !x.fecha_creacion) return null;
+    var etapa = x.seg_etapa||0, cad = cadDe(x);
+    if (etapa>=cad.length || !x.fecha_creacion) return null;
     var base = fechaBaseISO(x.fecha_creacion);
     /* sin fecha agendada y ya fuera de la ventana de la cadencia: Dormidos */
-    if (base < addDias(hoyISO(), -(CADENCIA[CADENCIA.length-1] + CADENCIA_GRACIA))) return null;
-    due = addDias(base, CADENCIA[etapa]);
+    if (base < addDias(hoyISO(), -(cad[cad.length-1] + CADENCIA_GRACIA))) return null;
+    due = addDias(base, cad[etapa]);
   }
   /* cadencia vencida: más de 30 días sin gestión → fuera de la cola diaria (sigue en las tablas) */
   if (due < addDias(hoyISO(),-30)) return null;
@@ -6650,6 +6679,7 @@ function toqueHoy(x){
 }
 function buildSegGroups(){
   var map = {};
+  LEAD0141 = {};
   dashRows.forEach(function(x){
     var k = clientKey(x);
     (map[k] = map[k] || []).push(x);
@@ -6678,7 +6708,12 @@ function buildSegGroups(){
     var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
     var suma = qs.reduce(function(a,q){ return a+(medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
     var promedio = qs.length ? Math.round(suma/qs.length) : 0;
-    groups.push({ key:k, quotes:qs, lead:lead, owner:owner, hasVendor:hasVendor, hasWeb:hasWeb, valor:valor, promedio:promedio });
+    /* flujo 0141: TODAS sus cotizaciones son de la web, desde el arranque y
+       sin clic a WhatsApp. Uno que ya cotizó antes o que tocó el botón en
+       alguna va por el camino de siempre. */
+    var es0141 = qs.every(sinClicWa);
+    if (es0141) LEAD0141[lead.id] = true;
+    groups.push({ key:k, quotes:qs, lead:lead, owner:owner, hasVendor:hasVendor, hasWeb:hasWeb, valor:valor, promedio:promedio, es0141:es0141 });
   });
   return groups;
 }
@@ -6814,6 +6849,30 @@ function waMsg(x){
   var bajo = (x.total_bajo > 0 && !medidaRara(x)) ? fmt(x.total_bajo) : '';
   var t = transfPct();
   var m;
+  /* ── MENSAJES DEL 0141 (23-10-2026) ──
+     Nunca nos habló: el primero se presenta y dice de dónde sacamos su número
+     (cotizó en la web). Textos distintos a los del 5558 y entre sí; el link va
+     solo en el primero y en el último, para no mandar enlaces seguidos desde
+     un número nuevo. */
+  if (LEAD0141[x.id] && !cadenciaAgotada(x)) {
+    var t0 = Math.min((x.seg_etapa||0)+1, CAD_0141.length), cu = waCuando(x);
+    if (t0 === 1) {
+      m = v === 0
+        ? hola + ', soy ' + yo + ' de Casa Zaru. Vi que ' + (cu === 'hoy' ? 'recién' : cu) + ' cotizaste ' + W.un + ' en nuestra página. ¿Te quedó alguna duda con las maderas, las medidas o el envío?'
+        : hola + ', te escribe ' + yo + ', de Casa Zaru. ' + (cu === 'hoy' ? 'Recién' : cu.charAt(0).toUpperCase() + cu.slice(1)) + ' cotizaste ' + W.un + ' en la web y quería saber si te puedo ayudar en algo. ' + W.preg;
+    } else if (t0 === 2) {
+      m = v === 0
+        ? hola + ', ¿pudiste darle una vuelta a la cotización? Si te sirve, te mando fotos de ' + P.fotos + ' que ya entregamos, para que veas cómo se ven las maderas en persona.'
+        : hola + ', ¿cómo vas con ' + suyo + '? Si todavía estás viendo medidas o maderas, cuéntame y te ayudo a definirlas.';
+    } else {
+      m = v === 0
+        ? hola + ', soy ' + yo + ' de Casa Zaru otra vez. Hace un par de semanas cotizaste ' + W.un + ' con nosotros. ¿Sigue en pie el proyecto? Si quieres, te actualizo la cotización con el precio de hoy.'
+        : hola + ', te escribo una última vez por ' + suyo + '. ¿Sigues con la idea? Si es para más adelante, dime más o menos cuándo y te escribo en esa fecha.';
+    }
+    m = waParrafos(m);
+    if (link && t0 !== 2) m += (t0 === 1 ? '\n\nTe dejo tu cotización por si la quieres revisar:\n' : '\n\nTu cotización:\n') + link;
+    return waLimpio(m);
+  }
   if (cadenciaAgotada(x)) {
     /* se le escribe desde Dormidos, semanas después: reabre sin presionar */
     m = hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Hace un tiempo cotizaste ' + W.un + ' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
@@ -7284,6 +7343,7 @@ var ORDEN_ORIGEN = ['ball', 'b1', 'conv', 'b2', 'b3'];
    para lo que viene atrasado de antes. */
 function enVentana(g){ return diasDe(g) <= CADENCIA[CADENCIA.length-1] + 1; }
 function origenHoy(g){
+  if (g.es0141 && !enConversacion(g)) return { cls:'c0141', txt:'📱 Desde el 0141', corto:'del 0141' };
   if (esBallena(g))          return { cls:'ball', txt:'🐋 No dejar enfriar', corto:'🐋 no dejar enfriar' };
   if (contactadoHoyEs1er(g)) return { cls:'b1',   txt:'Bloque 1 · primer contacto', corto:'del bloque 1' };
   if (enConversacion(g))     return { cls:'conv', txt:'💬 Conversación', corto:'en conversación' };
@@ -7571,6 +7631,21 @@ async function loadDash() {
     });
     TOQUES = (!tq.error && tq.data) ? tq.data : [];
   } catch(e) { TOQUES = []; }
+  /* Clics a WhatsApp desde el arranque del flujo 0141. Si falla la lectura,
+     CLICS_WA queda null y nadie entra al flujo (ver sinClicWa). */
+  try {
+    var ck = await sbTodas(function(){
+      return sbClient.from('embudo_eventos')
+        .select('sesion')
+        .in('paso', PASOS_CLIC_WA)
+        .gte('creado', addDias(DESDE_0141, -1))   /* un día de margen por la hora UTC */
+        .order('id');
+    });
+    if (!ck.error && ck.data) {
+      CLICS_WA = {};
+      ck.data.forEach(function(e){ if (e && e.sesion) CLICS_WA[e.sesion] = true; });
+    } else CLICS_WA = null;
+  } catch(e) { CLICS_WA = null; }
   /* las eliminadas no se muestran en el panel normal (solo en la pestaña Eliminadas del admin) */
   var all = allRows.filter(function(x){ return !x.eliminada; });
   /* vendedor: sus cotizaciones + las web (salvo B2B como Jepe, que solo ve su propio canal) */
@@ -7620,17 +7695,28 @@ function clasificarHoy(groups, owners, cmp){
      valioso es la forma más rápida de quemarlo. Ahora se le da aire: reaparece
      recién a las 48 h, un día antes de romper el acuerdo de las 72. */
   var porDueno = {};
-  var ballenas = groups.filter(function(g){ return owners[g.owner] && esBallena(g) && !dormido(g) && !compraReciente(g.quotes, g.lead) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
+  var ballenas = groups.filter(function(g){ return owners[g.owner] && !g.es0141 && esBallena(g) && !dormido(g) && !compraReciente(g.quotes, g.lead) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
     .sort(function(a,b){ return montoAbierto(b)-montoAbierto(a); })
     /* máximo 3 POR GRUPO (06-10-2026): con un tope global, en la vista Todos
        las del vendedor tapaban a las web y la lista no calzaba con su meta */
     .filter(function(g){ porDueno[g.owner] = (porDueno[g.owner]||0) + 1; return porDueno[g.owner] <= 3; });
   var esBall = {}; ballenas.forEach(function(g){ esBall[g.key] = true; });
-  var b1=[], b1Viejos=[], b1Hoy=[], b2=[], b3=[], conv=[], futuro=[], hoyDone=[], enJuego=0;
+  var b1=[], b1Viejos=[], b1Hoy=[], b2=[], b3=[], conv=[], futuro=[], hoyDone=[], b0141=[], enJuego=0;
   groups.forEach(function(g){
     if (!owners[g.owner]) return;
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
     if (compraReciente(g.quotes, g.lead)) return;       /* compró hace poco: no es seguimiento */
+    /* Flujo 0141 (ver CAD_0141): mientras no conteste, va en su propia
+       sección y solo el día que le toca. Entre toques y después del último
+       duerme: ni «Próximos días» ni meta. Si contesta, sigue como cualquier
+       conversación (más abajo). El mismo día que cotizó queda en «Cotizaron
+       hoy», igual que todos. */
+    if (g.es0141 && !enConversacion(g)){
+      if (sinPrimerContacto(g) && fechaBaseISO(g.lead.fecha_creacion) === hoy){ b1Hoy.push(g); return; }
+      var d0 = dueDate(g.lead);
+      if (d0 && d0 <= hoy) b0141.push(g);
+      return;
+    }
     if (esBall[g.key]) return;                          /* ya va fija arriba */
     if (sinPrimerContacto(g)){
       /* Respondió sin toque registrado: hay conversación igual —el cliente
@@ -7694,9 +7780,9 @@ function clasificarHoy(groups, owners, cmp){
       });
     b3 = b3.filter(function(g){ if (rescSet[g.key]){ rescate.push(g); return false; } return true; });
   }
-  [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone].forEach(function(a){ a.sort(cmp); });
-  b1.concat(b2,rescate,b3).forEach(function(g){ enJuego += g.valor; });
-  return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3,
+  [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone,b0141].forEach(function(a){ a.sort(cmp); });
+  b1.concat(b2,rescate,b3,b0141).forEach(function(g){ enJuego += g.valor; });
+  return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3, b0141:b0141,
            rescate:rescate, rescSet:rescSet,
            conv:conv, futuro:futuro, hoyDone:hoyDone, enJuego:enJuego };
 }
@@ -7719,7 +7805,7 @@ function renderSeguimiento(){
   var hoy=hoyISO(), lim=addDias(hoy,7);
   var C = clasificarHoy(groups, owners, cmp);
   var ballenas=C.ballenas, b1=C.b1, b1Viejos=C.b1Viejos, b1Hoy=C.b1Hoy, b2=C.b2, b3=C.b3,
-      rescate=C.rescate, conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego;
+      rescate=C.rescate, conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego, b0141=C.b0141;
   /* Progreso del día. La meta de toques cuenta TODO el seguimiento real del
      día: ballenas, conversaciones activas y bloque 2. Antes el texto decía que
      ballenas y conversaciones iban "fuera de la meta" pero el cálculo sí las
@@ -7743,7 +7829,11 @@ function renderSeguimiento(){
     var solo = {}; solo[b.o] = true;
     var S = clasificarHoy(gruposTodos, solo, cmp);
     var hechos = (S.hoyDone);
-    var n1Hechos = hechos.filter(function(g){ return contactadoHoyEs1er(g); }).length;
+    /* los del 0141 se cuentan aparte (h0141): no son ni primer contacto
+       del bloque 1 ni seguimiento de la cadencia de siempre */
+    var h0141 = hechos.filter(function(g){ return origenHoy(g).cls === 'c0141'; }).length;
+    var p0141 = (S.b0141).length;
+    var n1Hechos = hechos.filter(function(g){ return contactadoHoyEs1er(g) && origenHoy(g).cls !== 'c0141'; }).length;
     var segHechos = hechos.filter(function(g){ return CUENTAN_META.indexOf(origenHoy(g).cls) !== -1; }).length;
     var nuevos = (S.b1);
     var segPend = (S.ballenas).length + (S.conv).length + (S.b2).length;
@@ -7758,10 +7848,10 @@ function renderSeguimiento(){
       return g.lead.fecha_creacion && (Date.now() - new Date(g.lead.fecha_creacion).getTime()) > 86400000;
     }).length;
     var nom = b.o === 'web' ? 'Web' : (isPanelAdmin() ? b.t.replace(/^\S+\s+/, '') : 'Tus clientes');
-    return { o:b.o, t:nom, total:n1Hechos + nuevos.length + meta, hecho:n1Hechos + Math.min(segHechos, meta),
-             nuevos:nuevos.length, seg:Math.max(0, meta - segHechos), lentos:lentos,
+    return { o:b.o, t:nom, total:n1Hechos + nuevos.length + meta + p0141 + h0141, hecho:n1Hechos + Math.min(segHechos, meta) + h0141,
+             nuevos:nuevos.length, seg:Math.max(0, meta - segHechos), lentos:lentos, n0141:p0141,
              /* todo lo que sigue en la lista, esté o no dentro de la meta */
-             pend:(S.ballenas).length + nuevos.length + (S.b1Viejos).length + (S.conv).length + (S.b2).length + (S.rescate).length + (S.b3).length };
+             pend:(S.ballenas).length + nuevos.length + (S.b1Viejos).length + (S.conv).length + (S.b2).length + (S.rescate).length + (S.b3).length + p0141 };
   }).filter(function(m){ return m.total > 0; });
   /* Tomás trabaja sobre todo los web: en el panel admin van primero */
   if (isPanelAdmin()) metas.sort(function(a,b){ return (b.o === 'web') - (a.o === 'web'); });
@@ -7787,7 +7877,8 @@ function renderSeguimiento(){
      cuánto se hizo; no decide quién aparece. */
   b3.forEach(function(g){ lista.push([g,'today']); });
   b1Viejos.forEach(function(g){ lista.push([g,'nuevo']); });
-  var enJuegoHoy = lista.reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
+  var enJuegoHoy = lista.concat(b0141.map(function(g){ return [g]; }))
+                        .reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
   function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
   function plegado(k, titulo, arr, cls, nota){
     if (!arr.length) return '';
@@ -7797,11 +7888,17 @@ function renderSeguimiento(){
       (nota ? '<div class="hz-pleg-nota">'+nota+'</div>' : '')+
       '<div class="hz-lista">'+arr.map(function(g){ return filaReg(g, cls); }).join('')+'</div></details>';
   }
+  /* flujo 0141: su propia sección arriba, porque se escribe desde OTRO
+     WhatsApp y no puede mezclarse con la lista del 5558 */
+  var html0141 = b0141.length
+    ? '<div class="hz-bloque0141"><div class="hz-sec0141">📱 Desde el 0141 · solo cotizaron<span>'+b0141.length+'</span></div>'+
+      '<div class="hz-lista">'+b0141.map(function(g){ return filaReg(g, 'c0141'); }).join('')+'</div></div>'
+    : '';
   var html = '<div class="hz-lista">'+
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
-                  : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>')+
+                  : (b0141.length ? '' : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>'))+
     '</div>';
-  html = campanaHtml() + html;
+  html = campanaHtml() + html0141 + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
@@ -7816,9 +7913,11 @@ function renderSeguimiento(){
     var falta = [];
     if (m.nuevos) falta.push(m.nuevos + (m.nuevos === 1 ? ' nuevo' : ' nuevos') + (m.lentos ? ' (' + m.lentos + ' con más de 24 h)' : ''));
     if (m.seg) falta.push(m.seg + (m.seg === 1 ? ' seguimiento' : ' seguimientos'));
+    if (m.n0141) falta.push(m.n0141 + ' desde el 0141');
+    var faltan = m.nuevos + m.seg + (m.n0141||0);
     var sub = listo ? (m.pend ? 'Meta cumplida ✓ · quedan ' + m.pend + ' en la lista' : 'Listo ✓')
-                    : ((m.nuevos + m.seg === 1) ? 'Falta ' : 'Faltan ') + falta.join(' y ') +
-                      (m.pend > m.nuevos + m.seg ? ' · ' + m.pend + ' en la lista' : '');
+                    : (faltan === 1 ? 'Falta ' : 'Faltan ') + (falta.length > 2 ? falta.slice(0,-1).join(', ') + ' y ' + falta[falta.length-1] : falta.join(' y ')) +
+                      (m.pend > faltan ? ' · ' + m.pend + ' en la lista' : '');
     var on = (segBloque === m.o);
     return '<div class="hz-meta' + (listo ? ' ok' : '') + (on ? ' on' : '') + '" onclick="setSegBloque(\'' + (on ? '' : m.o) + '\')" title="' + (on ? 'Toca para ver todos' : 'Toca para ver solo este grupo') + '">' +
       '<div class="hz-meta-l"><strong>' + m.t + '</strong> · llevas ' + m.hecho + ' de ' + m.total + '<span>' + sub + '</span></div>' +
@@ -8187,11 +8286,20 @@ function segBotonContacto(g, x, clase){
     return 'pendAgregar(\''+x.id+'\',\''+escA(nom)+'\',\''+canal+'\');renderVistaActual();';
   }
   var phone = waPhone(x.contacto);
+  /* Se le escribe desde el 0141: flujo de los que solo cotizaron, o llegó por
+     un anuncio. Botón morado para no confundirse de teléfono. En el flujo
+     0141 además se revisa en la base que nadie le haya escrito recién (lo
+     ven Tomás y César a la vez): ver abrir0141. */
+  var de0141 = !!(g && (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); })));
   if (phone) {
-    return '<a class="'+clase+' wa'+(esperando?' esperando':'')+'" target="_blank" '+
-           'onclick="event.stopPropagation();'+accion('wa')+'" '+
-           'href="https://wa.me/'+phone+'?text='+encodeURIComponent(waMsg(x))+'">'+
-           (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp')+'</a>';
+    var href = 'https://wa.me/'+phone+'?text='+encodeURIComponent(waMsg(x));
+    var click = (g && g.es0141 && !esperando)
+      ? 'event.preventDefault();event.stopPropagation();abrir0141(\''+x.id+'\',this.href);'
+      : 'event.stopPropagation();'+accion('wa');
+    return '<a class="'+clase+' wa'+(de0141?' b0141':'')+(esperando?' esperando':'')+'" target="_blank" '+
+           'onclick="'+click+'" '+
+           'href="'+href+'">'+
+           (esperando ? '⏳ ¿Le escribiste?' : (de0141 ? '💬 0141' : '💬 WhatsApp'))+'</a>';
   }
   if (correoDe(x)) {
     return '<a class="'+clase+' mail'+(esperando?' esperando':'')+'" target="_blank" '+
@@ -8200,6 +8308,30 @@ function segBotonContacto(g, x, clase){
            (esperando ? '⏳ ¿Le escribiste?' : '✉ Correo')+'</a>';
   }
   return '';
+}
+/* Antes de abrir el chat del 0141 se pregunta a la base si alguien ya le
+   escribió (Tomás y César ven la misma sección, y el panel no se recarga
+   solo). La ventana se abre al tiro —si se abre después de esperar a la base,
+   el navegador la bloquea— y se cierra si ya estaba hecho. */
+async function abrir0141(id, url){
+  var x = COTIS[id]; if (!x) return;
+  var w = window.open('', '_blank');
+  try {
+    var r = await sbClient.from('cotizaciones')
+      .select('seg_etapa,seg_historial,seg_proxima,fecha_primer_contacto,estado,respondio')
+      .eq('id', id).single();
+    if (!r.error && r.data &&
+        ((r.data.seg_etapa||0) > (x.seg_etapa||0) || (r.data.estado||'enviada') !== (x.estado||'enviada'))) {
+      if (w) w.close();
+      Object.assign(x, r.data);
+      renderVistaActual();
+      toastInterno('Alguien ya le escribió a '+(x.cliente||'este cliente')+'. No le mandes otro mensaje.', false);
+      return;
+    }
+  } catch(e) {}
+  pendAgregar(id, String(x.cliente||''), 'wa');
+  renderVistaActual();
+  if (w) w.location.href = url; else window.open(url, '_blank');
 }
 /* El cliente llegó por un anuncio: su cotización lo mandó al WhatsApp nuevo
    (ver waNumero), así que el seguimiento va desde ese número y no desde el
@@ -8239,7 +8371,7 @@ function segFila(g, cls){
     if (p && prods.indexOf(p) === -1) prods.push(p);
   });
   var toque = (cls === 'nuevo') ? 'sin contactar'
-                                : 'toque '+Math.min(etapa+1, CADENCIA.length)+'/'+CADENCIA.length;
+                                : 'toque '+Math.min(etapa+1, cadDe(x).length)+'/'+cadDe(x).length;
   var ncot = g.quotes.length + (g.quotes.length===1 ? ' cotización' : ' cotizaciones');
   /* la línea de datos: lo justo para decidir sin abrir la ficha */
   var linea = [escA(x.contacto||'sin contacto'), prods.join(' · '), ncot, toque]
@@ -8311,6 +8443,10 @@ function hoyRazon(g, cls){
   var x = g.lead, etapa = x.seg_etapa||0;
   if (cls === 'donehoy') return 'contactado hoy';
   if (cls === 'future') return 'le toca el '+fmtFechaCorta(dueDate(x));
+  if (cls === 'c0141'){
+    var n0 = Math.min(etapa+1, CAD_0141.length), dd = diasDe(g);
+    return ['1.er mensaje','2.º mensaje','último mensaje'][n0-1]+' · cotizó '+(dd<=0 ? 'hoy' : dd===1 ? 'ayer' : 'hace '+dd+' días');
+  }
   /* si alguna de sus cotizaciones ya respondió, no es un primer contacto en
      frío: se dice, como lo decía la etiqueta "Respondió" de la tarjeta. Y la
      conversación activa nunca se lee como primer contacto. */
@@ -8335,7 +8471,7 @@ function hoyRazon(g, cls){
       partes.push(atr+' día'+(atr===1?'':'s')+' atrasado');
     } else partes.push('le toca hoy');
   }
-  partes.push('toque '+Math.min(etapa+1, CADENCIA.length)+' de '+CADENCIA.length);
+  partes.push('toque '+Math.min(etapa+1, cadDe(x).length)+' de '+cadDe(x).length);
   /* lo último que se anotó que contestó. La respuesta se guarda en el toque
      ANTERIOR al registrar el siguiente, así que se busca la más reciente. */
   var hist = Array.isArray(x.seg_historial) ? x.seg_historial : [];
@@ -8356,7 +8492,7 @@ function hoyFila(g, cls){
   else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
   else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
   /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
-  var anuncio = (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); })
+  var anuncio = (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); }))
     ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
   var boton = (cls === 'donehoy')
     ? '<button class="hz-btn sec" onclick="segDeshacer(\''+x.id+'\')">Deshacer</button>'
@@ -8459,14 +8595,14 @@ function segClientCard(g, cls){
      casillas de cadencia son ruido puro — lo único que hay que hacer es
      escribirle. Menos scroll y la acción queda obvia. */
   var compacta = (cls === 'nuevo');
-  var toques='';
-  for (var n=1;n<=CADENCIA.length && !compacta;n++){
+  var toques='', cadC = cadDe(x);
+  for (var n=1;n<=cadC.length && !compacta;n++){
     var h=null;
     for (var i=0;i<hist.length;i++){ if(hist[i].etapa===n){ h=hist[i]; break; } }
     var fechaTq = ((h && h.fecha) ? '<span class="tq-fecha">'+(h.via === 'llamada' ? '📞 ' : '')+fmtFechaCorta(h.fecha)+'</span>' : '') +
                   ((h && h.resp) ? '<span class="tq-resp tq-resp-'+escA(h.resp)+'">'+escA(respTxt(h.resp))+'</span>' : '');
     toques += '<div class="seg-tq">'+
-      '<label class="seg-tq-chk"><input type="checkbox"'+(etapa>=n?' checked':'')+' onchange="segCasilla(\''+x.id+'\','+n+',this)"><span>T'+n+' · día '+CADENCIA[n-1]+'</span>'+fechaTq+'</label>'+
+      '<label class="seg-tq-chk"><input type="checkbox"'+(etapa>=n?' checked':'')+' onchange="segCasilla(\''+x.id+'\','+n+',this)"><span>T'+n+' · día '+cadC[n-1]+'</span>'+fechaTq+'</label>'+
       '<input class="seg-tq-nota" type="text" placeholder="¿Qué dijo el cliente?" value="'+escA(h&&h.nota?h.nota:'')+'" onchange="segNota(\''+x.id+'\','+n+',this.value)">'+
     '</div>';
   }
@@ -8493,7 +8629,7 @@ function segClientCard(g, cls){
     : '';
   var meta = escA(x.contacto||'sin contacto')+' · hace '+dias+' día'+(dias===1?'':'s');
   var toqueChip = compacta ? '<span class="seg-touch nuevo">Sin contactar</span>'
-                           : '<span class="seg-touch">Toque '+Math.min(etapa+1,CADENCIA.length)+'/'+CADENCIA.length+'</span>';
+                           : '<span class="seg-touch">Toque '+Math.min(etapa+1,cadC.length)+'/'+cadC.length+'</span>';
   return '<div class="seg-card '+cls+(pez?' pez':'')+(interesado?' interesado':'')+(recu?' recu':'')+'">'+
     '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+pausaBadge+'</div>'+
     '<div class="seg-meta">'+meta+'</div>'+
@@ -8510,7 +8646,7 @@ function segClientCard(g, cls){
       /* Solo en tarjetas compactas (sin casillas de cadencia): la salida para
          el que contestó "No, todavía no" por error en el recuadro y quedó sin
          forma de decir que sí. En las demás tarjetas ya están las casillas. */
-      (compacta && etapa < CADENCIA.length ? '<button class="sbtn" onclick="segYaEscribi(\''+x.id+'\')">✓ Ya le escribí</button>' : '')+
+      (compacta && etapa < cadC.length ? '<button class="sbtn" onclick="segYaEscribi(\''+x.id+'\')">✓ Ya le escribí</button>' : '')+
       '<button class="sbtn" onclick="segPosponerUI(\''+x.id+'\')">⏰ Posponer</button>'+
       wa+
       '<button class="sbtn win" onclick="updateEstado(\''+x.id+'\',\'ganado\')">💰 Ganada</button>'+
@@ -8657,7 +8793,7 @@ async function segHecho(id){
    sí vuelve a la cola. */
 var NOTA_REACTIVACION = 'Reactivación desde Dormidos';
 var REACTIVACION_DIAS = 30;   /* cuánto tiempo queda en "Ya les escribiste" */
-function cadenciaAgotada(x){ return (x.seg_etapa||0) >= CADENCIA.length; }
+function cadenciaAgotada(x){ return (x.seg_etapa||0) >= cadDe(x).length; }
 function fechaReactivacion(x){
   var h = Array.isArray(x.seg_historial) ? x.seg_historial : [];
   var f = null;
@@ -8683,8 +8819,9 @@ async function segMarcar(id, n, checked, resp, tipoFijo){
   if (checked && !hist.some(function(h){ return h.etapa===n; }))
     hist.push(tipoFijo === 'llamada' ? {etapa:n, fecha:hoyISO(), via:'llamada'} : {etapa:n, fecha:hoyISO()});
   var next=null;
-  if (checked && etapa<CADENCIA.length && x.fecha_creacion){
-    var porCad=addDias(fechaBaseISO(x.fecha_creacion), CADENCIA[etapa]), minimo=addDias(hoyISO(),2);
+  var cadX = cadDe(x);
+  if (checked && etapa<cadX.length && x.fecha_creacion){
+    var porCad=addDias(fechaBaseISO(x.fecha_creacion), cadX[etapa]), minimo=addDias(hoyISO(),2);
     next = porCad>minimo ? porCad : minimo;
   }
   var updates = {seg_etapa:etapa, seg_proxima:next, seg_historial:hist};
@@ -8723,7 +8860,7 @@ function segResponderYMarcar(id, resp, n, tipoFijo){
   /* proyecto en pausa: se anota la respuesta y se pausa, sin toque nuevo */
   var pausaR = RESPUESTAS_PAUSA.filter(function(r){ return r.id === resp; })[0];
   if (pausaR) { segPausar(id, pausaR.pausa, histConRespuesta(x, sig-1, resp)); return; }
-  if (sig > CADENCIA.length) return;
+  if (sig > cadDe(x).length) return;
   segMarcar(id, sig, true, resp, tipoFijo);
 }
 /* ── LLAMADA (09-10-2026) ──
@@ -8734,7 +8871,7 @@ function segResponderYMarcar(id, resp, n, tipoFijo){
    (aplicado el 09-10-2026). */
 function segLlameUI(id){
   var x = COTIS[id]; if (!x) return;
-  if ((x.seg_etapa||0) >= CADENCIA.length) { toastInterno('Ya tiene todos los toques de la cadencia', false); return; }
+  if ((x.seg_etapa||0) >= cadDe(x).length) { toastInterno('Ya tiene todos los toques de la cadencia', false); return; }
   pModal('<h3>📞 ¿Qué te dijo '+escA(x.cliente||'el cliente')+' en la llamada?</h3>'+
     respuestasBtns('segLlamadaResp', id)+
     '<button class="mbtn cancel" onclick="segLlamadaResp(\''+id+'\',\'\')">Registrar la llamada sin anotar respuesta</button>'+
@@ -9310,11 +9447,12 @@ function renderActividad(){
        en que la lista se lo mostró (seg_proxima si se movió). */
     var abierto = (lead.estado || 'enviada') === 'enviada' && !compraReciente(qs, lead);
     var etapaAct = lead.seg_etapa || 0;
-    for (var n=1; n<=CADENCIA.length; n++){
+    var cadL = cadDe(lead);
+    for (var n=1; n<=cadL.length; n++){
       var hHecho = null;
       hist.some(function(h){ if (h && h.etapa===n){ hHecho = h; return true; } return false; });
       var hecho = !!hHecho;
-      var due = addDias(base, CADENCIA[n-1]);
+      var due = addDias(base, cadL[n-1]);
       /* 23-10-2026: un toque hecho ANTES de su fecha se cuenta el día en que se
          hizo. Si no, a las 7 AM el día ya salía con «atendidos» que eran toques
          adelantados ayer, y esos clientes ni siquiera estaban en la lista de hoy. */
