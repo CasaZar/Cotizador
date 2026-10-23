@@ -1729,6 +1729,32 @@ var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
 var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
 var sbClient = supabase.createClient(SB_URL, SB_KEY);
 
+/* ── Registro de errores del cliente (23-10-2026, supabase-cotizador/errores-cliente.sql) ──
+   Todo error no capturado del navegador va a errores_cliente: con la llave
+   pública si es el cotizador, con la sesión si es el panel. Nunca rompe nada;
+   tope de 20 por carga y sin repetir mensaje. Se revisa en /auditoria. */
+var _errCliEnviados = {}, _errCliTotal = 0;
+function registrarErrorCliente(mensaje, stack, extra) {
+  try {
+    mensaje = String(mensaje || '').slice(0, 2000);
+    if (!mensaje || /ResizeObserver loop|^Script error\.?$|chrome-extension:|moz-extension:/.test(mensaje)) return;
+    var k = mensaje.slice(0, 200); if (_errCliEnviados[k] || _errCliTotal >= 20) return;
+    _errCliEnviados[k] = 1; _errCliTotal++;
+    var fila = { app: (typeof vendorMode !== 'undefined' && vendorMode) ? 'panel' : 'cotizador', mensaje: mensaje,
+      stack: stack ? String(stack).slice(0, 8000) : null, url: location.href.slice(0, 500),
+      ua: navigator.userAgent.slice(0, 300), extra: extra || null };
+    sbClient.from('errores_cliente').insert(fila).then(function(){}, function(){});
+  } catch (e) {}
+}
+window.addEventListener('error', function(ev) {
+  var e = ev && ev.error;
+  registrarErrorCliente(ev.message || (e && e.message) || 'error sin mensaje', e && e.stack, { archivo: ev.filename || null, linea: ev.lineno || null, col: ev.colno || null });
+});
+window.addEventListener('unhandledrejection', function(ev) {
+  var r = ev && ev.reason;
+  registrarErrorCliente('Promesa rechazada: ' + ((r && r.message) || String(r)), r && r.stack, null);
+});
+
 /* ── FOTOS — pegar URL para activar foto en la card ── */
 /* Fotos de proyectos REALES (ago 2026). La de cubierta va recortada 16:7 para
    la tarjeta ancha; las demás 4:3. Reemplazaron los renders de ChatGPT de
