@@ -8300,7 +8300,7 @@ function campanaHtml(){
     return '<div class="hz-fila' + (abierta ? ' abierta' : '') + '"><div class="hz-linea">' +
       '<button class="hz-main" onclick="hoyToggle(\'' + x.id + '\')"><span class="hz-ini">' + escA(hoyIniciales(x.cliente)) + '</span>' +
         '<span class="hz-txt"><span class="hz-nom">' + escA(x.cliente || '—') + ' <span class="hz-monto">' + fmt(x.total_medio || 0) + '</span></span>' +
-        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + (c.abierta ? 'abierta' : 'cerrada') + anuncio + '</span></span></button>' +
+        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + escA(campanaEstado(c)) + anuncio + '</span></span></button>' +
       '<span class="hz-act">' + boton + '</span></div>' + mas + '</div>';
   }).join('');
   /* Abierta por defecto, pero si la cerraste queda cerrada (24-10-2026): antes
@@ -8312,6 +8312,23 @@ function campanaHtml(){
     '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario. A los que cotizaron peldaños se les ofrece <strong>10% sobre $1.000.000, hasta el 30 de octubre</strong>. ' +
     'Si contesta, recotiza con «＋ Nueva cotización» y el descuento especial de 10%.</div>' +
     '<div class="hz-lista">' + filas + '</div></details>';
+}
+/* En qué quedó el cliente, en palabras (24-10-2026). Antes decía «abierta» o
+   «cerrada» según el estado de la cotización, y un cliente dormido (6 mensajes
+   sin respuesta en agosto, nunca marcado perdido) salía «abierta»: César lo
+   recordaba cerrado y no entendía. El historial se mira en TODAS sus
+   cotizaciones, porque el seguimiento vive en la líder del grupo. */
+function campanaEstado(c){
+  var x = c.x;
+  if ((x.estado || 'enviada') === 'perdida') {
+    var mot = String(x.motivo_perdida || '').replace(/\s*\(.*\)\s*$/, '');
+    return 'cerrada' + (mot ? ': ' + mot.toLowerCase() : '');
+  }
+  if (c.qs.some(function(q){ return q.respondio; })) return 'te respondió antes';
+  var toques = c.qs.reduce(function(a, q){ return Math.max(a, q.seg_etapa || 0); }, 0);
+  if (!toques) return 'nunca se le escribió';
+  var dormido = c.qs.every(function(q){ return (q.estado || 'enviada') !== 'enviada' || dueDate(q) === null; });
+  return (dormido ? 'dormido · ' : 'en seguimiento · ') + toques + (toques === 1 ? ' mensaje' : ' mensajes') + ' sin respuesta';
 }
 function campRecordar(el){
   var a = detLeer();
