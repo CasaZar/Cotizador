@@ -1124,7 +1124,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-pleg.hz-camp .hz-pleg-n { color:#8A4A1F; }
 .hz-pleg.hz-camp > .hz-pleg-nota { background:transparent; border:none; padding:0 4px 10px; color:#6B4A33; }
 .hz-pleg.hz-camp > .hz-lista { border-radius:10px; border-color:#E8C9A8; }
-.hz-camp .hz-btn.wa { background:#B5652E; border-color:#B5652E; }
+.hz-camp .hz-btn.wa, .hz-camp .sbtn.wa { background:#B5652E; border-color:#B5652E; color:#fff; }
 .hz-camp .hz-btn.wa.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
 .hz-sec-main { margin:4px 2px 8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--tm); }
 .hz-pleg-nota { font-size:13px; color:var(--tm); padding:8px 14px; background:#fff; border-left:1px solid var(--bd2); border-right:1px solid var(--bd2); }
@@ -8263,46 +8263,11 @@ function campanaHtml(){
   if (!campanaActiva()) return '';
   var L = campanaClientes(); if (!L.length) return '';
   var pend = L.filter(function(c){ return !c.hecho; }).length;
-  var filas = L.map(function(c){
-    var x = c.x, nom = String(x.cliente || '').replace(/'/g, ''), esperando = pendTiene(x.id);
-    var anuncio = c.qs.some(function(q){ return vieneDeAnuncio(q.origen); }) ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
-    var boton = c.hecho ? '<span class="hz-btn sec" style="cursor:default">✓ Escrito</span>'
-      : '<a class="hz-btn wa' + (esperando ? ' esperando' : '') + '" target="_blank" ' +
-        'onclick="pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\');renderVistaActual();" ' +
-        'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x)) + '">' +
-        (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp') + '</a>';
-    /* Al tocar el nombre se abre, como en la lista de siempre (24-10-2026, lo
-       pidió César: tenía que ir a Cotizaciones a buscar al cliente). Muestra el
-       contacto, sus cotizaciones con el link y las acciones de siempre. Sin el
-       botón de WhatsApp de la ficha: ese manda el mensaje de seguimiento normal,
-       no el de la campaña. */
-    var abierta = (hoyAbierto === x.id), mas = '';
-    if (abierta) {
-      var owner = ''; c.qs.some(function(q){ var oc = ownerCode(q); if (oc){ owner = oc; return true; } return false; });
-      var qsOrd = c.qs.slice().sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
-      var cotis = qsOrd.map(function(q){
-        var est = q.estado || 'enviada';
-        return '<div class="seg-qrow">' + escA(q.numero || '—') + ' · ' + escA(prodNombre(q.producto)) + ' · ' + fmt(q.total_alto || 0) +
-          (q.fecha_creacion ? ' · ' + escA(fmtFechaCorta(fechaBaseISO(q.fecha_creacion))) : '') + (est !== 'enviada' ? ' · ' + escA(est) : '') +
-          (q.link ? ' <a href="' + escA(q.link) + '" target="_blank">↗</a>' : '') + '</div>';
-      }).join('');
-      mas = '<div class="hz-mas">' +
-        '<div class="seg-qlist" style="margin-bottom:8px">' + cotis + '</div>' +
-        '<div class="hz-acc">' +
-          '<span class="hz-contacto">' + escA(x.contacto || 'sin contacto') + '</span>' +
-          '<button class="hz-l" onclick="segNuevaCoti(\'' + x.id + '\',\'' + escA(owner) + '\')" title="Abre el cotizador con su nombre y contacto ya escritos">＋ Nueva cotización</button>' +
-          (c.qs.some(function(q){ return q.respondio; }) ? '' : '<button class="hz-l" onclick="segRespondio(\'' + x.id + '\')">💬 Respondió</button>') +
-          (c.abierta ? '<button class="hz-l" onclick="segPosponerUI(\'' + x.id + '\')">Posponer</button>' +
-                       '<button class="hz-l ok" onclick="updateEstado(\'' + x.id + '\',\'ganado\')">Ganada</button>' +
-                       '<button class="hz-l mal" onclick="segPerderUI(\'' + x.id + '\')">Perdida</button>' : '') +
-        '</div></div>';
-    }
-    return '<div class="hz-fila' + (abierta ? ' abierta' : '') + '"><div class="hz-linea">' +
-      '<button class="hz-main" onclick="hoyToggle(\'' + x.id + '\')"><span class="hz-ini">' + escA(hoyIniciales(x.cliente)) + '</span>' +
-        '<span class="hz-txt"><span class="hz-nom">' + escA(x.cliente || '—') + ' <span class="hz-monto">' + fmt(x.total_medio || 0) + '</span></span>' +
-        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + escA(campanaEstado(c)) + anuncio + '</span></span></button>' +
-      '<span class="hz-act">' + boton + '</span></div>' + mas + '</div>';
-  }).join('');
+  /* Cada cliente es la MISMA fila de la lista de siempre (hoyFila): al tocarla
+     se abren las respuestas, las acciones y la ficha completa con su historial
+     (24-10-2026, pedido del usuario). Lo único propio de la campaña es el
+     botón de WhatsApp, que manda el mensaje del descuento (ver campanaBoton). */
+  var filas = L.map(function(c){ return hoyFila(campanaGrupo(c), 'camp'); }).join('');
   /* Abierta por defecto, pero si la cerraste queda cerrada (24-10-2026): antes
      llevaba «open» fijo y se volvía a abrir cada vez que se repintaba la
      lista, o sea al tocar cualquier cliente. */
@@ -8330,6 +8295,28 @@ function campanaEstado(c){
   var dormido = c.qs.every(function(q){ return (q.estado || 'enviada') !== 'enviada' || dueDate(q) === null; });
   return (dormido ? 'dormido · ' : 'en seguimiento · ') + toques + (toques === 1 ? ' mensaje' : ' mensajes') + ' sin respuesta';
 }
+/* el cliente de la campaña con la forma de un grupo del seguimiento, para
+   pintarlo con hoyFila y segClientCard. Se arma aparte porque buildSegGroups
+   deja fuera a los cerrados, y la campaña los incluye. */
+function campanaGrupo(c){
+  var qs = c.qs.slice().sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
+  var owner = 'web';
+  for (var i = 0; i < qs.length; i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
+  var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto || 0)); }, 0);
+  return { key:clientKey(c.x), quotes:qs, lead:c.x, owner:owner,
+           hasVendor:qs.some(function(q){ return ownerCode(q); }), hasWeb:qs.some(isWeb),
+           valor:valor, promedio:valor, es0141:false, camp:c };
+}
+/* botón de WhatsApp de la campaña: mensaje del descuento, y al volver solo
+   pregunta sí o no (canal 'camp', ver pendPreguntar) */
+function campanaBoton(c, clase){
+  var x = c.x, nom = String(x.cliente || '').replace(/'/g, ''), esperando = pendTiene(x.id);
+  if (c.hecho) return '<span class="' + clase + ' sec" style="cursor:default">✓ Escrito</span>';
+  return '<a class="' + clase + ' wa' + (esperando ? ' esperando' : '') + '" target="_blank" ' +
+    'onclick="event.stopPropagation();pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\');renderVistaActual();" ' +
+    'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x)) + '">' +
+    (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp') + '</a>';
+}
 function campRecordar(el){
   var a = detLeer();
   if (el.open) delete a['campana-cerrada']; else a['campana-cerrada'] = 1;
@@ -8344,6 +8331,7 @@ async function campanaAnotar(id){
   if (ok) registrarToque(x, 0, 'cadencia');
 }
 function segBotonContacto(g, x, clase){
+  if (g && g.camp) return campanaBoton(g.camp, clase);   /* fila o ficha de la campaña de peldaños */
   var etapa = x.seg_etapa||0;
   var nom = String(x.cliente||'').replace(/'/g,'');
   /* si ya está en espera, el botón se ve apretado y lo dice */
@@ -8511,6 +8499,7 @@ function hoyRazon(g, cls){
   var x = g.lead, etapa = x.seg_etapa||0;
   if (cls === 'donehoy') return 'contactado hoy';
   if (cls === 'future') return 'le toca el '+fmtFechaCorta(dueDate(x));
+  if (cls === 'camp') return 'cotizó el '+fmtFechaCorta(fechaBaseISO(x.fecha_creacion))+' · '+campanaEstado(g.camp);
   if (cls === 'c0141'){
     var n0 = Math.min(etapa+1, CAD_0141.length), dd = diasDe(g);
     return ['1.er mensaje','2.º mensaje','último mensaje'][n0-1]+' · cotizó '+(dd<=0 ? 'hoy' : dd===1 ? 'ayer' : 'hace '+dd+' días');
@@ -8568,7 +8557,8 @@ function hoyFila(g, cls){
   var mas = '';
   if (abierta){
     var resp = '';
-    if (cls !== 'donehoy' && !cadenciaAgotada(x)){
+    /* en la campaña aparecen también cerrados: a esos no se les anota toque */
+    if (cls !== 'donehoy' && !cadenciaAgotada(x) && (x.estado||'enviada') === 'enviada'){
       if (etapa === 0){
         resp = '<div class="hz-preg">¿Ya le escribiste por otro lado?</div>'+
           '<div class="hz-resps"><button class="hz-r" onclick="hoyAbierto=null;segYaEscribi(\''+x.id+'\')">Sí, anotar el primer contacto</button></div>';
