@@ -8271,11 +8271,37 @@ function campanaHtml(){
         'onclick="pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\');renderVistaActual();" ' +
         'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x)) + '">' +
         (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp') + '</a>';
-    return '<div class="hz-fila"><div class="hz-linea">' +
-      '<span class="hz-main" style="cursor:default"><span class="hz-ini">' + escA(hoyIniciales(x.cliente)) + '</span>' +
+    /* Al tocar el nombre se abre, como en la lista de siempre (24-10-2026, lo
+       pidió César: tenía que ir a Cotizaciones a buscar al cliente). Muestra el
+       contacto, sus cotizaciones con el link y las acciones de siempre. Sin el
+       botón de WhatsApp de la ficha: ese manda el mensaje de seguimiento normal,
+       no el de la campaña. */
+    var abierta = (hoyAbierto === x.id), mas = '';
+    if (abierta) {
+      var owner = ''; c.qs.some(function(q){ var oc = ownerCode(q); if (oc){ owner = oc; return true; } return false; });
+      var qsOrd = c.qs.slice().sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
+      var cotis = qsOrd.map(function(q){
+        var est = q.estado || 'enviada';
+        return '<div class="seg-qrow">' + escA(q.numero || '—') + ' · ' + escA(prodNombre(q.producto)) + ' · ' + fmt(q.total_alto || 0) +
+          (q.fecha_creacion ? ' · ' + escA(fmtFechaCorta(fechaBaseISO(q.fecha_creacion))) : '') + (est !== 'enviada' ? ' · ' + escA(est) : '') +
+          (q.link ? ' <a href="' + escA(q.link) + '" target="_blank">↗</a>' : '') + '</div>';
+      }).join('');
+      mas = '<div class="hz-mas">' +
+        '<div class="seg-qlist" style="margin-bottom:8px">' + cotis + '</div>' +
+        '<div class="hz-acc">' +
+          '<span class="hz-contacto">' + escA(x.contacto || 'sin contacto') + '</span>' +
+          '<button class="hz-l" onclick="segNuevaCoti(\'' + x.id + '\',\'' + escA(owner) + '\')" title="Abre el cotizador con su nombre y contacto ya escritos">＋ Nueva cotización</button>' +
+          (c.qs.some(function(q){ return q.respondio; }) ? '' : '<button class="hz-l" onclick="segRespondio(\'' + x.id + '\')">💬 Respondió</button>') +
+          (c.abierta ? '<button class="hz-l" onclick="segPosponerUI(\'' + x.id + '\')">Posponer</button>' +
+                       '<button class="hz-l ok" onclick="updateEstado(\'' + x.id + '\',\'ganado\')">Ganada</button>' +
+                       '<button class="hz-l mal" onclick="segPerderUI(\'' + x.id + '\')">Perdida</button>' : '') +
+        '</div></div>';
+    }
+    return '<div class="hz-fila' + (abierta ? ' abierta' : '') + '"><div class="hz-linea">' +
+      '<button class="hz-main" onclick="hoyToggle(\'' + x.id + '\')"><span class="hz-ini">' + escA(hoyIniciales(x.cliente)) + '</span>' +
         '<span class="hz-txt"><span class="hz-nom">' + escA(x.cliente || '—') + ' <span class="hz-monto">' + fmt(x.total_medio || 0) + '</span></span>' +
-        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + (c.abierta ? 'abierta' : 'cerrada') + anuncio + '</span></span></span>' +
-      '<span class="hz-act">' + boton + '</span></div></div>';
+        '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + (c.abierta ? 'abierta' : 'cerrada') + anuncio + '</span></span></button>' +
+      '<span class="hz-act">' + boton + '</span></div>' + mas + '</div>';
   }).join('');
   /* Abierta por defecto, pero si la cerraste queda cerrada (24-10-2026): antes
      llevaba «open» fijo y se volvía a abrir cada vez que se repintaba la
