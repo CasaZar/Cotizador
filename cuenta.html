@@ -4,7 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Tu cuenta · Casa Zaru</title>
+<title>Tu cuenta empresa · Casa Zaru</title>
+<!-- Vista previa del link en WhatsApp: textos fijos, nunca datos de la empresa
+     (la página es la misma para todos; lo de cada cuenta lo trae el token). -->
+<meta name="description" content="Revisa cuánto llevas comprado y el descuento que tienes en tus próximas compras.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Casa Zaru">
+<meta property="og:title" content="Tu cuenta empresa · Casa Zaru">
+<meta property="og:description" content="Revisa cuánto llevas comprado y el descuento que tienes en tus próximas compras.">
+<meta property="og:image" content="https://cotizador.casazaru.cl/fotos/logo-casa-zaru-og-200.png">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
 <link rel="icon" href="fotos/logo-casa-zaru-og-200.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,9 +23,32 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--crema);color:var(--tinta);font-family:Poppins,-apple-system,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
 h1{font-family:'Playfair Display',Georgia,serif}
-.top{background:var(--verde);padding:22px 20px 18px;text-align:center}
-.top img{width:150px;display:block;margin:0 auto 10px}
-.top .t{color:var(--crema);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+.top{background:var(--verde);padding:16px 20px}
+.top .in{max-width:520px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.top img{width:120px;display:block}
+.top .t{color:var(--crema);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+/* 24-10: la misma barra del panel de Empresas — escala fija $0 → $1,5M (2 %) → $3M (5 %), color según el tramo */
+.rut{font-size:11.5px;color:var(--tinta3);margin:3px 0 18px}
+.hero{background:var(--blanco);border-radius:16px;border:1px solid var(--borde);padding:18px 16px 16px}
+.hero .l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta3)}
+.hero .fila{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:2px;flex-wrap:wrap}
+.hero .m{font-family:'Playfair Display',serif;font-size:30px;font-weight:700}
+.dsc{font-weight:700;font-size:13px;border-radius:8px;padding:4px 9px;white-space:nowrap;background:var(--crema2);color:var(--tinta2)}
+.dsc.t2{background:var(--dorado);color:var(--tinta)}.dsc.t5{background:var(--verde);color:#fff}
+.bar2{position:relative;height:14px;background:var(--crema);border-radius:8px;margin:16px 0 6px}
+.bar2 i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:#C9B8A3;transition:width .8s ease}
+.bar2 i.t2{background:var(--dorado)}.bar2 i.t5{background:var(--verde)}
+.bar2 .mk{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:#fff;box-shadow:0 0 0 1px var(--crema2)}
+.bar2 .over{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:#fff;white-space:nowrap}
+.esc{position:relative;height:30px;font-size:10.5px;color:var(--tinta3)}
+.esc span{position:absolute;top:0;line-height:1.3}.esc b{display:block;color:var(--tinta);font-weight:600}
+.falta{margin-top:10px;background:#F7EFE3;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45}
+.falta b{color:var(--terra)}.falta.ok b{color:var(--verde)}
+.cbar{height:5px;background:var(--crema2);border-radius:3px;margin:7px 0 3px;position:relative}.cbar i{position:absolute;left:0;top:0;bottom:0;background:var(--tinta2);border-radius:3px}
+.lista{background:var(--blanco);border-radius:12px;border:1px solid var(--borde)}
+.it{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--borde);font-size:12.5px}
+.it:last-child{border-bottom:0}.it small{display:block;color:var(--tinta3);font-size:10.5px}.it b{white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.bar2 i{transition:none}}
 .wrap{max-width:520px;margin:0 auto;padding:18px 20px 32px}
 h1{font-size:24px;margin:0 0 2px;color:var(--verde);font-weight:700;overflow-wrap:anywhere}
 .sub{font-size:12px;color:var(--tinta2);margin-bottom:14px}
@@ -37,7 +70,7 @@ table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
 td{padding:7px 4px;border-top:1px solid var(--borde);vertical-align:top}
 td.r{text-align:right;font-weight:600;white-space:nowrap}
 .src{font-size:10px;color:var(--tinta3)}
-.cta{display:block;text-align:center;background:var(--terra);color:#fff;font-weight:600;padding:12px;border-radius:var(--r);margin:8px 0;text-decoration:none}
+.cta{display:block;text-align:center;background:var(--verde);color:#fff;font-weight:600;padding:12px;border-radius:var(--r);margin:8px 0;text-decoration:none}
 .cta.sec{background:var(--blanco);color:var(--verde);border:1px solid var(--verde)}
 .foot{font-size:11px;color:var(--tinta3);text-align:center;margin-top:16px;line-height:1.5}
 .cond{font-size:11.5px;color:var(--tinta2);background:var(--blanco);border:1px solid var(--borde);border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.5}
@@ -46,7 +79,7 @@ td.r{text-align:right;font-weight:600;white-space:nowrap}
 </style>
 </head>
 <body>
-<div class="top"><img src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"><div class="t">Cuenta empresa</div></div>
+<div class="top"><div class="in"><img src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"><div class="t">Cuenta empresa</div></div></div>
 <div class="wrap" id="app"><div class="estado">Cargando tu cuenta…</div></div>
 <script>
 /* Lee UNA cuenta por su token (b2b_estado, proyecto de Gestión). La llave
@@ -61,30 +94,34 @@ function rutFmt(r){r=String(r||'');var c=r.split('-');if(c.length!==2)return r;r
 function estado(msg,sub){document.getElementById('app').innerHTML='<div class="estado"><h1>'+esc(msg)+'</h1><div>'+esc(sub||'')+'</div><a class="cta sec" style="margin-top:18px" href="https://wa.me/'+WA+'">Escribirnos por WhatsApp</a></div>';}
 function render(c){
   var t=Number(c.tramo_pct)||0,acum=Number(c.acumulado)||0;
-  var pct=Math.min(100,Math.round(acum/3000000*100));
-  var falta=t===5?'tramo máximo alcanzado':(t===2?'faltan '+clp(c.falta_5)+' para 5 %':'faltan '+clp(c.falta_2)+' para 2 %');
   var compras=(c.compras||[]);
   var nombre=(c.contacto||'').trim();
+  var ini=new Date(String(c.ciclo_inicio).slice(0,10)+'T12:00:00'),fin=new Date(String(c.ciclo_fin).slice(0,10)+'T12:00:00');
+  var pc=Math.max(0,Math.min(100,(Date.now()-ini)/(fin-ini)*100)),quedan=Math.max(0,Math.ceil((fin-Date.now())/864e5));
+  var over=acum>3000000?'<span class="over">'+(acum/3000000).toLocaleString('es-CL',{maximumFractionDigits:1})+'× la meta</span>':'';
+  var msgFalta=t===5?'<div class="falta ok">Tienes el <b>5 %</b>, el descuento más alto, en todas tus compras hasta el fin del ciclo.</div>':
+    '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para pasar al <b>'+(t===2?'5':'2')+' %</b> en tus próximas compras.</div>';
   var html='<h1>'+esc(c.razon_social)+'</h1>'+
-    '<div class="sub">RUT '+esc(rutFmt(c.rut))+(nombre?' · a cargo de '+esc(nombre):'')+'</div>'+
-    '<div class="big"><div class="l">Descuento vigente</div><div class="v">'+(t?t+' %':'0 %')+'</div>'+
-      '<div class="d">'+(t?'en tu próxima compra, además del 5 % por transferencia':'a partir de $1.500.000 acumulados tienes 2 %, además del 5 % por transferencia')+'</div></div>'+
-    '<div class="bar"><i style="width:'+pct+'%"></i><b></b></div>'+
-    '<div class="leg"><span>'+clp(acum)+' acumulado</span><span>'+falta+'</span></div>'+
-    '<div class="tramos">'+
-      '<div class="tramo'+(t>=2?' on':'')+'"><div class="p">2 %</div>sobre $1.500.000<br>'+(t>=2?'✓ alcanzado':'te faltan '+clp(c.falta_2))+'</div>'+
-      '<div class="tramo'+(t>=5?' on':'')+'"><div class="p">5 %</div>sobre $3.000.000<br>'+(t>=5?'✓ alcanzado':'te faltan '+clp(c.falta_5))+'</div>'+
-    '</div>'+
-    '<div class="ciclo">Tu ciclo va del '+esc(fecha(c.ciclo_inicio,true))+' al '+esc(fecha(c.ciclo_fin,true))+'. Al cumplirse el año el acumulado parte de nuevo.</div>'+
-    '<div class="lbl">Compras del ciclo</div>'+
-    (compras.length?'<table>'+compras.map(function(k){
-      return '<tr><td>'+esc(fecha(k.fecha))+'</td><td>'+esc(k.detalle||(k.tipo==='NC'?'Nota de crédito':'Compra'))+(k.folio?'<br><span class="src">'+(k.tipo==='NC'?'Nota de crédito':'Factura')+' '+esc(k.folio)+'</span>':'')+'</td><td class="r">'+clp(k.monto)+'</td></tr>';
-    }).join('')+'</table>':'<div class="ciclo">Todavía no hay compras en este ciclo.</div>')+
-    '<a class="cta" href="./?utm_source=cuenta&utm_medium=link&utm_campaign=cuenta-empresa">Cotizar un proyecto</a>'+
+    '<div class="rut">RUT '+esc(rutFmt(c.rut))+(nombre?' · a cargo de '+esc(nombre):'')+'</div>'+
+    '<div class="hero"><div class="l">Comprado en tu ciclo</div>'+
+      '<div class="fila"><div class="m">'+clp(acum)+'</div><div class="dsc t'+t+'">'+(t?t+' % de descuento':'aún sin descuento')+'</div></div>'+
+      '<div class="bar2"><i class="t'+t+'" style="width:0" data-w="'+(acum/3000000*100>100?100:(acum/3000000*100).toFixed(1))+'"></i><div class="mk"></div>'+over+'</div>'+
+      '<div class="esc"><span style="left:0">$0</span><span style="left:50%;transform:translateX(-50%);text-align:center"><b>2 %</b>$1,5M</span><span style="right:0;text-align:right"><b>5 %</b>$3M</span></div>'+
+      msgFalta+'</div>'+
+    '<div class="lbl" style="margin-top:20px">Tu ciclo</div>'+
+    '<div class="ciclo" style="margin:0">'+esc(fecha(c.ciclo_inicio,true))+' → '+esc(fecha(c.ciclo_fin,true))+'<div class="cbar"><i style="width:'+pc.toFixed(0)+'%"></i></div>'+
+      '<span style="font-size:11px;color:var(--tinta3)">Quedan '+quedan+(quedan===1?' día':' días')+'. Al cumplirse el año, el acumulado parte de nuevo.</span></div>'+
+    '<div class="lbl" style="margin-top:20px">Compras del ciclo</div>'+
+    (compras.length?'<div class="lista">'+compras.map(function(k){
+      return '<div class="it"><div>'+esc(k.detalle||(k.tipo==='NC'?'Nota de crédito':'Compra'))+'<small>'+esc(fecha(k.fecha))+(k.folio?' · '+(k.tipo==='NC'?'Nota de crédito':'Factura')+' '+esc(k.folio):'')+'</small></div><b>'+clp(k.monto)+'</b></div>';
+    }).join('')+'</div>':'<div class="ciclo">Todavía no hay compras en este ciclo.</div>')+
+    '<a class="cta" style="margin-top:18px" href="./?utm_source=cuenta&utm_medium=link&utm_campaign=cuenta-empresa">Cotizar un proyecto</a>'+
     '<a class="cta sec" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, escribo por la cuenta empresa de '+c.razon_social)+'">Escribirnos por WhatsApp</a>'+
     '<div class="cond">El descuento se aplica sobre el valor de lista del cotizador en las compras que hagas después de alcanzar cada tramo, y se suma al 5 % por pago con transferencia. Las cifras son los totales de tus facturas, IVA incluido.</div>'+
     '<div class="foot">Este enlace es privado, solo lo tienes tú.<br>Casa Zaru · Villarrica · casazaru.cl</div>';
   document.getElementById('app').innerHTML=html;
+  // la barra se llena al abrir
+  requestAnimationFrame(function(){requestAnimationFrame(function(){var b=document.querySelector('.bar2 i');if(b)b.style.width=b.getAttribute('data-w')+'%';});});
 }
 (async function(){
   var t=new URLSearchParams(location.search).get('t')||'';
