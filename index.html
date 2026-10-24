@@ -1115,6 +1115,18 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-pleg[open] > summary { border-radius:10px 10px 0 0; border-bottom:none; }
 .hz-pleg[open] > .hz-lista { border-radius:0 0 12px 12px; }
 .hz-pleg-n { margin-left:auto; color:var(--tm); font-size:13.5px; font-variant-numeric:tabular-nums; }
+/* Campaña peldaños (24-10-2026): se confundía con la lista de siempre. Va en
+   una caja color terracota propia, con su botón del mismo color. */
+.hz-pleg.hz-camp { margin:0 0 18px; padding:8px 6px 6px; background:#FDF1E6; border:2px solid #B5652E; border-radius:14px; }
+.hz-camp .hz-txt { flex:1; }
+.hz-pleg.hz-camp > summary { background:transparent; border:none; padding:4px 4px 8px; font-weight:700; color:#8A4A1F; font-size:15px; }
+.hz-pleg.hz-camp > summary::before { color:#B5652E; }
+.hz-pleg.hz-camp .hz-pleg-n { color:#8A4A1F; }
+.hz-pleg.hz-camp > .hz-pleg-nota { background:transparent; border:none; padding:0 4px 10px; color:#6B4A33; }
+.hz-pleg.hz-camp > .hz-lista { border-radius:10px; border-color:#E8C9A8; }
+.hz-camp .hz-btn.wa { background:#B5652E; border-color:#B5652E; }
+.hz-camp .hz-btn.wa.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
+.hz-sec-main { margin:4px 2px 8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--tm); }
 .hz-pleg-nota { font-size:13px; color:var(--tm); padding:8px 14px; background:#fff; border-left:1px solid var(--bd2); border-right:1px solid var(--bd2); }
 .hz-mes { margin-top:18px; font-size:12.5px; color:var(--tm); }
 @media (max-width:600px){
@@ -1125,6 +1137,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
   .hz-act { margin-left:62px; }
   .hz-mas { padding-left:14px; }
   .hz-nom { white-space:normal; }
+  .hz-camp .hz-main { flex-basis:100%; }   /* el botón va abajo y el nombre se lee entero */
 }
 /* el área abrible: ocupa toda su columna y lleva nombre + línea de datos.
    (Antes acá había un grid-template-columns de 4 columnas, sobrante de una
@@ -7898,7 +7911,11 @@ function renderSeguimiento(){
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
                   : (b0141.length ? '' : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>'))+
     '</div>';
-  html = campanaHtml() + html0141 + html;
+  /* con la campaña o el 0141 arriba, la lista de siempre lleva su título para
+     que se sepa dónde empieza */
+  var campHtml = campanaHtml();
+  if ((campHtml || html0141) && lista.length) html = '<div class="hz-sec-main">Seguimiento de hoy · '+lista.length+'</div>' + html;
+  html = campHtml + html0141 + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
@@ -8260,13 +8277,21 @@ function campanaHtml(){
         '<span class="hz-det">Peldaños · cotizó el ' + escA(fmtFechaCorta(fechaBaseISO(x.fecha_creacion))) + ' · ' + (c.abierta ? 'abierta' : 'cerrada') + anuncio + '</span></span></span>' +
       '<span class="hz-act">' + boton + '</span></div></div>';
   }).join('');
-  return '<details class="hz-pleg"' + detAttrs('campana') + ' open><summary>🪜 Campaña peldaños · ' + pend + ' por escribir' +
+  /* Abierta por defecto, pero si la cerraste queda cerrada (24-10-2026): antes
+     llevaba «open» fijo y se volvía a abrir cada vez que se repintaba la
+     lista, o sea al tocar cualquier cliente. */
+  var campCerrada = !!detLeer()['campana-cerrada'];
+  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' ontoggle="campRecordar(this)"><summary>🪜 Campaña peldaños · ' + pend + ' por escribir' +
     '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
-    '<div class="hz-pleg-nota">Todos los que cotizaron peldaños, menos los que compraron, compraron en otro lado o tienen el número malo. ' +
-    'El mensaje pregunta si el proyecto sigue en pie y ofrece <strong>10% de descuento en compras sobre $1.000.000, hasta el 30 de octubre</strong> (solo para estos clientes). ' +
-    'Al recotizar, aplica el descuento especial de 10% si el total pasa el millón. ' +
-    'Si contesta, búscalo arriba o en Reactivar y sigue la conversación; para recotizar usa «＋ Nueva cotización».</div>' +
+    '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario. A los que cotizaron peldaños se les ofrece <strong>10% sobre $1.000.000, hasta el 30 de octubre</strong>. ' +
+    'Si contesta, recotiza con «＋ Nueva cotización» y el descuento especial de 10%.</div>' +
     '<div class="hz-lista">' + filas + '</div></details>';
+}
+function campRecordar(el){
+  var a = detLeer();
+  if (el.open) delete a['campana-cerrada']; else a['campana-cerrada'] = 1;
+  DET_MEM = a;
+  try { localStorage.setItem(DET_KEY, JSON.stringify(a)); } catch(e){}
 }
 async function campanaAnotar(id){
   var x = COTIS[id]; if (!x) return;
