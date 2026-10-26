@@ -3545,12 +3545,17 @@ function mesaParNota() {
     return '<button type="button" class="par-tam' + (parTam === k ? ' on' : '') + '" onclick="mesaParSet(\'' + k + '\')">' +
       titulo + '<small>' + sub + '</small></button>';
   };
+  /* las dos mesas en el botón, sacadas de PAR_CATALOGO para que no se desalineen */
+  var parTamSub = function(c){
+    /* espacios duros dentro de cada medida: en el celular corta en la «y», nunca a mitad de una mesa */
+    return c.sup.largo + '&nbsp;×&nbsp;' + c.sup.ancho + ' y ' + c.inf.largo + '&nbsp;×&nbsp;' + c.inf.ancho + '&nbsp;cm';
+  };
   var html =
     '<div class="par-nota">' +
       '<b>Son dos mesas.</b> Se venden juntas y una entra debajo de la otra.' +
       '<div class="par-tams">' +
-        tamBtn('mediano', 'Mediano', '90 × 70 cm') +
-        tamBtn('grande',  'Grande',  '120 × 80 cm') +
+        tamBtn('mediano', 'Mediano', parTamSub(PAR_CATALOGO.mediano)) +
+        tamBtn('grande',  'Grande',  parTamSub(PAR_CATALOGO.grande)) +
         tamBtn('pedido',  'A pedido', 'tus medidas') +
       '</div>';
   if (PAR_CATALOGO[parTam]) {
