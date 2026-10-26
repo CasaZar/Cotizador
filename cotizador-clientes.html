@@ -1103,6 +1103,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-l { background:none; border:none; padding:5px 8px; border-radius:6px; font:inherit; font-size:13.5px; color:var(--acd); cursor:pointer; }
 .hz-l:hover { background:var(--bg3); }
 .hz-l.ok { color:#166534; } .hz-l.mal { color:#991B1B; }
+.hz-l.b0141 { color:#6D28D9; font-weight:600; } .sbtn.p0141 { color:#6D28D9; border-color:#CBB8FB; }
 .hz-ficha { margin-top:10px; }
 .hz-ficha .seg-card { margin:0; }
 .hz-vacio { padding:22px; text-align:center; color:var(--tm); font-size:15px; }
@@ -6373,14 +6374,25 @@ var PASOS_CLIC_WA = ['whatsapp', 'duda', 'muestrario'];
 var CLICS_WA = null;   /* sesión → true si tocó algún botón de WhatsApp */
 var LEAD0141 = {};     /* id de la cotización líder → true si su cliente va por el 0141 */
 function sinClicWa(q){
-  if (!CLICS_WA || !q || q.eliminada || !isWeb(q)) return false;
+  if (!q || q.eliminada || !isWeb(q)) return false;
   if (!waPhone(q.contacto)) return false;   /* sin WhatsApp no hay 0141: va por correo, como siempre */
+  /* «No nos escribió → pasar al 0141» (26-10-2026): tocó el botón pero nunca
+     llegó el mensaje al 5558. Lo marcado a mano manda, aunque sea de antes
+     del 23-10 o no se hayan podido leer los clics. */
+  if (q.origen && q.origen.no_escribio) return true;
+  if (!CLICS_WA) return false;
   var ses = q.origen && q.origen.ses;
   if (!ses || !q.fecha_creacion || fechaBaseISO(q.fecha_creacion) < DESDE_0141) return false;
   return !CLICS_WA[ses];
 }
 /* la cadencia de ESTA cotización: la del 0141 o la de siempre */
 function cadDe(x){ return (x && LEAD0141[x.id]) ? CAD_0141 : CADENCIA; }
+/* desde cuándo corre su cadencia: el día que cotizó o, si se pasó a mano al
+   0141, el día que se pasó (menos 1, así el mensaje que toca sale ese día) */
+function baseCad(x){
+  var m = cadDe(x) === CAD_0141 && x.origen && x.origen.no_escribio;
+  return m ? addDias(String(m).slice(0,10), -1) : fechaBaseISO(x.fecha_creacion);
+}
 /* Horas que descansa una ballena después de un toque antes de volver a la
    lista. 48 h deja un día de margen antes del acuerdo de las 72 h, y evita
    insistirle a diario justo al cliente que más cuesta perder. */
@@ -6655,7 +6667,7 @@ function dueDate(x){
   } else {
     var etapa = x.seg_etapa||0, cad = cadDe(x);
     if (etapa>=cad.length || !x.fecha_creacion) return null;
-    var base = fechaBaseISO(x.fecha_creacion);
+    var base = baseCad(x);
     /* sin fecha agendada y ya fuera de la ventana de la cadencia: Dormidos */
     if (base < addDias(hoyISO(), -(cad[cad.length-1] + CADENCIA_GRACIA))) return null;
     due = addDias(base, cad[etapa]);
@@ -8389,6 +8401,42 @@ async function abrir0141(id, url){
   renderVistaActual();
   if (w) w.location.href = url; else window.open(url, '_blank');
 }
+/* ── «No nos escribió → pasar al 0141» (26-10-2026, pedido del usuario) ──
+   Tocó el botón de WhatsApp de la cotización pero el mensaje nunca llegó al
+   5558 (caso Nacor Oñate): el panel lo daba por conversación de WhatsApp y
+   pedía seguirlo desde el 5558, a alguien que no nos había escrito. Se marca
+   origen.no_escribio en sus cotizaciones web y desde ahí va por el flujo
+   0141 (ver sinClicWa y baseCad): sale ese mismo día en «Desde el 0141» y
+   después sigue la cadencia del 0141. «Volver al 5558» lo deshace. */
+function puedePasar0141(g){
+  if (!g || g.camp || g.es0141 || g.hasVendor || !g.hasWeb) return false;
+  var x = g.lead;
+  if (!waPhone(x.contacto) || x.motivo_pausa || (x.estado||'enviada') !== 'enviada') return false;
+  if ((g.quotes||[]).some(function(q){ return q.respondio; })) return false;   /* sí nos escribió */
+  return (x.seg_etapa||0) < CAD_0141.length;
+}
+function pasado0141(g){ return !!(g && g.es0141 && g.lead.origen && g.lead.origen.no_escribio); }
+async function pasarA0141(id, volver){
+  var x = COTIS[id]; if (!x) return;
+  var k = clientKey(x);
+  var qs = Object.keys(COTIS).map(function(i){ return COTIS[i]; })
+    .filter(function(q){ return q && !q.eliminada && isWeb(q) && clientKey(q) === k; });
+  var hoy = hoyISO(), fallo = false;
+  for (var i=0; i<qs.length; i++){
+    var q = qs[i], o = Object.assign({}, q.origen||{});
+    if (volver) delete o.no_escribio; else o.no_escribio = hoy;
+    var up = { origen:o };
+    /* sale hoy en «Desde el 0141»; si ya llevaba toques del 5558, con el que sigue */
+    if (!volver && q.id === x.id) up.seg_proxima = (x.seg_etapa||0) > 0 ? hoy : null;
+    var r = await sbClient.from('cotizaciones').update(up).eq('id', q.id);
+    if (r.error){ fallo = true; break; }
+    Object.assign(q, up);
+  }
+  if (fallo){ toastInterno('No se pudo guardar. Revisa la conexión e intenta de nuevo.', false); return; }
+  renderVistaActual();
+  toastInterno(volver ? (x.cliente||'El cliente')+' vuelve al seguimiento del 5558.'
+                      : (x.cliente||'El cliente')+' pasa al 0141: aparece en «Desde el 0141» el día que le toca.', true);
+}
 /* El cliente llegó por un anuncio: su cotización lo mandó al WhatsApp nuevo
    (ver waNumero), así que el seguimiento va desde ese número y no desde el
    5558. La etiqueta lo dice en la fila y en la ficha. */
@@ -8579,6 +8627,8 @@ function hoyFila(g, cls){
         '<button class="hz-l" onclick="segNuevaCoti(\''+x.id+'\',\''+escA(g.owner||'')+'\')" title="Abre el cotizador con su nombre y contacto ya escritos">＋ Nueva cotización</button>'+
         '<button class="hz-l" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')">'+(interesado?'Quitar interesado':'★ Interesado')+'</button>'+
         '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
+        (puedePasar0141(g) ? '<button class="hz-l b0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">No nos escribió → 0141</button>' : '')+
+        (pasado0141(g) ? '<button class="hz-l" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
         '<button class="hz-l ok" onclick="updateEstado(\''+x.id+'\',\'ganado\')">Ganada</button>'+
         '<button class="hz-l mal" onclick="segPerderUI(\''+x.id+'\')">Perdida</button>'+
         '<button class="hz-l" onclick="hoyVerFicha()">'+(hoyFicha?'Ocultar ficha':'Ficha completa')+'</button>'+
@@ -8706,6 +8756,8 @@ function segClientCard(g, cls){
          forma de decir que sí. En las demás tarjetas ya están las casillas. */
       (compacta && etapa < cadC.length ? '<button class="sbtn" onclick="segYaEscribi(\''+x.id+'\')">✓ Ya le escribí</button>' : '')+
       '<button class="sbtn" onclick="segPosponerUI(\''+x.id+'\')">⏰ Posponer</button>'+
+      (puedePasar0141(g) ? '<button class="sbtn p0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">📱 No nos escribió → 0141</button>' : '')+
+      (pasado0141(g) ? '<button class="sbtn" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
       wa+
       '<button class="sbtn win" onclick="updateEstado(\''+x.id+'\',\'ganado\')">💰 Ganada</button>'+
       '<button class="sbtn lost" onclick="segPerderUI(\''+x.id+'\')">✗ Perdida</button>'+
@@ -8879,7 +8931,7 @@ async function segMarcar(id, n, checked, resp, tipoFijo){
   var next=null;
   var cadX = cadDe(x);
   if (checked && etapa<cadX.length && x.fecha_creacion){
-    var porCad=addDias(fechaBaseISO(x.fecha_creacion), cadX[etapa]), minimo=addDias(hoyISO(),2);
+    var porCad=addDias(baseCad(x), cadX[etapa]), minimo=addDias(hoyISO(),2);
     next = porCad>minimo ? porCad : minimo;
   }
   var updates = {seg_etapa:etapa, seg_proxima:next, seg_historial:hist};
@@ -9493,7 +9545,7 @@ function renderActividad(){
     var hist = [];
     qs.forEach(function(q){ if (Array.isArray(q.seg_historial)) hist = hist.concat(q.seg_historial); });
     /* 1 · lo que le tocaba a ESTE CLIENTE, una vez por etapa */
-    var base = fechaBaseISO(lead.fecha_creacion);
+    var base = baseCad(lead);
     /* 08-10-2026: «Tocaban» se cuenta con la MISMA vara que la lista de Hoy
        (dueDate). Antes se contaba cada toque de la cadencia en su fecha fija
        desde la cotización, y el % no le calzaba a César: el 07-10 marcaba 10
