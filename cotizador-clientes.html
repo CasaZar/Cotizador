@@ -2002,9 +2002,10 @@ function mesaLabel(nombre) {
    proponen la de abajo en «Medidas a pedido»: ahí se escriben las dos. */
 var PAR_DELTA = { alto: 6, ancho: 5, largo: 10 };
 var PAR_ALTO_DEF = 40;   /* alto de la mesa superior, igual que la ficha de casazaru.cl */
-/* Los dos tamaños de la tienda, al precio publicado y en cualquier madera,
-   igual que la web (la madera no cambia el precio allá). Si cambia el precio
-   en Shopify, se cambia aquí. */
+/* Los dos tamaños de la tienda. `precio` es el de casazaru.cl y vale SOLO en
+   Pino Oregón (26-10-2026, pedido del usuario: «la oferta solo en pino»). Las
+   demás maderas van a su valor por m², como cualquier mesa del cotizador, y
+   nunca bajo el precio del Pino. Si cambia el precio en Shopify, se cambia aquí. */
 var PAR_CATALOGO = {
   mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, precio:399900 },
   grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, precio:849900 }
@@ -2942,7 +2943,9 @@ function calcLive() {
     if (mParLive && mParLive.par) mM2 += mesaParM2();
     var parCat = mesaParCatalogo();
     if (parCat) {
-      bajo = alto = parCat.precio;   /* tamaño de la tienda: su precio, en cualquier madera */
+      /* tamaño de la tienda: Pino a su precio; la madera más cara, a su valor por m² */
+      bajo = parCat.precio;
+      alto = Math.max(parCat.precio, mM2*PR.cubierta.alto);
     } else if (mM2 > 0) {
       var mSug = mesaSugerido();
       bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
@@ -5293,10 +5296,14 @@ function htmlMesa(cli, fecha) {
     return sug ? sug[tier] : 0;
   }
   /* cada madera = su cubierta + sus bases + reborde + extras.
-     El par en tamaño de la tienda (Mediano o Grande) va a su precio publicado
-     en las tres maderas, como en casazaru.cl (26-10-2026). */
+     El par en tamaño de la tienda (Mediano o Grande): Pino Oregón al precio
+     de casazaru.cl; las demás maderas a su valor por m², nunca bajo el Pino
+     (26-10-2026, pedido del usuario). */
   var parCatD = esPar ? mesaParCatalogo() : null;
-  var tierMadera = function(t){ return parCatD ? parCatD.precio : sumM2*PR.cubierta[t]; };
+  var tierMadera = function(t){
+    if (!parCatD) return sumM2*PR.cubierta[t];
+    return t === 'bajo' ? parCatD.precio : Math.max(parCatD.precio, sumM2*PR.cubierta[t]);
+  };
   var tierBase   = function(t){ return parCatD ? 0 : baseTier(t) * nBases; };
   var tierRows = [
     {label:'Pino Oregón',              tier:'bajo',  madera: tierMadera('bajo'),  base: tierBase('bajo')},
@@ -5368,7 +5375,7 @@ function tierTableMesa(rows, recTier, M, esMadera, nBases, esPar, parCatalogo) {
   /* el par no tiene «cubierta + base»: son dos mesas enteras de madera, y el
      desglose decía «base $0» (26-10-2026) */
   if (esPar) return preciosCards(rows, recTier, null,
-    (parCatalogo ? 'Tamaño de la tienda: mismo precio en todas las maderas · ' : '') +
+    (parCatalogo ? 'Pino Oregón al precio de la tienda · ' : '') +
     'Valores incluyen las 2 mesas · Precios con IVA · Con tarjeta pagas el valor indicado');
   var lblBase = (nBases > 1) ? (nBases + ' bases ') : 'base ';
   var desglose = function(r) {
