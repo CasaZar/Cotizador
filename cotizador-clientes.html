@@ -1806,9 +1806,11 @@ var FOTOS = {
   cubierta:      'https://cotizador.casazaru.cl/fotos/cubierta-wide.jpg',
   repisa:        'https://cotizador.casazaru.cl/fotos/repisa.jpg',
   peldano:       'https://cotizador.casazaru.cl/fotos/peldano.jpg',
-  mesa:          'https://cotizador.casazaru.cl/fotos/mesa.jpg',          /* tarjeta "Mesas de centro" */
-  /* 08-10-2026: foto de catálogo (estudio) mientras no haya una de un comedor real */
-  'mesa-comedor':'https://cotizador.casazaru.cl/fotos/mesas/rio-valdivia.jpg',
+  /* 26-10-2026: las dos mesas con fotos de casas reales. La de centro es la
+     Río Bueno (la misma foto del producto en la web); la de comedor reemplaza
+     el render de estudio de la Río Valdivia. */
+  mesa:          'https://cotizador.casazaru.cl/fotos/mesa-centro.jpg',   /* tarjeta "Mesas de centro" */
+  'mesa-comedor':'https://cotizador.casazaru.cl/fotos/mesa-comedor.jpg',
   puertas:       'https://cotizador.casazaru.cl/fotos/puertas.jpg',
   revestimiento: 'https://cotizador.casazaru.cl/fotos/revestimiento.jpg'
 };
@@ -1823,16 +1825,19 @@ var FOTOS = {
      peldaño  42% → la escalera está a la izquierda; centrarla evita
                     comerse la punta de los peldaños y tanto mármol negro
      puertas  45% → la puerta queda centrada en el recorte
-     mesa     46% → conserva el canto izquierdo de la mesa
+     mesa     (hasta el 26-10 iba 46%: conservaba el canto izquierdo de la foto vieja)
      repisa   sin ajuste: la repisa cruza toda la foto y el centro sirve
      revestimiento: esta SÍ es vertical, se recorta a lo alto → 'center 25%' */
-var FOTO_POS = { revestimiento:'center 25%', peldano:'42% center', puertas:'45% center', mesa:'46% center' };
+var FOTO_POS = { revestimiento:'center 25%', peldano:'42% center', puertas:'45% center',
+                 /* 26-10: las dos fotos de mesas son más altas que la tarjeta (cuadrada y 3:4):
+                    se recortan a lo ALTO, y la mesa está un poco bajo el centro */
+                 mesa:'center 55%', 'mesa-comedor':'center 55%' };
 var FOTO_ALT = {
   cubierta:      'Cubierta de madera maciza en una isla de cocina, con lavaplatos',
   repisa:        'Repisa de madera montada en la pared con plantas',
   peldano:       'Peldaños de madera flotantes en una escalera',
-  mesa:          'Mesa de centro de madera maciza en un living con vista al volcán',
-  'mesa-comedor':'Mesa de comedor Río Valdivia de madera maciza',
+  mesa:          'Mesas de centro Río Bueno de madera maciza en un living',
+  'mesa-comedor':'Mesa de comedor de madera maciza con sillas negras, junto a la ventana',
   puertas:       'Puerta de entrada de madera maciza instalada',
   revestimiento: 'Dormitorio con revestimiento de madera en muro y cielo'
 };
