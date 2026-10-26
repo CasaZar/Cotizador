@@ -1079,6 +1079,15 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-marca { font-size:12px; font-weight:500; padding:1px 8px; border-radius:999px; background:var(--bg3); color:var(--acd); margin-left:8px; vertical-align:1px; }
 .hz-marca.int { background:#FCE7F3; color:#9D174D; }
 .hz-marca.rec { background:#FEF3C7; color:#92400E; }
+/* Campaña peldaños (26-10-2026): los que se cerraron DICIENDO algo se ven
+   distinto de los que solo dejaron de contestar. «Caro» va en terracota, es
+   justo a quien le sirve el descuento; «desistió» va apagado: se le escribe
+   igual, pero sin esperar mucho. */
+.hz-marca.caro, .hz-marca.fuera { display:inline-block; white-space:nowrap; }   /* la marca baja entera, no partida */
+.hz-marca.caro { background:#B5652E; color:#fff; }
+.hz-marca.fuera { background:#F3F4F6; color:#6B7280; }
+.hz-fila.camp-fuera .hz-nom, .hz-fila.camp-fuera .hz-monto { color:var(--tm); }
+.hz-fila.camp-fuera .hz-ini { background:#F3F4F6; color:#9CA3AF; }
 .hz-anuncio { display:inline-block; margin-left:6px; font-size:12px; font-weight:600; color:#1D4ED8; }
 .hz-act { flex-shrink:0; }
 .hz-btn { display:inline-block; padding:8px 14px; border-radius:8px; font-size:14px; font-weight:600; font-family:inherit; text-decoration:none; border:1px solid var(--bd); background:#fff; color:var(--tx); cursor:pointer; white-space:nowrap; }
@@ -8251,8 +8260,11 @@ function campanaClientes(){
     var hecho = qs.some(function(q){ return (q.seg_historial || []).some(function(h){ return h && h.nota === CAMPANA.nota; }); });
     out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
   });
+  /* entre los cerrados, primero los que dijeron «caro» (el descuento es para
+     ellos) y al final los que desistieron (26-10-2026) */
+  var rango = function(c){ var t = campanaTipo(c); return t === 'caro' ? 0 : t === 'fuera' ? 2 : 1; };
   out.sort(function(a,b){
-    return (a.hecho - b.hecho) || (b.abierta - a.abierta) ||
+    return (a.hecho - b.hecho) || (b.abierta - a.abierta) || (rango(a) - rango(b)) ||
            String(b.x.fecha_creacion || '').localeCompare(String(a.x.fecha_creacion || ''));
   });
   return out;
@@ -8295,9 +8307,27 @@ function campanaHtml(){
    sin respuesta en agosto, nunca marcado perdido) salía «abierta»: César lo
    recordaba cerrado y no entendía. El historial se mira en TODAS sus
    cotizaciones, porque el seguimiento vive en la líder del grupo. */
+/* Por qué se cerró, cuando el cliente LO DIJO (26-10-2026): 'caro' si fue el
+   precio (el descuento le habla justo a él) y 'fuera' si desistió del
+   proyecto. Los cerrados por no contestar no llevan nada: no dijeron nada. */
+function campanaTipo(c){
+  var x = c.x;
+  if ((x.estado || 'enviada') !== 'perdida') return '';
+  var m = String(x.motivo_perdida || '');
+  if (/precio|caro/i.test(m)) return 'caro';
+  if (/desisti/i.test(m)) return 'fuera';
+  return '';
+}
+function campanaMarca(c){
+  var t = campanaTipo(c);
+  if (t === 'caro')  return '<span class="hz-marca caro">💸 le pareció caro</span>';
+  if (t === 'fuera') return '<span class="hz-marca fuera">desistió del proyecto</span>';
+  return '';
+}
 function campanaEstado(c){
   var x = c.x;
   if ((x.estado || 'enviada') === 'perdida') {
+    if (campanaTipo(c)) return 'cerrada';   /* la marca de la fila ya dice por qué */
     var mot = String(x.motivo_perdida || '').replace(/\s*\(.*\)\s*$/, '');
     return 'cerrada' + (mot ? ': ' + mot.toLowerCase() : '');
   }
@@ -8593,7 +8623,9 @@ function hoyFila(g, cls){
   g.quotes.forEach(function(q){ var p = prodNombre(q.producto); if (p && prods.indexOf(p) === -1) prods.push(p); });
   /* UNA marca como máximo, la que más cambia la conversación */
   var marca = '';
-  if (x.interesado) marca = '<span class="hz-marca int">★ interesado</span>';
+  /* en la campaña de peldaños manda lo que dijo el cliente al cerrarse */
+  if (g.camp && campanaMarca(g.camp)) marca = campanaMarca(g.camp);
+  else if (x.interesado) marca = '<span class="hz-marca int">★ interesado</span>';
   else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
   else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
   /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
@@ -8636,7 +8668,8 @@ function hoyFila(g, cls){
       (hoyFicha ? '<div class="hz-ficha">'+segClientCard(g, cls)+'</div>' : '')+
     '</div>';
   }
-  return '<div class="hz-fila hz-'+cls+(abierta?' abierta':'')+'">'+
+  var fuera = (g.camp && campanaTipo(g.camp) === 'fuera') ? ' camp-fuera' : '';
+  return '<div class="hz-fila hz-'+cls+fuera+(abierta?' abierta':'')+'">'+
     '<div class="hz-linea">'+
       '<button class="hz-main" onclick="hoyToggle(\''+x.id+'\')">'+
         '<span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
