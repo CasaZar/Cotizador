@@ -2002,13 +2002,14 @@ function mesaLabel(nombre) {
    proponen la de abajo en «Medidas a pedido»: ahí se escriben las dos. */
 var PAR_DELTA = { alto: 6, ancho: 5, largo: 10 };
 var PAR_ALTO_DEF = 40;   /* alto de la mesa superior, igual que la ficha de casazaru.cl */
-/* Los dos tamaños de la tienda. `precio` es el de casazaru.cl y vale SOLO en
-   Pino Oregón (26-10-2026, pedido del usuario: «la oferta solo en pino»). Las
-   demás maderas van a su valor por m², como cualquier mesa del cotizador, y
-   nunca bajo el precio del Pino. Si cambia el precio en Shopify, se cambia aquí. */
+/* Los dos tamaños de la tienda, a los precios de casazaru.cl (26-10-2026,
+   pedido del usuario: «los precios que corresponden en la web; solo el
+   Oregón con el precio de oferta»). `oferta` vale SOLO en Pino Oregón;
+   `normal` es el precio de la web sin oferta, para las demás maderas. La web
+   no cambia el precio según la madera. Si cambia en Shopify, se cambia aquí. */
 var PAR_CATALOGO = {
-  mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, precio:399900 },
-  grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, precio:849900 }
+  mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, oferta:399900, normal:499900 },
+  grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, oferta:849900, normal:849900 }
 };
 var parTam = 'mediano';   /* 'mediano' | 'grande' | 'pedido' */
 function mesaInferior(largo, ancho, alto) {
@@ -2943,9 +2944,9 @@ function calcLive() {
     if (mParLive && mParLive.par) mM2 += mesaParM2();
     var parCat = mesaParCatalogo();
     if (parCat) {
-      /* tamaño de la tienda: Pino a su precio; la madera más cara, a su valor por m² */
-      bajo = parCat.precio;
-      alto = Math.max(parCat.precio, mM2*PR.cubierta.alto);
+      /* tamaño de la tienda: Pino con la oferta de la web, las demás al precio normal de la web */
+      bajo = parCat.oferta;
+      alto = parCat.normal;
     } else if (mM2 > 0) {
       var mSug = mesaSugerido();
       bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
@@ -5296,13 +5297,13 @@ function htmlMesa(cli, fecha) {
     return sug ? sug[tier] : 0;
   }
   /* cada madera = su cubierta + sus bases + reborde + extras.
-     El par en tamaño de la tienda (Mediano o Grande): Pino Oregón al precio
-     de casazaru.cl; las demás maderas a su valor por m², nunca bajo el Pino
-     (26-10-2026, pedido del usuario). */
+     El par en tamaño de la tienda (Mediano o Grande) va a los precios de
+     casazaru.cl: Pino Oregón con la oferta, las demás maderas al precio
+     normal de la web (26-10-2026, pedido del usuario). */
   var parCatD = esPar ? mesaParCatalogo() : null;
   var tierMadera = function(t){
     if (!parCatD) return sumM2*PR.cubierta[t];
-    return t === 'bajo' ? parCatD.precio : Math.max(parCatD.precio, sumM2*PR.cubierta[t]);
+    return t === 'bajo' ? parCatD.oferta : parCatD.normal;
   };
   var tierBase   = function(t){ return parCatD ? 0 : baseTier(t) * nBases; };
   var tierRows = [
@@ -5365,7 +5366,7 @@ function htmlMesa(cli, fecha) {
     '</tbody></table>' +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
-    tierTableMesa(tierRows, recWood(), M, esMadera, nBases, esPar, !!parCatD) +
+    tierTableMesa(tierRows, recWood(), M, esMadera, nBases, esPar, parCatD) +
     detalleFierro +
     boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total, escA(M.nombre))
   );
@@ -5375,7 +5376,8 @@ function tierTableMesa(rows, recTier, M, esMadera, nBases, esPar, parCatalogo) {
   /* el par no tiene «cubierta + base»: son dos mesas enteras de madera, y el
      desglose decía «base $0» (26-10-2026) */
   if (esPar) return preciosCards(rows, recTier, null,
-    (parCatalogo ? 'Pino Oregón al precio de la tienda · ' : '') +
+    (!parCatalogo ? '' : parCatalogo.oferta < parCatalogo.normal
+      ? 'Pino Oregón con precio de oferta · ' : 'Precio de la tienda, el mismo en todas las maderas · ') +
     'Valores incluyen las 2 mesas · Precios con IVA · Con tarjeta pagas el valor indicado');
   var lblBase = (nBases > 1) ? (nBases + ' bases ') : 'base ';
   var desglose = function(r) {
