@@ -711,6 +711,17 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .par-nota { background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:9px 11px;margin-top:10px;font-size:12.5px;color:var(--tx);line-height:1.5; }
 .par-nota b { color:var(--acd); }
 .par-medidas { margin-top:6px;font-size:12px;color:var(--tm); }
+/* conjunto Río Bueno (26-10-2026): Mediano, Grande o medidas a pedido */
+.par-tams { display:flex; gap:6px; margin:10px 0 2px; }
+.par-tam { flex:1; min-width:0; padding:9px 4px; border:1.5px solid var(--bd); border-radius:8px; background:#fff; font:inherit; font-size:13.5px; font-weight:600; color:var(--tx); cursor:pointer; line-height:1.25; }
+.par-tam small { display:block; font-weight:400; font-size:11.5px; color:var(--tm); }
+.par-tam.on { border-color:var(--ac); background:var(--crt); color:var(--acd); }
+.par-mesa { margin-top:10px; }
+.par-mesa-t { font-size:12.5px; font-weight:600; color:var(--acd); margin-bottom:4px; }
+.par-inputs { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.par-inputs label { font-size:11.5px; color:var(--tm); display:flex; flex-direction:column; gap:2px; }
+.par-inputs input { width:100%; min-width:0; box-sizing:border-box; padding:8px; border:1px solid var(--bd); border-radius:7px; font:inherit; font-size:15px; background:#fff; }
+.par-aviso { margin-top:8px; font-size:12px; color:#991B1B; }
 /* nota viva de ergonomía: cómo se vería la mesa con esas medidas */
 .ms-ergo { display:flex;align-items:flex-start;gap:8px;font-size:14.5px;color:var(--acd);background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;margin-top:8px;line-height:1.45; }
 .ms-ergo:empty { display:none; }
@@ -1985,8 +1996,20 @@ function mesaLabel(nombre) {
    de la de arriba y la de abajo sale de estos deltas: entran una debajo de la
    otra, así que la chica cede 3 cm de alto para pasar bajo la cubierta, 3 de
    ancho y 6 de largo para no toparse con las patas. */
-var PAR_DELTA = { alto: 3, ancho: 3, largo: 6 };
+/* 26-10-2026: los deltas son los del catálogo de casazaru.cl (Mediano 90×70×40
+   sobre 80×65×34, Grande 120×80×40 sobre 110×75×34). Antes eran 6/3/3 y la
+   mesa de abajo no calzaba con la que César le mandaba al cliente. Ahora solo
+   proponen la de abajo en «Medidas a pedido»: ahí se escriben las dos. */
+var PAR_DELTA = { alto: 6, ancho: 5, largo: 10 };
 var PAR_ALTO_DEF = 40;   /* alto de la mesa superior, igual que la ficha de casazaru.cl */
+/* Los dos tamaños de la tienda, al precio publicado y en cualquier madera,
+   igual que la web (la madera no cambia el precio allá). Si cambia el precio
+   en Shopify, se cambia aquí. */
+var PAR_CATALOGO = {
+  mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, precio:399900 },
+  grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, precio:849900 }
+};
+var parTam = 'mediano';   /* 'mediano' | 'grande' | 'pedido' */
 function mesaInferior(largo, ancho, alto) {
   return {
     largo: Math.max(0, (parseFloat(largo) || 0) - PAR_DELTA.largo),
@@ -2917,7 +2940,10 @@ function calcLive() {
        documento final, que sí filtra por par, estaba bien). */
     var mParLive = mesaModeloActual();
     if (mParLive && mParLive.par) mM2 += mesaParM2();
-    if (mM2 > 0) {
+    var parCat = mesaParCatalogo();
+    if (parCat) {
+      bajo = alto = parCat.precio;   /* tamaño de la tienda: su precio, en cualquier madera */
+    } else if (mM2 > 0) {
       var mSug = mesaSugerido();
       bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
       alto = mM2*PR.cubierta.alto + (mSug ? mSug.alto*mCant : 0);
@@ -2959,17 +2985,18 @@ function calcLive() {
     var liveM2 =(typeof sumM2 !== 'undefined' && sumM2) || (typeof m2r !== 'undefined' && m2r) || 0;
     var exT = getExtrasTotal(liveM2);
     bajo += rebordeValor('bajo'); alto += rebordeValor('alto');   /* el reborde cuesta según la madera */
-    rangeEl.innerHTML = fmt(bajo + exT) + '<span class="sep-dash"> — </span>' + fmt(alto + exT);
+    var unPrecio = Math.round(bajo) === Math.round(alto);   /* el par en tamaño de catálogo */
+    rangeEl.innerHTML = unPrecio ? fmt(bajo + exT) : fmt(bajo + exT) + '<span class="sep-dash"> — </span>' + fmt(alto + exT);
     /* peldaños: la gente compara por unidad (la tienda vende por peldaño), así
        que además del total se muestra cuánto sale cada uno */
     var nP = (prod === 'peldano') ? nPeldanos().n : 0;
     noteEl.textContent = (nP > 1)
       ? (nP + ' peldaños · ' + fmt((bajo + exT) / nP) + ' a ' + fmt((alto + exT) / nP) + ' c/u' + (contraDatos() ? ' con contrahuella' : '') + ' · IVA incluido · Envío según comuna')
-      : 'Según la madera · IVA incluido · Envío según comuna · Hasta 3 cuotas sin interés';
+      : ((unPrecio ? 'Mismo precio en todas las maderas' : 'Según la madera') + ' · IVA incluido · Envío según comuna · Hasta 3 cuotas sin interés');
     noteEl.style.display = 'block';
     embudoTick('medidas');
     barraPrecio.hay = true;
-    var bpv = document.getElementById('bp-v'); if (bpv) bpv.textContent = fmt(bajo + exT) + ' – ' + fmt(alto + exT);
+    var bpv = document.getElementById('bp-v'); if (bpv) bpv.textContent = unPrecio ? fmt(bajo + exT) : fmt(bajo + exT) + ' – ' + fmt(alto + exT);
   } else {
     rangeEl.innerHTML = '<span class="lp-empty">Escribe las medidas para ver tu precio</span>';
     noteEl.style.display = 'none';
@@ -3276,7 +3303,8 @@ function renderForm(p) {
         '<label class="flabel">¿Qué es? <span class="req">*</span></label>' +
         '<input class="finput" type="text" id="ms-nombre" placeholder="Ej. Mesa de comedor, Arrimo, Mesa de centro" value="' + (mesaTipo==='centro' ? 'Mesa de centro' : 'Mesa de comedor') + '">' +
       '</div>' +
-      '<div class="fsec">' +
+      /* id: el conjunto Río Bueno la esconde y pide sus medidas en su propio cuadro */
+      '<div class="fsec" id="ms-med-sec">' +
         '<label class="flabel" id="ms-med-lbl">Medidas de la cubierta</label>' +
         '<div class="col-labels dg">' +
           '<div class="col-lbl nar"></div>' +
@@ -3439,7 +3467,11 @@ function mesaDatos() {
     valorAlto:  parseInt(v('ms-valor-alto'), 10) || 0,
     pesoBase: parseFloat(v('ms-peso-madera')) || 0,
     tipo: mesaTipo,                                    /* pestaña comedor / centro */
-    altoSup: parseFloat(v('ms-alto-sup')) || 0         /* alto de la mesa de arriba, solo el par */
+    altoSup: parseFloat(v('ms-alto-sup')) || 0,        /* alto de la mesa de arriba, solo el par */
+    parTam: parTam,                                    /* par: mediano, grande o pedido */
+    infLargo: parseFloat(v('ms-inf-lg')) || 0,         /* par a pedido: la mesa de abajo */
+    infAncho: parseFloat(v('ms-inf-an')) || 0,
+    infAlto:  parseFloat(v('ms-inf-alto')) || 0
   };
 }
 /* al elegir un modelo del catálogo: completa nombre y tipo de base, y si algún día
@@ -3452,7 +3484,8 @@ function mesaModeloSel(nombre) {
   var btEl = document.getElementById('ms-base-tipo');
   if (btEl) btEl.value = m.base;
   toggleBaseMesa(m.base);
-  mesaParNota();   /* el conjunto Río Bueno abre su aviso y su campo de alto */
+  if (m.par) { parTam = 'mediano'; mesaParAplicar(); }   /* parte en el tamaño que más se vende */
+  mesaParNota();   /* el conjunto Río Bueno abre su aviso y sus tamaños */
   calcLive();   /* calcLive refresca también la sugerencia de base */
 }
 /* ── PESTAÑA COMEDOR / CENTRO ──
@@ -3491,42 +3524,112 @@ function mesaParNota() {
   var cont = document.getElementById('ms-par-nota');
   if (!cont) return;
   var m = mesaModeloActual();
-  if (!m || !m.par) { cont.innerHTML = ''; return; }
-  var prev = document.getElementById('ms-alto-sup');
-  var alto = prev ? (prev.value || PAR_ALTO_DEF) : PAR_ALTO_DEF;
-  cont.innerHTML =
+  var esPar = !!(m && m.par);
+  /* las medidas del par van en este cuadro: la fila genérica de medidas se
+     esconde, si no el cliente veía dos lugares donde escribir lo mismo */
+  var sec = document.getElementById('ms-med-sec');
+  if (sec) sec.classList.toggle('hidden', esPar);
+  if (!esPar) { cont.innerHTML = ''; return; }
+  /* 26-10-2026 (pedido del usuario): los dos tamaños de la tienda a un toque, y
+     «A pedido» para escribir las dos mesas una por una */
+  var tamBtn = function(k, titulo, sub){
+    return '<button type="button" class="par-tam' + (parTam === k ? ' on' : '') + '" onclick="mesaParSet(\'' + k + '\')">' +
+      titulo + '<small>' + sub + '</small></button>';
+  };
+  var html =
     '<div class="par-nota">' +
-      '<b>Son dos mesas.</b> Se venden juntas y una entra debajo de la otra. ' +
-      'Escribe las medidas de la mesa de arriba y calculamos la de abajo.' +
-      '<div class="fsec" style="margin-top:9px">' +
-        '<label class="flabel">Alto de la mesa de arriba (cm)</label>' +
-        '<input class="finput" type="number" inputmode="decimal" id="ms-alto-sup" min="0" value="' + alto + '" oninput="mesaParMedidas();calcLive()">' +
-      '</div>' +
-      '<div class="par-medidas" id="ms-par-med"></div>' +
-    '</div>';
+      '<b>Son dos mesas.</b> Se venden juntas y una entra debajo de la otra.' +
+      '<div class="par-tams">' +
+        tamBtn('mediano', 'Mediano', '90 × 70 cm') +
+        tamBtn('grande',  'Grande',  '120 × 80 cm') +
+        tamBtn('pedido',  'A pedido', 'tus medidas') +
+      '</div>';
+  if (PAR_CATALOGO[parTam]) {
+    html += '<div class="par-medidas" id="ms-par-med"></div>';
+  } else {
+    /* parte con las medidas del tamaño que estaba elegido: se corrige lo que haga falta */
+    var d = mesaParDims() || { sup:{ largo:'', ancho:'', alto:PAR_ALTO_DEF }, inf:{ largo:'', ancho:'', alto:'' } };
+    var campo = function(id, lbl, val){
+      return '<label>' + lbl + '<input type="number" inputmode="decimal" min="0" id="' + id + '" value="' + (val ? _n(val).replace(',', '.') : '') + '" oninput="mesaParInput()"></label>';
+    };
+    html +=
+      '<div class="par-mesa"><div class="par-mesa-t">Mesa de arriba (cm)</div><div class="par-inputs">' +
+        campo('ms-sup-lg', 'Largo', d.sup.largo) + campo('ms-sup-an', 'Ancho', d.sup.ancho) + campo('ms-alto-sup', 'Alto', d.sup.alto) +
+      '</div></div>' +
+      '<div class="par-mesa"><div class="par-mesa-t">Mesa de abajo (cm)</div><div class="par-inputs">' +
+        campo('ms-inf-lg', 'Largo', d.inf.largo) + campo('ms-inf-an', 'Ancho', d.inf.ancho) + campo('ms-inf-alto', 'Alto', d.inf.alto) +
+      '</div></div>' +
+      '<div class="par-aviso" id="ms-par-aviso"></div>';
+  }
+  cont.innerHTML = html + '</div>';
   mesaParMedidas();
 }
-/* línea viva con las dos mesas, para que el cliente vea qué está comprando */
+/* el tamaño del catálogo elegido (Mediano o Grande), o null si es a pedido o no es el par */
+function mesaParCatalogo() {
+  var m = mesaModeloActual();
+  return (m && m.par && PAR_CATALOGO[parTam]) || null;
+}
+/* tocar Mediano, Grande o A pedido */
+function mesaParSet(k) {
+  parTam = PAR_CATALOGO[k] ? k : 'pedido';
+  mesaParAplicar();
+  mesaParNota();
+  calcLive();
+}
+/* El par usa SOLO la fila 1 de medidas (la mesa de arriba): el resto del
+   cotizador —precio en vivo, peso del envío, teñido, líneas guardadas— lee de
+   ahí. Las filas extra se quitan, porque escondidas igual se sumaban. En un
+   tamaño del catálogo la fila 1 toma su mesa de arriba. */
+function mesaParAplicar() {
+  for (var i = 2; i <= nrows; i++) { var r = document.getElementById('r' + i); if (r) r.remove(); }
+  renumRows('drows');
+  var cat = PAR_CATALOGO[parTam]; if (!cat) return;
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v; };
+  set('lg1', cat.sup.largo); set('an1', cat.sup.ancho); set('ca1', 1);
+}
+/* A pedido: lo que se escribe de la mesa de arriba pasa a la fila 1 */
+function mesaParInput() {
+  var v = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+  var set = function(id, x){ var el = document.getElementById(id); if (el) el.value = x; };
+  set('lg1', v('ms-sup-lg')); set('an1', v('ms-sup-an')); set('ca1', 1);
+  calcLive();   /* calcLive llama a mesaParMedidas */
+}
+/* línea viva con las dos mesas (catálogo) o aviso si la de abajo no entra (a pedido) */
 function mesaParMedidas() {
-  var out = document.getElementById('ms-par-med');
-  if (!out) return;
   var d = mesaParDims();
-  if (!d) { out.textContent = 'Escribe el largo y el ancho de la mesa de arriba.'; return; }
-  var sup = 'Mesa de arriba: ' + _n(d.sup.largo) + ' × ' + _n(d.sup.ancho) + ' × ' + _n(d.sup.alto) + ' cm';
-  var inf = 'Mesa de abajo: ' + _n(d.inf.largo) + ' × ' + _n(d.inf.ancho) + ' × ' + _n(d.inf.alto) + ' cm';
-  out.innerHTML = sup + '<br>' + inf;
+  var out = document.getElementById('ms-par-med');
+  if (out) {
+    if (!d) { out.textContent = 'Escribe el largo y el ancho de la mesa de arriba.'; return; }
+    var sup = 'Mesa de arriba: ' + _n(d.sup.largo) + ' × ' + _n(d.sup.ancho) + ' × ' + _n(d.sup.alto) + ' cm';
+    var inf = 'Mesa de abajo: ' + _n(d.inf.largo) + ' × ' + _n(d.inf.ancho) + ' × ' + _n(d.inf.alto) + ' cm';
+    out.innerHTML = sup + '<br>' + inf;
+  }
+  var av = document.getElementById('ms-par-aviso');
+  if (av) {
+    /* lo que la de abajo cede en el catálogo: 10 de largo y 6 de alto, y nunca más ancha */
+    var noEntra = d && (d.inf.largo > d.sup.largo - PAR_DELTA.largo || d.inf.ancho > d.sup.ancho || d.inf.alto > d.sup.alto - PAR_DELTA.alto);
+    av.textContent = noEntra
+      ? 'Ojo: así la mesa de abajo puede no entrar bajo la de arriba. En la tienda es 10 cm más corta, 5 más angosta y 6 más baja.'
+      : '';
+  }
 }
 /* redondeo corto para las medidas (nada de 84.00000000001) */
 function _n(v) { return (Math.round((parseFloat(v)||0) * 10) / 10).toString().replace('.', ','); }
 /* medidas de las dos mesas del par, o null si aún no hay largo/ancho */
 function mesaParDims() {
+  var cat = mesaParCatalogo();
+  if (cat) return { sup: Object.assign({}, cat.sup), inf: Object.assign({}, cat.inf) };
   var lg = document.getElementById('lg1'), an = document.getElementById('an1');
   var L = lg ? parseFloat(lg.value) || 0 : 0;
   var A = an ? parseFloat(an.value) || 0 : 0;
   if (!L || !A) return null;
   var altoEl = document.getElementById('ms-alto-sup');
   var H = altoEl ? (parseFloat(altoEl.value) || PAR_ALTO_DEF) : PAR_ALTO_DEF;
-  return { sup: { largo: L, ancho: A, alto: H }, inf: mesaInferior(L, A, H) };
+  /* a pedido: la de abajo es la que se escribió; lo que falte, la propone el catálogo */
+  var def = mesaInferior(L, A, H);
+  var g = function(id, x){ var el = document.getElementById(id); var n = el ? parseFloat(el.value) || 0 : 0; return n > 0 ? n : x; };
+  return { sup: { largo: L, ancho: A, alto: H },
+           inf: { largo: g('ms-inf-lg', def.largo), ancho: g('ms-inf-an', def.ancho), alto: g('ms-inf-alto', def.alto) } };
 }
 /* ── LAS PIEZAS QUE EL CLIENTE NO ESCRIBE ──
    Del par, el cliente da una sola medida: largo y ancho de la tapa de arriba.
@@ -5189,11 +5292,16 @@ function htmlMesa(cli, fecha) {
     if (manual > 0) return manual;
     return sug ? sug[tier] : 0;
   }
-  /* cada madera = su cubierta + sus bases + reborde + extras */
+  /* cada madera = su cubierta + sus bases + reborde + extras.
+     El par en tamaño de la tienda (Mediano o Grande) va a su precio publicado
+     en las tres maderas, como en casazaru.cl (26-10-2026). */
+  var parCatD = esPar ? mesaParCatalogo() : null;
+  var tierMadera = function(t){ return parCatD ? parCatD.precio : sumM2*PR.cubierta[t]; };
+  var tierBase   = function(t){ return parCatD ? 0 : baseTier(t) * nBases; };
   var tierRows = [
-    {label:'Pino Oregón',              tier:'bajo',  madera: sumM2*PR.cubierta.bajo,  base: baseTier('bajo')  * nBases},
-    {label:'Castaño / Ciprés / Mañío', tier:'medio', madera: sumM2*PR.cubierta.medio, base: baseTier('medio') * nBases},
-    {label:'Coihue / Raulí / Lenga',   tier:'alto',  madera: sumM2*PR.cubierta.alto,  base: baseTier('alto')  * nBases}
+    {label:'Pino Oregón',              tier:'bajo',  madera: tierMadera('bajo'),  base: tierBase('bajo')},
+    {label:'Castaño / Ciprés / Mañío', tier:'medio', madera: tierMadera('medio'), base: tierBase('medio')},
+    {label:'Coihue / Raulí / Lenga',   tier:'alto',  madera: tierMadera('alto'),  base: tierBase('alto')}
   ].map(function(r){ r.total = r.madera + r.base + rebordeValor(r.tier) + vExtrasTot; return r; });
 
   var pesoMadera = Math.round(sumM2*30);
@@ -5217,6 +5325,7 @@ function htmlMesa(cli, fecha) {
       (espCub ? '<div class="spec"><div class="sl">Espesor de la cubierta</div><div class="sv">'+escA(espCub)+'</div></div>' : '') +
       (esMadera && M.espesorBase ? '<div class="spec"><div class="sl">Espesor de la base</div><div class="sv">'+escA(M.espesorBase)+'</div></div>' : '') +
       (esPar ? '<div class="spec"><div class="sl">Incluye</div><div class="sv">2 mesas (se venden juntas)</div></div>' : '') +
+      (esPar ? '<div class="spec"><div class="sl">Tamaño</div><div class="sv">'+(parCatD ? parCatD.nombre+' (el de la tienda)' : 'A pedido')+'</div></div>' : '') +
       (esPar ? '<div class="spec"><div class="sl">Alto</div><div class="sv">'+_n(parD.sup.alto)+' cm la de arriba · '+_n(parD.inf.alto)+' cm la de abajo</div></div>' : '') +
       (M.altura ? '<div class="spec"><div class="sl">Altura final</div><div class="sv">'+M.altura+' cm</div></div>' : '') +
       (!esMadera && M.perfil ? '<div class="spec"><div class="sl">Perfil del fierro</div><div class="sv">'+escA(M.perfil)+'</div></div>' : '') +
@@ -5249,13 +5358,18 @@ function htmlMesa(cli, fecha) {
     '</tbody></table>' +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
-    tierTableMesa(tierRows, recWood(), M, esMadera, nBases) +
+    tierTableMesa(tierRows, recWood(), M, esMadera, nBases, esPar, !!parCatD) +
     detalleFierro +
     boxes() + warranty() + muestrario() + whatsappCTA(tierRows[0].total, tierRows[2].total, escA(M.nombre))
   );
 }
 /* tabla de precios con el desglose cubierta + base (fierro o madera) */
-function tierTableMesa(rows, recTier, M, esMadera, nBases) {
+function tierTableMesa(rows, recTier, M, esMadera, nBases, esPar, parCatalogo) {
+  /* el par no tiene «cubierta + base»: son dos mesas enteras de madera, y el
+     desglose decía «base $0» (26-10-2026) */
+  if (esPar) return preciosCards(rows, recTier, null,
+    (parCatalogo ? 'Tamaño de la tienda: mismo precio en todas las maderas · ' : '') +
+    'Valores incluyen las 2 mesas · Precios con IVA · Con tarjeta pagas el valor indicado');
   var lblBase = (nBases > 1) ? (nBases + ' bases ') : 'base ';
   var desglose = function(r) {
     return '<span class="mesa-desglose">Cubierta ' + fmt(r.madera) + ' + ' + lblBase + fmt(r.base) + '</span>';
@@ -6048,8 +6162,15 @@ function restoreProducto(d) {
        está en "comedor", su tarjeta viene oculta y no se alcanza a marcar */
     mesaSetTipo(d.mesa.tipo || 'comedor');
     setv('ms-modelo', d.mesa.modelo); mesaCardsMarcar(); setv('ms-esp-cubierta', d.mesa.espesorCubierta);
-    mesaParNota();                                   /* recrea el campo de alto si es el par */
+    /* el par: el tamaño que traía el link. Los links de antes del 26-10-2026 no
+       lo traen y su mesa de abajo salía de otros deltas (6/3/3): se abren «a
+       pedido» con esas medidas, para que muestren lo mismo que se mandó. */
+    parTam = d.mesa.parTam || 'pedido';
+    mesaParNota();                                   /* recrea el cuadro del par */
     setv('ms-alto-sup', d.mesa.altoSup);
+    if (d.mesa.infLargo > 0) setv('ms-inf-lg', d.mesa.infLargo);
+    if (d.mesa.infAncho > 0) setv('ms-inf-an', d.mesa.infAncho);
+    if (d.mesa.infAlto  > 0) setv('ms-inf-alto', d.mesa.infAlto);
     setv('ms-nombre', d.mesa.nombre); setv('ms-valor', d.mesa.valor); setv('ms-altura', d.mesa.altura);
     setv('ms-perfil', d.mesa.perfil); setv('ms-color', d.mesa.color); setv('ms-metros', d.mesa.metros);
     var baseTipo = d.mesa.baseTipo || 'fierro';
@@ -6121,6 +6242,23 @@ function restoreProducto(d) {
       document.getElementById('an'+nrows).value = rows[i].an;
       document.getElementById('ca'+nrows).value = rows[i].ca;
       if (isPuerta && mods[i]) { var moN = document.getElementById('mo'+nrows); if (moN) moN.value = mods[i]; }
+    }
+  }
+  /* el par a pedido se vuelve a pintar ya con la fila 1 puesta (la mesa de
+     arriba vive ahí y se restaura recién arriba) */
+  if (d.p === 'mesa' && d.mesa) {
+    var mRp = mesaModeloActual();
+    if (mRp && mRp.par && !PAR_CATALOGO[parTam]) {
+      mesaParNota();
+      var r0 = (d.rows || [])[0];
+      if (!d.mesa.parTam && r0) {   /* link de antes del 26-10-2026: la de abajo salía 6/3/3 más chica */
+        var hSup = parseFloat(d.mesa.altoSup) || PAR_ALTO_DEF;
+        var setp = function(id, x){ var el = document.getElementById(id); if (el && x > 0) el.value = x; };
+        setp('ms-inf-lg', (parseFloat(r0.lg) || 0) - 6);
+        setp('ms-inf-an', (parseFloat(r0.an) || 0) - 3);
+        setp('ms-inf-alto', hSup - 3);
+      }
+      mesaParMedidas();
     }
   }
   rbRestaurar(d);   /* va DESPUÉS de las piezas: sus cantos cuelgan de cada fila */
