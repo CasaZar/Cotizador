@@ -96,25 +96,31 @@ function render(c){
   var t=Number(c.tramo_pct)||0,acum=Number(c.acumulado)||0;
   var compras=(c.compras||[]);
   var nombre=(c.contacto||'').trim();
-  var ini=new Date(String(c.ciclo_inicio).slice(0,10)+'T12:00:00'),fin=new Date(String(c.ciclo_fin).slice(0,10)+'T12:00:00');
-  var pc=Math.max(0,Math.min(100,(Date.now()-ini)/(fin-ini)*100)),quedan=Math.max(0,Math.ceil((fin-Date.now())/864e5));
   var over=acum>3000000?'<span class="over">'+(acum/3000000).toLocaleString('es-CL',{maximumFractionDigits:1})+'× la meta</span>':'';
-  var msgFalta=t===5?'<div class="falta ok">Tienes el <b>5 %</b>, el descuento más alto, en todas tus compras hasta el fin del ciclo.</div>':
+  var msgFalta=t===5?'<div class="falta ok">Tienes el <b>5 %</b>, el descuento más alto, en todas tus próximas compras.</div>':
     '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para pasar al <b>'+(t===2?'5':'2')+' %</b> en tus próximas compras.</div>';
+  // ventana móvil (26-10): cada compra cuenta durante 12 meses y después sale sola
+  var salida=c.salida_fecha?'El '+esc(fecha(c.salida_fecha,true))+' dejan de contar '+clp(c.salida_monto)+', que cumplen un año.':'';
   var html='<h1>'+esc(c.razon_social)+'</h1>'+
     '<div class="rut">RUT '+esc(rutFmt(c.rut))+(nombre?' · a cargo de '+esc(nombre):'')+'</div>'+
-    '<div class="hero"><div class="l">Comprado en tu ciclo</div>'+
+    '<div class="hero"><div class="l">Comprado en los últimos 12 meses</div>'+
       '<div class="fila"><div class="m">'+clp(acum)+'</div><div class="dsc t'+t+'">'+(t?t+' % de descuento':'aún sin descuento')+'</div></div>'+
       '<div class="bar2"><i class="t'+t+'" style="width:0" data-w="'+(acum/3000000*100>100?100:(acum/3000000*100).toFixed(1))+'"></i><div class="mk"></div>'+over+'</div>'+
       '<div class="esc"><span style="left:0">$0</span><span style="left:50%;transform:translateX(-50%);text-align:center"><b>2 %</b>$1,5M</span><span style="right:0;text-align:right"><b>5 %</b>$3M</span></div>'+
       msgFalta+'</div>'+
-    '<div class="lbl" style="margin-top:20px">Tu ciclo</div>'+
-    '<div class="ciclo" style="margin:0">'+esc(fecha(c.ciclo_inicio,true))+' → '+esc(fecha(c.ciclo_fin,true))+'<div class="cbar"><i style="width:'+pc.toFixed(0)+'%"></i></div>'+
-      '<span style="font-size:11px;color:var(--tinta3)">Quedan '+quedan+(quedan===1?' día':' días')+'. Al cumplirse el año, el acumulado parte de nuevo.</span></div>'+
-    '<div class="lbl" style="margin-top:20px">Compras del ciclo</div>'+
+    '<div class="lbl" style="margin-top:20px">Cómo se cuenta</div>'+
+    '<div class="ciclo" style="margin:0">Cada compra suma durante 12 meses y después deja de contar sola. '+salida+'</div>'+
+    '<div class="lbl" style="margin-top:20px">Tus beneficios</div>'+
+    '<div class="lista">'+
+      '<div class="it"><div><b style="white-space:normal">Muestrario sin costo</b><small>Para las cuentas empresa; normalmente vale $20.000.</small></div></div>'+
+      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>2 % sobre $1.500.000 y 5 % sobre $3.000.000, además del 5 % por transferencia.</small></div></div>'+
+      '<div class="it"><div><b style="white-space:normal">Cotizador para tus presupuestos</b><small>Valores por medida y especie, con el acabado incluido.</small></div></div>'+
+      '<div class="it"><div><b style="white-space:normal">Despacho a todo Chile</b><small>Con convenios de transporte; el costo se ve por proyecto.</small></div></div>'+
+    '</div>'+
+    '<div class="lbl" style="margin-top:20px">Compras de los últimos 12 meses</div>'+
     (compras.length?'<div class="lista">'+compras.map(function(k){
       return '<div class="it"><div>'+esc(k.detalle||(k.tipo==='NC'?'Nota de crédito':'Compra'))+'<small>'+esc(fecha(k.fecha))+(k.folio?' · '+(k.tipo==='NC'?'Nota de crédito':'Factura')+' '+esc(k.folio):'')+'</small></div><b>'+clp(k.monto)+'</b></div>';
-    }).join('')+'</div>':'<div class="ciclo">Todavía no hay compras en este ciclo.</div>')+
+    }).join('')+'</div>':'<div class="ciclo">Todavía no hay compras en los últimos 12 meses.</div>')+
     '<a class="cta" style="margin-top:18px" href="./?utm_source=cuenta&utm_medium=link&utm_campaign=cuenta-empresa">Cotizar un proyecto</a>'+
     '<a class="cta sec" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, escribo por la cuenta empresa de '+c.razon_social)+'">Escribirnos por WhatsApp</a>'+
     '<div class="cond">El descuento se aplica sobre el valor de lista del cotizador en las compras que hagas después de alcanzar cada tramo, y se suma al 5 % por pago con transferencia. Las cifras son los totales de tus facturas, IVA incluido.</div>'+
