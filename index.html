@@ -555,6 +555,13 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .omni-mas-btn.on { background:var(--acd);border-color:var(--acd);color:#fff; }
 .omni-mas { display:flex;flex-wrap:wrap;gap:6px;width:100%;margin-top:6px; }
 .omni-mas input, .omni-mas select { flex:1 1 120px;min-width:95px;padding:8px 9px;border:1px solid var(--bd);border-radius:8px;font-size:13.5px;font-family:'Jost',sans-serif;background:white;color:var(--tx); }
+/* filtros rápidos de un toque (26-10-2026): una línea que se desliza de lado
+   en el celular, para no comerse la pantalla antes de la lista */
+.omni-rap { display:flex;gap:6px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 0 4px;scrollbar-width:none; }
+.omni-rap::-webkit-scrollbar { display:none; }
+.omni-rap button { flex:0 0 auto;background:white;border:1px solid var(--bd);border-radius:20px;padding:6px 12px;font-size:13.5px;color:var(--tx);cursor:pointer;font-family:'Jost',sans-serif;white-space:nowrap;line-height:1.2; }
+.omni-rap button.on { background:var(--acd);border-color:var(--acd);color:#fff;font-weight:600; }
+.omni-rap .sep { flex:0 0 1px;background:var(--bd);margin:5px 3px; }
 .omni-chips { display:flex;flex-wrap:wrap;gap:5px;width:100%; }
 .omni-chips:empty { display:none; }
 .omni-chip { background:var(--bg3);border:1px solid var(--bd);border-radius:20px;padding:3px 10px;font-size:13px;color:var(--acd);font-weight:600; }
@@ -8072,14 +8079,17 @@ function renderSeguimiento(){
     ? '<div class="hz-bloque0141"><div class="hz-sec0141">📱 Desde el 0141 · solo cotizaron<span>'+b0141.length+'</span></div>'+
       '<div class="hz-lista">'+b0141.map(function(g){ return filaReg(g, 'c0141'); }).join('')+'</div></div>'
     : '';
+  /* con un filtro puesto (chips o buscador) se dice: una lista corta o vacía
+     no significa que no quede nadie, sino que nadie calza con el filtro */
+  var filtrado = rapActivo() || !!omniRaw;
   var html = '<div class="hz-lista">'+
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
-                  : (b0141.length ? '' : '<div class="hz-vacio">No te queda nadie por escribir hoy.</div>'))+
+                  : (b0141.length ? '' : '<div class="hz-vacio">'+(filtrado ? 'Nadie calza con el filtro. Tócalo de nuevo para quitarlo.' : 'No te queda nadie por escribir hoy.')+'</div>'))+
     '</div>';
   /* con la campaña o el 0141 arriba, la lista de siempre lleva su título para
      que se sepa dónde empieza */
   var campHtml = campanaHtml();
-  if ((campHtml || html0141) && lista.length) html = '<div class="hz-sec-main">Seguimiento de hoy · '+lista.length+'</div>' + html;
+  if ((campHtml || html0141 || filtrado) && lista.length) html = '<div class="hz-sec-main">'+(filtrado ? 'Con el filtro · ' : 'Seguimiento de hoy · ')+lista.length+'</div>' + html;
   html = campHtml + html0141 + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
@@ -9348,6 +9358,68 @@ function dashMonthOptions(){
 var OMNI = { texto:'', estado:'', producto:'', mes:'', min:NaN, max:NaN, dias:0 };
 var omniRaw = '';
 var omniAbierto = false;
+/* ── FILTROS RÁPIDOS (26-10-2026, pedido del usuario) ──
+   César necesita filtrar de un toque, sin escribir: CUÁNDO cotizó (esta
+   semana, este mes), QUÉ cotizó (puertas, cubiertas, mesas, peldaños) y
+   CUÁNTO (menos de $1M, más de $1M, más de $2M). Un chip encendido por grupo;
+   tocarlo de nuevo lo apaga. Se suman al buscador y a «Más filtros»:
+   applyDashFilters los aplica en todas las vistas. La meta del día NO los
+   mira: filtrar la lista no cambia lo que hay que hacer hoy. */
+var RAPIDO = { cuando:'', prod:'', monto:'' };
+var RAP_PROD = { puertas:['maciza','vidrios','granero','pcocina'], cubiertas:['cubierta'], mesas:['mesa','banca'], peldanos:['peldano'] };
+var RAP_DEF = [
+  { g:'cuando', v:'semana',    t:'Esta semana', tip:'Cotizaron desde el lunes' },
+  { g:'cuando', v:'mes',       t:'Este mes' },
+  { g:'prod',   v:'puertas',   t:'Puertas', tip:'Madera, con vidrios, granero y de cocina' },
+  { g:'prod',   v:'cubiertas', t:'Cubiertas' },
+  { g:'prod',   v:'mesas',     t:'Mesas', tip:'Mesas y bancas' },
+  { g:'prod',   v:'peldanos',  t:'Peldaños' },
+  { g:'monto',  v:'<1',        t:'Menos de $1M' },
+  { g:'monto',  v:'>1',        t:'Más de $1M' },
+  { g:'monto',  v:'>2',        t:'Más de $2M' }
+];
+function rapActivo(){ return !!(RAPIDO.cuando || RAPIDO.prod || RAPIDO.monto); }
+function rapToggle(g, v){
+  RAPIDO[g] = (RAPIDO[g] === v) ? '' : v;
+  rapPintar(); omniPintarChips(); renderVistaActual();
+}
+function rapHTML(){
+  var out = [], ultimo = '';
+  RAP_DEF.forEach(function(d){
+    if (ultimo && d.g !== ultimo) out.push('<span class="sep"></span>');
+    ultimo = d.g;
+    out.push('<button class="' + (RAPIDO[d.g] === d.v ? 'on' : '') + '" onclick="rapToggle(\'' + d.g + '\',\'' + d.v + '\')"' +
+      (d.tip ? ' title="' + d.tip + '"' : '') + '>' + d.t + '</button>');
+  });
+  return out.join('');
+}
+function rapPintar(){ var el = document.getElementById('omni-rap'); if (el) el.innerHTML = rapHTML(); }
+function rapLabel(g){ var d = RAP_DEF.filter(function(d){ return d.g === g && d.v === RAPIDO[g]; })[0]; return d ? d.t : ''; }
+/* el lunes de la semana en curso: las semanas se nombran por el lunes */
+function lunesISO(){
+  var hoy = hoyISO(), dow = (new Date(hoy + 'T12:00:00').getDay() + 6) % 7;
+  return addDias(hoy, -dow);
+}
+function pasaRapido(x){
+  if (RAPIDO.cuando){
+    var f = x.fecha_creacion ? fechaBaseISO(x.fecha_creacion) : '';
+    if (!f) return false;
+    if (RAPIDO.cuando === 'semana' && f < lunesISO()) return false;
+    if (RAPIDO.cuando === 'mes' && f.slice(0, 7) !== hoyISO().slice(0, 7)) return false;
+  }
+  if (RAPIDO.prod){
+    /* una combinada ("mesa+banca") pasa si alguno de sus productos calza */
+    var codes = String(x.producto || '').split('+'), ok = RAP_PROD[RAPIDO.prod] || [];
+    if (!codes.some(function(c){ return ok.indexOf(c) !== -1; })) return false;
+  }
+  if (RAPIDO.monto){
+    var tot = x.total_alto || 0;
+    if (RAPIDO.monto === '<1' && tot >= 1000000) return false;
+    if (RAPIDO.monto === '>1' && tot < 1000000)  return false;
+    if (RAPIDO.monto === '>2' && tot < 2000000)  return false;
+  }
+  return true;
+}
 
 function omniProducto(t){
   var k = null;
@@ -9413,6 +9485,7 @@ function omniSet(v) {
 function omniToggle(){ omniAbierto = !omniAbierto; renderDashFilters(true); }
 function omniLimpiar(){
   omniRaw = ''; OMNI = parseOmni(''); dashMonth = '';
+  RAPIDO = { cuando:'', prod:'', monto:'' };
   ['f-dash-estado','f-dash-prod','f-dash-month','f-dash-min','f-dash-max','f-dash-dias'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
   });
@@ -9427,6 +9500,7 @@ function omniChipsHTML() {
   if (!isNaN(OMNI.min)) c.push('desde ' + fmt(OMNI.min));
   if (!isNaN(OMNI.max)) c.push('hasta ' + fmt(OMNI.max));
   if (OMNI.dias)     c.push('últimos ' + OMNI.dias + ' días');
+  ['cuando', 'prod', 'monto'].forEach(function(g){ if (RAPIDO[g]) c.push(rapLabel(g)); });
   if (!c.length) return '';
   return c.map(function(t){ return '<span class="omni-chip">' + t + '</span>'; }).join('') +
          '<button class="omni-clear" onclick="omniLimpiar()">Limpiar</button>';
@@ -9444,7 +9518,7 @@ function subFiltros(html){
    ">1m" funcionan igual en esas vistas que en la tabla. */
 function grupoPasaOmni(g){
   if (!omniRaw && !OMNI.texto && !OMNI.estado && !OMNI.producto && !OMNI.mes &&
-      isNaN(OMNI.min) && isNaN(OMNI.max) && !OMNI.dias) return true;
+      isNaN(OMNI.min) && isNaN(OMNI.max) && !OMNI.dias && !rapActivo()) return true;
   return applyDashFilters(g.quotes).length > 0;
 }
 function renderDashFilters(forzar) {
@@ -9479,6 +9553,7 @@ function renderDashFilters(forzar) {
         'placeholder="Busca lo que sea: nombre, N°, teléfono, mesa, ganadas, agosto, &gt;500000, 30d…">' +
       '<button class="omni-mas-btn' + (omniAbierto ? ' on' : '') + '" onclick="omniToggle()">Más filtros</button>' +
     '</div>' +
+    '<div id="omni-rap" class="omni-rap">' + rapHTML() + '</div>' +
     avanzados +
     '<div id="omni-chips" class="omni-chips">' + omniChipsHTML() + '</div>';
 }
@@ -9513,6 +9588,7 @@ function applyDashFilters(data) {
   var diasQ = parseInt(sel('f-dash-dias'), 10) || OMNI.dias || 0;
   var cutoff = diasQ ? Date.now() - diasQ*24*60*60*1000 : 0;
   return data.filter(function(x){
+    if (!pasaRapido(x)) return false;   /* chips de un toque (RAPIDO) */
     /* buscar también por N° de cotización y por contacto: el buscador solo
        miraba el nombre, así que no había forma de encontrar una cotización
        por su número —que es justo como se la nombra por teléfono—. */
