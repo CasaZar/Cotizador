@@ -6518,11 +6518,15 @@ function vendedorPorSrc(code){
    en la semana en que se decide la venta. El cruce Cotizador × Gestión del
    07-10 (ventas desde el 29-06) dio: mediana de 2 días entre cotización y
    venta, 45 de 52 ventas en 7 días o menos, y solo 6 ventas después del
-   segundo toque entre ~2.200 toques. Ahora son cuatro toques: tres dentro de
-   la semana y uno de cierre al día 14, que pide un sí o un no.
-   Los toques 5 y 6 ya registrados en clientes antiguos quedan en su
+   segundo toque entre ~2.200 toques. Desde el 26-10-2026 son TRES toques
+   (días 1, 3 y 13): el usuario sentía que tanto seguimiento saturaba el chat
+   y a César, y ningún estudio ni nuestros números respaldan insistir más de
+   dos veces a quien leyó y no contestó. El tercero no se despide: avisa que
+   el precio venció (VALIDEZ_DIAS = 10) y ofrece actualizarlo. Si el cliente
+   contesta, sale de la cadencia y sigue la conversación.
+   Los toques 4 a 6 ya registrados en clientes antiguos quedan en su
    historial; esos clientes están con la cadencia agotada (Dormidos). */
-var CADENCIA = [1, 3, 7, 14];   /* días desde la cotización para los 4 toques */
+var CADENCIA = [1, 3, 13];   /* días desde la cotización para los 3 toques */
 /* pasada la cadencia + este margen sin toque agendado, el cliente sale de la
    lista diaria (Dormidos): los que venían de la cadencia vieja con 20 o 30
    días no se le cargan de golpe al vendedor */
@@ -6530,13 +6534,14 @@ var CADENCIA_GRACIA = 7;
 /* ── FLUJO 0141: LOS QUE SOLO COTIZARON (23-10-2026, pedido del usuario) ──
    El que cotiza en la web y no toca ningún botón de WhatsApp («Quiero mi
    cubierta», dudas, muestrario) nunca nos habló. A esos se les escribe desde
-   el WhatsApp nuevo (+56 9 2766 0141), con su propia cadencia: día 1, día 3
-   y día 15. Entre medio y después duermen: no salen en Hoy ni en la meta.
+   el WhatsApp nuevo (+56 9 2766 0141), con la misma cadencia que el resto
+   desde el 26-10-2026: día 1, día 3 y día 13 (antes 1, 3 y 15). Entre medio
+   y después duermen: no salen en Hoy ni en la meta.
    Solo para los que cotizan desde DESDE_0141: la cotización guarda la sesión
    del embudo (origen.ses) y el clic queda en embudo_eventos con esa sesión.
    Si los clics no se pudieron leer (CLICS_WA null), nadie entra al flujo:
    ante la duda, el seguimiento normal. */
-var CAD_0141 = [1, 3, 15];
+var CAD_0141 = [1, 3, 13];
 var DESDE_0141 = '2026-10-23';
 var PASOS_CLIC_WA = ['whatsapp', 'duda', 'muestrario'];
 var CLICS_WA = null;   /* sesión → true si tocó algún botón de WhatsApp */
@@ -6967,14 +6972,17 @@ function prodTexto(p){
 /* ── MENSAJES DE SEGUIMIENTO (12-10-2026) ──
    Pedido del usuario: que se sientan reales y personales, "no como llegar y
    copiar de una IA". Cambios de fondo respecto de las 6 plantillas de antes:
-   · Cuatro toques (días 1, 3, 7 y 14), no seis.
+   · Tres toques (días 1, 3 y 13) desde el 26-10-2026; antes cuatro, antes seis.
+     Los textos de los tres los eligió el usuario ese día entre tres flujos
+     propuestos; la pregunta es siempre una y el tercero no se despide.
    · Cada mensaje sale de los datos de ESA cotización: el nombre, qué cotizó
      y cuándo ("ayer", "el martes"), hasta qué día vale su precio, cuánto sale
      en la madera más económica y, sobre todo, QUÉ RESPONDIÓ la vez anterior
      (pidió fotos, está caro, lo está pensando...). El toque 2 de alguien que
      pidió fotos no puede ser igual al de alguien que nunca contestó.
-   · Dos versiones por mensaje, elegidas por cliente (siempre la misma para
-     el mismo cliente): diez clientes no reciben diez textos idénticos.
+   · Dos versiones de la presentación («soy César» / «te escribe César»),
+     elegidas por cliente (siempre la misma para el mismo cliente): diez
+     clientes no reciben diez textos idénticos. El cuerpo es el mismo.
    · Frases cortas, una sola pregunta fácil de contestar, sin lenguaje de
      folleto. Sin rayas largas ni emojis (llegaban rotos a WhatsApp).
    · Firma siempre César, lo mande quien lo mande (pedido del usuario, 13-10).
@@ -7030,83 +7038,60 @@ function waVariante(x){
   return h % 2;
 }
 function waMsg(x){
-  var toque = Math.min((x.seg_etapa||0)+1, CADENCIA.length);
+  /* la misma cadencia y los mismos textos para el 5558 y el 0141 (26-10-2026):
+     en los dos casos el cliente cotizó en la web y no nos ha contestado */
+  var cad = cadDe(x);
+  var toque = Math.min((x.seg_etapa||0)+1, cad.length);
   var nom = waNombre(x), hola = nom ? 'Hola ' + nom : 'Hola';
   var yo = waQuien();
   var link = (x.link||'').trim();
   var P = prodTexto(x.producto);
   var W = WA_PROD[String(x.producto||'')] || { un:'un proyecto', preg:'¿En qué etapa vas?' };
   var suyo = P.suyo;                                   /* "tu cubierta" */
-  var Suyo = suyo.charAt(0).toUpperCase() + suyo.slice(1);
   var v = waVariante(x), resp = waUltResp(x), vence = waVence(x);
   var bajo = (x.total_bajo > 0 && !medidaRara(x)) ? fmt(x.total_bajo) : '';
-  var t = transfPct();
-  var m;
-  /* ── MENSAJES DEL 0141 (23-10-2026) ──
-     Nunca nos habló: el primero se presenta y dice de dónde sacamos su número
-     (cotizó en la web). Textos distintos a los del 5558 y entre sí; el link va
-     solo en el primero y en el último, para no mandar enlaces seguidos desde
-     un número nuevo. */
-  if (LEAD0141[x.id] && !cadenciaAgotada(x)) {
-    var t0 = Math.min((x.seg_etapa||0)+1, CAD_0141.length), cu = waCuando(x);
-    if (t0 === 1) {
-      m = v === 0
-        ? hola + ', soy ' + yo + ' de Casa Zaru. Vi que ' + (cu === 'hoy' ? 'recién' : cu) + ' cotizaste ' + W.un + ' en nuestra página. ¿Te quedó alguna duda con las maderas, las medidas o el envío?'
-        : hola + ', te escribe ' + yo + ', de Casa Zaru. ' + (cu === 'hoy' ? 'Recién' : cu.charAt(0).toUpperCase() + cu.slice(1)) + ' cotizaste ' + W.un + ' en la web y quería saber si te puedo ayudar en algo. ' + W.preg;
-    } else if (t0 === 2) {
-      m = v === 0
-        ? hola + ', ¿pudiste darle una vuelta a la cotización? Si te sirve, te mando fotos de ' + P.fotos + ' que ya entregamos, para que veas cómo se ven las maderas en persona.'
-        : hola + ', ¿cómo vas con ' + suyo + '? Si todavía estás viendo medidas o maderas, cuéntame y te ayudo a definirlas.';
-    } else {
-      m = v === 0
-        ? hola + ', soy ' + yo + ' de Casa Zaru otra vez. Hace un par de semanas cotizaste ' + W.un + ' con nosotros. ¿Sigue en pie el proyecto? Si quieres, te actualizo la cotización con el precio de hoy.'
-        : hola + ', te escribo una última vez por ' + suyo + '. ¿Sigues con la idea? Si es para más adelante, dime más o menos cuándo y te escribo en esa fecha.';
-    }
-    m = waParrafos(m);
-    if (link && t0 !== 2) m += (t0 === 1 ? '\n\nTe dejo tu cotización por si la quieres revisar:\n' : '\n\nTu cotización:\n') + link;
-    return waLimpio(m);
-  }
+  /* «la» / «las» / «los» / «lo», según lo que cotizó: «¿Para cuándo la necesitas?» */
+  var lo = /^unas /.test(W.un) ? 'las' : /^unos /.test(W.un) ? 'los' : /^una /.test(W.un) ? 'la' : 'lo';
+  /* la presentación es lo único que cambia entre las dos versiones */
+  var presento = v === 0 ? hola + ', soy ' + yo + ' de Casa Zaru. ' : hola + ', te escribe ' + yo + ' de Casa Zaru. ';
+  var m, pie = '';
   if (cadenciaAgotada(x)) {
     /* se le escribe desde Dormidos, semanas después: reabre sin presionar */
     m = hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Hace un tiempo cotizaste ' + W.un + ' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
   } else if (toque === 1) {
+    /* día 1: una sola pregunta, fácil de contestar */
     var cuando = waCuando(x);
     if (esBacklogQ(x)) {
       /* nunca se le escribió y ya pasaron días: reconocer la demora */
       m = hola + ', soy ' + yo + ' de Casa Zaru. ' + (cuando === 'hace unas semanas' ? 'Hace unas semanas' : 'La semana pasada') + ' cotizaste ' + W.un + ' con nosotros y no alcancé a escribirte antes, disculpa la demora. ¿Sigues con el proyecto? Si quieres te actualizo la cotización.';
-    } else if (cuando === 'hoy') {
-      m = hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Vi que recién cotizaste ' + W.un + '. ' + W.preg + ' Cuéntame y te ayudo a elegir la madera.';
-    } else if (v === 0) {
-      m = hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Vi que ' + cuando + ' cotizaste ' + W.un + ' con nosotros. ' + W.preg + ' Así te oriento con la madera que más te conviene.';
     } else {
-      m = hola + ', te escribe ' + yo + ' de Casa Zaru. ' + cuando.charAt(0).toUpperCase() + cuando.slice(1) + ' cotizaste ' + W.un + ' y quería saber cómo vas. ' + W.preg;
+      m = presento + 'Vi que ' + (cuando === 'hoy' ? 'recién' : cuando) + ' cotizaste ' + W.un + ' en nuestra página. ¿Ya tienes clara la madera o estás entre opciones?';
     }
+    pie = '\n\nTe dejo tu cotización por si la quieres revisar:\n';
   } else if (toque === 2) {
-    /* depende de lo que contestó al primero */
+    /* día 3: si contestó al primero, se sigue lo que dijo; si no, un dato real
+       (el plazo de fabricación) y una pregunta */
     if (resp === 'fotos')        m = hola + ', ¿pudiste ver las fotos? Si quieres ver otra madera u otro tono, dime cuál y te la mando.';
     else if (resp === 'medidas') m = hola + ', ¿ya tienes las medidas definitivas? Me las mandas por acá y te actualizo la cotización al tiro.';
     else if (resp === 'pensando')m = hola + ', ¿cómo vas con la decisión? Si hay algo que te hace dudar, la madera, el precio o el plazo, dime y lo vemos.';
     else if (resp === 'precio')  m = hola + ', estuve mirando tu cotización. Si el precio te complica hay formas de bajarlo' + (bajo ? ': en la madera más económica queda en ' + bajo : '') + ', y también se puede ajustar el espesor o las medidas. ¿Te armo esa opción?';
     else if (resp === 'compra')  m = hola + ', ¿seguimos con ' + suyo + '? Para partir la fabricación se confirma con el 70%. Dime y te mando los datos.';
     else if (resp === 'interesado') m = hola + ', ¿te quedó alguna duda de ' + suyo + '? Si quieres avanzar, me confirmas la madera y las medidas y te digo para cuándo estaría.';
-    else if (v === 0)            m = hola + ', ¿cómo va todo? Te puedo mandar fotos de ' + P.fotos + ' que ya entregamos, en distintas maderas, para que veas cómo quedan los tonos de verdad. ¿Te las mando?';
-    else                         m = hola + ', una pregunta: ¿ya tienes clara la madera o todavía estás entre opciones? Si quieres te mando fotos de ' + P.fotos + ' ya ' + P.gen + ' para comparar.';
-  } else if (toque === 3) {
-    /* día 7: el precio tiene fecha, y eso es un dato real de su cotización */
-    if (vence.vencida)           m = hola + ', el precio de tu cotización venció ' + vence.txt + '. Si todavía te interesa ' + suyo + ', dime y te la actualizo hoy mismo.';
-    else if (resp === 'precio')  m = hola + ', por si te sirve: tu cotización vale hasta ' + vence.txt + ' y pagando por transferencia tienes un ' + t + '% de descuento' + (bajo ? '. En la madera más económica queda en ' + bajo : '') + '. ¿Te acomoda alguna de esas opciones?';
-    else if (resp === 'compra')  m = hola + ', ¿cómo vas? Tu precio se mantiene hasta ' + vence.txt + '. Cuando quieras confirmamos con el 70% y dejamos ' + suyo + ' en fabricación.';
-    else if (v === 0)            m = hola + ', te aviso que el precio de tu cotización vale hasta ' + vence.txt + '. Si la confirmas antes mantienes ese valor, y pagando por transferencia tienes un ' + t + '% de descuento. La fabricación toma de 7 a 15 días hábiles. ¿Avanzamos?';
-    else                         m = hola + ', ¿cómo estás? La cotización de ' + suyo + ' sigue con el mismo precio hasta ' + vence.txt + ', y con transferencia baja un ' + t + '%. Si quieres la dejamos confirmada y partimos la fabricación, que demora de 7 a 15 días hábiles.';
+    else                         m = presento + 'Cotizaste ' + W.un + ' en la web y quería contarte que la fabricación toma de 7 a 15 días hábiles desde que se confirma. ¿Para cuándo ' + lo + ' necesitas?';
+    pie = '\n\nTu cotización:\n';
   } else {
-    /* día 14: el último. Pide un sí o un no, que es el dato que falta */
-    if (v === 0) m = hola + ', no te quiero llenar de mensajes. ¿' + Suyo + (W.pl ? ' siguen en pie o quedaron' : ' sigue en pie o quedó') + ' para más adelante? Con un sí o un no me basta. Y si es para después, dime más o menos cuándo y te escribo ahí.';
-    else         m = hola + ', último mensaje de mi parte por ' + suyo + '. ¿Lo retomamos o lo dejamos para más adelante? Cualquiera de las dos me sirve saberlo, así no te molesto.';
+    /* día 13: el precio venció (VALIDEZ_DIAS = 10), un motivo real para
+       escribir. No se despide: ofrece actualizarlo o una fecha. Sin link,
+       porque el precio del link ya no vale. */
+    if (resp === 'compra')       m = hola + ', ¿seguimos con ' + suyo + '? Te actualizo la cotización con el precio de hoy y, si te acomoda, la confirmamos con el 70% para dejarla en fabricación.';
+    else if (vence.vencida)      m = hola + ', el precio de tu cotización venció ' + vence.txt + '. Si todavía te interesa ' + suyo + ', dime y te la actualizo hoy mismo. Y si es para más adelante, cuéntame más o menos cuándo.';
+    else                         m = hola + ', el precio de tu cotización vence ' + vence.txt + '. Si todavía te interesa ' + suyo + ', dime y la dejamos confirmada con ese valor. Y si es para más adelante, cuéntame más o menos cuándo.';
+    pie = '';
   }
   m = waParrafos(m);   /* siempre en párrafos (pedido del usuario, 21-10-2026) */
-  /* el link va siempre, corto y al final: el chat se entierra rápido y así
-     la cotización queda a mano */
-  if (link) m += (toque === 1 ? '\n\nTe dejo tu cotización por si la quieres revisar:\n' : '\n\nTu cotización:\n') + link;
+  /* el link va corto y al final en los dos primeros: el chat se entierra
+     rápido y así la cotización queda a mano */
+  if (link && pie) m += pie + link;
   return waLimpio(m);
 }
 /* Los emoji llegaron rotos a WhatsApp: en los mensajes ya enviados el 🙂 salió
@@ -7530,7 +7515,7 @@ function diasDe(g){
    de hoy ya subió seg_etapa — hay que mirar fecha_primer_contacto. Sin esto,
    "Contactados hoy" es una lista plana y no se sabe qué trabajó el vendedor. */
 var ORDEN_ORIGEN = ['ball', 'b1', 'conv', 'b2', 'b3'];
-/* Dentro de la ventana de la cadencia (14 días desde que cotizó) TODO toque
+/* Dentro de la ventana de la cadencia (13 días desde que cotizó) TODO toque
    cuenta para la meta, sea cual sea el monto (12-10-2026). Antes los de monto
    bajo iban al bloque 3 y se quedaban con un solo mensaje. El bloque 3 queda
    para lo que viene atrasado de antes. */
@@ -7613,7 +7598,7 @@ var CIERRE_MOTIVO_IGNORO = 'No respondió los seguimientos (cierre automático)'
 function nuncaRespondio(x){
   return Array.isArray(x.seg_historial) && x.seg_historial.some(function(h){ return h && h.resp === 'nada'; });
 }
-var CFG_SEG_CIERRE_DIAS = 21;   /* era 40: con la cadencia en 14 días, una semana después se cierra */
+var CFG_SEG_CIERRE_DIAS = 21;   /* era 40: con la cadencia en 13 días, ocho días después se cierra */
 var CFG_SEG_BACKLOG_DIAS = 14;   /* plazo para trabajar el backlog desde el arranque del sistema */
 function candidatasACerrar(){
   var limite = addDias(hoyISO(), -CFG_SEG_CIERRE_DIAS);
