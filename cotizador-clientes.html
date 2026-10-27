@@ -7180,6 +7180,7 @@ function setDashView(v){
    pestaña abierta, y como filtra por dashView (que ahí vale 'backlog', no un
    vendedor) no encontraba filas: todo en cero y "Sin cotizaciones". */
 function renderVistaActual(){
+  _contactados = null;   /* el filtro «Nunca contactados» se rearma con lo recién marcado */
   var v = dashView;
   if (v==='seg')            renderSeguimiento();
   else if (v==='elim')      renderEliminadas();
@@ -8439,7 +8440,11 @@ function campanaMsg(x){
 }
 function campanaHtml(){
   if (!campanaActiva()) return '';
-  var L = campanaClientes(); if (!L.length) return '';
+  var L = campanaClientes();
+  /* con un filtro puesto la campaña también se filtra (27-10-2026): con
+     «Nunca contactados» seguía mostrando sus 109 clientes, todos ya escritos */
+  if (rapActivo() || omniRaw) L = L.filter(function(c){ return applyDashFilters([c.x]).length > 0; });
+  if (!L.length) return '';
   var pend = L.filter(function(c){ return !c.hecho; }).length;
   /* Cada cliente es la MISMA fila de la lista de siempre (hoyFila): al tocarla
      se abren las respuestas, las acciones y la ficha completa con su historial
@@ -9365,9 +9370,11 @@ var omniAbierto = false;
    tocarlo de nuevo lo apaga. Se suman al buscador y a «Más filtros»:
    applyDashFilters los aplica en todas las vistas. La meta del día NO los
    mira: filtrar la lista no cambia lo que hay que hacer hoy. */
-var RAPIDO = { cuando:'', prod:'', monto:'' };
+var RAPIDO = { contacto:'', cuando:'', prod:'', monto:'' };
 var RAP_PROD = { puertas:['maciza','vidrios','granero','pcocina'], cubiertas:['cubierta'], mesas:['mesa','banca'], peldanos:['peldano'] };
 var RAP_DEF = [
+  /* 27-10-2026: va primero porque es el que dice a quién falta escribirle */
+  { g:'contacto', v:'nunca',   t:'Nunca contactados', tip:'Nadie le ha escrito ni lo ha llamado: ningún toque en ninguna de sus cotizaciones' },
   { g:'cuando', v:'semana',    t:'Esta semana', tip:'Cotizaron desde el lunes' },
   { g:'cuando', v:'mes',       t:'Este mes' },
   { g:'prod',   v:'puertas',   t:'Puertas', tip:'Madera, con vidrios, granero y de cocina' },
@@ -9378,7 +9385,30 @@ var RAP_DEF = [
   { g:'monto',  v:'>1',        t:'Más de $1M' },
   { g:'monto',  v:'>2',        t:'Más de $2M' }
 ];
-function rapActivo(){ return !!(RAPIDO.cuando || RAPIDO.prod || RAPIDO.monto); }
+function rapActivo(){ return !!(RAPIDO.contacto || RAPIDO.cuando || RAPIDO.prod || RAPIDO.monto); }
+/* ── NUNCA CONTACTADOS (27-10-2026, pedido del usuario) ──
+   Se mira al CLIENTE, no a la cotización: el toque se anota solo en la
+   cotización líder, así que sus otras cotizaciones se verían «sin contactar»
+   aunque se le haya escrito (ver cotizContactada y clientKey). Un cliente
+   cuenta como contactado si en CUALQUIERA de sus cotizaciones hay un toque,
+   un primer contacto, una respuesta, una venta, una casilla del historial o
+   un registro en la bitácora de toques (TOQUES, últimos 30 días). El mapa se
+   arma una vez por dibujo: renderVistaActual lo borra antes de pintar. */
+var _contactados = null, _contactadosT = 0;
+function clientesContactados(){
+  if (_contactados && Date.now() - _contactadosT < 2000) return _contactados;
+  var conToque = {};
+  (TOQUES || []).forEach(function(t){ if (t && t.cotizacion_id != null) conToque[t.cotizacion_id] = true; });
+  var m = {};
+  allRows.forEach(function(x){
+    if (!x || x.eliminada) return;
+    var h = Array.isArray(x.seg_historial) ? x.seg_historial : [];
+    if (cotizContactada(x) || x.estado === 'ganado' || conToque[x.id] ||
+        h.some(function(e){ return e && ((e.etapa || 0) > 0 || e.via); })) m[clientKey(x)] = true;
+  });
+  _contactados = m; _contactadosT = Date.now();
+  return m;
+}
 function rapToggle(g, v){
   RAPIDO[g] = (RAPIDO[g] === v) ? '' : v;
   rapPintar(); omniPintarChips(); renderVistaActual();
@@ -9401,6 +9431,7 @@ function lunesISO(){
   return addDias(hoy, -dow);
 }
 function pasaRapido(x){
+  if (RAPIDO.contacto === 'nunca' && clientesContactados()[clientKey(x)]) return false;
   if (RAPIDO.cuando){
     var f = x.fecha_creacion ? fechaBaseISO(x.fecha_creacion) : '';
     if (!f) return false;
@@ -9485,7 +9516,7 @@ function omniSet(v) {
 function omniToggle(){ omniAbierto = !omniAbierto; renderDashFilters(true); }
 function omniLimpiar(){
   omniRaw = ''; OMNI = parseOmni(''); dashMonth = '';
-  RAPIDO = { cuando:'', prod:'', monto:'' };
+  RAPIDO = { contacto:'', cuando:'', prod:'', monto:'' };
   ['f-dash-estado','f-dash-prod','f-dash-month','f-dash-min','f-dash-max','f-dash-dias'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
   });
@@ -9500,7 +9531,7 @@ function omniChipsHTML() {
   if (!isNaN(OMNI.min)) c.push('desde ' + fmt(OMNI.min));
   if (!isNaN(OMNI.max)) c.push('hasta ' + fmt(OMNI.max));
   if (OMNI.dias)     c.push('últimos ' + OMNI.dias + ' días');
-  ['cuando', 'prod', 'monto'].forEach(function(g){ if (RAPIDO[g]) c.push(rapLabel(g)); });
+  ['contacto', 'cuando', 'prod', 'monto'].forEach(function(g){ if (RAPIDO[g]) c.push(rapLabel(g)); });
   if (!c.length) return '';
   return c.map(function(t){ return '<span class="omni-chip">' + t + '</span>'; }).join('') +
          '<button class="omni-clear" onclick="omniLimpiar()">Limpiar</button>';
