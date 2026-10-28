@@ -97,23 +97,26 @@ function render(c){
   var compras=(c.compras||[]);
   var nombre=(c.contacto||'').trim();
   var over=acum>3000000?'<span class="over">'+(acum/3000000).toLocaleString('es-CL',{maximumFractionDigits:1})+'× la meta</span>':'';
-  var msgFalta=t===5?'<div class="falta ok">Tienes el <b>5 %</b>, el descuento más alto, en todas tus próximas compras.</div>':
-    '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para pasar al <b>'+(t===2?'5':'2')+' %</b> en tus próximas compras.</div>';
+  // Los porcentajes se muestran SUMADOS al 5 % por transferencia (7 % / 10 %),
+  // igual que en el mensaje que recibe el cliente. El tramo puro (2 / 5) queda
+  // explicado abajo, en la nota, para quien paga con otro medio.
+  var msgFalta=t===5?'<div class="falta ok">Tienes el <b>10 %</b> con transferencia, el descuento más alto, en todas tus próximas compras.</div>':
+    '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para pasar al <b>'+(t===2?'10':'7')+' %</b> con transferencia en tus próximas compras.</div>';
   // ventana móvil (26-10): cada compra cuenta durante 12 meses y después sale sola
   var salida=c.salida_fecha?'El '+esc(fecha(c.salida_fecha,true))+' dejan de contar '+clp(c.salida_monto)+', que cumplen un año.':'';
   var html='<h1>'+esc(c.razon_social)+'</h1>'+
     '<div class="rut">RUT '+esc(rutFmt(c.rut))+(nombre?' · a cargo de '+esc(nombre):'')+'</div>'+
     '<div class="hero"><div class="l">Comprado en los últimos 12 meses</div>'+
-      '<div class="fila"><div class="m">'+clp(acum)+'</div><div class="dsc t'+t+'">'+(t?t+' % de descuento':'aún sin descuento')+'</div></div>'+
+      '<div class="fila"><div class="m">'+clp(acum)+'</div><div class="dsc t'+t+'">'+(t+5)+' % con transferencia'+'</div></div>'+
       '<div class="bar2"><i class="t'+t+'" style="width:0" data-w="'+(acum/3000000*100>100?100:(acum/3000000*100).toFixed(1))+'"></i><div class="mk"></div>'+over+'</div>'+
-      '<div class="esc"><span style="left:0">$0</span><span style="left:50%;transform:translateX(-50%);text-align:center"><b>2 %</b>$1,5M</span><span style="right:0;text-align:right"><b>5 %</b>$3M</span></div>'+
+      '<div class="esc"><span style="left:0">$0</span><span style="left:50%;transform:translateX(-50%);text-align:center"><b>7 %</b>$1,5M</span><span style="right:0;text-align:right"><b>10 %</b>$3M</span></div>'+
       msgFalta+'</div>'+
     '<div class="lbl" style="margin-top:20px">Cómo se cuenta</div>'+
     '<div class="ciclo" style="margin:0">Cada compra suma durante 12 meses y después deja de contar sola. '+salida+'</div>'+
     '<div class="lbl" style="margin-top:20px">Tus beneficios</div>'+
     '<div class="lista">'+
       '<div class="it"><div><b style="white-space:normal">Muestrario sin costo</b><small>Para las cuentas empresa; normalmente vale $20.000.</small></div></div>'+
-      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>2 % sobre $1.500.000 y 5 % sobre $3.000.000, además del 5 % por transferencia.</small></div></div>'+
+      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>Pagando por transferencia: 5 % desde la primera compra, 7 % sobre $1.500.000 acumulados y 10 % sobre $3.000.000.</small></div></div>'+
       '<div class="it"><div><b style="white-space:normal">Cotizador para tus presupuestos</b><small>Valores por medida y especie, con el acabado incluido.</small></div></div>'+
       '<div class="it"><div><b style="white-space:normal">Despacho a todo Chile</b><small>Con convenios de transporte; el costo se ve por proyecto.</small></div></div>'+
     '</div>'+
@@ -123,7 +126,7 @@ function render(c){
     }).join('')+'</div>':'<div class="ciclo">Todavía no hay compras en los últimos 12 meses.</div>')+
     '<a class="cta" style="margin-top:18px" href="./?utm_source=cuenta&utm_medium=link&utm_campaign=cuenta-empresa">Cotizar un proyecto</a>'+
     '<a class="cta sec" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Hola, escribo por la cuenta empresa de '+c.razon_social)+'">Escribirnos por WhatsApp</a>'+
-    '<div class="cond">El descuento se aplica sobre el valor de lista del cotizador en las compras que hagas después de alcanzar cada tramo, y se suma al 5 % por pago con transferencia. Las cifras son los totales de tus facturas, IVA incluido.</div>'+
+    '<div class="cond">Los porcentajes incluyen el 5 % por pago con transferencia; con tarjeta u otro medio el descuento de la cuenta es 2 % y 5 %. Se aplica sobre el valor de lista del cotizador en las compras que hagas después de alcanzar cada tramo. Las cifras son los totales de tus facturas, IVA incluido.</div>'+
     '<div class="foot">Este enlace es privado, solo lo tienes tú.<br>Casa Zaru · Villarrica · casazaru.cl</div>';
   document.getElementById('app').innerHTML=html;
   // la barra se llena al abrir
