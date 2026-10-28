@@ -1097,6 +1097,17 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-marca { font-size:12px; font-weight:500; padding:1px 8px; border-radius:999px; background:var(--bg3); color:var(--acd); margin-left:8px; vertical-align:1px; }
 .hz-marca.int { background:#FCE7F3; color:#9D174D; }
 .hz-marca.rec { background:#FEF3C7; color:#92400E; }
+/* ★ con quién y cuándo (28-10-2026): la fila se pinta rosa y lleva su línea */
+.hz-fila.hz-int { background:#FFF7FB; box-shadow:inset 3px 0 0 var(--mrk-inter); }
+.hz-fila.hz-int.abierta { background:#FCEFF6; }
+.hz-intl, .sf-int { display:block; font-size:12.5px; font-weight:600; color:#9D174D; margin-top:2px; }
+/* lead creado a mano, sin cotización: borde punteado y etiqueta ámbar */
+.hz-fila.hz-manual { border:1.5px dashed #D97706; border-radius:10px; margin:6px; }
+.hz-leadl { display:block; margin-top:3px; }
+.hz-leadl .hz-marca { margin-left:0; }
+.hz-marca.manual, .lead-badge.manual { display:inline-block; white-space:normal; border-radius:8px; background:#FEF3C7; color:#92400E; border:1px dashed #D97706; }
+.lead-badge { font-size:11px; font-weight:700; padding:1px 8px; border-radius:10px; margin-left:6px; vertical-align:1px; }
+.seg-fila.manual, .seg-card.manual { border-style:dashed; border-color:#D97706; }
 /* Campaña peldaños (26-10-2026): los que se cerraron DICIENDO algo se ven
    distinto de los que solo dejaron de contestar. «Caro» va en terracota, es
    justo a quien le sirve el descuento; «desistió» va apagado: se le escribe
@@ -6596,6 +6607,34 @@ var PEZ_GORDO = 2000000;
 var MOTIVO_PRUEBA = 'Prueba — no es un cliente real';
 var MOTIVOS  = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto', 'Sin respuesta', 'Número no funciona / sin WhatsApp', MOTIVO_PRUEBA];
 function esPrueba(x){ return !!(x && x.motivo_perdida === MOTIVO_PRUEBA); }
+/* ── LEAD CREADO A MANO (28-10-2026) ──
+   Un cliente que ya conversa por WhatsApp pero nunca cotizó en la web (lo
+   crea la revisión diaria de WhatsApp: lead_manual = 'Claude'). Se sigue en
+   el panel como cualquiera, pero no es una cotización: no suma a montos,
+   metas ni conteos (noCuenta), y su WhatsApp abre el chat vacío, porque
+   waMsg cita un link y un producto que no existen. */
+function esLeadManual(x){ return !!(x && x.lead_manual); }
+function noCuenta(x){ return esPrueba(x) || esLeadManual(x); }
+function grupoManual(g){ return !!(g && g.quotes && g.quotes.length && g.quotes.every(esLeadManual)); }
+function leadManualChip(x, clase){
+  return '<span class="'+clase+' manual">Sin cotización · lead creado por '+escA(x.lead_manual)+'</span>';
+}
+/* ── QUIÉN PUSO LA ★ (28-10-2026) ──
+   «★ Interesado · César · 28-10». Las marcadas antes de esa fecha no
+   guardaban quién ni cuándo: quedan como «★ Interesado» a secas. */
+function quienMarca(){ return (panelSeller && !vistaComo) ? panelSeller.nombre : 'Tomás'; }
+function marcaInteresado(){ return { interesado:true, interesado_por:quienMarca(), interesado_fecha:new Date().toISOString() }; }
+function fmtDiaMes(iso){
+  var d = new Date(iso);
+  if (isNaN(d)) return '';
+  return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function interesadoTxt(x){
+  var t = '★ Interesado';
+  if (x.interesado_por) t += ' · '+escA(x.interesado_por);
+  if (x.interesado_fecha && fmtDiaMes(x.interesado_fecha)) t += ' · '+fmtDiaMes(x.interesado_fecha);
+  return t;
+}
 /* motivos que implican que el cliente CONVERSÓ: al marcarlos se aprende
    respondio=true solo (validación del spec sin ponerle un error a César) */
 var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto'];
@@ -6916,7 +6955,8 @@ function buildSegGroups(){
     /* flujo 0141: TODAS sus cotizaciones son de la web, desde el arranque y
        sin clic a WhatsApp. Uno que ya cotizó antes o que tocó el botón en
        alguna va por el camino de siempre. */
-    var es0141 = qs.every(sinClicWa);
+    /* un lead creado a mano ya conversa por WhatsApp: nunca es del 0141 */
+    var es0141 = qs.every(function(q){ return !esLeadManual(q) && sinClicWa(q); });
     if (es0141) LEAD0141[lead.id] = true;
     groups.push({ key:k, quotes:qs, lead:lead, owner:owner, hasVendor:hasVendor, hasWeb:hasWeb, valor:valor, promedio:promedio, es0141:es0141 });
   });
@@ -6930,6 +6970,7 @@ function computeSegPend(){
   var hoy=hoyISO(); segPend=0;
   buildSegGroups().forEach(function(g){
     if (segBloque && g.owner !== segBloque) return;
+    if (grupoManual(g)) return;   /* lead creado a mano: se ve en la lista, no suma al contador */
     var d=dueDate(g.lead); if(d && d<=hoy) segPend++;
   });
 }
@@ -7287,7 +7328,7 @@ function fechaEnHist(x, prefijo){
 }
 function gruposReactivar(){
   var hoy = hoyISO(), porCli = {};
-  dashRows.forEach(function(x){ if (!x.eliminada && !esPrueba(x)) (porCli[clientKey(x)] = porCli[clientKey(x)] || []).push(x); });
+  dashRows.forEach(function(x){ if (!x.eliminada && !noCuenta(x)) (porCli[clientKey(x)] = porCli[clientKey(x)] || []).push(x); });
   var out = [];
   Object.keys(porCli).forEach(function(k){
     var qs = porCli[k].slice().sort(function(a,b){ return new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0); });
@@ -7918,7 +7959,8 @@ function clasificarHoy(groups, owners, cmp){
          si igual se quiere escribir— pero NO son tarea ni cuentan en la meta.
          Entran al bloque 1 mañana. Se compara por fecha local, no por horas,
          así el que cotizó anoche a las 23:00 sí entra hoy. */
-      if (fechaBaseISO(g.lead.fecha_creacion) === hoy){ b1Hoy.push(g); return; }
+      /* un lead creado a mano no «cotizó hoy»: ya está conversando */
+      if (fechaBaseISO(g.lead.fecha_creacion) === hoy && !grupoManual(g)){ b1Hoy.push(g); return; }
       (diasDe(g) > 7 ? b1Viejos : b1).push(g); return;
     }
     /* La cadencia agotada manda sobre TODO: si ya se hicieron los 6 toques
@@ -7967,7 +8009,7 @@ function clasificarHoy(groups, owners, cmp){
     b3 = b3.filter(function(g){ if (rescSet[g.key]){ rescate.push(g); return false; } return true; });
   }
   [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone,b0141].forEach(function(a){ a.sort(cmp); });
-  b1.concat(b2,rescate,b3,b0141).forEach(function(g){ enJuego += g.valor; });
+  b1.concat(b2,rescate,b3,b0141).forEach(function(g){ if (!grupoManual(g)) enJuego += g.valor; });
   return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3, b0141:b0141,
            rescate:rescate, rescSet:rescSet,
            conv:conv, futuro:futuro, hoyDone:hoyDone, enJuego:enJuego };
@@ -8008,7 +8050,8 @@ function renderSeguimiento(){
      hay pendiente, con metaHoy() de tope: antes pedía 20 cuando solo había 9
      que contaban y el día no podía quedar verde nunca. */
   var CUENTAN_META = ['ball', 'conv', 'b2'];
-  var gruposTodos = buildSegGroups();
+  /* los leads creados a mano no son cotizaciones: fuera de las metas */
+  var gruposTodos = buildSegGroups().filter(function(g){ return !grupoManual(g); });
   var metas = segBloquesDef().map(function(b){
     /* cada grupo se clasifica solo, igual que cuando se filtra la lista por
        él: así las 3 de "no dejar enfriar" son las mismas que se ven */
@@ -8064,7 +8107,7 @@ function renderSeguimiento(){
   b3.forEach(function(g){ lista.push([g,'today']); });
   b1Viejos.forEach(function(g){ lista.push([g,'nuevo']); });
   var enJuegoHoy = lista.concat(b0141.map(function(g){ return [g]; }))
-                        .reduce(function(a,p){ return a + (p[0].valor||0); }, 0);
+                        .reduce(function(a,p){ return a + (grupoManual(p[0]) ? 0 : (p[0].valor||0)); }, 0);
   function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
   function plegado(k, titulo, arr, cls, nota){
     if (!arr.length) return '';
@@ -8133,7 +8176,7 @@ function renderSeguimiento(){
      pestañas: la conversión va sobre los clientes DECIDIDOS. */
   var ahora=new Date(), mesAct=ahora.getFullYear()+'-'+String(ahora.getMonth()+1).padStart(2,'0');
   /* las pruebas salen de todo el conteo: no son clientes ni cotizaciones reales */
-  var mesRows = dashRows.filter(function(x){ return x.fecha_creacion && String(x.fecha_creacion).slice(0,7)===mesAct && !esPrueba(x); });
+  var mesRows = dashRows.filter(function(x){ return x.fecha_creacion && String(x.fecha_creacion).slice(0,7)===mesAct && !noCuenta(x); });
   var porCliMes = {};
   mesRows.forEach(function(x){ var k=clientKey(x); (porCliMes[k]=porCliMes[k]||[]).push(x); });
   var clavesMes = Object.keys(porCliMes);
@@ -8549,7 +8592,9 @@ function segBotonContacto(g, x, clase){
      ven Tomás y César a la vez): ver abrir0141. */
   var de0141 = !!(g && (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); })));
   if (phone) {
-    var href = 'https://wa.me/'+phone+'?text='+encodeURIComponent(waMsg(x));
+    /* lead creado a mano: chat vacío, sin la plantilla (cita link y producto que no tiene) */
+    var href = esLeadManual(x) ? 'https://wa.me/'+phone
+                               : 'https://wa.me/'+phone+'?text='+encodeURIComponent(waMsg(x));
     var click = (g && g.es0141 && !esperando)
       ? 'event.preventDefault();event.stopPropagation();abrir0141(\''+x.id+'\',this.href);'
       : 'event.stopPropagation();'+accion('wa');
@@ -8649,12 +8694,14 @@ function segFila(g, cls){
      muestran su estado en el botón, repetirlos como etiqueta a 20 px de
      distancia era ruido. */
   var marcas = '';
+  if (esLeadManual(x))                                   marcas += leadManualChip(x, 'lead-badge');
   if (g.quotes.some(function(q){ return q.respondio; })) marcas += '<span class="resp-badge">💬 Respondió</span>';
   if (x.motivo_pausa)                                    marcas += '<span class="pausa-badge">⏸ '+escA(pausaLabel(x.motivo_pausa))+'</span>';
   marcas += chipAnuncio(g);
   /* de quién es el cliente: mismo criterio que la ficha completa */
   var origen = (g.hasVendor && g.hasWeb) ? 'Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'
              : g.hasVendor               ? 'Cliente '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre
+             : grupoManual(g)            ? 'Escribió por WhatsApp'
              :                             'Cotizó solo';
   var oClase = (g.hasVendor && g.hasWeb) ? 'mix' : (g.hasVendor ? 'vend' : 'web');
   /* qué pidió, sin repetir productos */
@@ -8665,7 +8712,8 @@ function segFila(g, cls){
   });
   var toque = (cls === 'nuevo') ? 'sin contactar'
                                 : 'toque '+Math.min(etapa+1, cadDe(x).length)+'/'+cadDe(x).length;
-  var ncot = g.quotes.length + (g.quotes.length===1 ? ' cotización' : ' cotizaciones');
+  var nq = g.quotes.filter(function(q){ return !esLeadManual(q); }).length;   /* el lead creado a mano no es cotización */
+  var ncot = nq ? nq + (nq===1 ? ' cotización' : ' cotizaciones') : 'sin cotización';
   /* la línea de datos: lo justo para decidir sin abrir la ficha */
   var linea = [escA(x.contacto||'sin contacto'), prods.join(' · '), ncot, toque]
                 .filter(Boolean).join('  ·  ');
@@ -8680,13 +8728,14 @@ function segFila(g, cls){
       'title="'+(interesado?'Quitar marca de interesado':'Marcar como interesado — sube al bloque 2')+'">'+(interesado?'★':'☆')+'</button>'+
     '<button class="seg-star recu'+(recu?' on':'')+'" onclick="segToggleRecurrente(\''+x.id+'\','+recu+')" '+
       'title="'+(recu?'Quitar marca de cliente que ya compró':'Marcar: este cliente ya nos compró antes')+'">🔁</button>';
-  return '<div class="seg-fila f-'+cls+(interesado?' interesada':'')+(x.id===segSel?' abierta':'')+'">'+
+  return '<div class="seg-fila f-'+cls+(interesado?' interesada':'')+(esLeadManual(x)?' manual':'')+(x.id===segSel?' abierta':'')+'">'+
     '<span class="sf-stripe"></span>'+
     '<span class="sf-marcas">'+estrellas+'</span>'+
     '<button class="sf-open" onclick="segAbrir(\''+x.id+'\')" title="Ver la ficha completa con la cadencia y las notas">'+
       '<span class="sf-nom">'+escA(x.cliente||'—')+
         '<span class="seg-owner '+oClase+'">'+origen+'</span>'+marcas+'</span>'+
       '<span class="sf-det">'+linea+'</span>'+
+      (interesado ? '<span class="sf-int">'+interesadoTxt(x)+'</span>' : '')+
     '</button>'+
     /* monto, días y el botón van juntos y alineados a la derecha, SIEMPRE en
        el mismo lugar. Antes el botón caía a una línea propia según el ancho y
@@ -8784,7 +8833,8 @@ function hoyFila(g, cls){
   var marca = '';
   /* en la campaña de peldaños manda lo que dijo el cliente al cerrarse */
   if (g.camp && campanaMarca(g.camp)) marca = campanaMarca(g.camp);
-  else if (x.interesado) marca = '<span class="hz-marca int">★ interesado</span>';
+  else if (esLeadManual(x)) marca = '';   /* va en su propia línea (leadLinea): entera no cabe junto al nombre */
+  else if (x.interesado) marca = '';   /* va en su propia línea, con quién y cuándo (intLinea) */
   else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
   else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
   /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
@@ -8813,7 +8863,7 @@ function hoyFila(g, cls){
     var interesado = !!x.interesado;
     mas = '<div class="hz-mas">'+resp+
       '<div class="hz-acc">'+
-        '<span class="hz-contacto">'+escA(x.contacto||'sin contacto')+' · '+g.quotes.length+(g.quotes.length===1?' cotización':' cotizaciones')+'</span>'+
+        '<span class="hz-contacto">'+escA(x.contacto||'sin contacto')+' · '+(grupoManual(g) ? 'sin cotización' : g.quotes.length+(g.quotes.length===1?' cotización':' cotizaciones'))+'</span>'+
         (cls !== 'donehoy' ? '<button class="hz-l" onclick="segLlameUI(\''+x.id+'\')">📞 Lo llamé</button>' : '')+
         '<button class="hz-l" onclick="segNuevaCoti(\''+x.id+'\',\''+escA(g.owner||'')+'\')" title="Abre el cotizador con su nombre y contacto ya escritos">＋ Nueva cotización</button>'+
         '<button class="hz-l" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')">'+(interesado?'Quitar interesado':'★ Interesado')+'</button>'+
@@ -8828,13 +8878,16 @@ function hoyFila(g, cls){
     '</div>';
   }
   var fuera = (g.camp && campanaTipo(g.camp) === 'fuera') ? ' camp-fuera' : '';
-  return '<div class="hz-fila hz-'+cls+fuera+(abierta?' abierta':'')+'">'+
+  var intLinea = x.interesado ? '<span class="hz-intl">'+interesadoTxt(x)+'</span>' : '';
+  var leadLinea = esLeadManual(x) ? '<span class="hz-leadl">'+leadManualChip(x, 'hz-marca')+'</span>' : '';
+  return '<div class="hz-fila hz-'+cls+fuera+(x.interesado?' hz-int':'')+(esLeadManual(x)?' hz-manual':'')+(abierta?' abierta':'')+'">'+
     '<div class="hz-linea">'+
       '<button class="hz-main" onclick="hoyToggle(\''+x.id+'\')">'+
         '<span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
         '<span class="hz-txt">'+
           '<span class="hz-nom">'+escA(x.cliente||'—')+' <span class="hz-monto">'+fmt(g.valor)+'</span>'+marca+'</span>'+
           '<span class="hz-det">'+escA(prods.join(', '))+(prods.length?' · ':'')+hoyRazon(g, cls)+anuncio+'</span>'+
+          leadLinea+intLinea+
         '</span>'+
       '</button>'+
       '<span class="hz-act">'+boton+'</span>'+
@@ -8880,12 +8933,13 @@ function segClientCard(g, cls){
   var origen, oClase;
   if (g.hasVendor && g.hasWeb){ origen='🔁 Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'; oClase='mix'; }
   else if (g.hasVendor){ origen='Cliente '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre; oClase='vend'; }
-  else { origen='Cotizó solo'; oClase='web'; }
+  else { origen = grupoManual(g) ? 'Escribió por WhatsApp' : 'Cotizó solo'; oClase='web'; }
   var ownChip = '<span class="seg-owner '+oClase+'">'+origen+'</span>' + chipAnuncio(g);
   var qrows = g.quotes.map(function(q){
     var est = q.estado||'enviada';
     var link = q.link ? ' <a href="'+q.link+'" target="_blank">↗</a>' : '';
     var f = q.fecha_creacion ? new Date(q.fecha_creacion).toLocaleDateString('es-CL') : '';
+    if (esLeadManual(q)) return '<div class="seg-qrow">'+leadManualChip(q, 'lead-badge')+' · '+prodNombre(q.producto)+' · '+fmt(q.total_alto||0)+(f?' · '+f:'')+(est!=='enviada'?' · '+est:'')+'</div>';
     return '<div class="seg-qrow">'+(q.numero||'—')+' · '+prodNombre(q.producto)+' · '+fmt(q.total_alto||0)+(f?' · '+f:'')+(est!=='enviada'?' · '+est:'')+link+'</div>';
   }).join('');
   var qbody = g.quotes.length>1
@@ -8915,7 +8969,8 @@ function segClientCard(g, cls){
   var pezBadge = pez ? '<span class="pez-badge">🐋 No dejar enfriar</span>' : '';
   var interesado = !!x.interesado;
   var starBtn = '<button class="seg-star'+(interesado?' on':'')+'" onclick="segToggleInteresado(\''+x.id+'\','+interesado+')" title="'+(interesado?'Quitar marca de interesado':'Marcar como interesado')+'">'+(interesado?'★':'☆')+'</button>';
-  var interesadoBadge = interesado ? '<span class="interesado-badge">★ Interesado</span>' : '';
+  var interesadoBadge = interesado ? '<span class="interesado-badge">'+interesadoTxt(x)+'</span>' : '';
+  var leadBadge = esLeadManual(x) ? leadManualChip(x, 'lead-badge') : '';
   var respondio = g.quotes.some(function(q){ return q.respondio; });
   var respBadge = respondio ? '<span class="resp-badge">💬 Respondió</span>' : '';
   var recu = esRecurrente(g);
@@ -8930,8 +8985,8 @@ function segClientCard(g, cls){
   var meta = escA(x.contacto||'sin contacto')+' · hace '+dias+' día'+(dias===1?'':'s');
   var toqueChip = compacta ? '<span class="seg-touch nuevo">Sin contactar</span>'
                            : '<span class="seg-touch">Toque '+Math.min(etapa+1,cadC.length)+'/'+cadC.length+'</span>';
-  return '<div class="seg-card '+cls+(pez?' pez':'')+(interesado?' interesado':'')+(recu?' recu':'')+'">'+
-    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+pausaBadge+'</div>'+
+  return '<div class="seg-card '+cls+(pez?' pez':'')+(interesado?' interesado':'')+(recu?' recu':'')+(esLeadManual(x)?' manual':'')+'">'+
+    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+leadBadge+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+pausaBadge+'</div>'+
     '<div class="seg-meta">'+meta+'</div>'+
     qbody+
     (compacta ? '' : '<div class="seg-toques">'+toques+'</div>')+
@@ -8957,7 +9012,9 @@ function segClientCard(g, cls){
 }
 /* marca/desmarca un cliente como interesado (estrella, para ubicarlo fácil en la cola) */
 async function segToggleInteresado(id, current){
-  segSave(id, {interesado: !current}, current?'Ya no marcado como interesado':'Marcado como interesado ★');
+  /* queda quién y cuándo (interesado_por / interesado_fecha); al quitarla se borran */
+  var upd = current ? {interesado:false, interesado_por:null, interesado_fecha:null} : marcaInteresado();
+  segSave(id, upd, current?'Ya no marcado como interesado':'Marcado como interesado ★');
 }
 /* "ya nos compró antes": +100 en el score y lo convierte en 🐋. Se marca a
    mano porque las compras cargadas en Gestión no llegan al cotizador. */
@@ -9133,7 +9190,8 @@ async function segMarcar(id, n, checked, resp, tipoFijo){
     updates.respondio = true; updates.fecha_primera_respuesta = new Date().toISOString();
   }
   /* "Va a comprar" lo marca con ★: los interesados van primero en cada sección */
-  if (checked && resp === 'compra') updates.interesado = true;
+  /* si ya tenía la ★, se respeta quién la puso primero */
+  if (checked && resp === 'compra' && !x.interesado) Object.assign(updates, marcaInteresado());
   /* El canal de origen NO se toca: quien cotizó solo por la web queda como
      web para siempre, haga quien haga el seguimiento. Son dos cosas distintas
      —de dónde vino el cliente y quién lo trabajó— y mezclarlas ensucia la
@@ -9661,10 +9719,13 @@ async function updateEstado(id, estado) {
         'Aceptar → quedan en seguimiento (se marcan ★)\n'+
         'Cancelar → se dan por cerradas junto con esta venta';
       if (confirm(msg)){
-        var ids = otras.map(function(q){ return q.id; });
-        sbClient.from('cotizaciones').update({interesado:true}).in('id', ids).then(function(r){
+        /* las que ya tenían ★ no se tocan: se respeta quién la puso */
+        var nuevas = otras.filter(function(q){ return !q.interesado; });
+        var ids = nuevas.map(function(q){ return q.id; });
+        var marca = marcaInteresado();
+        (ids.length ? sbClient.from('cotizaciones').update(marca).in('id', ids) : Promise.resolve({})).then(function(r){
           if (r && r.error) { showToast('No se pudo marcar ★: '+r.error.message, false); return; }
-          otras.forEach(function(q){ q.interesado = true; if (COTIS[q.id]) COTIS[q.id].interesado = true; });
+          nuevas.forEach(function(q){ Object.assign(q, marca); if (COTIS[q.id]) Object.assign(COTIS[q.id], marca); });
           computeSegPend(); renderTabs(); renderVistaActual();
           showToast('Las otras '+otras.length+' siguen en seguimiento (★)', true);
         });
@@ -10205,8 +10266,8 @@ function renderDash() {
   /* dReal = lo mismo sin las pruebas. La TABLA sigue mostrando d (las pruebas
      tienen que poder verse y corregirse), pero las fichas de arriba cuentan
      sobre dReal: una prueba no es una cotización del negocio. */
-  var dReal = d.filter(function(x){ return !esPrueba(x); });
-  var nPruebas = d.length - dReal.length;
+  var dReal = d.filter(function(x){ return !noCuenta(x); });   /* ni pruebas ni leads creados a mano */
+  var nPruebas = d.filter(esPrueba).length;
   var ganadas = dReal.filter(function(x){ return x.estado==='ganado'; });
   var cotizado = dReal.reduce(function(a,x){ return a + (x.estado==='perdida' ? 0 : (x.total_alto||0)); }, 0);
   var vendido  = ganadas.reduce(function(a,x){ return a + (x.monto_cierre||x.total_medio||x.total_alto||0); }, 0);
@@ -10216,7 +10277,7 @@ function renderDash() {
      vendedor no queda contado como "perdido" en Clientes Web y "ganado" en el vendedor a la vez. */
   var porCliente = {};
   dashRows.forEach(function(x){
-    if (esPrueba(x)) return;            /* una prueba no es un cliente */
+    if (noCuenta(x)) return;            /* una prueba o un lead creado a mano no es un cliente del cotizador */
     var k = clientKey(x);
     (porCliente[k] = porCliente[k] || []).push(x);
   });
@@ -10324,7 +10385,8 @@ function renderDash() {
      justo la cifra que uno mira para saber cómo viene el día. Va sobre la
      tabla, contando lo que el filtro activo esté mostrando. */
   var gentePers = {}, gentePorDia = {};
-  d.forEach(function(x){
+  var dCot = d.filter(function(x){ return !esLeadManual(x); });   /* el lead creado a mano no cotizó */
+  dCot.forEach(function(x){
     var k = clientKey(x);
     gentePers[k] = 1;
     var dia = fechaBaseISO(x.fecha_creacion);
@@ -10335,10 +10397,10 @@ function renderDash() {
   var nPers = Object.keys(gentePers).length;
   var hoyK = hoyISO();
   var persHoy = gentePorDia[hoyK] ? Object.keys(gentePorDia[hoyK]).length : 0;
-  var cotisHoy = d.filter(function(x){ return fechaBaseISO(x.fecha_creacion) === hoyK; }).length;
-  var porPersona = nPers ? (d.length / nPers).toFixed(1).replace('.', ',') : '0';
+  var cotisHoy = dCot.filter(function(x){ return fechaBaseISO(x.fecha_creacion) === hoyK; }).length;
+  var porPersona = nPers ? (dCot.length / nPers).toFixed(1).replace('.', ',') : '0';
   var genteHtml = '<div class="month-metrics" title="Una persona puede pedir varias cotizaciones probando medidas. El primer número son filas de la tabla; el segundo, personas distintas (mismo teléfono o correo).">' +
-    '<strong>' + d.length + '</strong> cotizaciones de <strong>' + nPers + '</strong> personas' +
+    '<strong>' + dCot.length + '</strong> cotizaciones de <strong>' + nPers + '</strong> personas' +
     ' · ' + porPersona + ' por persona' +
     (cotisHoy ? ' — hoy: <strong>' + cotisHoy + '</strong> de <strong>' + persHoy + '</strong> personas' : '') +
     '</div>';
@@ -10365,6 +10427,8 @@ function renderDash() {
        completo — eso era lo que se veía "raro" y se cortaba en el celu */
     var numCorto = (x.numero||'—').replace(/^N°\s*CL-?/i,'');
     var numHtml = x.link ? '<a href="'+x.link+'" target="_blank" style="color:var(--ac);text-decoration:none;white-space:nowrap">'+numCorto+' ↗</a>' : '<span style="white-space:nowrap">'+numCorto+'</span>';
+    /* lead creado a mano: se ve en la tabla, pero no suma a las fichas de arriba */
+    if (esLeadManual(x)) numHtml = '<span class="lead-badge manual" title="Lead creado por '+escA(x.lead_manual)+', sin cotización: no suma al total cotizado ni a los conteos">Sin cotización</span>';
     var montoTxt = est==='ganado' && x.monto_cierre ? '$'+Math.round(x.monto_cierre).toLocaleString('es-CL') : '$'+Math.round(x.total_alto||0).toLocaleString('es-CL');
     return '<tr><td>'+numHtml+'</td><td>'+escA(x.cliente||'—')+'</td><td style="font-size:11.5px">'+escA(x.contacto||'—')+'</td><td>'+(prodNombre(x.producto)||'—')+'</td><td>'+montoTxt+'</td><td style="font-size:11.5px">'+f+'</td>' +
       '<td>'+tqBadge(tqDe(x))+'</td>' +
