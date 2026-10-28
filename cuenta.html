@@ -101,7 +101,7 @@ function render(c){
   // igual que en el mensaje que recibe el cliente. El tramo puro (2 / 5) queda
   // explicado abajo, en la nota, para quien paga con otro medio.
   var msgFalta=t===5?'<div class="falta ok">Tienes el <b>10 %</b> con transferencia, el descuento más alto, en todas tus próximas compras.</div>':
-    '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para pasar al <b>'+(t===2?'10':'7')+' %</b> con transferencia en tus próximas compras.</div>';
+    '<div class="falta">Te faltan <b>'+clp(t===2?c.falta_5:c.falta_2)+'</b> para activar el <b>'+(t===2?'10':'7')+' %</b> pagando con transferencia.</div>';
   // ventana móvil (26-10): cada compra cuenta durante 12 meses y después sale sola
   var salida=c.salida_fecha?'El '+esc(fecha(c.salida_fecha,true))+' dejan de contar '+clp(c.salida_monto)+', que cumplen un año.':'';
   var html='<h1>'+esc(c.razon_social)+'</h1>'+
@@ -116,7 +116,7 @@ function render(c){
     '<div class="lbl" style="margin-top:20px">Tus beneficios</div>'+
     '<div class="lista">'+
       '<div class="it"><div><b style="white-space:normal">Muestrario sin costo</b><small>Para las cuentas empresa; normalmente vale $20.000.</small></div></div>'+
-      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>Pagando por transferencia: 5 % desde la primera compra, 7 % sobre $1.500.000 acumulados y 10 % sobre $3.000.000.</small></div></div>'+
+      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>Sobre $1.500.000 acumulados se activa el 7 % pagando con transferencia; sobre $3.000.000, el 10 %. Desde la primera compra ya tienes el 5 %.</small></div></div>'+
       '<div class="it"><div><b style="white-space:normal">Cotizador para tus presupuestos</b><small>Valores por medida y especie, con el acabado incluido.</small></div></div>'+
       '<div class="it"><div><b style="white-space:normal">Despacho a todo Chile</b><small>Con convenios de transporte; el costo se ve por proyecto.</small></div></div>'+
     '</div>'+
