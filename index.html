@@ -7085,6 +7085,27 @@ function waVariante(x){
   for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 9973;
   return h % 2;
 }
+/* ── CÉSAR SE PRESENTA UNA SOLA VEZ (30-10-2026, pedido del usuario) ──
+   «Soy César de Casa Zaru» va solo en el primer mensaje que recibe el cliente.
+   Ya presentado = el cliente tiene algún toque, respuesta o venta en CUALQUIERA
+   de sus cotizaciones (la misma vara del chip «Nunca contactados»). Excepción:
+   si se le pasó al 0141 (origen.no_escribio), el primer mensaje desde ese
+   número sí se presenta, porque le escribe un número que no conoce. */
+function yaSePresento(x){
+  if (!x || !clientesContactados()[clientKey(x)]) return false;
+  var ne = x.origen && x.origen.no_escribio;
+  if (ne) {
+    var h = Array.isArray(x.seg_historial) ? x.seg_historial : [];
+    var desde = String(ne).slice(0, 10);
+    if (!h.some(function(e){ return e && (e.etapa || 0) > 0 && String(e.fecha || '') >= desde; })) return false;
+  }
+  return true;
+}
+/* abre el mensaje: con presentación si es el primero, si no solo el saludo
+   («Hola Ana, vi que ayer…» en vez de «Hola Ana, soy César… Vi que ayer…») */
+function waAbre(hola, presento, yaPres, frase){
+  return yaPres ? hola + ', ' + frase.charAt(0).toLowerCase() + frase.slice(1) : presento + frase;
+}
 function waMsg(x){
   /* la misma cadencia y los mismos textos para el 5558 y el 0141 (26-10-2026):
      en los dos casos el cliente cotizó en la web y no nos ha contestado */
@@ -7102,18 +7123,23 @@ function waMsg(x){
   var lo = /^unas /.test(W.un) ? 'las' : /^unos /.test(W.un) ? 'los' : /^una /.test(W.un) ? 'la' : 'lo';
   /* la presentación es lo único que cambia entre las dos versiones */
   var presento = v === 0 ? hola + ', soy ' + yo + ' de Casa Zaru. ' : hola + ', te escribe ' + yo + ' de Casa Zaru. ';
+  var yaPres = yaSePresento(x);
   var m, pie = '';
   if (cadenciaAgotada(x)) {
-    /* se le escribe desde Dormidos, semanas después: reabre sin presionar */
-    m = hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Hace un tiempo cotizaste ' + W.un + ' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
+    /* se le escribe desde Dormidos, semanas después: reabre sin presionar.
+       Ya recibió mensajes de César: sin presentarse, pero nombrando Casa Zaru */
+    m = yaPres
+      ? hola + ', ¿cómo estás? Hace un tiempo cotizaste ' + W.un + ' en Casa Zaru y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.'
+      : hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Hace un tiempo cotizaste ' + W.un + ' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
   } else if (toque === 1) {
     /* día 1: una sola pregunta, fácil de contestar */
     var cuando = waCuando(x);
     if (esBacklogQ(x)) {
       /* nunca se le escribió y ya pasaron días: reconocer la demora */
-      m = hola + ', soy ' + yo + ' de Casa Zaru. ' + (cuando === 'hace unas semanas' ? 'Hace unas semanas' : 'La semana pasada') + ' cotizaste ' + W.un + ' con nosotros y no alcancé a escribirte antes, disculpa la demora. ¿Sigues con el proyecto? Si quieres te actualizo la cotización.';
+      /* si ya se le escribió por otra cotización, «no alcancé a escribirte» sería falso */
+      m = waAbre(hola, hola + ', soy ' + yo + ' de Casa Zaru. ', yaPres, (cuando === 'hace unas semanas' ? 'Hace unas semanas' : 'La semana pasada') + ' cotizaste ' + W.un + ' con nosotros' + (yaPres ? '.' : ' y no alcancé a escribirte antes, disculpa la demora.') + ' ¿Sigues con el proyecto? Si quieres te actualizo la cotización.');
     } else {
-      m = presento + 'Vi que ' + (cuando === 'hoy' ? 'recién' : cuando) + ' cotizaste ' + W.un + ' en nuestra página. ¿Ya tienes clara la madera o estás entre opciones?';
+      m = waAbre(hola, presento, yaPres, 'Vi que ' + (cuando === 'hoy' ? 'recién' : cuando) + ' cotizaste ' + W.un + ' en nuestra página. ¿Ya tienes clara la madera o estás entre opciones?');
     }
     pie = '\n\nTe dejo tu cotización por si la quieres revisar:\n';
   } else if (toque === 2) {
@@ -7125,7 +7151,7 @@ function waMsg(x){
     else if (resp === 'precio')  m = hola + ', estuve mirando tu cotización. Si el precio te complica hay formas de bajarlo' + (bajo ? ': en la madera más económica queda en ' + bajo : '') + ', y también se puede ajustar el espesor o las medidas. ¿Te armo esa opción?';
     else if (resp === 'compra')  m = hola + ', ¿seguimos con ' + suyo + '? Para partir la fabricación se confirma con el 70%. Dime y te mando los datos.';
     else if (resp === 'interesado') m = hola + ', ¿te quedó alguna duda de ' + suyo + '? Si quieres avanzar, me confirmas la madera y las medidas y te digo para cuándo estaría.';
-    else                         m = presento + 'Cotizaste ' + W.un + ' en la web y quería contarte que la fabricación toma de 7 a 15 días hábiles desde que se confirma. ¿Para cuándo ' + lo + ' necesitas?';
+    else                         m = waAbre(hola, presento, yaPres, 'Cotizaste ' + W.un + ' en la web y quería contarte que la fabricación toma de 7 a 15 días hábiles desde que se confirma. ¿Para cuándo ' + lo + ' necesitas?');
     pie = '\n\nTu cotización:\n';
   } else {
     /* día 13: el precio venció (VALIDEZ_DIAS = 10), un motivo real para
@@ -7367,7 +7393,10 @@ function waMsgReactivar(x){
      no "cubierta", firma quien tiene el panel abierto */
   var nom = waNombre(x);
   var W = WA_PROD[String(x.producto||'')] || { un:'un proyecto' };
-  var m = (nom ? 'Hola '+nom : 'Hola')+', ¿cómo estás? Soy '+waQuien()+', de Casa Zaru. Hace unas semanas cotizaste '+W.un+' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
+  /* César se presenta una sola vez (30-10-2026): si ya le escribió, solo saluda */
+  var m = yaSePresento(x)
+    ? (nom ? 'Hola '+nom : 'Hola')+', ¿cómo estás? Hace unas semanas cotizaste '+W.un+' en Casa Zaru y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.'
+    : (nom ? 'Hola '+nom : 'Hola')+', ¿cómo estás? Soy '+waQuien()+', de Casa Zaru. Hace unas semanas cotizaste '+W.un+' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
   return waLimpio(waParrafos(m));
 }
 function reactFila(g){
@@ -8476,8 +8505,10 @@ function campanaMsg(x){
      $1.000.000 y hasta el 30-10; César lo aplica al recotizar con el
      «descuento especial» del modo vendedor. */
   var dias = Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000);
-  return waLimpio(hola + ', ¿cómo estás? Soy César, de Casa Zaru.' +
-    '\n\n' + (dias <= 7 ? 'Hace unos días' : 'Hace un tiempo') + ' cotizaste unos peldaños con nosotros y quería saber si el proyecto sigue en pie.' +
+  /* César se presenta una sola vez (30-10-2026): si ya le escribió, solo saluda */
+  var yaPres = yaSePresento(x);
+  return waLimpio(hola + ', ¿cómo estás?' + (yaPres ? '' : ' Soy César, de Casa Zaru.') +
+    '\n\n' + (dias <= 7 ? 'Hace unos días' : 'Hace un tiempo') + ' cotizaste unos peldaños ' + (yaPres ? 'en Casa Zaru' : 'con nosotros') + ' y quería saber si el proyecto sigue en pie.' +
     '\n\nSi es así, estamos con un 10% de descuento en peldaños para compras sobre $1.000.000, hasta el 30 de octubre. Coméntame y te actualizo la cotización con el descuento.' +
     '\n\nSaludos.');
 }
