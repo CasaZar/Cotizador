@@ -8155,9 +8155,22 @@ function renderSeguimiento(){
   /* con un filtro puesto (chips o buscador) se dice: una lista corta o vacía
      no significa que no quede nadie, sino que nadie calza con el filtro */
   var filtrado = rapActivo() || !!omniRaw;
+  /* con el filtro puesto, el del 0141 que duerme entre mensajes también sale:
+     si no, buscar a un cliente que existe decía «Nadie calza con el filtro»
+     (29-10-2026, caso Andrea). Sin filtro la lista no cambia. */
+  var vistos = {};
+  [ballenas, b1, b1Viejos, b1Hoy, b2, b3, rescate, conv, futuro, hoyDone, b0141].forEach(function(a){
+    a.forEach(function(g){ vistos[g.key] = true; });
+  });
+  var espera0141 = !filtrado ? [] : groups.filter(function(g){
+    return owners[g.owner] && g.es0141 && !vistos[g.key] && dueDate(g.lead) && !compraReciente(g.quotes, g.lead);
+  }).sort(cmp);
+  if (espera0141.length) html0141 +=
+    '<div class="hz-bloque0141"><div class="hz-sec0141">📱 0141 · esperan su próximo mensaje<span>'+espera0141.length+'</span></div>'+
+    '<div class="hz-lista">'+espera0141.map(function(g){ return filaReg(g, 'future'); }).join('')+'</div></div>';
   var html = '<div class="hz-lista">'+
     (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
-                  : (b0141.length ? '' : '<div class="hz-vacio">'+(filtrado ? 'Nadie calza con el filtro. Tócalo de nuevo para quitarlo.' : 'No te queda nadie por escribir hoy.')+'</div>'))+
+                  : (b0141.length || espera0141.length ? '' : '<div class="hz-vacio">'+(filtrado ? 'Nadie calza con el filtro. Tócalo de nuevo para quitarlo.' : 'No te queda nadie por escribir hoy.')+'</div>'))+
     '</div>';
   /* con la campaña o el 0141 arriba, la lista de siempre lleva su título para
      que se sepa dónde empieza */
@@ -9685,6 +9698,11 @@ function dashCoincide(x, q){
   if (!t) return true;
   var campos = [x.cliente||'', x.numero||'', x.contacto||''].join(' ').toLowerCase();
   if (campos.indexOf(t) !== -1) return true;
+  /* el teléfono como lo muestra WhatsApp («+56 9 4018 8207») no calzaba con
+     el guardado («+56 9 40188207»): con 6 dígitos o más se comparan solo los
+     dígitos (29-10-2026, caso Andrea) */
+  var dig = t.replace(/\D/g, '');
+  if (dig.length >= 6 && String(x.contacto||'').replace(/\D/g, '').indexOf(dig) !== -1) return true;
   var num = String(x.numero||'').toLowerCase().replace(/^n[°º]?\s*/,'').replace(/^cl-/,'');
   return num.indexOf(t.replace(/^n[°º]?\s*/,'').replace(/^cl-/,'')) !== -1;
 }
