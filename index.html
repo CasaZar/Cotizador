@@ -5154,9 +5154,12 @@ function htmlCubierta(cli, fecha) {
     return '<span class="mesa-desglose">' + fmt(r.total / nUnid) + ' por peldaño' + (ct ? ', con su contrahuella' : '') + '</span>';
   } : null;
   var vEsp = vEspesorFinal();
-  var esp = vEsp || (es8cm() ? '8 cms macizo — incluye 4 cms extra de espesor' :
-    (prod==='cubierta' ? 'De 2,1 a 4,0 cms. Tú eliges' : prod==='peldano' ? (getPeldanoEspesor() + ' cms') :
-     prod==='banca' ? '4 cms (asiento)' : '2 cms'));
+  var esp = vEsp || (es8cm() ? '8 cm macizo — incluye 4 cm extra de espesor' :
+    (prod==='cubierta' ? 'De 2,1 a 4 cm, tú eliges' : prod==='peldano' ? (getPeldanoEspesor() + ' cm') :
+     prod==='banca' ? '4 cm (asiento)' : '2 cm'));
+  /* el espesor va junto a las medidas (31-10-2026, pedido del usuario): abajo,
+     después de los precios, el cliente no lo veía. Sigue también en los datos. */
+  var espNota = '<div class="info-bar">Espesor: <strong>' + escA(esp) + '</strong></div>';
   /* el cliente ve de dónde sale el precio, igual que el desglose cubierta + base de las mesas */
   var fijoNota = '';
   if (prod === 'banca' && fijoU > 0)
@@ -5178,6 +5181,7 @@ function htmlCubierta(cli, fecha) {
     '<tbody>'+dimRows+
     '<tr class="trow"><td colspan="4" style="text-align:right;padding-right:8px">M² TOTAL</td><td>'+sumM2.toFixed(2)+'</td></tr>' +
     '</tbody></table>' +
+    espNota +
     ctNota +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
