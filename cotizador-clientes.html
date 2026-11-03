@@ -699,11 +699,14 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .tq-resp-precio { background:#FEF3C7;color:#92400E; }
 .tq-resp-pausa { background:#E0EEF7;color:#1E4E79; }
 .tq-resp-otro_lado, .tq-resp-numero { background:#FDE8E8;color:#991B1B; }
-.dm-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px; }
-@media(max-width:480px){ .dm-grid { grid-template-columns:repeat(2,1fr); } }
+/* 03-11-2026, pedido del usuario: fotos más chicas para ver todos los modelos
+   de una. Columnas de ~110 px: 3 por fila en el celular (antes 2) y 5-6 en el
+   PC del vendedor (antes 3, cada foto de casi 300 px). */
+.dm-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:7px;margin-top:4px; }
+@media(min-width:1100px){ body.modo-vendedor .dm-grid { grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); } }
 .dm-card { border:2px solid var(--bd);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s; }
 .dm-card img { width:100%;aspect-ratio:3/4;object-fit:cover;display:block; }
-.dm-lbl { font-size:12px;text-align:center;padding:5px 4px;color:var(--tx);line-height:1.3; }
+.dm-lbl { font-size:12px;text-align:center;padding:4px 3px;color:var(--tx);line-height:1.25; }
 .dm-card:hover,.dm-card.dm-sel { border-color:var(--ac); }
 .dm-card.dm-sel { box-shadow:0 0 0 1px var(--ac); }
 /* las fotos de mesas son casi cuadradas (las de puertas, verticales) */
@@ -1460,6 +1463,28 @@ body.modo-vendedor #s2 #b2b-wrap .vx-sub { margin: 4px 0 0; padding: 0; border: 
 .v-wa { white-space: pre-wrap; font-size: 13px; line-height: 1.5; color: var(--tx); background: #F7F3EA; border-radius: 10px; padding: 10px 12px; }
 .v-wa i { color: var(--tm); }
 #v-msg { display: none; }
+/* etapa 2: extras a un toque, reborde plegado, editar/duplicar lo agregado y vista previa */
+.vx-rapidos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.vx-rapidos button { border: 1px solid var(--verde); color: var(--verde); background: #fff; border-radius: 20px; padding: 6px 11px;
+  font-size: 13px; cursor: pointer; min-height: 34px; font-family: inherit; }
+.vx-rapidos button:active { background: #EEF1EA; }
+.vx-mas { margin: 0 0 12px; border: 1px solid var(--bd); border-radius: 10px; padding: 0 12px; background: #fff; }
+.vx-mas > summary { cursor: pointer; padding: 11px 0; font-size: 14px; font-weight: 500; color: var(--tx); }
+.vx-mas[open] > summary { border-bottom: 1px solid var(--bd); margin-bottom: 10px; }
+body.modo-vendedor .combo-li { flex-wrap: wrap; row-gap: 2px; }
+.combo-li .cl-acc { display: flex; gap: 4px; }
+body.modo-vendedor .combo-li .cl-acc { order: 3; flex-basis: 100%; padding-left: 14px; }
+.combo-li .cl-acc button { font-size: 13px; color: var(--verde); text-decoration: underline; padding: 2px 6px 2px 0; min-height: 30px; }
+.btn-vista { display: none; width: 100%; margin-top: 10px; border: 1.5px solid var(--bd); background: #fff; color: var(--tx); border-radius: 12px;
+  min-height: 46px; font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; }
+body.modo-vendedor .btn-vista { display: block; }
+.v-vista-banda { background: #FBF0E4; color: #8F4E22; border-radius: 10px; padding: 9px 12px; font-size: 13px; font-weight: 600; text-align: center; margin: 0 0 12px; }
+.v-vista-barra { display: none; }
+body.v-vista .v-vista-barra { display: flex; gap: 8px; position: sticky; bottom: 0; z-index: 70; background: #fff; border-top: 1px solid #E1D8C8;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); font-family: 'Poppins', sans-serif; }
+.v-vista-barra button { flex: 1; min-height: 46px; border-radius: 10px; border: 1.5px solid #E1D8C8; background: #fff; color: #2B2A24; font: 500 14.5px 'Poppins', sans-serif; cursor: pointer; }
+.v-vista-barra button.p { background: #A85D2A; border-color: #A85D2A; color: #fff; font-weight: 600; }
+body.v-vista .btn-copy-link, body.v-vista #btn-q-s1, body.v-vista .btn-pdf { display: none !important; }
 body.modo-vendedor #s2 .btn-combo { border: 1.5px solid var(--verde); border-style: solid; background: #fff; color: var(--verde); font-family: 'Poppins', sans-serif; font-weight: 500; letter-spacing: .2px; min-height: 46px; }
 /* inicio del vendedor: la lista de productos sin fotos, para elegir rápido */
 body.modo-vendedor #s1 .pcard-img, body.modo-vendedor #s1 .ptag, body.modo-vendedor #s1 .s1-confianza,
@@ -1772,6 +1797,7 @@ body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
     <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
     <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
+    <button class="btn-vista v-solo" type="button" onclick="vVistaPrevia()">Vista del cliente</button>
     <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar otro producto</button>
     </aside>
   </div>
@@ -1796,6 +1822,9 @@ body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
     <button class="btn-nav-sm right" id="btn-q-s1">Inicio</button>
   </div>
   <div id="q-out" class="coti marca"></div>
+  <!-- solo en la «Vista del cliente» del vendedor (body.v-vista) -->
+  <div class="v-vista-barra"><button type="button" onclick="show('s2')">← Seguir editando</button>
+    <button type="button" class="p" onclick="vGuardarDesdeVista()">Guardar y copiar link</button></div>
 </div>
 
 <!-- ══ s-login: ACCESO AL PANEL ══ -->
@@ -2969,6 +2998,7 @@ function show(id) {
     var el = document.getElementById(i); if (el) el.classList.add('hidden');
   });
   document.getElementById(id).classList.remove('hidden');
+  if (id !== 's3') document.body.classList.remove('v-vista');   /* fuera de la vista previa del vendedor */
   window.scrollTo(0,0);
 }
 /* se llama pase lo que pase al terminar de restaurar: si algo falló y no
@@ -4099,6 +4129,27 @@ function pfTarifa(sel) {
   if (val) val.value = def.valor;
   calcLive();
 }
+/* botones de extras frecuentes (vendedor, 03-11-2026): atajos a los mismos campos */
+function vExtraRapido(t) {
+  if (t === 'lava' || t === 'red') { pfTarifa({ value: t }); return; }
+  if (t === 'tenido') {
+    var sel = document.getElementById('tn-tarifa');
+    if (sel) { sel.value = 'm2'; tnTarifa(); }
+    var det = document.getElementById('tn-det'); if (det) det.focus();
+    return;
+  }
+  addVExtra();
+  var nom = document.getElementById('vx-nom' + nVExtras), val = document.getElementById('vx-val' + nVExtras);
+  if (t === 'u45' && nom) { nom.value = 'Unión en 45 grados'; if (val) val.focus(); }
+  else if (nom) nom.focus();
+}
+/* el reborde y el respaldo van plegados: se abren solos si traen algo */
+function vMasAbrir() {
+  var m = document.getElementById('vx-mas');
+  if (!m) return;
+  var lleno = ['rb-ml', 'rs-ml'].some(function(id){ var el = document.getElementById(id); return el && parseFloat(el.value) > 0; });
+  if (lleno) m.open = true;
+}
 /* ── REBORDE POR CANTO, PIEZA POR PIEZA ──
    Cada pieza tiene sus propios 4 cantos, porque en una misma cotización puede
    haber cubiertas con reborde y otras sin. Los metros lineales suman cada pieza
@@ -4333,6 +4384,19 @@ function vExtrasFieldHtml() {
   return '<div class="mesa-box'+(vendorMode?'':' hidden')+'">' +
     '<div class="mesa-h">Extras (opcional)</div>' +
     /* el descuento especial ya no va acá: vive en «Ajustes de precio» (#v-ajustes) */
+    /* los extras que de verdad se usan (ago-oct 2026: teñido, unión en 45° y
+       perforación), a un toque. Cada botón llena los campos de abajo, que
+       siguen siendo la fuente de verdad. La unión en 45° no tiene tarifa:
+       solo se escribe el nombre y el valor lo pone el vendedor. */
+    '<div class="vx-rapidos">' +
+      '<button type="button" onclick="vExtraRapido(\'lava\')">+ Perforación lavaplatos</button>' +
+      '<button type="button" onclick="vExtraRapido(\'red\')">+ Perforación redonda</button>' +
+      '<button type="button" onclick="vExtraRapido(\'tenido\')">+ Teñido</button>' +
+      '<button type="button" onclick="vExtraRapido(\'u45\')">+ Unión en 45°</button>' +
+      '<button type="button" onclick="vExtraRapido(\'otro\')">+ Otro extra</button>' +
+    '</div>' +
+    /* reborde y respaldo se usan en ~3 % de las cotizaciones: plegados */
+    '<details class="vx-mas" id="vx-mas"><summary>Reborde' + (prod === 'cubierta' ? ' y respaldo' : '') + '</summary>' +
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Reborde — simula mayor espesor, por metro lineal</div>' +
       '<div class="col-labels"><div class="col-lbl">Alto del reborde</div></div>' +
@@ -4362,6 +4426,7 @@ function vExtrasFieldHtml() {
       '<button class="btn-add" type="button" onclick="rsUsarLargos()" style="margin:0 0 8px">Usar el largo de las piezas</button>' +
       '<div class="finput-hint" id="rs-hint">Escribe los metros de muro que lleva respaldo. Cada metro lineal se cobra como una cubierta de 100 × 5 cm.</div>' +
     '</div>' : '') +
+    '</details>' +
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Teñido</div>' +
       '<div class="dim-row">' +
@@ -5315,6 +5380,9 @@ function comboPintar() {
     var filas = combo.map(function(it, i){
       return '<div class="combo-li"><span class="cl-n">' + (i+1) + '. ' + it.nombre + '</span>' +
         '<span class="cl-p">' + fmt(it.tot.bajo) + ' – ' + fmt(it.tot.alto) + '</span>' +
+        /* etapa 2 del vendedor (03-11-2026): cada producto se corrige o se repite sin rehacerlo */
+        '<span class="cl-acc"><button type="button" onclick="vComboEditar(' + i + ')">Editar</button>' +
+        '<button type="button" onclick="vComboDuplicar(' + i + ')">Duplicar</button></span>' +
         '<button type="button" title="Quitar de la cotización" onclick="comboQuitar(' + i + ')">✕</button></div>';
     }).join('');
     html = '<div class="combo-bar">' +
@@ -5487,6 +5555,68 @@ function vMontar() {
   if (s2) { s2.addEventListener('input', vCambio); s2.addEventListener('change', vCambio); }
   vEstadoPintar();
   vPrecioProgramar();
+}
+/* ── ETAPA 2 (03-11-2026): corregir, repetir y mirar antes de guardar ── */
+/* vuelve un producto ya agregado al formulario. El que estaba en pantalla no se
+   pierde: si se puede cotizar, pasa a la lista antes de abrir el otro. */
+function vComboEditar(i) {
+  var it = combo[i];
+  if (!it) return;
+  var mudo = { textContent: '', classList: { add: function(){}, remove: function(){} } };
+  var enForm = !document.getElementById('s2').classList.contains('hidden');
+  if (enForm && prod && validarProducto(mudo, true)) {
+    fromHash = false;
+    descongelar();
+    uso = usoActual();
+    combo.push(comboCapturar());
+  }
+  combo.splice(i, 1);
+  restoreProducto(it.share);
+  calcLive();
+  comboPintar();
+  vCambio();
+  showToast('Editando ' + it.nombre + ': al terminar, «Guardar» o «Agregar otro producto»', true);
+}
+function vComboDuplicar(i) {
+  if (!combo[i]) return;
+  combo.splice(i + 1, 0, JSON.parse(JSON.stringify(combo[i])));
+  comboPintar();
+  vCambio();
+}
+/* «Vista del cliente»: el documento tal cual lo verá el cliente, sin guardar
+   nada (saveQuote no hace nada mientras vVista) y sin número ni link */
+var vVista = false;
+function vVistaPrevia() {
+  var errEl = document.getElementById('f-err');
+  if (!validarProducto(errEl)) { errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  errEl.classList.add('hidden');
+  var antes = { q: qnum, link: shareShortUrl, cs: comboShare };
+  vVista = true;
+  try {
+    uso = usoActual();
+    qnum = 'Borrador';
+    shareShortUrl = '';
+    comboShare = null;
+    var cli = document.getElementById('f-cli').value.trim(), fecha = fechaDocTexto();
+    var html = combo.length ? htmlCombinada(cli, fecha) : htmlProducto(cli, fecha);
+    var qOut = document.getElementById('q-out');
+    qOut.innerHTML = '<div class="v-vista-banda">Vista del cliente · todavía no está guardada</div>' + html;
+    /* lo mismo que confirmar(): WhatsApp bajo los precios y la validez sobre ellos */
+    var waB = qOut.querySelector('.wa-block'), bloques = qOut.querySelectorAll('.precios');
+    if (waB && bloques.length) bloques[bloques.length - 1].insertAdjacentElement('afterend', waB);
+    if (bloques.length) bloques[bloques.length - 1].insertAdjacentHTML('beforebegin',
+      '<p class="elige-madera">Elige tu madera · ' + validezHtml() + '</p>');
+    stkMontar(qOut);
+  } finally {
+    vVista = false;
+    qnum = antes.q; shareShortUrl = antes.link; comboShare = antes.cs;
+  }
+  document.body.classList.add('v-vista');
+  show('s3');
+}
+function vGuardarDesdeVista() {
+  show('s2');
+  barraIrADatos();   /* en modo vendedor: toca «Guardar y copiar link» y muestra el error si falta algo */
 }
 /* el documento con todos los productos: cada uno con su detalle y su tabla
    de precios, y al final el total por madera y el pie común una sola vez */
@@ -6753,6 +6883,7 @@ function restoreProducto(d) {
     if (ctAl) ctAl.value = d.ct.alto;
     if (ctCa) { ctCa.value = d.ct.cant; if (d.ct.manual) ctCa.dataset.manual = '1'; }
   }
+  vMasAbrir();   /* reborde o respaldo del link: su bloque plegado se abre */
 }
 /* Restaura el reborde de un link compartido. Requiere que las piezas ya existan. */
 function rbRestaurar(d) {
@@ -6888,6 +7019,7 @@ async function saveQuote(data, lineas) {
     comboCaptura.vidrio_tipo = data.vidrio_tipo || null;
     return;
   }
+  if (vVista) return;   /* «Vista del cliente» del vendedor: solo se mira, no se guarda */
   if (fromHash) return;
   /* anti-duplicado: no insertar dos veces el mismo número en la misma sesión.
      El flag se fija ANTES del await para que clics rápidos seguidos no alcancen a duplicar. */
