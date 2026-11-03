@@ -353,7 +353,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .precios-nota { font-size: 11.5px; color: var(--tm); text-align: center; line-height: 1.5; margin-top: 2px; }
 /* nota al pie de un bloque; la cotización ya no la usa, pero sí la pestaña Actividad del panel */
 .ptier-note { padding: 6px 10px; font-size: 12px; color: var(--tm); background: var(--crt); border-top: 1px solid var(--bg3); text-align: center; }
-.precios-pro { background: #EEF6FF; color: #1E40AF; font-weight: 600; font-size: 12px; border-radius: 8px; padding: 6px 10px; text-align: center; margin-bottom: 9px; }
+.precios-pro { background: #485B3D; color: #fff; font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 12px; text-align: center; margin-bottom: 10px; line-height: 1.4; }
+.b2b-ok { margin-top: 8px; background: #EEF2EA; border: 1px solid #C9D4BF; border-radius: 9px; padding: 9px 11px; font-size: 14px; }
+.b2b-ok b { color: #485B3D; }
+.b2b-ok small { display: block; color: var(--tm); font-size: 12.5px; margin-top: 2px; line-height: 1.4; }
 /* specs: de cuatro columnas apretadas a una grilla de dos, etiqueta arriba y valor abajo */
 .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; background: var(--bg3); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; }
 .spec { min-width: 0; }
@@ -2648,7 +2651,19 @@ var cubiertaSolo = false; /* true con ?prod=cubierta: además de simplificado, c
    hacía ?prod=cubierta y los otros cinco abrían con "← Inicio"). */
 var prodSolo = false;
 var mesaTipo = 'comedor'; /* pestaña del catálogo de mesas: 'comedor' o 'centro' */
-var b2bDcto = 0;          /* % extra Casa Zaru Profesionales (0-5); >0 aplica descuento aunque no se vea el selector (link compartido) */
+/* ── CUENTA EMPRESA (03-11-2026) ──
+   El vendedor escribe el RUT en «Cuenta empresa» y el cotizador le pregunta
+   el tramo a Gestión (b2b_tramo_rut, migración 0027: solo devuelve razón
+   social y tramo). Tramo 2 o 5: baja el precio de lista en ese % y el de
+   transferencia en 5 % + tramo (7 % o 10 %), igual que la página de la cuenta.
+   Va por los mismos tres puntos que el descuento especial (dctoPct) y NO se
+   suma con él: gana el mayor; si empatan, la cuenta, que rinde más en
+   transferencia. El link lo conserva (d.b2b, solo 2 o 5; d.ben = nombre). */
+var b2bDcto = 0;          /* tramo de la cuenta empresa: 0, 2 o 5 */
+var b2bEmp = null;        /* { rut, nombre } de la cuenta encontrada */
+var B2B_TRAMOS = [2, 5];
+function b2bValido(v) { v = parseInt(v, 10) || 0; return B2B_TRAMOS.indexOf(v) !== -1 ? v : 0; }
+function b2bAplica() { return b2bDcto > 0 && b2bDcto >= dctoEsp; }
 /* ── DESCUENTO ESPECIAL (20-10-2026) ──
    Lo pone SOLO el vendedor (selector en «Extras», que el público no ve), de
    5% o 10%. Baja TODOS los precios, el de tarjeta y el de transferencia: se
@@ -2664,14 +2679,17 @@ var b2bDcto = 0;          /* % extra Casa Zaru Profesionales (0-5); >0 aplica de
 var dctoEsp = 0;
 var DCTO_OPCIONES = [5, 10];
 function dctoValido(v) { v = parseInt(v, 10) || 0; return DCTO_OPCIONES.indexOf(v) !== -1 ? v : 0; }
-function dctoFactor() { return dctoEsp > 0 ? 1 - dctoEsp / 100 : 1; }
+/* % que baja el precio de lista: el de la cuenta empresa o el especial, el que gane */
+function dctoPct() { return b2bAplica() ? b2bDcto : dctoEsp; }
+function dctoFactor() { var p = dctoPct(); return p > 0 ? 1 - p / 100 : 1; }
 /* monto rebajado, redondeado igual que lo guarda saveQuote (primero el total, despues el descuento): asi el precio que se ve, el del mensaje y el del panel son el mismo peso */
-function dctoMonto(x) { return dctoEsp > 0 ? Math.round(Math.round(x) * dctoFactor()) : x; }
+function dctoMonto(x) { return dctoPct() > 0 ? Math.round(Math.round(x) * dctoFactor()) : x; }
 function dctoSel(v) {
   dctoEsp = dctoValido(v);
   document.querySelectorAll('.dcto-op').forEach(function(b){
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
   });
+  b2bPintar();   /* el aviso de la cuenta dice cuál de los dos se usa */
 }
 function dctoSelHtml() {
   return '<div class="vx-sub">' +
@@ -2686,7 +2704,7 @@ function dctoSelHtml() {
 }
 /* la franja que ve el cliente arriba de su cotización */
 function dctoBannerHtml(cli) {
-  if (!(dctoEsp > 0)) return '';
+  if (!(dctoEsp > 0) || b2bAplica()) return '';
   var nom = String(cli || '').trim().split(/\s+/)[0] || '';
   nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
   var vence = new Date(fechaDocDate().getTime() + VALIDEZ_DIAS * 86400000);
@@ -3102,28 +3120,81 @@ function recBadgeText() {
   if (prod==='mesa')     return '★ La más pedida para mesas';
   return '★ La más pedida en el taller';
 }
-/* factor de transferencia: 5% normal, o 5%+descuento profesionales si aplica */
+/* factor de transferencia sobre el precio con tarjeta (que ya viene rebajado por
+   dctoPct). Con cuenta empresa la transferencia es lista × (1 − (5 + tramo) %):
+   sumados, no encadenados, igual que lo que dice la página de la cuenta. */
 function transferFactor(){
   var t = VALORES.generales.transferencia * 100;   /* % de dcto por transferencia, editable en el Manual */
-  return b2bDcto > 0 ? (1 - (t + b2bDcto) / 100) : (1 - t / 100);
+  return b2bAplica() ? (1 - (t + b2bDcto) / 100) / (1 - b2bDcto / 100) : (1 - t / 100);
 }
 /* % de transferencia para textos ("Transferencia −5%"): sigue al Manual */
 function transfPct(){ return Math.round(VALORES.generales.transferencia * 100); }
-function transfLabel(){ return b2bDcto > 0 ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : ('Transferencia −' + transfPct() + '%'); }
-/* selector de descuento B2B — solo en el link privado de Jepe */
+function transfLabel(){ return b2bAplica() ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : ('Transferencia −' + transfPct() + '%'); }
+/* «Cuenta empresa»: solo el vendedor la ve, en todos los productos */
+var B2B_SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';   /* Gestión: la llave solo ejecuta b2b_estado y b2b_tramo_rut */
+var B2B_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
+var b2bTimer = null, b2bBusq = 0, b2bMsg = '';
+/* RUT con dígito verificador correcto, como 12345678-K; si no, '' */
+function rutValido(v) {
+  var r = String(v || '').toUpperCase().replace(/[^0-9K]/g, '');
+  if (r.length < 8) return '';
+  var cuerpo = r.slice(0, -1), dv = r.slice(-1);
+  if (/K/.test(cuerpo)) return '';
+  var s = 0, m = 2;
+  for (var i = cuerpo.length - 1; i >= 0; i--) { s += parseInt(cuerpo[i], 10) * m; m = m === 7 ? 2 : m + 1; }
+  var e = 11 - s % 11;
+  return (e === 11 ? '0' : e === 10 ? 'K' : String(e)) === dv ? cuerpo + '-' + dv : '';
+}
 function renderB2B(){
   var w = document.getElementById('b2b-wrap');
   if (!w) return;
-  if (!b2bMode){ w.classList.add('hidden'); w.innerHTML=''; return; }
-  var opts='';
-  for (var i=0;i<=5;i++){ opts += '<option value="'+i+'"'+(b2bDcto===i?' selected':'')+'>'+(i===0?'Sin descuento extra':i+'% extra')+'</option>'; }
+  if (!vendorMode){ w.classList.add('hidden'); w.innerHTML=''; return; }
   w.classList.remove('hidden');
   w.innerHTML =
-    '<div class="b2b-box">'+
-      '<div class="b2b-h">★ Descuento Casa Zaru Profesionales</div>'+
-      '<select class="fsel" id="b2b-sel" onchange="b2bDcto=parseInt(this.value)||0;calcLive()">'+opts+'</select>'+
-      '<div class="b2b-note">Se suma al 5% de transferencia. Solo tú (Jepe) ves esto.</div>'+
+    '<div class="vx-sub">'+
+      '<div class="vx-sub-h">Cuenta empresa</div>'+
+      '<input class="finput" type="text" id="b2b-rut" autocomplete="off" placeholder="RUT de la factura (ej. 76.123.456-7)" value="' + escA(b2bEmp ? b2bEmp.rut : '') + '" oninput="b2bRutInput(this.value)">'+
+      '<div id="b2b-res">' + b2bResHtml() + '</div>'+
     '</div>';
+}
+function b2bRutInput(v) {
+  clearTimeout(b2bTimer);
+  b2bBusq++;   /* una respuesta que llegue tarde ya no vale */
+  var rut = rutValido(v);
+  if (!rut) {
+    var largo = String(v || '').replace(/[^0-9kK]/g, '').length;
+    b2bFijar(null, 0, largo >= 8 ? 'RUT no válido: revisa el dígito verificador.' : '');
+    return;
+  }
+  b2bPintar('Buscando la cuenta…');
+  b2bTimer = setTimeout(function(){ b2bBuscar(rut); }, 350);
+}
+async function b2bBuscar(rut) {
+  var n = ++b2bBusq;
+  try {
+    var r = await fetch(B2B_SB_URL + '/rest/v1/rpc/b2b_tramo_rut', { method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: B2B_SB_ANON, Authorization: 'Bearer ' + B2B_SB_ANON },
+      body: JSON.stringify({ p_rut: rut }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var j = await r.json();
+    if (n !== b2bBusq) return;
+    if (!j) { b2bFijar(null, 0, 'Sin cuenta empresa: precio normal.'); return; }
+    var pct = b2bValido(j.tramo_pct);
+    b2bFijar({ rut: rut, nombre: String(j.razon_social || '').slice(0, 80) }, pct,
+      pct ? '' : (j.razon_social || 'La cuenta') + ' todavía no llega a $1.500.000 en 12 meses: precio normal.');
+  } catch (e) {
+    if (n === b2bBusq) b2bFijar(null, 0, 'No se pudo consultar la cuenta. Revisa la conexión y vuelve a escribir el RUT.');
+    console.error('b2bBuscar:', e);
+  }
+}
+function b2bFijar(emp, pct, msg) { b2bEmp = emp; b2bDcto = pct; b2bMsg = msg || ''; b2bPintar(); calcLive(); }
+function b2bPintar(cargando) { var el = document.getElementById('b2b-res'); if (el) el.innerHTML = b2bResHtml(cargando); }
+function b2bResHtml(cargando) {
+  if (cargando) return '<div class="finput-hint">' + cargando + '</div>';
+  if (b2bDcto > 0) return '<div class="b2b-ok"><b>✓ ' + escA(b2bEmp && b2bEmp.nombre ? b2bEmp.nombre : 'Cuenta empresa') + '</b> · tramo ' + b2bDcto + ' %<small>' +
+    (b2bAplica() ? 'Se aplica solo: ' + b2bDcto + ' % con tarjeta, ' + (transfPct() + b2bDcto) + ' % con transferencia. Ponlo antes de «Ver precio por madera».'
+                 : 'El descuento especial de ' + dctoEsp + ' % es mayor: se usa ese y no se suman.') + '</small></div>';
+  return '<div class="finput-hint">' + (b2bMsg ? escA(b2bMsg) : 'Si el cliente tiene cuenta empresa con tramo, el descuento se aplica solo.') + '</div>';
 }
 
 /* ── FORM ── */
@@ -5758,8 +5829,9 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
       '</div>' +
     '</div>';
   }).join('');
-  var proNote = b2bDcto > 0
-    ? '<div class="precios-pro">★ Incluye Descuento Casa Zaru Profesionales: ' + b2bDcto + '% extra</div>'
+  var proNote = b2bAplica()
+    ? '<div class="precios-pro">★ Cuenta empresa' + (b2bEmp && b2bEmp.nombre ? ' ' + escA(b2bEmp.nombre) : '') + ': ' +
+      b2bDcto + ' % sobre lista (' + (transfPct() + b2bDcto) + ' % con transferencia)</div>'
     : '';
   return '<div class="precios">' + proNote + cards + '<div class="precios-nota">' + nota + '</div></div>';
 }
@@ -5907,9 +5979,9 @@ function waNumero() {
    supabase-cotizador/embudo-whatsapp.sql; sin él la base lo rechaza callada). */
 function whatsappCTA(bajo, alto, det, nombreProd) {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
-  if (dctoEsp > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
+  if (dctoPct() > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA' +
-    (dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
+    (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
   var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
@@ -5923,7 +5995,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   var urlMuest = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
     'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
   return '<div class="wa-block">' +
-    '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + (dctoEsp > 0 ? ' con descuento' : '') + '</a>' +
+    '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + (dctoPct() > 0 ? ' con descuento' : '') + '</a>' +
     '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
     '<div class="wa-otras">' +
       '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'duda\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
@@ -6159,7 +6231,7 @@ function getShareData(conValores) {
       var valsC = valoresParaCongelar();
       if (Object.keys(valsC).length) d.vals = valsC;
     }
-    if (b2bDcto > 0) d.b2b = b2bDcto;
+    if (b2bAplica()) { d.b2b = b2bDcto; if (b2bEmp && b2bEmp.nombre) d.ben = b2bEmp.nombre; }
     if (dctoEsp > 0) d.de = dctoEsp;   /* descuento especial del vendedor */
     if (stkComuna) d.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };
     if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
@@ -6177,7 +6249,10 @@ function getShareDataProducto(conValores) {
     var vals = valoresParaCongelar();
     if (Object.keys(vals).length) data.vals = vals;
   }
-  if (b2bDcto > 0) data.b2b = b2bDcto;   /* el link compartido conserva el descuento profesionales */
+  if (b2bAplica()) {   /* el link compartido conserva el tramo de la cuenta empresa */
+    data.b2b = b2bDcto;
+    if (b2bEmp && b2bEmp.nombre) data.ben = b2bEmp.nombre;
+  }
   if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
@@ -6270,7 +6345,8 @@ function restoreFromData(d) {
   restaurando = true;   /* tapa el formulario mientras se rellena */
   congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
-  b2bDcto = parseInt(d.b2b) || 0;   /* aplica el descuento al mostrar, sin mostrar el selector */
+  b2bDcto = b2bValido(d.b2b);       /* cuenta empresa: solo 2 o 5 (el link lo puede armar cualquiera) */
+  b2bEmp = b2bDcto && d.ben ? { rut: '', nombre: String(d.ben).slice(0, 80) } : null;
   dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
   /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
@@ -6574,7 +6650,7 @@ async function saveQuote(data, lineas) {
     /* el link ya se construyó en confirmar() (shareShortUrl); lo guardamos en el mismo insert
        para no necesitar permiso público de "update" en la tabla. */
     var payload = Object.assign({}, data, { user_email: srcEmail || correoEquipo(), link: shareShortUrl || null });
-    if (b2bDcto > 0) payload.b2b_dcto = b2bDcto;   /* solo cotizaciones B2B con descuento (requiere columna) */
+    if (b2bAplica()) payload.b2b_dcto = b2bDcto;   /* tramo de la cuenta empresa que se aplicó */
     if (origenVisita && !vendorMode) payload.origen = origenVisita;
     /* 23-10-2026: la sesión del embudo, para saber después si este cliente tocó
        «Quiero mi cubierta» u otro botón de WhatsApp (embudo_eventos guarda el
@@ -6594,10 +6670,12 @@ async function saveQuote(data, lineas) {
     if (medidasRaras().length) payload.origen = Object.assign({}, payload.origen || {}, { medida_rara: true });
     /* descuento especial del vendedor: se guarda el precio rebajado (lo que de
        verdad paga el cliente) y la marca va en origen, para no necesitar columna */
-    if (dctoEsp > 0) {
+    if (dctoPct() > 0) {
       var fdS = dctoFactor();
       ['total_bajo','total_medio','total_alto'].forEach(function(k){ if (payload[k]) payload[k] = Math.round(payload[k] * fdS); });
-      payload.origen = Object.assign({}, payload.origen || {}, { dcto_especial: dctoEsp });
+      payload.origen = Object.assign({}, payload.origen || {}, b2bAplica()
+        ? { cuenta_empresa: { pct: b2bDcto, rut: b2bEmp ? b2bEmp.rut : '', nombre: b2bEmp ? b2bEmp.nombre : '' } }
+        : { dcto_especial: dctoEsp });
     }
     /* sin .select(): con RLS el público solo puede insertar, no leer de vuelta la fila */
     var res = await sbClient.from('cotizaciones').insert(payload);
