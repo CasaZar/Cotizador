@@ -2371,11 +2371,12 @@ var MESA_BASES = {
      casazaru.cl porque la segunda mesa iba de regalo. */
   'Mesas de Centro Río Bueno (par)': { modo:'enCubierta', nota:'2 mesas · tapas y patas por m²' },
 
-  /* Base + bancas. Siguen a la base de su modelo: al pasar Calafquén y Maullín
-     a tramos, el primer tramo quedó en $339.900, así que el conjunto sube de
-     $519.900 a $569.900 ($339.900 + $229.900 de las bancas). */
-  'Mesa y Bancas Lago Calafquén': { modo:'fijo', bajo:569900, medio:569900, alto:569900, largoExtra:30000, nota:'Base de fierro X + par de bancas' },
-  'Mesa y Bancas Río Maullín':    { modo:'fijo', bajo:569900, medio:569900, alto:569900, largoExtra:30000, nota:'Base de fierro cuadrada + par de bancas' }
+  /* Base + bancas (03-11-2026): la base de la mesa por tramo, igual que el
+     modelo solo, más cada banca a la base de fierro de la banca suelta
+     (PR.banca.fierro, $189.900, +$20.000 sobre 250 cm). Antes era un fijo de
+     $569.900 que cobraba el par a $229.900. */
+  'Mesa y Bancas Lago Calafquén': { modo:'largo', tramos:BASE_FIERRO_RECT, bancas:2, nota:'Base de fierro X' },
+  'Mesa y Bancas Río Maullín':    { modo:'largo', tramos:BASE_FIERRO_RECT, bancas:2, nota:'Base de fierro cuadrada' }
 };
 /* Valor de la base según la lista de precios. Devuelve null si el modelo aún
    no tiene precio cargado — en ese caso el vendedor lo escribe a mano y el
@@ -2415,8 +2416,15 @@ function mesaBaseSugerida(modelo, largoCm, anchoCm) {
     var lbl = t.hasta >= 9999
       ? ('desde '+((anterior?anterior.hasta:cfg.tramos[0].hasta))+unidad)
       : ('hasta '+t.hasta+unidad);
+    /* conjuntos con bancas de fierro: cada banca a PR.banca.fierro, con el mismo
+       recargo por largo que la banca suelta (las bancas van del largo de la mesa) */
+    var bc = 0;
+    if (cfg.bancas) {
+      bc = cfg.bancas * ((PR.banca.fierro || 0) + (largoCm > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0));
+      lbl += ' + ' + cfg.bancas + ' bancas de ' + fmt(bc / cfg.bancas);
+    }
     /* si el modelo trae nota (las de fierro) se muestra en vez de "Base" */
-    return { bajo:t.bajo, medio:t.medio, alto:t.alto, detalle:(cfg.nota || 'Base')+' '+lbl };
+    return { bajo:t.bajo+bc, medio:t.medio+bc, alto:t.alto+bc, detalle:(cfg.nota || 'Base')+' '+lbl };
   }
   if (cfg.modo === 'cubiertas') {
     /* Río Fuy: las patas son 2 cubiertas iguales, de alto fijo y 40 cm menos
