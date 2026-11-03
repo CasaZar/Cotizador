@@ -1883,10 +1883,10 @@ var PR = {
      el asiento como cubierta de 4 cm y la puerta de cocina como repisa de 2 cm
      (ver currentPR). Aquí va solo el fijo POR UNIDAD, editable en el Manual:
      banca = la base, según sea de fierro o de madera (03-11-2026, precios del
-     usuario, con IVA), + largoExtra por banca cuando el asiento pasa de
-     BANCA_LARGO_EXTRA cm; puerta de cocina = el cargo por puerta sobre el
-     valor de repisa. */
-  banca:     { fierro: 189900, madera: 100000, largoExtra: 20000 },
+     usuario, con IVA), + el recargo por sobredimensionado de cada banca
+     (sobre290 / sobre340, ver bancaRecargo); puerta de cocina = el cargo por
+     puerta sobre el valor de repisa. */
+  banca:     { fierro: 189900, madera: 100000, sobre290: 20000, sobre340: 40000 },
   pcocina:   { fijo: 10000 },
   granero:   { bajo:{m2:241890,fijo:50000}, medio:{m2:333184,fijo:50000}, alto:{m2:362145,fijo:50000} },
   maciza:    { alto:{m2:362145,fijo:80000}, medio:{m2:333184,fijo:80000}, bajo:{m2:241890,fijo:80000} },
@@ -2376,7 +2376,7 @@ var MESA_BASES = {
 
   /* Base + bancas (03-11-2026): la base de la mesa por tramo, igual que el
      modelo solo, más cada banca a la base de fierro de la banca suelta
-     (PR.banca.fierro, $189.900, +$20.000 sobre 250 cm). Antes era un fijo de
+     (PR.banca.fierro, $189.900, + sobredimensionado, ver bancaRecargo). Antes era un fijo de
      $569.900 que cobraba el par a $229.900. */
   'Mesa y Bancas Lago Calafquén': { modo:'largo', tramos:BASE_FIERRO_RECT, bancas:2, nota:'Base de fierro X' },
   'Mesa y Bancas Río Maullín':    { modo:'largo', tramos:BASE_FIERRO_RECT, bancas:2, nota:'Base de fierro cuadrada' }
@@ -2426,8 +2426,9 @@ function mesaBaseSugerida(modelo, largoCm, anchoCm) {
       /* el recargo mira el largo de las bancas: el escrito, o el de la mesa */
       var bd = (modelo === mesaModeloActual()) ? mesaBancasDims() : null;
       var lb = bd ? bd.lg : largoCm;
-      bc = cfg.bancas * ((PR.banca.fierro || 0) + (lb > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0));
-      lbl += ' + ' + cfg.bancas + ' bancas de ' + fmt(bc / cfg.bancas);
+      var bRec = bancaRecargo(lb);
+      bc = cfg.bancas * ((PR.banca.fierro || 0) + bRec);
+      lbl += ' + ' + cfg.bancas + ' bancas de ' + fmt(bc / cfg.bancas) + (bRec ? ' (sobredimensionadas)' : '');
     }
     /* si el modelo trae nota (las de fierro) se muestra en vez de "Base" */
     return { bajo:t.bajo+bc, medio:t.medio+bc, alto:t.alto+bc, detalle:(cfg.nota || 'Base')+' '+lbl };
@@ -2736,8 +2737,16 @@ function currentPR() {
   return PR[prod];
 }
 /* Base de la banca: 'fierro' o 'madera'. Se elige en el formulario. */
-var BANCA_LARGO_EXTRA = 250;   /* sobre este largo de asiento la base suma PR.banca.largoExtra */
 var bancaBase = 'fierro';
+/* recargo por sobredimensionado de UNA banca según el largo del asiento
+   (03-11-2026): más de 290 cm suma sobre290, más de 340 suma sobre340 (no se
+   acumulan) */
+function bancaRecargo(lg) {
+  lg = lg || 0;
+  if (lg > 340) return PR.banca.sobre340 || 0;
+  if (lg > 290) return PR.banca.sobre290 || 0;
+  return 0;
+}
 function getBancaBase() {
   var el = document.getElementById('f-banca-base');
   if (el && el.value) bancaBase = el.value;
@@ -2747,7 +2756,7 @@ function getBancaBase() {
    recargo por largo) o el cargo de cada puerta de cocina */
 function fijoUnidad(lg) {
   if (prod === 'banca') {
-    return (PR.banca[getBancaBase()] || 0) + ((lg || 0) > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0);
+    return (PR.banca[getBancaBase()] || 0) + bancaRecargo(lg);
   }
   return (prod === 'pcocina') ? (PR.pcocina.fijo || 0) : 0;
 }
@@ -3303,7 +3312,7 @@ function renderForm(p) {
                   los ejemplos en gris los campos parecían ya llenos */
                : 'Escribe tus medidas en cm';
     var fijoHint = (p === 'banca')
-      ? '<div class="finput-hint">Cada banca suma su base: fierro <strong>' + fmt(PR.banca.fierro) + '</strong> o madera <strong>' + fmt(PR.banca.madera) + '</strong>, y <strong>' + fmt(PR.banca.largoExtra) + '</strong> más si el asiento pasa de ' + BANCA_LARGO_EXTRA + ' cm. En «Cant.» va el número de bancas de esa medida.</div>'
+      ? '<div class="finput-hint">Cada banca suma su base: fierro <strong>' + fmt(PR.banca.fierro) + '</strong> o madera <strong>' + fmt(PR.banca.madera) + '</strong>. Sobredimensionada suma <strong>' + fmt(PR.banca.sobre290) + '</strong> sobre 290 cm de largo y <strong>' + fmt(PR.banca.sobre340) + '</strong> sobre 340 cm. En «Cant.» va el número de bancas de esa medida.</div>'
       : (p === 'pcocina')
       ? '<div class="finput-hint">Cada puerta suma <strong>' + fmt(PR.pcocina.fijo) + '</strong> sobre el valor de la madera. En «Cant.» va el número de puertas de esa medida.</div>'
       : (p === 'peldano')
@@ -3676,8 +3685,8 @@ function mesaParNota() {
     var bLg = bcVal('ms-banca-lg'), bAn = bcVal('ms-banca-an');
     cont.innerHTML =
       '<div class="par-nota">' +
-        '<b>Incluye ' + nBc + ' bancas.</b> Cada una lleva base de fierro (' + fmt(PR.banca.fierro) + ', o ' +
-          fmt(PR.banca.fierro + PR.banca.largoExtra) + ' si pasa de ' + BANCA_LARGO_EXTRA + ' cm) y el asiento de 4 cm se cobra por m².' +
+        '<b>Incluye ' + nBc + ' bancas.</b> Cada una lleva base de fierro (' + fmt(PR.banca.fierro) + '; sobredimensionada, ' +
+          fmt(PR.banca.sobre290) + ' más sobre 290 cm y ' + fmt(PR.banca.sobre340) + ' más sobre 340 cm) y el asiento de 4 cm se cobra por m².' +
         '<div class="par-mesa"><div class="par-mesa-t">Asiento de cada banca (cm)</div><div class="par-inputs">' +
           '<label>Largo<input type="number" inputmode="decimal" min="0" id="ms-banca-lg" placeholder="= mesa" value="' + escA(bLg) + '" oninput="calcLive()"></label>' +
           '<label>Ancho<input type="number" inputmode="decimal" min="0" id="ms-banca-an" value="' + escA(bAn || BANCA_CONJ_ANCHO) + '" oninput="calcLive()"></label>' +
@@ -5296,7 +5305,7 @@ function htmlCombinada(cli, fecha) {
 }
 
 function htmlCubierta(cli, fecha) {
-  var filas = [], sumM2 = 0, nUnid = 0, fijoTot = 0, nLargas = 0;
+  var filas = [], sumM2 = 0, nUnid = 0, fijoTot = 0, recTot = 0;
   for (var i=1; i<=nrows; i++) {
     var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
     if (!lgEl||!lgEl.value||!anEl.value) continue;
@@ -5305,7 +5314,7 @@ function htmlCubierta(cli, fecha) {
     sumM2+=m2; nUnid+=ca; filas.push({n:i,lg:lg,an:an,ca:ca,m2:m2});
     /* banca y puerta de cocina suman un fijo por unidad (0 en el resto) */
     fijoTot += fijoUnidad(lg) * ca;
-    if (lg > BANCA_LARGO_EXTRA) nLargas += ca;
+    if (prod === 'banca') recTot += bancaRecargo(lg) * ca;
   }
   var dimRows = filas.map(function(f){
     return '<tr><td>'+f.n+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td><td>'+f.m2.toFixed(2)+'</td></tr>';
@@ -5342,7 +5351,7 @@ function htmlCubierta(cli, fecha) {
   if (prod === 'banca' && fijoU > 0)
     fijoNota = '<div class="info-bar">Base de ' + bBase + ' por banca: <strong>' + fmt(fijoU) + '</strong>' +
       (nUnid > 1 ? ' × ' + nUnid + ' bancas' : '') +
-      (nLargas > 0 ? ' · + ' + fmt(PR.banca.largoExtra) + (nLargas > 1 ? ' × ' + nLargas : '') + ' por pasar de ' + BANCA_LARGO_EXTRA + ' cm de largo' : '') +
+      (recTot > 0 ? ' · + <strong>' + fmt(recTot) + '</strong> por sobredimensionado' : '') +
       ' · el asiento se cobra por m²</div>';
   if (prod === 'pcocina' && fijoU > 0)
     fijoNota = '<div class="info-bar">Valor por puerta: madera por m² + <strong>' + fmt(fijoU) + '</strong>' +
@@ -10375,10 +10384,11 @@ function renderManual() {
       '<div class="mv-grid3">' +
         '<label>Banca · base de fierro' + mvNum('mv-banca-fierro', PR.banca.fierro, 5000) + '</label>' +
         '<label>Banca · base de madera' + mvNum('mv-banca-madera', PR.banca.madera, 5000) + '</label>' +
-        '<label>Banca · recargo sobre ' + BANCA_LARGO_EXTRA + ' cm' + mvNum('mv-banca-largo', PR.banca.largoExtra, 1000) + '</label>' +
+        '<label>Banca · sobredimensionado, sobre 290 cm' + mvNum('mv-banca-s290', PR.banca.sobre290, 1000) + '</label>' +
+        '<label>Banca · sobredimensionado, sobre 340 cm' + mvNum('mv-banca-s340', PR.banca.sobre340, 1000) + '</label>' +
         '<label>Puerta de cocina · por puerta' + mvNum('mv-pcoc-fijo', PR.pcocina.fijo, 1000) + '</label>' +
       '</div>' +
-      '<div class="finput-hint">La banca cobra el asiento como cubierta de 4 cm (m² × valor de arriba) + la base elegida por banca, y el recargo cuando el asiento pasa de ' + BANCA_LARGO_EXTRA + ' cm de largo. La puerta de cocina cobra la madera como repisa de 2 cm + este fijo por puerta.</div>' +
+      '<div class="finput-hint">La banca cobra el asiento como cubierta de 4 cm (m² × valor de arriba) + la base elegida por banca, y el recargo por sobredimensionado según el largo del asiento (no se suman: sobre 340 cm va solo el segundo). La puerta de cocina cobra la madera como repisa de 2 cm + este fijo por puerta.</div>' +
       '<div class="mv-sub">Revestimiento — $ por m²</div>' +
       '<div class="mv-grid3">' +
         '<label>Ciprés' + mvNum('mv-rev-cipres', PR.revestimiento.cipres, 1000) + '</label>' +
@@ -10471,7 +10481,7 @@ async function guardarValores(clave) {
       maciza:   { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
       vidrios:  { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
       revestimiento: { cipres: mvLee('mv-rev-cipres'), coihue: mvLee('mv-rev-coihue') },
-      banca:   { fierro: mvLee('mv-banca-fierro'), madera: mvLee('mv-banca-madera'), largoExtra: mvLee('mv-banca-largo') },
+      banca:   { fierro: mvLee('mv-banca-fierro'), madera: mvLee('mv-banca-madera'), sobre290: mvLee('mv-banca-s290'), sobre340: mvLee('mv-banca-s340') },
       pcocina: { fijo: mvLee('mv-pcoc-fijo') }
     };
   } else if (clave === 'esp8') {
