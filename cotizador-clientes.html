@@ -2420,7 +2420,10 @@ function mesaBaseSugerida(modelo, largoCm, anchoCm) {
        recargo por largo que la banca suelta (las bancas van del largo de la mesa) */
     var bc = 0;
     if (cfg.bancas) {
-      bc = cfg.bancas * ((PR.banca.fierro || 0) + (largoCm > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0));
+      /* el recargo mira el largo de las bancas: el escrito, o el de la mesa */
+      var bd = (modelo === mesaModeloActual()) ? mesaBancasDims() : null;
+      var lb = bd ? bd.lg : largoCm;
+      bc = cfg.bancas * ((PR.banca.fierro || 0) + (lb > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0));
       lbl += ' + ' + cfg.bancas + ' bancas de ' + fmt(bc / cfg.bancas);
     }
     /* si el modelo trae nota (las de fierro) se muestra en vez de "Base" */
@@ -2988,6 +2991,7 @@ function calcLive() {
        documento final, que sí filtra por par, estaba bien). */
     var mParLive = mesaModeloActual();
     if (mParLive && mParLive.par) mM2 += mesaParM2();
+    mM2 += mesaBancasM2();   /* asientos de los conjuntos Mesa y Bancas (0 en el resto) */
     var parCat = mesaParCatalogo();
     if (parCat) {
       /* tamaño de la tienda: Pino con la oferta de la web, las demás al precio normal de la web */
@@ -3534,7 +3538,9 @@ function mesaDatos() {
     parTam: parTam,                                    /* par: mediano, grande o pedido */
     infLargo: parseFloat(v('ms-inf-lg')) || 0,         /* par a pedido: la mesa de abajo */
     infAncho: parseFloat(v('ms-inf-an')) || 0,
-    infAlto:  parseFloat(v('ms-inf-alto')) || 0
+    infAlto:  parseFloat(v('ms-inf-alto')) || 0,
+    bancaLg:  parseFloat(v('ms-banca-lg')) || 0,       /* conjuntos Mesa y Bancas: asiento */
+    bancaAn:  parseFloat(v('ms-banca-an')) || 0
   };
 }
 /* al elegir un modelo del catálogo: completa nombre y tipo de base, y si algún día
@@ -3592,6 +3598,22 @@ function mesaParNota() {
      esconde, si no el cliente veía dos lugares donde escribir lo mismo */
   var sec = document.getElementById('ms-med-sec');
   if (sec) sec.classList.toggle('hidden', esPar);
+  var nBc = mesaBancasN();
+  if (!esPar && nBc) {
+    /* conjuntos Mesa y Bancas: las medidas del asiento, que se cobra por m² */
+    var bcVal = function(id){ var el = document.getElementById(id); return el ? el.value : ''; };
+    var bLg = bcVal('ms-banca-lg'), bAn = bcVal('ms-banca-an');
+    cont.innerHTML =
+      '<div class="par-nota">' +
+        '<b>Incluye ' + nBc + ' bancas.</b> Cada una lleva base de fierro (' + fmt(PR.banca.fierro) + ', o ' +
+          fmt(PR.banca.fierro + PR.banca.largoExtra) + ' si pasa de ' + BANCA_LARGO_EXTRA + ' cm) y el asiento de 4 cm se cobra por m².' +
+        '<div class="par-mesa"><div class="par-mesa-t">Asiento de cada banca (cm)</div><div class="par-inputs">' +
+          '<label>Largo<input type="number" inputmode="decimal" min="0" id="ms-banca-lg" placeholder="= mesa" value="' + escA(bLg) + '" oninput="calcLive()"></label>' +
+          '<label>Ancho<input type="number" inputmode="decimal" min="0" id="ms-banca-an" value="' + escA(bAn || BANCA_CONJ_ANCHO) + '" oninput="calcLive()"></label>' +
+        '</div></div>' +
+      '</div>';
+    return;
+  }
   if (!esPar) { cont.innerHTML = ''; return; }
   /* 26-10-2026 (pedido del usuario): los dos tamaños de la tienda a un toque, y
      «A pedido» para escribir las dos mesas una por una */
@@ -3737,6 +3759,32 @@ function mesaParM2() {
     return a + (p.lg / 100) * (p.an / 100) * p.ca;
   }, 0);
 }
+/* ── ASIENTOS DE LOS CONJUNTOS MESA Y BANCAS (03-11-2026) ──
+   La base de fierro de cada banca va en la base (mesaBaseSugerida); el asiento
+   se cobra por m² como cubierta de 4 cm, igual que la banca suelta. Por
+   defecto las bancas van del largo de la mesa y BANCA_CONJ_ANCHO cm de ancho;
+   el vendedor puede corregir las dos medidas. */
+var BANCA_CONJ_ANCHO = 35;
+function mesaBancasN() {
+  var m = mesaModeloActual();
+  var cfg = m && MESA_BASES[m.nombre];
+  return (cfg && cfg.bancas) || 0;
+}
+function mesaBancasDims() {
+  var n = mesaBancasN(); if (!n) return null;
+  var num = function(id){ var el = document.getElementById(id); return el ? parseFloat(el.value) || 0 : 0; };
+  var lg = num('ms-banca-lg') || num('lg1');
+  if (!lg) return null;
+  return { lg: lg, an: num('ms-banca-an') || BANCA_CONJ_ANCHO, ca: n };
+}
+function mesaBancasPiezas() {
+  var d = mesaBancasDims();
+  return d ? [{ lg:d.lg, an:d.an, ca:d.ca, etq:'asiento de las bancas' }] : [];
+}
+function mesaBancasM2() {
+  var d = mesaBancasDims();
+  return d ? (d.lg / 100) * (d.an / 100) * d.ca : 0;
+}
 
 /* tarjeta de modelo tocada: fija el select oculto y marca la tarjeta.
    Tocar la misma de nuevo des-selecciona (vuelve a mesa libre). */
@@ -3873,6 +3921,7 @@ function vxM2Actual() {
   /* solo el modelo par tiene mesa de abajo y patas (misma condición que calcLive y htmlMesa) */
   var mPar = (prod === 'mesa') ? mesaModeloActual() : null;
   if (mPar && mPar.par) m2 += mesaParM2();
+  if (prod === 'mesa') m2 += mesaBancasM2();
   return m2;
 }
 /* teñido por tarifa: el valor se recalcula solo cuando cambian las medidas
@@ -4788,7 +4837,7 @@ function stkKgActual() {
     var M = mesaDatos(), m = mesaModeloActual();
     /* las piezas del par (mesa de abajo y patas) solo existen en el modelo par:
        mesaParDims() calcula medidas para cualquier mesa, igual que hace htmlMesa */
-    kg = (filasM2() + ((m && m.par) ? mesaParM2() : 0)) * STK_KG_M2;
+    kg = (filasM2() + ((m && m.par) ? mesaParM2() : 0) + mesaBancasM2()) * STK_KG_M2;
     /* una base por mesa, igual que en htmlMesa; las piezas del par no suman base */
     var nBases = 0;
     for (var i = 1; i <= nrows; i++) {
@@ -5367,6 +5416,13 @@ function htmlMesa(cli, fecha) {
       filas.push({n:filas.length+1, lg:p.lg, an:p.an, ca:p.ca, m2:m2p, etq:p.etq});
     });
   }
+  /* conjuntos Mesa y Bancas: el asiento de las bancas, por m² (su base de
+     fierro ya va dentro de la base de la mesa). Con etq no suma bases. */
+  mesaBancasPiezas().forEach(function(p){
+    var m2b = (p.lg/100)*(p.an/100)*p.ca;
+    sumM2 += m2b;
+    filas.push({n:filas.length+1, lg:p.lg, an:p.an, ca:p.ca, m2:m2b, etq:p.etq});
+  });
   var dimRows = filas.map(function(f){
     var etq = f.etq ? ' <span style="color:var(--tm);font-style:italic">('+f.etq+')</span>' : '';
     return '<tr><td>'+f.n+etq+'</td><td>'+_n(f.lg)+'</td><td>'+_n(f.an)+'</td><td>'+f.ca+'</td><td>'+f.m2.toFixed(2)+'</td></tr>';
@@ -6278,6 +6334,8 @@ function restoreProducto(d) {
     if (d.mesa.infLargo > 0) setv('ms-inf-lg', d.mesa.infLargo);
     if (d.mesa.infAncho > 0) setv('ms-inf-an', d.mesa.infAncho);
     if (d.mesa.infAlto  > 0) setv('ms-inf-alto', d.mesa.infAlto);
+    if (d.mesa.bancaLg  > 0) setv('ms-banca-lg', d.mesa.bancaLg);
+    if (d.mesa.bancaAn  > 0) setv('ms-banca-an', d.mesa.bancaAn);
     setv('ms-nombre', d.mesa.nombre); setv('ms-valor', d.mesa.valor); setv('ms-altura', d.mesa.altura);
     setv('ms-perfil', d.mesa.perfil); setv('ms-color', d.mesa.color); setv('ms-metros', d.mesa.metros);
     var baseTipo = d.mesa.baseTipo || 'fierro';
