@@ -1423,6 +1423,56 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
   #barra-precio button { background: #A85D2A; color: #fff; border: 0; border-radius: 10px; padding: 11px 16px; font-size: 14.5px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
 }
 
+/* ── COTIZAR COMO VENDEDOR (03-11-2026, etapa 1 del boceto aprobado) ──
+   Todo cuelga de body.modo-vendedor: el cliente no ve ni un píxel distinto.
+   Cliente arriba, descuentos juntos, precio por madera en vivo y un solo
+   botón «Guardar y copiar link». Ver vPrecioPintar() y vTrasGuardar(). */
+.solo-ven, .v-solo, .v-estado { display: none; }
+body.modo-vendedor .solo-ven { display: inline; }
+body.modo-vendedor .v-solo { display: block; }
+body.modo-vendedor .solo-pub, body.modo-vendedor #s2 .live-price-wrap,
+body.modo-vendedor #s2 .confianza, body.modo-vendedor #s2 .legal-datos, body.modo-vendedor #s2 .nota-asesor { display: none !important; }
+body.modo-vendedor #s2 .form-hdr { flex-wrap: wrap; row-gap: 6px; }
+body.modo-vendedor .v-estado { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: #6B6658;
+  background: #F3EEE3; border-radius: 20px; padding: 5px 11px; white-space: nowrap; }
+.v-estado:before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #B9AE9A; }
+.v-estado.ok { background: #EEF1EA; color: #485B3D; }
+.v-estado.ok:before { background: #485B3D; }
+.v-estado.cambios { background: #FBF0E4; color: #8F4E22; }
+.v-estado.cambios:before { background: #A85D2A; }
+body.modo-vendedor #s2 .datos-sec { margin-bottom: 14px; }
+body.modo-vendedor #s2 .datos-sec .fsec { margin-bottom: 12px; }
+body.modo-vendedor #s2 #b2b-wrap .vx-sub { margin: 4px 0 0; padding: 0; border: 0; background: none; }
+.v-blk { background: #fff; border: 1px solid var(--bd); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.v-h { font-size: 15px; font-weight: 600; color: var(--tx); margin-bottom: 10px; }
+.v-h span { font-size: 12px; font-weight: 400; color: var(--tm); margin-left: 6px; }
+.v-blk .vx-sub { margin: 0; padding: 0; border: 0; background: none; }
+.v-blk .vx-sub-h { font-size: 13px; color: var(--tm); margin-bottom: 6px; }
+.v-tab { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.v-tab th { font-size: 11.5px; font-weight: 500; color: var(--tm); text-align: right; padding: 0 0 6px 6px; }
+.v-tab th:first-child { text-align: left; padding-left: 0; }
+.v-tab td { border-top: 1px solid var(--bd); padding: 9px 0 9px 6px; text-align: right; font-size: 15px; font-weight: 600; color: var(--tx); vertical-align: top; }
+.v-tab td:first-child { text-align: left; padding-left: 0; font-size: 13px; font-weight: 500; line-height: 1.3; }
+.v-tab td small { display: block; font-size: 11.5px; font-weight: 400; color: var(--tm); text-decoration: line-through; }
+.v-tab td.v-tr { color: #485B3D; }
+.v-nota, .v-vacio { font-size: 12px; color: var(--tm); line-height: 1.45; margin-top: 8px; }
+.v-vacio { margin-top: 0; }
+.v-wa { white-space: pre-wrap; font-size: 13px; line-height: 1.5; color: var(--tx); background: #F7F3EA; border-radius: 10px; padding: 10px 12px; }
+.v-wa i { color: var(--tm); }
+#v-msg { display: none; }
+body.modo-vendedor #s2 .btn-combo { border: 1.5px solid var(--verde); border-style: solid; background: #fff; color: var(--verde); font-family: 'Poppins', sans-serif; font-weight: 500; letter-spacing: .2px; min-height: 46px; }
+/* inicio del vendedor: la lista de productos sin fotos, para elegir rápido */
+body.modo-vendedor #s1 .pcard-img, body.modo-vendedor #s1 .ptag, body.modo-vendedor #s1 .s1-confianza,
+body.modo-vendedor #s1 .dash-intro, body.modo-vendedor #s1 .tagline { display: none; }
+body.modo-vendedor #s1 .pcard, body.modo-vendedor #s1 .pcard[data-prod="cubierta"] { grid-column: auto; border: 1px solid var(--bd); }
+body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
+@media (min-width:1100px){
+  /* con el cliente a la izquierda, la columna derecha queda para precio y botón */
+  body.modo-vendedor .v-izq { grid-column: 1; min-width: 0; }
+  body.modo-vendedor .form-side .v-blk { border: 0; border-radius: 0; padding: 0 0 16px; margin: 0 0 16px; border-bottom: 1px solid var(--bd); }
+  body.modo-vendedor #v-msg { display: block; }
+}
+
 /* ── LA COTIZACIÓN (.marca = #q-out y su copia del PDF) ── */
 .marca .coti-hdr { background: var(--verde); border-radius: 12px; padding: 9px 14px; border-bottom: 0; justify-content: center; margin-bottom: 14px; }
 .marca .coti-logo { color: #fff; font-family: 'Poppins', sans-serif; font-size: 17px; font-weight: 300; letter-spacing: 2px; }
@@ -1661,6 +1711,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
     <div class="form-hdr">
       <button class="btn-back" id="btn-back">← Inicio</button>
       <h2 id="f-title">—</h2>
+      <span class="v-estado" id="v-estado">Borrador · sin guardar</span>
     </div>
     <!-- 1º las medidas: la persona ve su precio antes de dar datos personales -->
     <div id="f-dyn"></div>
@@ -1681,9 +1732,9 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
          que ven su precio solo el 23% dejaba sus datos, y el bloque no decía qué
          se recibía a cambio. Ahora lo dice el título y lo repite el botón. -->
     <div class="datos-sec">
-      <div class="datos-h">Mira el precio exacto de cada madera</div>
+      <div class="datos-h"><span class="solo-pub">Mira el precio exacto de cada madera</span><span class="solo-ven">Cliente</span></div>
       <div class="fsec">
-        <label class="flabel" for="f-cli">Tu nombre</label>
+        <label class="flabel" for="f-cli"><span class="solo-pub">Tu nombre</span><span class="solo-ven">Nombre</span></label>
         <input class="finput" type="text" id="f-cli" placeholder="Ej. Camila Muñoz" autocomplete="name">
       </div>
       <div class="fsec" style="margin-bottom:14px">
@@ -1697,26 +1748,31 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
              datos" de antes no era exacto: pasan por Meta (WhatsApp) y otros
              proveedores. Ofertas y novedades necesitarían consentimiento
              aparte, con casilla desmarcada. -->
-        <div class="finput-hint">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.
+        <div class="finput-hint"><span class="solo-pub">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.</span>
           <a href="#" class="con-modo" id="f-con-modo" onclick="conModo(); return false;">Prefiero dejar mi correo</a></div>
       </div>
       <!-- comuna de entrega (17-10-2026): opcional. Con ella la cotización trae el
            valor del envío Starken a domicilio (ver stkMontar). -->
       <div class="fsec" style="margin-bottom:0">
-        <label class="flabel" for="stk-form-comuna">¿A qué comuna lo enviamos?<span class="flabel-op">opcional</span></label>
+        <label class="flabel" for="stk-form-comuna"><span class="solo-pub">¿A qué comuna lo enviamos?</span><span class="solo-ven">Comuna</span><span class="flabel-op">opcional</span></label>
         <div class="es-busca">
           <input class="finput" type="text" id="stk-form-comuna" placeholder="Ej. Ñuñoa" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, 'form')" onblur="stkAutoElegir('form')">
           <div class="es-lista hidden" id="stk-lista-form"></div>
         </div>
-        <div class="finput-hint">Para mostrarte el valor del envío a domicilio con Starken junto a tu cotización.</div>
+        <div class="finput-hint solo-pub">Para mostrarte el valor del envío a domicilio con Starken junto a tu cotización.</div>
       </div>
     </div>
+    <!-- solo vendedores (03-11-2026): los ajustes que cambian el precio, juntos,
+         y el precio de cada madera en vivo (vPrecioPintar) -->
+    <div class="v-blk v-solo" id="v-ajustes"></div>
+    <div class="v-blk v-solo"><div class="v-h">Precio por madera</div><div id="v-precio"></div></div>
+    <div class="v-blk" id="v-msg"><div class="v-h">Mensaje para WhatsApp<span>se copia al guardar</span></div><div class="v-wa" id="v-wa"></div></div>
     <div class="msg-err hidden" id="f-err"></div>
     <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
     <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
     <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
-    <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar y cotizar otro producto</button>
+    <button class="btn-combo hidden" id="btn-combo" type="button" onclick="comboAgregar()">＋ Agregar otro producto</button>
     </aside>
   </div>
   <!-- barra fija con el precio, solo en celular (ver barraPintar) -->
@@ -2691,6 +2747,7 @@ function dctoSel(v) {
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
   });
   b2bPintar();   /* el aviso de la cuenta dice cuál de los dos se usa */
+  vCambio();     /* la tabla de precios del vendedor sigue al descuento */
 }
 function dctoSelHtml() {
   return '<div class="vx-sub">' +
@@ -2700,7 +2757,7 @@ function dctoSelHtml() {
         return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + '%' : 'Sin') + '</button>';
       }).join('') +
     '</div>' +
-    '<div class="finput-hint">Baja los precios de las 3 maderas y se suma al de transferencia. El cliente ve «esta cotización tiene un descuento especial». Elígelo antes de «Ver precio por madera».</div>' +
+    '<div class="finput-hint">Baja las 3 maderas y se suma al de transferencia. El cliente ve «esta cotización tiene un descuento especial».</div>' +
   '</div>';
 }
 /* la franja que ve el cliente arriba de su cotización */
@@ -3082,13 +3139,14 @@ function calcLive() {
     noteEl.style.display = 'block';
     embudoTick('medidas');
     barraPrecio.hay = true;
-    var bpv = document.getElementById('bp-v'); if (bpv) bpv.textContent = unPrecio ? fmt(bajo + exT) : fmt(bajo + exT) + ' – ' + fmt(alto + exT);
+    var bpv = document.getElementById('bp-v'); if (bpv && !vendorMode) bpv.textContent = unPrecio ? fmt(bajo + exT) : fmt(bajo + exT) + ' – ' + fmt(alto + exT);
   } else {
     rangeEl.innerHTML = '<span class="lp-empty">Escribe las medidas para ver tu precio</span>';
     noteEl.style.display = 'none';
     barraPrecio.hay = false;
   }
   barraPintar();
+  vPrecioProgramar();   /* vendedor: la tabla con el precio de cada madera */
 }
 
 function recWood() {
@@ -3201,7 +3259,7 @@ function b2bPintar(cargando) { var el = document.getElementById('b2b-res'); if (
 function b2bResHtml(cargando) {
   if (cargando) return '<div class="finput-hint">' + cargando + '</div>';
   if (b2bDcto > 0) return '<div class="b2b-ok"><b>✓ ' + escA(b2bEmp && b2bEmp.nombre ? b2bEmp.nombre : 'Cuenta empresa') + '</b> · tramo ' + b2bDcto + ' %<small>' +
-    (b2bAplica() ? 'Se aplica solo: ' + b2bDcto + ' % con tarjeta, ' + (transfPct() + b2bDcto) + ' % con transferencia. Ponlo antes de «Ver precio por madera».'
+    (b2bAplica() ? 'Se aplica solo: ' + b2bDcto + ' % con tarjeta, ' + (transfPct() + b2bDcto) + ' % con transferencia.'
                  : 'El descuento especial de ' + dctoEsp + ' % es mayor: se usa ese y no se suman.') + '</small></div>';
   return '<div class="finput-hint">' + (b2bMsg ? escA(b2bMsg) : 'Si el cliente tiene cuenta empresa con tramo, el descuento se aplica solo.') + '</div>';
 }
@@ -4274,7 +4332,7 @@ function vExtrasFieldHtml() {
   tnAuto = false;       /* el select de tarifa nace en "Valor manual" */
   return '<div class="mesa-box'+(vendorMode?'':' hidden')+'">' +
     '<div class="mesa-h">Extras (opcional)</div>' +
-    dctoSelHtml() +
+    /* el descuento especial ya no va acá: vive en «Ajustes de precio» (#v-ajustes) */
     '<div class="vx-sub">' +
       '<div class="vx-sub-h">Reborde — simula mayor espesor, por metro lineal</div>' +
       '<div class="col-labels"><div class="col-lbl">Alto del reborde</div></div>' +
@@ -4623,12 +4681,21 @@ function medFrec(l, a) {
    barra lo muestra abajo mientras se completa el formulario; se esconde con
    un campo activo (el teclado del iPhone la empuja y tapa lo que se escribe)
    y cuando el bloque de datos ya está a la vista. */
-var barraPrecio = { hay: false, enfoco: false, datosVisibles: false };
+var barraPrecio = { hay: false, enfoco: false, datosVisibles: false, btnVisible: false };
 function barraPintar() {
   var b = document.getElementById('barra-precio');
-  if (b) b.classList.toggle('ver', barraPrecio.hay && !barraPrecio.enfoco && !barraPrecio.datosVisibles);
+  /* al vendedor el cliente le queda arriba: la barra se esconde solo cuando el
+     botón de guardar ya está a la vista */
+  var tapada = vendorMode ? barraPrecio.btnVisible : barraPrecio.datosVisibles;
+  if (b) b.classList.toggle('ver', barraPrecio.hay && !barraPrecio.enfoco && !tapada);
 }
 function barraIrADatos() {
+  if (vendorMode) {   /* en la barra del vendedor el botón es «Guardar y copiar link» */
+    document.getElementById('btn-calc').click();
+    var er = document.getElementById('f-err');
+    if (er && !er.classList.contains('hidden')) er.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   var d = document.querySelector('#s2 .datos-sec');
   if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
   setTimeout(function(){ var c = document.getElementById('f-cli'); if (c && !c.value) c.focus(); }, 450);
@@ -4653,6 +4720,7 @@ function barraIniciar() {
     var io = new IntersectionObserver(function(ents){
       ents.forEach(function(x){ visibles[vigilar.indexOf(x.target)] = x.isIntersecting; });
       barraPrecio.datosVisibles = Object.keys(visibles).some(function(k){ return visibles[k]; });
+      barraPrecio.btnVisible = !!visibles[vigilar.indexOf(document.getElementById('btn-calc'))];
       barraPintar();
     });
     vigilar.forEach(function(el){ io.observe(el); });
@@ -4811,15 +4879,18 @@ function generar() {
      revés, el cliente escribía nombre y WhatsApp para enterarse recién ahí de
      que le faltaba el modelo */
   if (!validarProducto(errEl)) return;
-  if (!cli) return falta('Escribe tu nombre.');
-  if (!conStr) return falta(porCorreo ? 'Escribe tu correo para ver tu cotización.' : 'Escribe tu WhatsApp para ver tu cotización.');
+  if (!cli) return falta(vendorMode ? 'Escribe el nombre del cliente.' : 'Escribe tu nombre.');
+  if (!conStr) return falta(vendorMode ? (porCorreo ? 'Escribe el correo del cliente.' : 'Escribe el WhatsApp del cliente.')
+                                       : (porCorreo ? 'Escribe tu correo para ver tu cotización.' : 'Escribe tu WhatsApp para ver tu cotización.'));
   if (!waPhone(conStr) && !esCorreo(conStr))
     return falta(porCorreo ? 'Revisa el correo (ej. nombre@gmail.com).' : 'Revisa el número: son 8 dígitos después del +56 9.');
   var telChk = waPhone(conStr);
-  if (telChk && !esCorreo(conStr) && telBasura(telChk)) return falta('Ese número no parece real. Revísalo: por ahí te contactamos.');
+  if (telChk && !esCorreo(conStr) && telBasura(telChk)) return falta(vendorMode ? 'Ese número no parece real. Revísalo.' : 'Ese número no parece real. Revísalo: por ahí te contactamos.');
   errEl.classList.add('hidden');
   uso = usoActual();
   embudoTick('datos');
+  /* vendedor: apenas se guarde, el mensaje con el link queda copiado (saveQuote) */
+  vCopiarAlGuardar = vendorMode;
   /* directo a la cotización, que es donde se guarda: antes había una pantalla
      intermedia y el contacto se perdía si el cliente la abandonaba */
   confirmar();
@@ -4837,14 +4908,14 @@ function conModo(forzar) {
     inp.type = 'email'; inp.setAttribute('inputmode', 'email'); inp.setAttribute('autocomplete', 'email');
     inp.placeholder = 'nombre@correo.cl';
     if (inp.value.indexOf('@') === -1) inp.value = '';   /* un número a medias no sirve como correo */
-    if (lbl) lbl.textContent = 'Tu correo';
-    if (lnk) lnk.textContent = 'Prefiero WhatsApp';
+    if (lbl) lbl.textContent = vendorMode ? 'Correo' : 'Tu correo';
+    if (lnk) lnk.textContent = vendorMode ? 'Usar WhatsApp' : 'Prefiero WhatsApp';
   } else {
     inp.type = 'tel'; inp.setAttribute('inputmode', 'tel'); inp.setAttribute('autocomplete', 'tel');
     inp.placeholder = '+56 9 1234 5678';
     if (inp.value.indexOf('@') !== -1) inp.value = '';   /* ni un correo como número */
-    if (lbl) lbl.textContent = 'Tu WhatsApp';
-    if (lnk) lnk.textContent = 'Prefiero dejar mi correo';
+    if (lbl) lbl.textContent = vendorMode ? 'WhatsApp' : 'Tu WhatsApp';
+    if (lnk) lnk.textContent = vendorMode ? 'Usar correo' : 'Prefiero dejar mi correo';
   }
 }
 /* al tocar el campo vacío en modo WhatsApp se pone el "+56 9 ": quedan los 8 dígitos */
@@ -5231,10 +5302,12 @@ function comboAgregar() {
   uso = usoActual();
   combo.push(comboCapturar());
   comboPintar();
+  vCambio();
   show('s1');
 }
-function comboQuitar(i) { combo.splice(i, 1); comboPintar(); }
-function comboVaciar() { combo = []; comboShare = null; comboPintar(); }
+function comboQuitar(i) { combo.splice(i, 1); comboPintar(); vCambio(); }
+/* vaciar = empezar otra cotización: el estado del vendedor vuelve a borrador */
+function comboVaciar() { combo = []; comboShare = null; vGuardadaNum = ''; vCambios = false; comboPintar(); vEstadoPintar(); }
 /* la lista de lo agregado, arriba del selector y del formulario */
 function comboPintar() {
   var html = '';
@@ -5247,13 +5320,173 @@ function comboPintar() {
     html = '<div class="combo-bar">' +
       '<div class="combo-h">En esta cotización · ' + combo.length + (combo.length === 1 ? ' producto' : ' productos') + '</div>' +
       filas +
-      '<div class="combo-hint">Elige o completa el siguiente producto. «Ver mi cotización» junta todo en un solo documento, con el total por madera.</div>' +
+      '<div class="combo-hint">Completa el siguiente producto. «Guardar y copiar link» junta todo en una sola cotización, con un número, un link y el total por madera.</div>' +
       '<button type="button" class="combo-vaciar" onclick="comboVaciar()">Vaciar y empezar de nuevo</button>' +
     '</div>';
   }
   ['combo-bar-s1', 'combo-bar-s2'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.innerHTML = html;
   });
+}
+
+/* ── COTIZAR COMO VENDEDOR (03-11-2026, etapa 1 del boceto aprobado) ──
+   El formulario interno era el mismo del cliente con opciones encima: 4
+   pantallas de celular, el descuento a media página con un «elígelo antes de
+   Ver precio» y el precio exacto recién en la cotización guardada. Nada de
+   esto existe para el cliente (todo cuelga de vendorMode).
+   · El cliente va arriba: el vendedor ya lo tiene del chat.
+   · Descuento especial en «Ajustes de precio», junto a la tabla: se puede
+     cambiar hasta guardar.
+   · «Precio por madera» en vivo con los MISMOS totales que se guardan: se
+     calculan con la captura de las combinadas (comboCapturar), que arma el
+     documento sin guardar nada (saveQuote solo anota los totales).
+   · Un botón, «Guardar y copiar link»: guarda como siempre y, cuando la fila
+     quedó en la base, deja en el portapapeles el mensaje con el link de ESA
+     cotización (vTrasGuardar). Después de guardar no se edita la misma: un
+     cambio y otro «Guardar» sacan otro número, y el estado de arriba lo avisa.
+   Etapa 2 (pendiente): editar en su lugar los productos ya agregados. */
+var vPrecioTimer = null, vCopiarAlGuardar = false, vCambios = false, vGuardadaNum = '', vMontado = false;
+var V_TIERS = [['bajo', 'Pino Oregón'], ['medio', 'Castaño · Ciprés · Mañío'], ['alto', 'Coihue · Raulí · Lenga']];
+function vPrecioProgramar() {
+  if (!vendorMode) return;
+  clearTimeout(vPrecioTimer);
+  vPrecioTimer = setTimeout(vPrecioPintar, 220);
+}
+/* algo cambió en el formulario: la tabla se recalcula y, si ya estaba
+   guardada, el estado avisa que el próximo «Guardar» sale con otro número */
+function vCambio() {
+  if (!vendorMode) return;
+  if (vGuardadaNum && !vCambios) { vCambios = true; vEstadoPintar(); }
+  vPrecioProgramar();
+}
+function vEstadoPintar() {
+  var el = document.getElementById('v-estado');
+  if (!el) return;
+  el.className = 'v-estado' + (vGuardadaNum ? (vCambios ? ' cambios' : ' ok') : '');
+  el.textContent = !vGuardadaNum ? 'Borrador · sin guardar'
+    : vCambios ? 'Con cambios · al guardar sale otro N°' : 'Guardada · ' + vGuardadaNum;
+}
+/* totales de lista por madera de lo agregado + el producto del formulario.
+   Si el producto todavía no se puede cotizar, devuelve por qué. */
+function vTotales() {
+  var mudo = { textContent: '', classList: { add: function(){}, remove: function(){} } };
+  var items = combo.slice(), falta = '';
+  if (prod && validarProducto(mudo, combo.length > 0)) {
+    var usoAntes = uso;
+    try { uso = usoActual(); items.push(comboCapturar()); }
+    catch (e) { console.warn('vTotales:', e); }
+    finally { uso = usoAntes; }
+  } else falta = mudo.textContent;
+  if (!items.length) return { falta: falta };
+  var tot = { bajo: 0, medio: 0, alto: 0 };
+  items.forEach(function(it){ V_TIERS.forEach(function(t){ tot[t[0]] += (it.tot && it.tot[t[0]]) || 0; }); });
+  return { tot: tot, items: items, falta: falta };
+}
+function vPrecioPintar() {
+  var box = document.getElementById('v-precio');
+  if (!vendorMode || !box) return;
+  /* el descuento puede venir de un link abierto: los botones siguen a la variable */
+  document.querySelectorAll('.dcto-op').forEach(function(b){
+    b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
+  });
+  var r = vTotales();
+  var bpv = document.getElementById('bp-v');
+  if (!r.tot) {
+    box.innerHTML = '<div class="v-vacio">' + escA(r.falta || 'Completa las medidas para ver el precio de cada madera.') + '</div>';
+    barraPrecio.hay = false; barraPintar(); vMsgPintar();
+    return;
+  }
+  /* el revestimiento por m² se cotiza en dos maderas (siempre solo, ver validarProducto) */
+  var tiers = (r.items.length === 1 && r.items[0].p === 'revestimiento')
+    ? [['bajo', 'Ciprés'], ['alto', 'Coihue']]
+    : V_TIERS.filter(function(t){ return r.tot[t[0]] > 0; });
+  var pct = dctoPct(), tf = transferFactor();
+  var col = pct > 0 ? (b2bAplica() ? 'Cuenta empresa' : 'Con ' + pct + ' %') : 'Lista';
+  /* mismo redondeo que preciosCards y saveQuote: el número de la tabla es el de la cotización */
+  var precio = function(t){ return dctoMonto(Math.round(r.tot[t[0]])); };
+  box.innerHTML = '<table class="v-tab"><thead><tr><th>Madera</th><th>' + col + '</th><th>' + transfLabel() + '</th></tr></thead><tbody>' +
+    tiers.map(function(t){
+      return '<tr><td>' + t[1] + '</td><td>' + fmt(precio(t)) +
+        (pct > 0 ? '<small>' + fmt(Math.round(r.tot[t[0]])) + '</small>' : '') + '</td>' +
+        '<td class="v-tr">' + fmt(precio(t) * tf) + '</td></tr>';
+    }).join('') + '</tbody></table>' +
+    '<div class="v-nota">' + (r.items.length > 1 ? r.items.length + ' productos · ' : '') + 'IVA incluido · envío aparte' +
+      (fromHash ? ' · con los precios del día de la cotización abierta; al guardar se recalculan con los de hoy' : '') +
+      (r.falta ? ' · falta completar el producto en pantalla: ' + escA(r.falta) : '') + '</div>';
+  var lo = precio(tiers[0]), hi = precio(tiers[tiers.length - 1]);
+  if (bpv) bpv.textContent = lo === hi ? fmt(lo) : fmt(lo) + ' – ' + fmt(hi);
+  barraPrecio.hay = true; barraPintar();
+  vMsgPintar();
+}
+/* el mensaje que se copia al guardar. Lo firma César aunque lo mande otro
+   (así lo pidió el usuario) y va en párrafos, como los del panel. */
+function vMensaje(link) {
+  var nom = String(document.getElementById('f-cli').value || '').trim().split(/\s+/)[0] || '';
+  nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
+  var cods = combo.map(function(it){ return it.p; });
+  if (prod && cods.indexOf(prod) === -1) cods.push(prod);
+  return (nom ? 'Hola ' + nom : 'Hola') + ', te escribe César de Casa Zaru.\n\n' +
+    'Te dejo la cotización de ' + prodTexto(cods.join('+')).suyo + ', con el precio en cada madera:\n' + link + '\n\n' +
+    'Cualquier duda, o si quieres fotos para comparar maderas, me avisas y te mando.';
+}
+function vMsgPintar() {
+  var el = document.getElementById('v-wa');
+  if (el) el.innerHTML = escA(vMensaje('{link}')).replace('{link}', '<i>(el link se crea al guardar)</i>');
+}
+function vCopiarTexto(txt) {
+  function aMano() {
+    try {
+      var ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+    } catch (e) { return false; }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    return navigator.clipboard.writeText(txt).then(function(){ return true; }, aMano);
+  return Promise.resolve(aMano());
+}
+/* la fila ya quedó en la base (lo llama saveQuote): estado y portapapeles */
+function vTrasGuardar(numero) {
+  vGuardadaNum = numero || ''; vCambios = false; vEstadoPintar();
+  vCopiarTexto(vMensaje(linkLimpio())).then(function(ok){
+    showToast(ok ? 'Guardada ' + numero + ' · mensaje con el link copiado' : 'Guardada ' + numero + ' · toca «Copiar mensaje» para copiar el link', true);
+    var b = document.querySelector('.btn-copy-link');
+    if (ok && b) { b.textContent = '✓ Mensaje copiado'; b.classList.add('copied'); }
+  });
+}
+/* el link de la cotización a la vista, sin lo que traiga la barra del vendedor */
+function linkLimpio() {
+  var m = /[?&]s=([A-Za-z0-9]+)/.exec(shareShortUrl || '');
+  return m ? BASE_URL + '?s=' + m[1] : shareShortUrl;
+}
+/* arma el formulario del vendedor una sola vez (lo llama habilitarInternos) */
+function vMontar() {
+  if (vMontado) return;
+  vMontado = true;
+  var fb = document.querySelector('#s2 .form-body'), fd = document.getElementById('f-dyn');
+  var datos = document.querySelector('#s2 .datos-sec'), cb = document.getElementById('combo-bar-s2'), b2b = document.getElementById('b2b-wrap');
+  /* cliente y productos a la izquierda (en celular: arriba), en una columna */
+  if (fb && fd && datos) {
+    var izq = document.createElement('div');
+    izq.className = 'v-izq';
+    fb.insertBefore(izq, fd);
+    izq.appendChild(datos);
+    if (cb) izq.appendChild(cb);
+    izq.appendChild(fd);
+  }
+  if (datos && b2b) datos.appendChild(b2b);   /* el RUT es un dato del cliente */
+  var aj = document.getElementById('v-ajustes');
+  if (aj) aj.innerHTML = '<div class="v-h">Ajustes de precio<span>se pueden cambiar hasta guardar</span></div>' + dctoSelHtml();
+  var bc = document.getElementById('btn-calc'); if (bc) bc.textContent = 'Guardar y copiar link';
+  var bl = document.querySelector('#barra-precio .bp-l'); if (bl) bl.textContent = 'Precio por madera';
+  var bb = document.querySelector('#barra-precio button'); if (bb) bb.textContent = 'Guardar y copiar link';
+  var lbl = document.getElementById('f-con-lbl'), lnk = document.getElementById('f-con-modo');
+  if (lbl) lbl.textContent = conModoCorreo ? 'Correo' : 'WhatsApp';
+  if (lnk) lnk.textContent = conModoCorreo ? 'Usar WhatsApp' : 'Usar correo';
+  var s2 = document.getElementById('s2');
+  if (s2) { s2.addEventListener('input', vCambio); s2.addEventListener('change', vCambio); }
+  vEstadoPintar();
+  vPrecioProgramar();
 }
 /* el documento con todos los productos: cada uno con su detalle y su tabla
    de precios, y al final el total por madera y el pie común una sola vez */
@@ -6354,6 +6587,7 @@ function restoreFromData(d) {
   restaurando = true;   /* tapa el formulario mientras se rellena */
   congelarDesde(d);     /* fecha y precios del día en que se cotizó */
   if (d.qnum) qnum = d.qnum;
+  vGuardadaNum = d.qnum || ''; vCambios = false;   /* vendedor: «← Editar» parte de una ya guardada */
   b2bDcto = b2bValido(d.b2b);       /* cuenta empresa: solo 2 o 5 (el link lo puede armar cualquiera) */
   b2bEmp = b2bDcto && d.ben ? { rut: '', nombre: String(d.ben).slice(0, 80) } : null;
   dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
@@ -6554,16 +6788,20 @@ function rbRestaurar(d) {
 
 async function copyShareLink() {
   var btn = document.querySelector('.btn-copy-link');
-  if (btn) btn.textContent = 'Generando enlace…';
-  var url = await buildShortUrl();
-  var msg = 'Te envío tu cotización, la puedes revisar en este link:\n' + url;
+  /* el link de ESTA cotización, el que quedó guardado con ella. Antes cada
+     toque armaba otro en quote_links: 4.884 links para 1.533 cotizaciones
+     entre agosto y octubre de 2026, y el cliente recibía uno distinto del que
+     ve el panel. Solo si no hay ninguno (no debería pasar) se arma uno. */
+  var url = linkLimpio();
+  if (!url) {
+    if (btn) btn.textContent = 'Generando enlace…';
+    url = shareShortUrl = await buildShortUrl();
+  }
+  var msg = vMensaje(url);
   function done() {
     if (btn) { btn.textContent = '✓ Mensaje copiado'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = '📋 Copiar mensaje para WhatsApp'; btn.classList.remove('copied'); }, 2500); }
   }
-  if (navigator.clipboard) { navigator.clipboard.writeText(msg).then(done).catch(done); }
-  else {
-    var ta = document.createElement('textarea'); ta.value = msg; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done();
-  }
+  vCopiarTexto(msg).then(done);
 }
 
 function loadFromHash() {
@@ -6695,9 +6933,11 @@ async function saveQuote(data, lineas) {
       delete payload.origen;
       res = await sbClient.from('cotizaciones').insert(payload);
     }
-    if (res.error) { savedQnum = null; toastInterno('No se pudo registrar la cotización', false); console.error('saveQuote:', res.error); return; }
+    if (res.error) { savedQnum = null; vCopiarAlGuardar = false; toastInterno('No se pudo registrar la cotización', false); console.error('saveQuote:', res.error); return; }
     saveQuoteLineas(data.numero, lineas);   /* el detalle de piezas, aparte y sin bloquear */
-    toastInterno('Cotización guardada', true);
+    /* vendedor con «Guardar y copiar link»: recién ahora, con la fila en la base, se copia */
+    if (vCopiarAlGuardar) { vCopiarAlGuardar = false; vTrasGuardar(data.numero); }
+    else toastInterno('Cotización guardada', true);
   } catch(e) { toastInterno('No se pudo registrar la cotización', false); console.error('saveQuote:', e); }
 }
 
@@ -10874,6 +11114,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ['pcard-banca', 'pcard-pcocina', 'btn-combo'].forEach(function(id){
       var el = document.getElementById(id); if (el) el.classList.remove('hidden');
     });
+    vMontar();   /* el formulario del vendedor: cliente arriba, precio por madera, guardar y copiar */
   }
   /* ── NUEVA COTIZACIÓN PARA UN CLIENTE DEL PANEL (12-10-2026) ──
      El botón «＋ Nueva cotización» del panel abre esta página con el nombre y
