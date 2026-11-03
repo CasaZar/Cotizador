@@ -1596,7 +1596,7 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 
       <div class="pcard" data-prod="puertas">
         <div class="pcard-img" id="img-puertas"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="3" width="16" height="20" rx="1"/><circle cx="16.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas</div><div class="psub">Granero, maciza o con vidrios</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas</div><div class="psub">Granero, sin vidrio o con vidrio</div></div><span class="parrow">→</span></div>
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
@@ -1895,7 +1895,8 @@ var WOOD = {
 };
 var PNAME = {
   cubierta:'Cubiertas', repisa:'Repisas', peldano:'Peldaños',
-  granero:'Puerta Granero', maciza:'Puerta Madera', vidrios:'Puerta con Vidrios',
+  /* 03-11-2026: «Sin vidrio» en vez de «Madera»/«Maciza», porque todas son macizas */
+  granero:'Puerta Granero', maciza:'Puerta sin vidrio', vidrios:'Puerta con vidrio',
   revestimiento:'Revestimiento', mesa:'Mesas de madera', revlibre:'Revestimiento a medida',
   banca:'Bancas', pcocina:'Puertas de mueble de cocina'
 };
@@ -2974,6 +2975,11 @@ function calcLive() {
       var mSug = mesaSugerido();
       bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
       alto = mM2*PR.cubierta.alto + (mSug ? mSug.alto*mCant : 0);
+      var parPisoL = mesaParPiso();
+      if (parPisoL) {
+        bajo = Math.max(bajo, mesaParPisoTier(parPisoL, 'bajo'));
+        alto = Math.max(alto, mesaParPisoTier(parPisoL, 'alto'));
+      }
     }
 
   } else if (['granero','maciza','vidrios'].includes(prod)) {
@@ -3601,6 +3607,24 @@ function mesaParCatalogo() {
   var m = mesaModeloActual();
   return (m && m.par && PAR_CATALOGO[parTam]) || null;
 }
+/* A pedido nunca sale más barato que el tamaño de la tienda que cabe en lo
+   pedido (03-11-2026, pedido del usuario): escrito a mano, el Grande en Pino
+   salía $709.947 y con su botón $849.900. Devuelve el tamaño más grande cuyas
+   dos tapas caben (largo y ancho) en las pedidas, o null. */
+function mesaParPiso() {
+  var m = mesaModeloActual();
+  if (!m || !m.par || PAR_CATALOGO[parTam]) return null;
+  var d = mesaParDims(); if (!d) return null;
+  var piso = null;
+  ['mediano', 'grande'].forEach(function(k) {
+    var c = PAR_CATALOGO[k];
+    if (d.sup.largo >= c.sup.largo && d.sup.ancho >= c.sup.ancho &&
+        d.inf.largo >= c.inf.largo && d.inf.ancho >= c.inf.ancho) piso = c;
+  });
+  return piso;
+}
+/* el mínimo por madera: Pino con la oferta de la tienda, las demás al precio normal */
+function mesaParPisoTier(c, t) { return c ? (t === 'bajo' ? c.oferta : c.normal) : 0; }
 /* tocar Mediano, Grande o A pedido */
 function mesaParSet(k) {
   parTam = PAR_CATALOGO[k] ? k : 'pedido';
@@ -5333,11 +5357,14 @@ function htmlMesa(cli, fecha) {
      casazaru.cl: Pino Oregón con la oferta, las demás maderas al precio
      normal de la web (26-10-2026, pedido del usuario). */
   var parCatD = esPar ? mesaParCatalogo() : null;
-  var tierMadera = function(t){
-    if (!parCatD) return sumM2*PR.cubierta[t];
-    return t === 'bajo' ? parCatD.oferta : parCatD.normal;
-  };
+  var parPisoD = esPar ? mesaParPiso() : null;   /* a pedido: nunca bajo la tienda */
   var tierBase   = function(t){ return parCatD ? 0 : baseTier(t) * nBases; };
+  var tierMadera = function(t){
+    if (parCatD) return t === 'bajo' ? parCatD.oferta : parCatD.normal;
+    var v = sumM2*PR.cubierta[t];
+    if (parPisoD) v = Math.max(v, mesaParPisoTier(parPisoD, t) - tierBase(t));
+    return v;
+  };
   var tierRows = [
     {label:'Pino Oregón',              tier:'bajo',  madera: tierMadera('bajo'),  base: tierBase('bajo')},
     {label:'Castaño / Ciprés / Mañío', tier:'medio', madera: tierMadera('medio'), base: tierBase('medio')},
@@ -6609,7 +6636,8 @@ var PEZ_GORDO = 2000000;
    entró por el formulario. Si contaran como perdidas, cada prueba bajaría la
    conversión real — por eso se excluyen de todas las métricas (esPrueba). */
 var MOTIVO_PRUEBA = 'Prueba — no es un cliente real';
-var MOTIVOS  = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto', 'Sin respuesta', 'Número no funciona / sin WhatsApp', MOTIVO_PRUEBA];
+/* 'Envío / distancia' (03-11-2026): para medir cuántas ventas se pierden por el despacho */
+var MOTIVOS  = ['Precio', 'Envío / distancia', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto', 'Sin respuesta', 'Número no funciona / sin WhatsApp', MOTIVO_PRUEBA];
 function esPrueba(x){ return !!(x && x.motivo_perdida === MOTIVO_PRUEBA); }
 /* ── LEAD CREADO A MANO (28-10-2026) ──
    Un cliente que ya conversa por WhatsApp pero nunca cotizó en la web (lo
@@ -6641,7 +6669,7 @@ function interesadoTxt(x){
 }
 /* motivos que implican que el cliente CONVERSÓ: al marcarlos se aprende
    respondio=true solo (validación del spec sin ponerle un error a César) */
-var MOTIVOS_CON_RESPUESTA = ['Precio', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto'];
+var MOTIVOS_CON_RESPUESTA = ['Precio', 'Envío / distancia', 'Plazo de entrega', 'Compró en otro lado', 'Desistió del proyecto'];
 /* Lo que el cliente había contestado al seguimiento anterior. Se pregunta al
    registrar el siguiente, que es cuando el vendedor tiene el chat abierto:
    anotar "no respondió" como un paso aparte era algo que nadie hacía. */
