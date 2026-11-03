@@ -1879,9 +1879,11 @@ var PR = {
   /* Solo vendedores (oct 2026). No tienen tabla de m² propia: la banca cobra
      el asiento como cubierta de 4 cm y la puerta de cocina como repisa de 2 cm
      (ver currentPR). Aquí va solo el fijo POR UNIDAD, editable en el Manual:
-     banca = patas/base + armado mientras cada diseño no tenga precio propio;
-     puerta de cocina = el cargo por puerta sobre el valor de repisa. */
-  banca:     { fijo: 100000 },
+     banca = la base, según sea de fierro o de madera (03-11-2026, precios del
+     usuario, con IVA), + largoExtra por banca cuando el asiento pasa de
+     BANCA_LARGO_EXTRA cm; puerta de cocina = el cargo por puerta sobre el
+     valor de repisa. */
+  banca:     { fierro: 189900, madera: 100000, largoExtra: 20000 },
   pcocina:   { fijo: 10000 },
   granero:   { bajo:{m2:241890,fijo:50000}, medio:{m2:333184,fijo:50000}, alto:{m2:362145,fijo:50000} },
   maciza:    { alto:{m2:362145,fijo:80000}, medio:{m2:333184,fijo:80000}, bajo:{m2:241890,fijo:80000} },
@@ -2704,9 +2706,21 @@ function currentPR() {
   if (prod === 'pcocina') return PR.repisa;  /* puerta de 2 cm = repisa */
   return PR[prod];
 }
-/* fijo por unidad: patas y armado de cada banca, cargo de cada puerta de cocina */
-function fijoUnidad() {
-  return (prod === 'banca' || prod === 'pcocina') ? (PR[prod].fijo || 0) : 0;
+/* Base de la banca: 'fierro' o 'madera'. Se elige en el formulario. */
+var BANCA_LARGO_EXTRA = 250;   /* sobre este largo de asiento la base suma PR.banca.largoExtra */
+var bancaBase = 'fierro';
+function getBancaBase() {
+  var el = document.getElementById('f-banca-base');
+  if (el && el.value) bancaBase = el.value;
+  return bancaBase;
+}
+/* fijo por unidad de una fila de largo lg: la base de cada banca (con su
+   recargo por largo) o el cargo de cada puerta de cocina */
+function fijoUnidad(lg) {
+  if (prod === 'banca') {
+    return (PR.banca[getBancaBase()] || 0) + ((lg || 0) > BANCA_LARGO_EXTRA ? (PR.banca.largoExtra || 0) : 0);
+  }
+  return (prod === 'pcocina') ? (PR.pcocina.fijo || 0) : 0;
 }
 /* ── PELDAÑOS: CONTRAHUELLAS (06-10-2026) ──
    La pieza vertical entre peldaños, opcional, de 2 cm: se cobra como repisa
@@ -2934,15 +2948,15 @@ function calcLive() {
   var bajo = 0, alto = 0;
 
   if (['cubierta','repisa','peldano','banca','pcocina'].includes(prod)) {
-    var sumM2 = 0, nUnid = 0;
+    var sumM2 = 0, nUnid = 0, fijoLive = 0;
     for (var i=1; i<=nrows; i++) {
       var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
       if (!lgEl||!lgEl.value||!anEl.value) continue;
       var lg=parseFloat(lgEl.value)||0, an=parseFloat(anEl.value)||0, ca=parseInt((caEl&&caEl.value)||1)||1;
       sumM2 += (lg/100)*(an/100)*ca;
       nUnid += ca;
+      fijoLive += fijoUnidad(lg) * ca;
     }
-    var fijoLive = fijoUnidad() * nUnid;
     if (prod === 'peldano') contraSync();
     if (sumM2 > 0) {
       bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive + contraValor('bajo');
@@ -3144,7 +3158,15 @@ function renderForm(p) {
   if (['cubierta','repisa','peldano','banca','pcocina'].includes(p)) {
     /* banca y puerta de cocina no preguntan el uso: el espesor ya viene dado y
        recWood() no recomienda madera para ellos */
-    var usoField = (p === 'banca' || p === 'pcocina') ? '' : (p === 'peldano') ?
+    var usoField = (p === 'banca') ?
+      '<div class="fsec">' +
+        '<label class="flabel">Base</label>' +
+        '<select class="fsel" id="f-banca-base" onchange="calcLive()">' +
+          '<option value="fierro"' + (bancaBase === 'fierro' ? ' selected' : '') + '>Fierro · ' + fmt(PR.banca.fierro) + ' por banca</option>' +
+          '<option value="madera"' + (bancaBase === 'madera' ? ' selected' : '') + '>Madera · ' + fmt(PR.banca.madera) + ' por banca</option>' +
+        '</select>' +
+      '</div>' :
+      (p === 'pcocina') ? '' : (p === 'peldano') ?
       '<div class="fsec">' +
         '<label class="flabel">Espesor</label>' +
         '<select class="fsel" id="f-espesor-peldano" onchange="setPeldanoEspesor(this.value)">' +
@@ -3198,7 +3220,7 @@ function renderForm(p) {
                   los ejemplos en gris los campos parecían ya llenos */
                : 'Escribe tus medidas en cm';
     var fijoHint = (p === 'banca')
-      ? '<div class="finput-hint">Cada banca suma <strong>' + fmt(PR.banca.fijo) + '</strong> de patas y armado. En «Cant.» va el número de bancas de esa medida.</div>'
+      ? '<div class="finput-hint">Cada banca suma su base: fierro <strong>' + fmt(PR.banca.fierro) + '</strong> o madera <strong>' + fmt(PR.banca.madera) + '</strong>, y <strong>' + fmt(PR.banca.largoExtra) + '</strong> más si el asiento pasa de ' + BANCA_LARGO_EXTRA + ' cm. En «Cant.» va el número de bancas de esa medida.</div>'
       : (p === 'pcocina')
       ? '<div class="finput-hint">Cada puerta suma <strong>' + fmt(PR.pcocina.fijo) + '</strong> sobre el valor de la madera. En «Cant.» va el número de puertas de esa medida.</div>'
       : (p === 'peldano')
@@ -5146,21 +5168,24 @@ function htmlCombinada(cli, fecha) {
 }
 
 function htmlCubierta(cli, fecha) {
-  var filas = [], sumM2 = 0, nUnid = 0;
+  var filas = [], sumM2 = 0, nUnid = 0, fijoTot = 0, nLargas = 0;
   for (var i=1; i<=nrows; i++) {
     var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
     if (!lgEl||!lgEl.value||!anEl.value) continue;
     var lg=parseFloat(lgEl.value), an=parseFloat(anEl.value), ca=parseInt(caEl.value)||1;
     var m2=(lg/100)*(an/100)*ca;
     sumM2+=m2; nUnid+=ca; filas.push({n:i,lg:lg,an:an,ca:ca,m2:m2});
+    /* banca y puerta de cocina suman un fijo por unidad (0 en el resto) */
+    fijoTot += fijoUnidad(lg) * ca;
+    if (lg > BANCA_LARGO_EXTRA) nLargas += ca;
   }
   var dimRows = filas.map(function(f){
     return '<tr><td>'+f.n+'</td><td>'+f.lg+'</td><td>'+f.an+'</td><td>'+f.ca+'</td><td>'+f.m2.toFixed(2)+'</td></tr>';
   }).join('');
   var vExtrasList = vExtrasDatos();
   var vExtrasTot = vExtrasList.reduce(function(a,e){ return a+e.valor; }, 0);
-  /* banca y puerta de cocina suman un fijo por unidad (0 en el resto) */
-  var fijoU = fijoUnidad(), fijoTot = fijoU * nUnid;
+  var fijoU = fijoUnidad(0);   /* sin recargo por largo: es lo que se muestra "por unidad" */
+  var bBase = (prod === 'banca') ? getBancaBase() : '';
   /* peldaños con contrahuellas: van en cada precio, cobradas como repisa 2 cm */
   var ct = contraDatos();
   var ctV = function(t){ return ct ? ct.m2 * PR.repisa[t] : 0; };
@@ -5187,8 +5212,10 @@ function htmlCubierta(cli, fecha) {
   /* el cliente ve de dónde sale el precio, igual que el desglose cubierta + base de las mesas */
   var fijoNota = '';
   if (prod === 'banca' && fijoU > 0)
-    fijoNota = '<div class="info-bar">Cada banca incluye patas y armado: <strong>' + fmt(fijoU) + '</strong>' +
-      (nUnid > 1 ? ' × ' + nUnid + ' bancas' : '') + ' · el asiento se cobra por m²</div>';
+    fijoNota = '<div class="info-bar">Base de ' + bBase + ' por banca: <strong>' + fmt(fijoU) + '</strong>' +
+      (nUnid > 1 ? ' × ' + nUnid + ' bancas' : '') +
+      (nLargas > 0 ? ' · + ' + fmt(PR.banca.largoExtra) + (nLargas > 1 ? ' × ' + nLargas : '') + ' por pasar de ' + BANCA_LARGO_EXTRA + ' cm de largo' : '') +
+      ' · el asiento se cobra por m²</div>';
   if (prod === 'pcocina' && fijoU > 0)
     fijoNota = '<div class="info-bar">Valor por puerta: madera por m² + <strong>' + fmt(fijoU) + '</strong>' +
       (nUnid > 1 ? ' × ' + nUnid + ' puertas' : '') + '</div>';
@@ -5197,7 +5224,7 @@ function htmlCubierta(cli, fecha) {
     total_bajo:  Math.round(tierRows[0].total),
     total_medio: Math.round(tierRows[1].total),
     total_alto:  Math.round(tierRows[2].total)
-  }, filas.map(function(f){ return {largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; })
+  }, filas.map(function(f){ var l = {largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; if (bBase) l.modelo = 'Base de ' + bBase; return l; })
      .concat(ct ? [{ modelo:'Contrahuella', largo_cm: Math.round(ct.largo * 10) / 10, ancho_cm: ct.alto, cantidad: ct.cant, m2: ct.m2 }] : []));
   return shell(PNAME[prod], cli, fecha,
     (uso === 'exterior' ? '<div class="aviso-ext">☂️ ' + AVISO_EXTERIOR + '</div>' : '') +
@@ -5214,7 +5241,7 @@ function htmlCubierta(cli, fecha) {
     extrasBlock(sumM2) +
     '<div class="specs">' +
       '<div class="spec"><div class="sl">Espesor</div><div class="sv">'+escA(esp)+'</div></div>' +
-      (prod === 'banca' ? '<div class="spec"><div class="sl">Patas</div><div class="sv">Según diseño · incluidas en el valor</div></div>' : '') +
+      (prod === 'banca' ? '<div class="spec"><div class="sl">Base</div><div class="sv">De ' + bBase + ' · incluida en el valor</div></div>' : '') +
       '<div class="spec"><div class="sl">Bordes</div><div class="sv">Recto, redondo o biselado. Tú eliges</div></div>' +
       '<div class="spec"><div class="sl">Plazo envío*</div><div class="sv">7 a 15 días hábiles</div></div>' +
       '<div class="spec"><div class="sl">Peso aprox.</div><div class="sv">'+Math.round(sumM2*30*stkFactorEspesor(prod) + (ct ? ct.m2*15 : 0))+' kg</div></div>' +
@@ -6090,6 +6117,7 @@ function getShareDataProducto(conValores) {
   if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
+  if (prod === 'banca') data.bb = getBancaBase();           /* base de fierro o de madera */
   var ctNow = contraDatos();
   if (ctNow) data.ct = { alto: ctNow.alto, cant: ctNow.cant, manual: ctNow.manual ? 1 : 0 };
   if (waNumero() === WA_ANUNCIOS) data.wa = WA_ANUNCIOS;   /* el link vuelve al mismo WhatsApp */
@@ -6213,6 +6241,9 @@ function restoreProducto(d) {
   var espGuardado = d.esp || null;   /* espesor de peldaño del link compartido */
   uso = d.uso || 'otro';
   var isPuerta = ['granero','maciza','vidrios'].includes(d.p);
+  /* los links de banca anteriores al 03-11-2026 no traen la base: cobraban
+     $100.000 de patas, que es lo que hoy vale la de madera */
+  if (d.p === 'banca') bancaBase = (d.bb === 'fierro' || d.bb === 'madera') ? d.bb : 'madera';
   initProd(isPuerta ? 'puertas' : d.p);
   if (espGuardado) {   /* restaurar espesor de peldaño (initProd lo resetea a 4) */
     peldanoEspesor = espGuardado;
@@ -10198,10 +10229,12 @@ function renderManual() {
       '<div class="finput-hint">El $/m² de puertas usa la misma tabla de maderas de cubiertas; aquí solo se define el cargo fijo por puerta.</div>' +
       '<div class="mv-sub">Bancas y puertas de mueble de cocina (solo vendedores) — fijo por unidad</div>' +
       '<div class="mv-grid3">' +
-        '<label>Banca · patas y armado' + mvNum('mv-banca-fijo', PR.banca.fijo, 5000) + '</label>' +
+        '<label>Banca · base de fierro' + mvNum('mv-banca-fierro', PR.banca.fierro, 5000) + '</label>' +
+        '<label>Banca · base de madera' + mvNum('mv-banca-madera', PR.banca.madera, 5000) + '</label>' +
+        '<label>Banca · recargo sobre ' + BANCA_LARGO_EXTRA + ' cm' + mvNum('mv-banca-largo', PR.banca.largoExtra, 1000) + '</label>' +
         '<label>Puerta de cocina · por puerta' + mvNum('mv-pcoc-fijo', PR.pcocina.fijo, 1000) + '</label>' +
       '</div>' +
-      '<div class="finput-hint">La banca cobra el asiento como cubierta de 4 cm (m² × valor de arriba) + este fijo por banca. La puerta de cocina cobra la madera como repisa de 2 cm + este fijo por puerta.</div>' +
+      '<div class="finput-hint">La banca cobra el asiento como cubierta de 4 cm (m² × valor de arriba) + la base elegida por banca, y el recargo cuando el asiento pasa de ' + BANCA_LARGO_EXTRA + ' cm de largo. La puerta de cocina cobra la madera como repisa de 2 cm + este fijo por puerta.</div>' +
       '<div class="mv-sub">Revestimiento — $ por m²</div>' +
       '<div class="mv-grid3">' +
         '<label>Ciprés' + mvNum('mv-rev-cipres', PR.revestimiento.cipres, 1000) + '</label>' +
@@ -10294,7 +10327,7 @@ async function guardarValores(clave) {
       maciza:   { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
       vidrios:  { bajo:{m2:mvLee('mv-cub-bajo'), fijo:mvLee('mv-pta-ma-fijo')}, medio:{m2:mvLee('mv-cub-medio'), fijo:mvLee('mv-pta-ma-fijo')}, alto:{m2:mvLee('mv-cub-alto'), fijo:mvLee('mv-pta-ma-fijo')} },
       revestimiento: { cipres: mvLee('mv-rev-cipres'), coihue: mvLee('mv-rev-coihue') },
-      banca:   { fijo: mvLee('mv-banca-fijo') },
+      banca:   { fierro: mvLee('mv-banca-fierro'), madera: mvLee('mv-banca-madera'), largoExtra: mvLee('mv-banca-largo') },
       pcocina: { fijo: mvLee('mv-pcoc-fijo') }
     };
   } else if (clave === 'esp8') {
