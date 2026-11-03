@@ -1436,12 +1436,12 @@ body.modo-vendedor .v-solo { display: block; }
 body.modo-vendedor .solo-pub, body.modo-vendedor #s2 .live-price-wrap,
 body.modo-vendedor #s2 .confianza, body.modo-vendedor #s2 .legal-datos, body.modo-vendedor #s2 .nota-asesor { display: none !important; }
 body.modo-vendedor #s2 .form-hdr { flex-wrap: wrap; row-gap: 6px; }
-body.modo-vendedor .v-estado { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: #6B6658;
-  background: #F3EEE3; border-radius: 20px; padding: 5px 11px; white-space: nowrap; }
-.v-estado:before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #B9AE9A; }
-.v-estado.ok { background: #EEF1EA; color: #485B3D; }
-.v-estado.ok:before { background: #485B3D; }
-.v-estado.cambios { background: #FBF0E4; color: #8F4E22; }
+body.modo-vendedor .v-estado { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 400; color: #57524B;
+  background: none; border: 1px solid #948A7C; border-radius: 4px; padding: 3px 8px; white-space: nowrap; flex-shrink: 0; }
+.v-estado:before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #C9A227; }
+.v-estado.ok { color: #2F6B3A; }
+.v-estado.ok:before { background: #2F6B3A; }
+.v-estado.cambios { color: #8F4E22; }
 .v-estado.cambios:before { background: #A85D2A; }
 body.modo-vendedor #s2 .datos-sec { margin-bottom: 14px; }
 body.modo-vendedor #s2 .datos-sec .fsec { margin-bottom: 12px; }
@@ -1491,11 +1491,103 @@ body.modo-vendedor #s1 .pcard-img, body.modo-vendedor #s1 .ptag, body.modo-vende
 body.modo-vendedor #s1 .dash-intro, body.modo-vendedor #s1 .tagline { display: none; }
 body.modo-vendedor #s1 .pcard, body.modo-vendedor #s1 .pcard[data-prod="cubierta"] { grid-column: auto; border: 1px solid var(--bd); }
 body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
-@media (min-width:1100px){
-  /* con el cliente a la izquierda, la columna derecha queda para precio y botón */
-  body.modo-vendedor .v-izq { grid-column: 1; min-width: 0; }
-  body.modo-vendedor .form-side .v-blk { border: 0; border-radius: 0; padding: 0 0 16px; margin: 0 0 16px; border-bottom: 1px solid var(--bd); }
-  body.modo-vendedor #v-msg { display: block; }
+/* ── SEGUNDA VUELTA, AL PIE DEL BOCETO APROBADO (03-11-2026) ──
+   La etapa 1 dejó las piezas pero con la cara del formulario del cliente
+   (tarjetas redondeadas, «Cotiza tu mesa», botones apilados). El usuario
+   mandó la captura del boceto: «se supone que era así». Bloques planos
+   separados por una línea, títulos chicos en mayúscula, el producto como
+   línea de un carro, columna derecha clara y los dos botones lado a lado. */
+body.modo-vendedor #s2 { background: #F7F4EE; color: #1F1D24; }
+body.modo-vendedor #s1 .logo-bar, body.modo-vendedor #s2 .logo-bar { display: flex; align-items: center; justify-content: space-between; text-align: left; padding: 12px 16px; }
+body.modo-vendedor #s1 .logo-bar .logo-blanco, body.modo-vendedor #s2 .logo-bar .logo-blanco { height: 20px; }
+.v-yo { display: none; }
+body.modo-vendedor .v-yo { display: inline; font-family: 'Poppins', sans-serif; font-size: 13px; color: #fff; opacity: .9; }
+body.modo-vendedor #s2 #btn-back, body.modo-vendedor #s2 #f-title { display: none; }
+.v-cab { display: none; }
+body.modo-vendedor .v-cab { display: block; flex: 1; min-width: 0; }
+.v-cab-k { font-family: 'Poppins', sans-serif; font-size: 12px; color: #57524B; margin: 0 0 2px; }
+body.modo-vendedor #s2 .v-cab h1 { font-family: 'Nanum Myeongjo', serif; font-size: 24px; font-weight: 800; line-height: 1.2; margin: 0; color: #1F1D24; overflow-wrap: anywhere; }
+body.modo-vendedor #s2 .form-hdr { align-items: flex-end; justify-content: space-between; gap: 12px; padding: 18px 0 14px; margin: 0; border-bottom: 1px solid #E4DDD2; }
+body.modo-vendedor #s2 .form-body { font-family: 'Poppins', sans-serif; }
+/* bloques planos */
+body.modo-vendedor #s2 .datos-sec, body.modo-vendedor #s2 .v-sec, body.modo-vendedor #s2 .v-blk {
+  display: block; background: none; border: 0; border-radius: 0; box-shadow: none; margin: 0; padding: 18px 0; border-bottom: 1px solid #E4DDD2; }
+body.modo-vendedor #s2 #v-msg { display: none; }
+body.modo-vendedor #s2 .datos-h, .v-h2, body.modo-vendedor #s2 .v-h {
+  font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #57524B;
+  margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+body.modo-vendedor #s2 .datos-h span.solo-ven { display: inline; }
+.v-h2 span, body.modo-vendedor #s2 .v-h span { font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; margin: 0; color: #57524B; text-align: right; }
+body.modo-vendedor #s2 .flabel { font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 400; color: #57524B; letter-spacing: 0; text-transform: none; margin: 0 0 4px; }
+body.modo-vendedor #s2 .flabel .flabel-op:before { content: '('; }
+body.modo-vendedor #s2 .flabel .flabel-op:after { content: ')'; }
+body.modo-vendedor #s2 .flabel .flabel-op { font-size: 13px; color: #57524B; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+body.modo-vendedor #s2 .finput { border: 1px solid #948A7C; border-radius: 4px; background: #fff; min-height: 46px; font-size: 16px; color: #1F1D24; }
+body.modo-vendedor #s2 .datos-sec .fsec { margin-bottom: 12px; }
+.v-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+body.modo-vendedor #s2 .v-g2 .fsec { margin: 0 !important; min-width: 0; }
+body.modo-vendedor #s2 .datos-sec .finput-hint { font-size: 12px; }
+body.modo-vendedor #s2 #b2b-wrap .vx-sub { margin: 0; }
+body.modo-vendedor #s2 #b2b-res { display: none; }   /* el aviso de la cuenta va en «Ajustes de precio» */
+/* productos: líneas de un carro */
+.v-linea { background: #fff; border: 1px solid #E4DDD2; border-radius: 4px; margin-bottom: 10px; }
+.v-linea.abierta { border-color: #948A7C; }
+.v-linea-hd { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.v-linea-t { min-width: 0; }
+.v-linea-hd .n { font-size: 15px; font-weight: 600; color: #1F1D24; line-height: 1.35; }
+.v-linea-hd .d { font-size: 13px; color: #57524B; font-variant-numeric: tabular-nums; line-height: 1.4; }
+.v-linea-hd .acc { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
+.v-ib { width: 40px; height: 40px; border: 0; background: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #57524B; cursor: pointer; padding: 0; }
+.v-ib:hover { background: #F3EEE3; color: #1F1D24; }
+.v-ib svg, .v-add svg, .v-barra-pc #btn-calc svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.v-linea-cuerpo { border-top: 1px solid #E4DDD2; padding: 14px; }
+.v-add { width: 100%; height: 48px; border: 1px solid #948A7C; border-radius: 4px; background: none; font-family: 'Poppins', sans-serif; font-size: 15px;
+  color: #1F1D24; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.v-add:hover { background: #fff; }
+.v-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.v-chips[hidden] { display: none; }
+.v-chip { height: 40px; padding: 0 12px; border: 1px solid #948A7C; border-radius: 4px; background: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1F1D24; cursor: pointer; }
+.v-chip:hover { border-color: #1F1D24; }
+.v-s1-lista { max-width: 1180px; margin: 0 auto 14px; }
+.v-s1-lista .combo-vaciar { font-family: 'Poppins', sans-serif; }
+body.modo-vendedor #s2 .btn-combo { display: none !important; }
+/* ajustes de precio */
+body.modo-vendedor .dcto-seg { border: 1px solid #948A7C; border-radius: 4px; }
+body.modo-vendedor .dcto-seg .dcto-op { height: 44px; padding: 0; font-weight: 400; color: #1F1D24; border-right-color: #948A7C; font-family: 'Poppins', sans-serif; }
+body.modo-vendedor .dcto-seg .dcto-op.on { background: #1F1D24; color: #fff; }
+body.modo-vendedor #v-ajustes .vx-sub-h { font-size: 13px; font-weight: 400; color: #57524B; margin: 0 0 4px; }
+#v-b2b-res .finput-hint, #v-b2b-res .b2b-ok { margin-top: 8px; font-size: 12px; color: #57524B; }
+/* precio por madera: lista y transferencia, con el desglose bajo la lista */
+.v-tab { font-size: 14px; }
+.v-tab th { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #57524B; padding: 0 0 8px 12px; }
+.v-tab td { border-top: 1px solid #E4DDD2; padding: 10px 0 10px 12px; font-size: 14px; font-weight: 400; color: #1F1D24; }
+.v-tab td:first-child { font-size: 14px; font-weight: 400; }
+.v-tab td small { display: block; font-size: 12px; font-weight: 400; color: #57524B; text-decoration: none; line-height: 1.45; margin-top: 2px; }
+.v-tab td small.lista { text-decoration: line-through; font-size: 13px; }
+.v-tab td.v-tr { font-weight: 600; color: #1F1D24; }
+body.modo-vendedor .v-nota { font-size: 12px; color: #57524B; }
+.v-wa { background: #fff; border: 1px solid #E4DDD2; border-radius: 4px; padding: 12px 14px; font-size: 14px; }
+/* los dos botones del final */
+body.modo-vendedor .v-barra-pc { display: flex; gap: 10px; align-items: center; padding: 18px 0; }
+body.modo-vendedor #s2 .v-barra-pc .btn-vista { display: inline-flex; align-items: center; justify-content: center; width: 100%; margin: 0; height: 48px; min-height: 0;
+  border: 1px solid #948A7C; border-radius: 4px; padding: 0 18px; font-size: 15px; font-weight: 500; background: none; }
+body.modo-vendedor #s2 .v-barra-pc #btn-calc { display: none; }
+body.modo-vendedor #barra-precio .bp-v small { display: block; font-size: 11.5px; font-weight: 400; color: #6B6658; }
+body.modo-vendedor #barra-precio button { border-radius: 4px; font-weight: 500; }
+@media (max-width:989px){ body.modo-vendedor #s2 .form-body { padding-bottom: 110px; } }   /* que la barra fija no tape «Vista del cliente» */
+@media (min-width:990px){
+  body.modo-vendedor .form-body { display: grid; max-width: 1180px; padding: 0 0 40px; grid-template-columns: 7fr 5fr; gap: 0; align-items: start; }
+  body.modo-vendedor #s2 .form-hdr { grid-column: 1 / -1; padding: 22px 24px 16px; margin: 0; }
+  body.modo-vendedor .v-izq { grid-column: 1; min-width: 0; padding: 0 24px; }
+  body.modo-vendedor .form-side { display: block; grid-column: 2; position: sticky; top: 0; align-self: stretch; min-height: 100vh;
+    background: #FBF9F5; border: 0; border-left: 1px solid #E4DDD2; border-radius: 0; box-shadow: none; padding: 0 24px; }
+  body.modo-vendedor #s2 #v-msg { display: block; }
+  body.modo-vendedor .v-barra-pc { padding: 18px 0 24px; }
+  body.modo-vendedor #s2 .v-barra-pc .btn-vista { width: auto; }
+  body.modo-vendedor #s2 .v-barra-pc #btn-calc { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; margin: 0 0 0 auto;
+    min-height: 0; height: 48px; border-radius: 4px; padding: 0 18px; background: #A85D2A; font-size: 15px; font-weight: 500; letter-spacing: 0; }
+  body.modo-vendedor #s2 .v-barra-pc #btn-calc:hover { background: #8F4E22; }
+  body.modo-vendedor #s2 .v-linea-cuerpo #f-dyn .fsec { margin-bottom: 18px; }
 }
 
 /* ── LA COTIZACIÓN (.marca = #q-out y su copia del PDF) ── */
@@ -1736,7 +1828,8 @@ body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
     <div class="form-hdr">
       <button class="btn-back" id="btn-back">← Inicio</button>
       <h2 id="f-title">—</h2>
-      <span class="v-estado" id="v-estado">Borrador · sin guardar</span>
+      <div class="v-cab"><div class="v-cab-k">Cotización nueva</div><h1 id="v-titulo">Cliente sin nombre</h1></div>
+      <span class="v-estado" id="v-estado">Borrador, sin guardar</span>
     </div>
     <!-- 1º las medidas: la persona ve su precio antes de dar datos personales -->
     <div id="f-dyn"></div>
@@ -1791,9 +1884,11 @@ body.modo-vendedor #s1 .pcard-body { padding: 12px 13px; }
          y el precio de cada madera en vivo (vPrecioPintar) -->
     <div class="v-blk v-solo" id="v-ajustes"></div>
     <div class="v-blk v-solo"><div class="v-h">Precio por madera</div><div id="v-precio"></div></div>
-    <div class="v-blk" id="v-msg"><div class="v-h">Mensaje para WhatsApp<span>se copia al guardar</span></div><div class="v-wa" id="v-wa"></div></div>
+    <div class="v-blk" id="v-msg"><div class="v-h">Mensaje para WhatsApp<span>se copia junto con el link</span></div><div class="v-wa" id="v-wa"></div></div>
     <div class="msg-err hidden" id="f-err"></div>
+    <div class="v-barra-pc">
     <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
+    </div>
     <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
     <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
@@ -2783,10 +2878,9 @@ function dctoSelHtml() {
     '<div class="vx-sub-h">Descuento especial</div>' +
     '<div class="dcto-seg">' +
       [0].concat(DCTO_OPCIONES).map(function(v){
-        return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + '%' : 'Sin') + '</button>';
+        return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + ' %' : 'Sin') + '</button>';
       }).join('') +
     '</div>' +
-    '<div class="finput-hint">Baja las 3 maderas y se suma al de transferencia. El cliente ve «esta cotización tiene un descuento especial».</div>' +
   '</div>';
 }
 /* la franja que ve el cliente arriba de su cotización */
@@ -3249,10 +3343,11 @@ function renderB2B(){
   w.classList.remove('hidden');
   w.innerHTML =
     '<div class="vx-sub">'+
-      '<div class="vx-sub-h">Cuenta empresa</div>'+
-      '<input class="finput" type="text" id="b2b-rut" autocomplete="off" placeholder="RUT de la factura (ej. 76.123.456-7)" value="' + escA(b2bEmp ? b2bEmp.rut : '') + '" oninput="b2bRutInput(this.value)">'+
+      '<label class="flabel" for="b2b-rut">RUT empresa<span class="flabel-op">opcional</span></label>'+
+      '<input class="finput" type="text" id="b2b-rut" autocomplete="off" placeholder="Para facturas con cuenta empresa" value="' + escA(b2bEmp ? b2bEmp.rut : '') + '" oninput="b2bRutInput(this.value)">'+
       '<div id="b2b-res">' + b2bResHtml() + '</div>'+
     '</div>';
+  b2bPintar();
 }
 function b2bRutInput(v) {
   clearTimeout(b2bTimer);
@@ -3285,13 +3380,16 @@ async function b2bBuscar(rut) {
   }
 }
 function b2bFijar(emp, pct, msg) { b2bEmp = emp; b2bDcto = pct; b2bMsg = msg || ''; b2bPintar(); calcLive(); }
-function b2bPintar(cargando) { var el = document.getElementById('b2b-res'); if (el) el.innerHTML = b2bResHtml(cargando); }
+/* el aviso sale bajo el RUT y, en el formulario del vendedor, en «Ajustes de precio» (#v-b2b-res) */
+function b2bPintar(cargando) {
+  ['b2b-res', 'v-b2b-res'].forEach(function(id){ var el = document.getElementById(id); if (el) el.innerHTML = b2bResHtml(cargando); });
+}
 function b2bResHtml(cargando) {
   if (cargando) return '<div class="finput-hint">' + cargando + '</div>';
   if (b2bDcto > 0) return '<div class="b2b-ok"><b>✓ ' + escA(b2bEmp && b2bEmp.nombre ? b2bEmp.nombre : 'Cuenta empresa') + '</b> · tramo ' + b2bDcto + ' %<small>' +
     (b2bAplica() ? 'Se aplica solo: ' + b2bDcto + ' % con tarjeta, ' + (transfPct() + b2bDcto) + ' % con transferencia.'
                  : 'El descuento especial de ' + dctoEsp + ' % es mayor: se usa ese y no se suman.') + '</small></div>';
-  return '<div class="finput-hint">' + (b2bMsg ? escA(b2bMsg) : 'Si el cliente tiene cuenta empresa con tramo, el descuento se aplica solo.') + '</div>';
+  return '<div class="finput-hint">' + (b2bMsg ? escA(b2bMsg) : 'Cuenta empresa: sin RUT. Si escribes uno arriba, el tramo se aplica solo.') + '</div>';
 }
 
 /* ── FORM ── */
@@ -5376,6 +5474,23 @@ function comboVaciar() { combo = []; comboShare = null; vGuardadaNum = ''; vCamb
 /* la lista de lo agregado, arriba del selector y del formulario */
 function comboPintar() {
   var html = '';
+  if (vendorMode) {
+    /* vendedor (boceto 03-11): cada producto agregado es una línea cerrada, con
+       editar, duplicar y quitar. En el inicio (s1) se puede vaciar todo. */
+    html = combo.map(function(it, i){
+      return '<div class="v-linea"><div class="v-linea-hd"><div class="v-linea-t">' +
+          '<div class="n">' + escA(vNombreCorto(it)) + '</div><div class="d">' + escA(vLineaDesc(it)) + '</div></div>' +
+        '<div class="acc">' + vIb('editar', 'Editar', 'vComboEditar(' + i + ')') + vIb('duplicar', 'Duplicar', 'vComboDuplicar(' + i + ')') +
+          vIb('quitar', 'Quitar', 'comboQuitar(' + i + ')') + '</div></div></div>';
+    }).join('');
+    var s1 = document.getElementById('combo-bar-s1'), s2 = document.getElementById('combo-bar-s2');
+    if (s1) s1.innerHTML = combo.length ? '<div class="v-s1-lista"><div class="v-h2">En esta cotización<span>' + combo.length +
+      (combo.length === 1 ? ' producto' : ' productos') + '</span></div>' + html +
+      '<button type="button" class="combo-vaciar" onclick="comboVaciar()">Vaciar y empezar de nuevo</button></div>' : '';
+    if (s2) s2.innerHTML = html;
+    vNprod();
+    return;
+  }
   if (combo.length) {
     var filas = combo.map(function(it, i){
       return '<div class="combo-li"><span class="cl-n">' + (i+1) + '. ' + it.nombre + '</span>' +
@@ -5431,7 +5546,7 @@ function vEstadoPintar() {
   var el = document.getElementById('v-estado');
   if (!el) return;
   el.className = 'v-estado' + (vGuardadaNum ? (vCambios ? ' cambios' : ' ok') : '');
-  el.textContent = !vGuardadaNum ? 'Borrador · sin guardar'
+  el.textContent = !vGuardadaNum ? 'Borrador, sin guardar'
     : vCambios ? 'Con cambios · al guardar sale otro N°' : 'Guardada · ' + vGuardadaNum;
 }
 /* totales de lista por madera de lo agregado + el producto del formulario.
@@ -5458,6 +5573,7 @@ function vPrecioPintar() {
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
   });
   var r = vTotales();
+  vActualPintar(r);
   var bpv = document.getElementById('bp-v');
   if (!r.tot) {
     box.innerHTML = '<div class="v-vacio">' + escA(r.falta || 'Completa las medidas para ver el precio de cada madera.') + '</div>';
@@ -5470,21 +5586,147 @@ function vPrecioPintar() {
     : V_TIERS.filter(function(t){ return r.tot[t[0]] > 0; });
   var pct = dctoPct(), tf = transferFactor();
   var col = pct > 0 ? (b2bAplica() ? 'Cuenta empresa' : 'Con ' + pct + ' %') : 'Lista';
-  /* mismo redondeo que preciosCards y saveQuote: el número de la tabla es el de la cotización */
+  /* un producto: los números salen tal cual del documento que se va a guardar
+     (precio, transferencia y desglose de cada madera). Varios: la suma, igual
+     que htmlCombinada, y el desglose es cuánto aporta cada producto. */
+  var doc = r.items.length === 1 ? vPreciosDoc(r.items[0].body) : {};
   var precio = function(t){ return dctoMonto(Math.round(r.tot[t[0]])); };
-  box.innerHTML = '<table class="v-tab"><thead><tr><th>Madera</th><th>' + col + '</th><th>' + transfLabel() + '</th></tr></thead><tbody>' +
+  var transf = function(t){ var d = doc[t[1]]; return d && d.trans ? d.trans : fmt(dctoMonto(r.tot[t[0]]) * tf); };
+  var desglose = function(t){
+    if (r.items.length > 1) return r.items.map(function(it){
+      return vNombreCorto(it) + ' ' + fmt(dctoMonto(Math.round((it.tot && it.tot[t[0]]) || 0)));
+    }).join(' · ');
+    var d = doc[t[1]];
+    return d && d.desg ? d.desg : '';
+  };
+  box.innerHTML = '<table class="v-tab"><thead><tr><th>Madera</th><th>' + col + '</th><th>Transferencia</th></tr></thead><tbody>' +
     tiers.map(function(t){
+      var dg = desglose(t);
       return '<tr><td>' + t[1] + '</td><td>' + fmt(precio(t)) +
-        (pct > 0 ? '<small>' + fmt(Math.round(r.tot[t[0]])) + '</small>' : '') + '</td>' +
-        '<td class="v-tr">' + fmt(precio(t) * tf) + '</td></tr>';
+        (pct > 0 ? '<small class="lista">' + fmt(Math.round(r.tot[t[0]])) + '</small>' : '') +
+        (dg ? '<small>' + escA(dg) + '</small>' : '') + '</td>' +
+        '<td class="v-tr">' + transf(t) + '</td></tr>';
     }).join('') + '</tbody></table>' +
-    '<div class="v-nota">' + (r.items.length > 1 ? r.items.length + ' productos · ' : '') + 'IVA incluido · envío aparte' +
+    '<div class="v-nota">' + (r.items.length > 1 ? r.items.length + ' productos · ' : '') + 'IVA incluido · envío aparte · ' + transfLabel() +
       (fromHash ? ' · con los precios del día de la cotización abierta; al guardar se recalculan con los de hoy' : '') +
       (r.falta ? ' · falta completar el producto en pantalla: ' + escA(r.falta) : '') + '</div>';
-  var lo = precio(tiers[0]), hi = precio(tiers[tiers.length - 1]);
-  if (bpv) bpv.textContent = lo === hi ? fmt(lo) : fmt(lo) + ' – ' + fmt(hi);
+  /* barra del celular: la madera más cara con transferencia, como en el boceto */
+  var ult = tiers[tiers.length - 1];
+  var bl = document.querySelector('#barra-precio .bp-l');
+  if (bl) bl.textContent = ult[1];
+  if (bpv) bpv.innerHTML = transf(ult) + '<small>con transferencia</small>';
   barraPrecio.hay = true; barraPintar();
   vMsgPintar();
+}
+/* los precios de cada madera tal como salen en el documento de UN producto:
+   { 'Pino Oregón': { trans: '$1.447.561', desg: 'Cubierta $774.048 + base $749.700' }, … } */
+function vPreciosDoc(body) {
+  var out = {};
+  if (!body) return out;
+  var d = document.createElement('div');
+  d.innerHTML = body;
+  var pre = d.querySelector('.precios');
+  if (!pre) return out;
+  pre.querySelectorAll('.pz').forEach(function(pz){
+    var nom = pz.querySelector('.pz-nom'), tr = pz.querySelector('.pz-trans'), dg = pz.querySelector('.mesa-desglose');
+    if (!nom) return;
+    var trTxt = tr ? (tr.firstChild && tr.firstChild.nodeType === 3 ? tr.firstChild.nodeValue : '') : '';
+    out[nom.textContent.trim()] = { trans: trTxt.trim(), desg: dg && !/combinadas/.test(dg.textContent) ? dg.textContent.trim() : '' };
+  });
+  return out;
+}
+/* el nombre de cada línea: la mesa con su modelo, el resto en singular («Cubierta», no «Cubiertas») */
+function vNombreCorto(it) {
+  if (!it) return '';
+  if (it.p === 'mesa' || it.p === 'puertas') return it.nombre || PNAME[it.p] || it.p;
+  return V_CHIPS[it.p] || it.nombre || PNAME[it.p] || it.p;
+}
+/* «200 × 90 cm · 2 × 200 × 35 cm»: lo que se ve bajo el nombre de cada línea */
+function vLineaDesc(it) {
+  var ls = (it && it.lineas) || [];
+  var txt = ls.filter(function(l){ return l.largo_cm && l.ancho_cm; }).map(function(l){
+    return (l.cantidad > 1 ? l.cantidad + ' × ' : '') + String(l.largo_cm).replace('.', ',') + ' × ' + String(l.ancho_cm).replace('.', ',') + ' cm';
+  });
+  if (txt.length > 3) txt = txt.slice(0, 3).concat(['…']);
+  return txt.join(' · ') || (it && it.tot ? fmt(Math.round(it.tot.bajo || it.tot.alto)) + ' – ' + fmt(Math.round(it.tot.alto || it.tot.bajo)) : '');
+}
+var V_ICONOS = {
+  editar: '<path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/>',
+  duplicar: '<rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  quitar: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'
+};
+function vIb(icono, titulo, accion) {
+  return '<button type="button" class="v-ib" title="' + titulo + '" aria-label="' + titulo + '" onclick="' + accion + '"><svg viewBox="0 0 24 24">' + V_ICONOS[icono] + '</svg></button>';
+}
+/* la línea abierta: el producto que está en el formulario */
+function vActualPintar(r) {
+  var n = document.getElementById('v-act-n'), d = document.getElementById('v-act-d');
+  if (!n || !d) return;
+  var it = r && r.items && r.items.length > combo.length ? r.items[r.items.length - 1] : null;
+  n.textContent = it ? vNombreCorto(it) : (V_CHIPS[prod] || PNAME[prod] || 'Producto');
+  d.textContent = it ? vLineaDesc(it) : 'Completa las medidas';
+  vNprod();
+  vTituloPintar();   /* un link abierto llena el nombre sin escribirlo */
+}
+function vNprod() {
+  var el = document.getElementById('v-nprod');
+  if (!el) return;
+  var n = combo.length + (prod ? 1 : 0);
+  el.textContent = n + (n === 1 ? ' producto' : ' productos');
+}
+function vTituloPintar() {
+  var t = document.getElementById('v-titulo'), c = document.getElementById('f-cli');
+  if (t) t.textContent = (c && c.value.trim()) || 'Cliente sin nombre';
+}
+/* «Duplicar» en la línea abierta: una copia pasa a la lista y se sigue editando esta */
+function vActualDuplicar() {
+  var errEl = document.getElementById('f-err');
+  if (!validarProducto(errEl, true)) { errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  errEl.classList.add('hidden');
+  fromHash = false;
+  descongelar();
+  uso = usoActual();
+  combo.push(comboCapturar());
+  comboPintar();
+  vCambio();
+  showToast('Copia agregada a la lista', true);
+}
+/* «Quitar» en la línea abierta: si hay otros, se abre el último; si no, se elige otro producto */
+function vActualQuitar() {
+  if (combo.length) {
+    var it = combo.pop();
+    restoreProducto(it.share);
+    calcLive();
+    comboPintar();
+    vCambio();
+    return;
+  }
+  show('s1');
+}
+/* «Agregar producto»: la lista de productos sin fotos, sacada del inicio (s1) */
+var V_CHIPS = { cubierta: 'Cubierta', repisa: 'Repisa', peldano: 'Peldaños', puertas: 'Puerta', revestimiento: 'Revestimiento',
+  revlibre: 'Revestimiento a medida', banca: 'Banca', pcocina: 'Puerta de cocina' };
+function vAgregarAbrir() {
+  var box = document.getElementById('v-chips');
+  if (!box) return;
+  if (!box.hidden) { box.hidden = true; return; }
+  var mesas = 0;
+  box.innerHTML = Array.prototype.map.call(document.querySelectorAll('#s1 .pcard'), function(c, i){
+    var p = c.getAttribute('data-prod');
+    if (getComputedStyle(c).display === 'none') return '';
+    var t = p === 'mesa' ? (mesas++ ? 'Mesa de centro' : 'Mesa de comedor') : (V_CHIPS[p] || p);
+    return '<button type="button" class="v-chip" onclick="vAgregarProd(' + i + ')">' + t + '</button>';
+  }).join('');
+  box.hidden = false;
+}
+function vAgregarProd(i) {
+  var c = document.querySelectorAll('#s1 .pcard')[i];
+  if (!c) return;
+  var errEl = document.getElementById('f-err');
+  if (!validarProducto(errEl, true)) { errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  var box = document.getElementById('v-chips'); if (box) box.hidden = true;
+  comboAgregar();   /* el de pantalla pasa a la lista y queda el inicio (s1) */
+  c.click();        /* … y se abre el producto elegido, como si se tocara su tarjeta */
 }
 /* el mensaje que se copia al guardar. Lo firma César aunque lo mande otro
    (así lo pidió el usuario) y va en párrafos, como los del panel. */
@@ -5533,26 +5775,67 @@ function vMontar() {
   vMontado = true;
   var fb = document.querySelector('#s2 .form-body'), fd = document.getElementById('f-dyn');
   var datos = document.querySelector('#s2 .datos-sec'), cb = document.getElementById('combo-bar-s2'), b2b = document.getElementById('b2b-wrap');
-  /* cliente y productos a la izquierda (en celular: arriba), en una columna */
+  /* cliente y productos a la izquierda (en celular: arriba), en una columna.
+     Boceto 03-11: el producto en pantalla es una línea abierta (nombre, medidas,
+     duplicar y quitar) bajo las ya agregadas, y abajo «Agregar producto». */
   if (fb && fd && datos) {
     var izq = document.createElement('div');
     izq.className = 'v-izq';
     fb.insertBefore(izq, fd);
     izq.appendChild(datos);
-    if (cb) izq.appendChild(cb);
-    izq.appendChild(fd);
+    var prods = document.createElement('div');
+    prods.className = 'v-sec';
+    prods.innerHTML = '<div class="v-h2">Productos<span id="v-nprod"></span></div>';
+    if (cb) prods.appendChild(cb);
+    var linea = document.createElement('div');
+    linea.className = 'v-linea abierta';
+    linea.innerHTML = '<div class="v-linea-hd"><div class="v-linea-t"><div class="n" id="v-act-n"></div><div class="d" id="v-act-d"></div></div>' +
+      '<div class="acc">' + vIb('duplicar', 'Duplicar', 'vActualDuplicar()') + vIb('quitar', 'Quitar', 'vActualQuitar()') + '</div></div>' +
+      '<div class="v-linea-cuerpo"></div>';
+    linea.lastChild.appendChild(fd);
+    prods.appendChild(linea);
+    prods.insertAdjacentHTML('beforeend', '<button type="button" class="v-add" onclick="vAgregarAbrir()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar producto</button>' +
+      '<div class="v-chips" id="v-chips" hidden></div>');
+    izq.appendChild(prods);
   }
-  if (datos && b2b) datos.appendChild(b2b);   /* el RUT es un dato del cliente */
+  if (datos) {
+    var dh = datos.querySelector('.datos-h .solo-ven'); if (dh) dh.textContent = 'Cliente';
+    /* WhatsApp y comuna en una fila, como en el boceto */
+    var fCon = document.getElementById('f-con'), fCom = document.getElementById('stk-form-comuna');
+    var sCon = fCon && fCon.closest('.fsec'), sCom = fCom && fCom.closest('.fsec');
+    if (sCon && sCom) {
+      var g2 = document.createElement('div');
+      g2.className = 'v-g2';
+      datos.insertBefore(g2, sCon);
+      g2.appendChild(sCon); g2.appendChild(sCom);
+    }
+    if (b2b) datos.appendChild(b2b);   /* el RUT es un dato del cliente */
+  }
   var aj = document.getElementById('v-ajustes');
-  if (aj) aj.innerHTML = '<div class="v-h">Ajustes de precio<span>se pueden cambiar hasta guardar</span></div>' + dctoSelHtml();
-  var bc = document.getElementById('btn-calc'); if (bc) bc.textContent = 'Guardar y copiar link';
-  var bl = document.querySelector('#barra-precio .bp-l'); if (bl) bl.textContent = 'Precio por madera';
+  if (aj) aj.innerHTML = '<div class="v-h">Ajustes de precio<span>se pueden cambiar hasta guardar</span></div>' + dctoSelHtml() +
+    '<div id="v-b2b-res"></div>';
+  b2bPintar();
+  /* abajo a la derecha: «Vista del cliente» y «Guardar y copiar link», lado a lado */
+  var bc = document.getElementById('btn-calc'), bv = document.querySelector('#s2 .btn-vista');
+  if (bc) {
+    bc.innerHTML = '<svg viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>Guardar y copiar link';
+    if (bv) bc.parentNode.insertBefore(bv, bc);
+  }
   var bb = document.querySelector('#barra-precio button'); if (bb) bb.textContent = 'Guardar y copiar link';
   var lbl = document.getElementById('f-con-lbl'), lnk = document.getElementById('f-con-modo');
   if (lbl) lbl.textContent = conModoCorreo ? 'Correo' : 'WhatsApp';
   if (lnk) lnk.textContent = conModoCorreo ? 'Usar WhatsApp' : 'Usar correo';
+  /* barra verde: quién cotiza, a la derecha */
+  var yo = (VENDEDORES.find(function(s){ return sesionEmail && (s.email === sesionEmail || s.srcEmail === sesionEmail); }) || VENDEDORES[0] || {}).nombre;
+  document.querySelectorAll('#s1 .logo-bar, #s2 .logo-bar').forEach(function(b){
+    if (yo && !b.querySelector('.v-yo')) b.insertAdjacentHTML('beforeend', '<span class="v-yo">Vendedor · ' + escA(yo) + '</span>');
+  });
+  var cli = document.getElementById('f-cli');
+  if (cli) cli.addEventListener('input', vTituloPintar);
   var s2 = document.getElementById('s2');
   if (s2) { s2.addEventListener('input', vCambio); s2.addEventListener('change', vCambio); }
+  vTituloPintar();
+  comboPintar();
   vEstadoPintar();
   vPrecioProgramar();
 }
