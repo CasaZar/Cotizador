@@ -7339,14 +7339,14 @@ function waMsg(x){
       ? hola + ', ¿cómo estás? Hace un tiempo cotizaste ' + W.un + ' en Casa Zaru y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.'
       : hola + ', ¿cómo estás? Soy ' + yo + ', de Casa Zaru. Hace un tiempo cotizaste ' + W.un + ' con nosotros y quería saber cómo va ese proyecto. Si lo retomas, te actualizo la cotización al tiro.';
   } else if (toque === 1) {
-    /* día 1: una sola pregunta, fácil de contestar */
+    /* día 1: sin pregunta, solo ofrecer ayuda y fotos (texto del usuario, 03-11-2026) */
     var cuando = waCuando(x);
     if (esBacklogQ(x)) {
       /* nunca se le escribió y ya pasaron días: reconocer la demora */
       /* si ya se le escribió por otra cotización, «no alcancé a escribirte» sería falso */
       m = waAbre(hola, hola + ', soy ' + yo + ' de Casa Zaru. ', yaPres, (cuando === 'hace unas semanas' ? 'Hace unas semanas' : 'La semana pasada') + ' cotizaste ' + W.un + ' con nosotros' + (yaPres ? '.' : ' y no alcancé a escribirte antes, disculpa la demora.') + ' ¿Sigues con el proyecto? Si quieres te actualizo la cotización.');
     } else {
-      m = waAbre(hola, presento, yaPres, 'Vi que ' + (cuando === 'hoy' ? 'recién' : cuando) + ' cotizaste ' + W.un + ' en nuestra página. ¿Ya tienes clara la madera o estás entre opciones?');
+      m = waAbre(hola, presento, yaPres, 'Vi que cotizaste ' + W.un + ' con nosotros. Cualquier duda que tengas, o si necesitas fotos para comparar maderas, me avisas y te mando.');
     }
     pie = '\n\nTe dejo tu cotización por si la quieres revisar:\n';
   } else if (toque === 2) {
