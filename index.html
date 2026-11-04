@@ -1589,6 +1589,54 @@ body.modo-vendedor #barra-precio button { border-radius: 4px; font-weight: 500; 
   body.modo-vendedor #s2 .v-barra-pc #btn-calc:hover { background: #8F4E22; }
   body.modo-vendedor #s2 .v-linea-cuerpo #f-dyn .fsec { margin-bottom: 18px; }
 }
+/* ── CUBIERTA CON BOTONES (boceto del 03-11-2026) ── ver vSelBotones() y vExtrasVendedorHtml() */
+body.modo-vendedor #f-dyn .fsec { margin-bottom: 16px; }
+.v-chips-sel { display: flex; flex-wrap: wrap; gap: 6px; }
+.v-chips-sel button { height: 38px; padding: 0 12px; border: 1px solid #948A7C; border-radius: 4px; background: #fff; font-family: 'Poppins', sans-serif;
+  font-size: 14px; color: #1F1D24; cursor: pointer; font-variant-numeric: tabular-nums; }
+.v-chips-sel button:hover { border-color: #1F1D24; }
+.v-chips-sel button.on { background: #1F1D24; border-color: #1F1D24; color: #fff; }
+.v-chips-sel button.mas { border-style: dashed; color: #57524B; }
+.v-seg { display: flex; border: 1px solid #948A7C; border-radius: 4px; overflow: hidden; }
+.v-seg button { flex: 1; height: 42px; border: 0; background: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1F1D24; cursor: pointer; }
+.v-seg button + button { border-left: 1px solid #948A7C; }
+.v-seg button.on { background: #1F1D24; color: #fff; }
+.v-medfrec { margin-top: 8px; }
+/* medidas: una pieza = tres campos (largo, ancho, cantidad); con más piezas vuelven el número y la ✕ */
+body.modo-vendedor #f-dyn .dim-row input, body.modo-vendedor #f-dyn .dim-row select { border: 1px solid #948A7C; border-radius: 4px; background: #fff;
+  height: 46px; font-size: 16px; color: #1F1D24; font-family: 'Poppins', sans-serif; }
+body.modo-vendedor #f-dyn #drows > .dim-row.dg:only-child { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 64px; }
+body.modo-vendedor #f-dyn #drows > .dim-row.dg:only-child .rnum, body.modo-vendedor #f-dyn #drows > .dim-row.dg:only-child .btn-del-row { display: none; }
+/* extras como líneas: nombre, valor y ✕ */
+.v-extras { margin: 0 0 6px; }
+.v-ex, body.modo-vendedor #vx-extras-rows .dim-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #E4DDD2; margin: 0; }
+.v-ex-n { font-size: 14px; color: #1F1D24; white-space: nowrap; }
+.v-ex-n small { display: block; font-size: 12px; color: #57524B; font-variant-numeric: tabular-nums; }
+body.modo-vendedor #f-dyn .v-ex input, body.modo-vendedor #f-dyn #vx-extras-rows .dim-row input { height: 38px; font-size: 14px; padding: 0 10px; }
+.v-ex .v-ex-in, body.modo-vendedor #vx-extras-rows .dim-row input[type=text] { flex: 1; min-width: 0; }
+/* el nombre ya escrito se lee como texto (se edita igual al tocarlo) */
+body.modo-vendedor #f-dyn #vx-extras-rows .dim-row input[type=text]:not(:placeholder-shown):not(:focus) { border-color: transparent; background: transparent; padding-left: 0; text-overflow: ellipsis; }
+.v-ex .v-ex-val, body.modo-vendedor #vx-extras-rows .dim-row input[type=number] { flex: 0 0 104px; width: 104px; text-align: right; font-variant-numeric: tabular-nums; }
+.v-ex-x, body.modo-vendedor #vx-extras-rows .btn-del-row { flex: 0 0 32px; width: 32px; height: 32px; border: 0; background: none; color: #57524B; font-size: 15px; cursor: pointer; padding: 0; }
+.v-ex-caja { border-top: 1px solid #E4DDD2; padding: 8px 0 10px; }
+.v-ex-cab { display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #1F1D24; margin-bottom: 6px; }
+.v-ex-caja .dim-row { display: grid; grid-template-columns: minmax(0,1fr) 104px; gap: 8px; margin-bottom: 8px; }
+body.modo-vendedor #f-dyn .v-ex-caja .dim-row select, body.modo-vendedor #f-dyn .v-ex-caja .dim-row input { height: 38px; font-size: 14px; min-height: 0; padding: 0 10px; }
+.v-ex-caja .finput-hint { font-size: 12px; color: #57524B; margin: 4px 0 0; }
+.v-ex-chips { margin-top: 8px; }
+.v-link { display: block; background: none; border: 0; padding: 0; min-height: 40px; font-family: 'Poppins', sans-serif; font-size: 13px; color: #57524B; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #948A7C; text-align: left; }
+body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
+@media (min-width:990px){   /* PC del boceto: medidas y espesor de ancho fijo, el valor de cada extra a la derecha */
+  body.modo-vendedor #f-dyn #drows > .dim-row.dg:only-child { grid-template-columns: 110px 110px 70px; }
+  .v-seg { display: inline-flex; }
+  .v-seg button { flex: 0 0 150px; width: 150px; height: 40px; }
+  .v-ex-n { width: 190px; }
+  .v-ex .v-ex-in { flex: 1; max-width: 240px; }
+  body.modo-vendedor #vx-extras-rows .dim-row input[type=text] { max-width: 440px; }
+  .v-ex .v-ex-val, body.modo-vendedor #vx-extras-rows .dim-row input[type=number] { margin-left: auto; }
+  .v-ex-caja .dim-row { grid-template-columns: 240px 104px; }
+}
 
 /* ── LA COTIZACIÓN (.marca = #q-out y su copia del PDF) ── */
 .marca .coti-hdr { background: var(--verde); border-radius: 12px; padding: 9px 14px; border-bottom: 0; justify-content: center; margin-bottom: 14px; }
@@ -3415,7 +3463,10 @@ function initProd(p, tipoMesa) {
      saber qué es una "perforación de encimera" para decidir— y frenaban a gente
      que solo quería el precio. Se siguen ofreciendo, pero conversando: la nota
      de renderForm() le avisa al cliente que existen. */
-  if (['cubierta','repisa','peldano'].includes(p) && vendorMode) renderExtras();
+  /* «+ Extras opcionales» (renderExtras) ya no se dibuja (03-11-2026): era un segundo
+     camino para teñido y perforaciones, con la redonda a $5.000 en vez de $5.950. Los
+     botones de extras del vendedor (vExtrasVendedorHtml) son el único. Sin sus campos,
+     getExtrasTotal() suma 0. */
   renderNotaAsesor();   /* va en todos los productos: los planos aplican igual a puertas y mesas */
   renderB2B();
   renumRows('drows'); renumRows('mrows');   /* con una sola fila, oculta el botón de quitar */
@@ -3447,7 +3498,8 @@ function renderForm(p) {
       (p === 'pcocina') ? '' : (p === 'peldano') ?
       '<div class="fsec">' +
         '<label class="flabel">Espesor</label>' +
-        '<select class="fsel" id="f-espesor-peldano" onchange="setPeldanoEspesor(this.value)">' +
+        (vendorMode ? vSelBotones('f-espesor-peldano', [['4', '4 cm'], ['2', '2 cm'], ['8', '8 cm macizo']], 'v-seg') : '') +
+        '<select class="fsel' + (vendorMode ? ' hidden' : '') + '" id="f-espesor-peldano" onchange="setPeldanoEspesor(this.value)">' +
           '<option value="4" selected>4 cm</option>' +
           '<option value="2">2 cm</option>' +
           (vendorMode ? '<option value="8">8 cm macizo</option>' : '') +
@@ -3456,8 +3508,12 @@ function renderForm(p) {
       '<div class="fsec">' +
         /* nunca fue obligatorio (vacío pasa como "otro"), pero el asterisco
            lo hacía parecer una barrera antes de las medidas */
-        '<label class="flabel">¿Dónde va? <span style="font-weight:400;color:var(--tm)">(opcional)</span></label>' +
-        '<select class="fsel" id="f-uso" onchange="usoAviso()">' +
+        /* vendedor (03-11-2026): botones en vez de la lista; el select queda
+           oculto y sigue siendo el que leen usoActual() y los links */
+        (vendorMode
+          ? '<label class="flabel">Dónde va</label>' + vSelBotones('f-uso', V_USOS, 'v-chips-sel')
+          : '<label class="flabel">¿Dónde va? <span style="font-weight:400;color:var(--tm)">(opcional)</span></label>') +
+        '<select class="fsel' + (vendorMode ? ' hidden' : '') + '" id="f-uso" onchange="usoAviso()">' +
           '<option value="">Selecciona el uso…</option>' +
           '<option value="cocina">Cocina</option>' +
           '<option value="bano">Baño</option>' +
@@ -3486,7 +3542,8 @@ function renderForm(p) {
     var espCubField = (p === 'cubierta' && vendorMode) ?
       '<div class="fsec">' +
         '<label class="flabel">Espesor</label>' +
-        '<select class="fsel" id="f-espesor-cubierta" onchange="calcLive()">' +
+        vSelBotones('f-espesor-cubierta', [['4', '4 cm'], ['8', '8 cm macizo']], 'v-seg') +
+        '<select class="fsel hidden" id="f-espesor-cubierta" onchange="calcLive()">' +
           '<option value="4" selected>De 2,1 a 4,0 cm (estándar)</option>' +
           '<option value="8">8 cm macizo</option>' +
         '</select>' +
@@ -3496,7 +3553,11 @@ function renderForm(p) {
                : (p === 'peldano') ? 'Medidas de cada peldaño'
                /* 06-10-2026: «Dimensiones» no decía que había que escribir, y con
                   los ejemplos en gris los campos parecían ya llenos */
+               : (vendorMode && p === 'cubierta') ? 'Medidas en cm'
                : 'Escribe tus medidas en cm';
+    /* cubierta del vendedor: sin rótulos de columna ni botón grande; «+ pieza»
+       va al final de las medidas frecuentes (ver medFrecHtml) */
+    var vCub = vendorMode && p === 'cubierta';
     var fijoHint = (p === 'banca')
       ? '<div class="finput-hint">Cada banca suma su base: fierro <strong>' + fmt(PR.banca.fierro) + '</strong> o madera <strong>' + fmt(PR.banca.madera) + '</strong>. Sobredimensionada suma <strong>' + fmt(PR.banca.sobre290) + '</strong> sobre 290 cm de largo y <strong>' + fmt(PR.banca.sobre340) + '</strong> sobre 340 cm. En «Cant.» va el número de bancas de esa medida.</div>'
       : (p === 'pcocina')
@@ -3531,25 +3592,28 @@ function renderForm(p) {
         '<li><strong>Fondo:</strong> desde la pared o la contrahuella hasta el borde. Suma 2 a 3 cm si quieres que sobresalga.</li>' +
         '<li>Mide 2 o 3 escalones: a veces no son iguales.</li></ul>' +
       '</details>';
-    c.innerHTML = usoField + espCubField +
+    /* el espesor de la cubierta (solo vendedor) va después de las medidas, como en el boceto */
+    c.innerHTML = usoField +
       '<div class="fsec">' +
         '<label class="flabel">' + dimLbl + '</label>' + fijoHint +
+        (vCub ? '' :
         '<div class="col-labels dg">' +
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
           '<div class="col-lbl">' + (p === 'peldano' ? 'Fondo cm' : 'Ancho cm') + '</div>' +
           '<div class="col-lbl nar">Cant.</div>' +
           '<div class="col-lbl del"></div>' +
-        '</div>' +
+        '</div>') +
         '<div id="drows">' + dimRow(1) + '</div>' +
-        '<button class="btn-add" id="btn-add-row">'+addRowLabel+'</button>' +
+        (vCub ? '' : '<button class="btn-add" id="btn-add-row">'+addRowLabel+'</button>') +
         /* las más pedidas van DEBAJO de los campos (06-10-2026): arriba se leían
            como la forma de ingresar la medida y no se veía dónde escribirla */
         (p === 'cubierta' ? medFrecHtml() : '') +
         maderaNota +
       '</div>' +
-      peldanoExtra +
-      vEspesorFieldHtml() + vExtrasFieldHtml();
+      espCubField + peldanoExtra +
+      /* al vendedor el espesor del documento le queda como un link al final */
+      (vendorMode ? vExtrasFieldHtml() + vEspesorFieldHtml() : vEspesorFieldHtml() + vExtrasFieldHtml());
     c.addEventListener('click', function(e) {
       if (e.target.closest('#btn-add-row')) addRow();
       if (e.target.closest('#btn-add-vextra')) addVExtra();
@@ -4231,18 +4295,151 @@ function pfTarifa(sel) {
 function vExtraRapido(t) {
   if (t === 'lava' || t === 'red') { pfTarifa({ value: t }); return; }
   if (t === 'tenido') {
+    vxVer.tn = true; vExtrasPintar();
     var sel = document.getElementById('tn-tarifa');
     if (sel) { sel.value = 'm2'; tnTarifa(); }
+    vExtrasPintar();
     var det = document.getElementById('tn-det'); if (det) det.focus();
     return;
   }
+  if (t === 'rb') { vxVer.rb = true; rbRenderPiezas(); vExtrasPintar(); return; }
+  if (t === 'rs') { vxVer.rs = true; vExtrasPintar(); rsUsarLargos(); return; }
   addVExtra();
   var nom = document.getElementById('vx-nom' + nVExtras), val = document.getElementById('vx-val' + nVExtras);
   if (t === 'u45' && nom) { nom.value = 'Unión en 45 grados'; if (val) val.focus(); }
   else if (nom) nom.focus();
 }
+/* ── CUBIERTA CON BOTONES (vendedor, boceto aprobado el 03-11-2026: «dale cn todo») ──
+   Las listas desplegables pasan a botones de un toque y los extras a líneas
+   con su precio y una ✕. Los campos de siempre (f-uso, tn-*, rb-*, rs-*, filas
+   vx) siguen en el DOM y son la fuente de verdad: los botones solo los llenan,
+   así que precios, links y cotizaciones guardadas no cambian. */
+var V_USOS = [['cocina', 'Cocina'], ['bano', 'Baño'], ['comedor', 'Mesa'], ['escritorio', 'Escritorio'],
+              ['quincho', 'Quincho'], ['exterior', 'Exterior'], ['otro', 'Otro']];
+function vSelBotones(selId, ops, clase) {
+  return '<div class="' + clase + '" data-sel="' + selId + '">' + ops.map(function(o){
+    return '<button type="button" data-v="' + o[0] + '" onclick="vSelPoner(\'' + selId + '\',\'' + o[0] + '\')">' + o[1] + '</button>';
+  }).join('') + '</div>';
+}
+function vSelPoner(selId, v) {
+  var s = document.getElementById(selId);
+  if (!s) return;
+  s.value = v;
+  s.dispatchEvent(new Event('change'));   /* corre el onchange de siempre (usoAviso, calcLive, setPeldanoEspesor) */
+  calcLive();
+  vFormSync();
+}
+/* deja los botones, las líneas de extras y el link de espesor al día con los campos */
+function vFormSync() {
+  if (!vendorMode) return;
+  document.querySelectorAll('#f-dyn [data-sel]').forEach(function(g){
+    var s = document.getElementById(g.getAttribute('data-sel'));
+    if (!s) return;
+    g.querySelectorAll('button[data-v]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-v') === s.value); });
+  });
+  var lg = document.getElementById('lg1'), an = document.getElementById('an1');
+  var una = document.querySelectorAll('#drows > .dim-row').length === 1;
+  document.querySelectorAll('#med-frec-box button[data-l]').forEach(function(b){
+    b.classList.toggle('on', !!(una && lg && an && lg.value === b.getAttribute('data-l') && an.value === b.getAttribute('data-a')));
+  });
+  var ef = document.getElementById('f-espesor-final');
+  if (ef && ef.value.trim()) vEspFinAbrir(true);
+  vExtrasPintar();
+}
+function vEspFinAbrir(sinFoco) {
+  var box = document.getElementById('v-espfin-box'), ln = document.getElementById('v-espfin-link');
+  if (!box) return;
+  box.classList.remove('hidden');
+  if (ln) ln.classList.add('hidden');
+  if (!sinFoco) { var ef = document.getElementById('f-espesor-final'); if (ef) ef.focus(); }
+}
+/* líneas de teñido, reborde y respaldo abiertas con su botón (aunque aún estén en 0) */
+var vxVer = {};
+function vExtrasPintar() {
+  if (!document.getElementById('v-extras')) return;
+  var lleno = function(id){ var el = document.getElementById(id); return !!(el && parseFloat(el.value) > 0); };
+  var ver = { tn: vxVer.tn || lleno('tn-val'), rb: vxVer.rb || lleno('rb-ml'), rs: vxVer.rs || lleno('rs-ml') };
+  [['tn', 'v-ex-tn', 'v-ch-tn'], ['rb', 'v-ex-rb', 'v-ch-rb'], ['rs', 'v-ex-rs', 'v-ch-rs']].forEach(function(k){
+    var l = document.getElementById(k[1]), c = document.getElementById(k[2]);
+    if (l) l.classList.toggle('hidden', !ver[k[0]]);
+    if (c) c.classList.toggle('hidden', !!ver[k[0]]);
+  });
+  var m2 = document.getElementById('v-tn-m2');
+  if (m2) m2.textContent = tnAuto
+    ? String(Math.round(vxM2Actual() * 100) / 100).replace('.', ',') + ' m² × ' + fmt(VX_TARIFAS.tenidoM2)
+    : 'valor a mano';
+}
+function vTnQuitar() {
+  ['tn-val', 'tn-det', 'tn-tarifa'].forEach(function(id){ var el = document.getElementById(id); if (el) el.value = ''; });
+  tnAuto = false; vxVer.tn = false;
+  calcLive(); vExtrasPintar();
+}
+function vRbQuitar() {
+  document.querySelectorAll('#rb-piezas input[type=checkbox]').forEach(function(c){ c.checked = false; });
+  var ml = document.getElementById('rb-ml'); if (ml) ml.value = '';
+  rbManual = false; vxVer.rb = false;
+  rbRefrescarHint(); calcLive(); vExtrasPintar();
+}
+function vRsQuitar() {
+  var ml = document.getElementById('rs-ml'); if (ml) ml.value = '';
+  vxVer.rs = false;
+  rsSync(); vExtrasPintar();
+}
+/* cuántos extras lleva el producto en pantalla, para la cabecera de la línea */
+function vExtrasCuenta() {
+  if (!document.getElementById('v-extras')) return 0;
+  return vExtrasDatos().length + (rbDatos() ? 1 : 0) + (prod === 'cubierta' && rsDatos() ? 1 : 0);
+}
+function vExtrasVendedorHtml() {
+  vxVer = {};
+  var esCub = prod === 'cubierta';
+  var x = function(fn){ return '<button type="button" class="v-ex-x" onclick="' + fn + '" title="Quitar" aria-label="Quitar">✕</button>'; };
+  var chip = function(t, txt, id){ return '<button type="button" class="mas"' + (id ? ' id="' + id + '"' : '') + ' onclick="vExtraRapido(\'' + t + '\')">+ ' + txt + '</button>'; };
+  return '<div class="v-extras" id="v-extras">' +
+    '<div class="flabel">Extras</div>' +
+    '<div class="v-ex hidden" id="v-ex-tn">' +
+      '<div class="v-ex-n">Teñido<small id="v-tn-m2"></small></div>' +
+      '<input type="text" class="v-ex-in" id="tn-det" placeholder="Color, ej. nogal">' +
+      '<input type="number" inputmode="numeric" min="0" class="v-ex-val" id="tn-val" placeholder="Valor" oninput="tnManual(); vExtrasPintar()">' +
+      x('vTnQuitar()') +
+      '<select id="tn-tarifa" class="hidden" onchange="tnTarifa()"><option value="">Valor manual</option><option value="m2">Tarifa por m²</option></select>' +
+    '</div>' +
+    /* perforaciones, unión en 45° y otros: filas vx, cada una con su ✕ */
+    '<div id="vx-extras-rows"></div>' +
+    '<div class="v-ex-caja hidden" id="v-ex-rb">' +
+      '<div class="v-ex-cab"><span>Reborde</span>' + x('vRbQuitar()') + '</div>' +
+      '<div class="dim-row">' +
+        '<select class="finput" id="rb-alto" onchange="rbSync()">' +
+          '<option value="4">4 cm de alto</option>' +
+          '<option value="2">2 cm de alto</option>' +
+        '</select>' +
+        '<input type="number" inputmode="decimal" step="0.01" min="0" id="rb-ml" placeholder="Metros" oninput="rbSyncFromMl()">' +
+      '</div>' +
+      '<div id="rb-piezas"></div>' +
+      '<div class="finput-hint" id="rb-hint"></div>' +
+    '</div>' +
+    (esCub ?
+    '<div class="v-ex-caja hidden" id="v-ex-rs">' +
+      '<div class="v-ex-cab"><span>Respaldo</span>' + x('vRsQuitar()') + '</div>' +
+      '<div class="dim-row">' +
+        '<select class="finput" id="rs-alto" onchange="rsSync()">' +
+          [5,6,7,8,9,10].map(function(a){ return '<option value="'+a+'">'+a+' cm de alto</option>'; }).join('') +
+        '</select>' +
+        '<input type="number" inputmode="decimal" step="0.01" min="0" id="rs-ml" placeholder="Metros" oninput="rsSync()">' +
+      '</div>' +
+      '<div class="finput-hint" id="rs-hint"></div>' +
+    '</div>' : '') +
+    /* la perforación «a mano» del formulario antiguo: vacía, solo para que vExtrasDatos la encuentre */
+    '<div class="hidden"><input type="text" id="pf-det"><input type="number" id="pf-val"></div>' +
+    '<div class="v-chips-sel v-ex-chips">' +
+      chip('lava', 'Lavaplatos') + chip('red', 'Redonda') + chip('tenido', 'Teñido', 'v-ch-tn') + chip('u45', 'Unión 45°') +
+      chip('rb', 'Reborde', 'v-ch-rb') + (esCub ? chip('rs', 'Respaldo', 'v-ch-rs') : '') + chip('otro', 'Otro') +
+    '</div>' +
+  '</div>';
+}
 /* el reborde y el respaldo van plegados: se abren solos si traen algo */
 function vMasAbrir() {
+  vFormSync();   /* vendedor: las líneas de reborde y respaldo que trae el link */
   var m = document.getElementById('vx-mas');
   if (!m) return;
   var lleno = ['rb-ml', 'rs-ml'].some(function(id){ var el = document.getElementById(id); return el && parseFloat(el.value) > 0; });
@@ -4479,6 +4676,7 @@ function vExtrasFieldHtml() {
   rbFirmaPiezas = '';   /* el bloque se vuelve a crear vacío: forzar el redibujo de las piezas */
   rbManual = false;
   tnAuto = false;       /* el select de tarifa nace en "Valor manual" */
+  if (vendorMode) return vExtrasVendedorHtml();
   return '<div class="mesa-box'+(vendorMode?'':' hidden')+'">' +
     '<div class="mesa-h">Extras (opcional)</div>' +
     /* el descuento especial ya no va acá: vive en «Ajustes de precio» (#v-ajustes) */
@@ -4560,6 +4758,14 @@ function vExtrasFieldHtml() {
 /* campo "Espesor final": existe siempre, oculto si no hay sesión de vendedor.
    Si se llena, reemplaza el texto de espesor por defecto en la cotización final. */
 function vEspesorFieldHtml() {
+  /* vendedor: se usa en ~2 % de las cotizaciones, queda como un link que abre el campo */
+  if (vendorMode) return '<div class="fsec v-espfin">' +
+    '<button type="button" class="v-link" id="v-espfin-link" onclick="vEspFinAbrir()">Espesor distinto en el documento</button>' +
+    '<div id="v-espfin-box" class="hidden">' +
+      '<label class="flabel" for="f-espesor-final">Espesor que dice el documento</label>' +
+      '<input class="finput" type="text" id="f-espesor-final" placeholder="Ej. 6 cm">' +
+    '</div>' +
+  '</div>';
   return '<div class="fsec'+(vendorMode?'':' hidden')+'">' +
     '<label class="flabel">Espesor final (opcional)</label>' +
     '<input class="finput" type="text" id="f-espesor-final" placeholder="Ej. 6 cms (si es distinto al estándar)">' +
@@ -4823,6 +5029,11 @@ var MEDIDAS_POR_USO = {
 };
 function medFrecHtml() {
   var u = MEDIDAS_POR_USO[usoActual()];
+  /* vendedor: botones sin la frase, y al final «+ pieza» (03-11-2026) */
+  if (vendorMode) return '<div id="med-frec-box" class="v-chips-sel v-medfrec">' +
+    (u ? u.m : MEDIDAS_FREC).map(function(m){
+      return '<button type="button" data-l="' + m[0] + '" data-a="' + m[1] + '" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
+    }).join('') + '<button type="button" class="mas" onclick="addRow()">+ pieza</button></div>';
   return '<div id="med-frec-box"><div class="finput-hint" style="margin:0 0 5px">¿Aún no tienes la medida? Toca una de las más pedidas' + (u ? ' para ' + u.t : '') + ':</div><div class="med-frec">' +
     (u ? u.m : MEDIDAS_FREC).map(function(m){
       return '<button type="button" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
@@ -4838,6 +5049,7 @@ function medFrec(l, a) {
   if (!lg || !an) return;
   lg.value = l; an.value = a;
   calcLive();
+  vFormSync();
 }
 /* ── BARRA FIJA CON EL PRECIO (celular, etapa 2) ──
    Con el teclado abierto, el precio en vivo quedaba fuera de la pantalla. La
@@ -4891,6 +5103,7 @@ function barraIniciar() {
 }
 function dimRow(n) {
   var ph = (prod === 'peldano') ? ['ej. 100', 'ej. 28'] : ['ej. 220', 'ej. 60'];   /* un peldaño típico, no una cubierta */
+  if (vendorMode && prod === 'cubierta') ph = ['Largo', 'Ancho'];   /* sin rótulos de columna: el campo dice qué es */
   return '<div class="dim-row dg" id="r'+n+'">' +
     '<span class="rnum">'+n+'</span>' +
     '<input type="number" inputmode="decimal" placeholder="'+ph[0]+'" min="1" id="lg'+n+'">' +
@@ -5664,7 +5877,15 @@ function vActualPintar(r) {
   if (!n || !d) return;
   var it = r && r.items && r.items.length > combo.length ? r.items[r.items.length - 1] : null;
   n.textContent = it ? vNombreCorto(it) : (V_CHIPS[prod] || PNAME[prod] || 'Producto');
-  d.textContent = it ? vLineaDesc(it) : 'Completa las medidas';
+  /* «200 × 60 cm · cocina · 2 extras» */
+  var desc = it ? vLineaDesc(it) : 'Completa las medidas';
+  var usoEl = document.getElementById('f-uso');
+  var usoTxt = { cocina: 'cocina', bano: 'baño', comedor: 'mesa', escritorio: 'escritorio', quincho: 'quincho', repisa: 'repisa', exterior: 'exterior' }[usoEl ? usoEl.value : ''];
+  if (it && usoTxt) desc += ' · ' + usoTxt;
+  var nEx = it ? vExtrasCuenta() : 0;
+  if (nEx) desc += ' · ' + nEx + (nEx === 1 ? ' extra' : ' extras');
+  d.textContent = desc;
+  vFormSync();
   vNprod();
   vTituloPintar();   /* un link abierto llena el nombre sin escribirlo */
 }
@@ -7046,6 +7267,9 @@ function restoreProducto(d) {
     var espEl = document.getElementById('f-espesor-peldano');
     if (espEl) espEl.value = espGuardado;
   }
+  /* «¿Dónde va?» del link (antes quedaba en blanco y al guardar de nuevo pasaba a «otro») */
+  var usoSel = document.getElementById('f-uso');
+  if (usoSel && d.uso && usoSel.querySelector('option[value="' + d.uso + '"]')) { usoSel.value = d.uso; medFrecRepintar(); }
   if (d.esp8) {   /* restaurar espesor 8 cm macizo de cubierta (el selector solo existe en modo vendedor) */
     cubiertaEspesor = '8';
     var ecEl = document.getElementById('f-espesor-cubierta');
