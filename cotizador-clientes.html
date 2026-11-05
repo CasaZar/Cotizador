@@ -1540,6 +1540,10 @@ body.modo-vendedor #s2 #b2b-res { display: none; }   /* el aviso de la cuenta va
 .v-linea-hd .acc { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
 .v-ib { width: 40px; height: 40px; border: 0; background: none; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #57524B; cursor: pointer; padding: 0; }
 .v-ib:hover { background: #F3EEE3; color: #1F1D24; }
+.v-cambiar { height: 40px; border: 0; background: none; padding: 0 10px; border-radius: 4px; color: #57524B; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.v-cambiar:hover { background: #F3EEE3; color: #1F1D24; }
+#v-chips-c { padding: 0 16px 12px; }
+.v-chips-t { width: 100%; font-size: 13px; color: #57524B; margin-bottom: 2px; }
 .v-ib svg, .v-add svg, .v-barra-pc #btn-calc svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .v-linea-cuerpo { border-top: 1px solid #E4DDD2; padding: 14px; }
 .v-add { width: 100%; height: 48px; border: 1px solid #948A7C; border-radius: 4px; background: none; font-family: 'Poppins', sans-serif; font-size: 15px;
@@ -5939,18 +5943,38 @@ function vActualQuitar() {
 /* «Agregar producto»: la lista de productos sin fotos, sacada del inicio (s1) */
 var V_CHIPS = { cubierta: 'Cubierta', repisa: 'Repisa', peldano: 'Peldaños', puertas: 'Puerta', revestimiento: 'Revestimiento',
   revlibre: 'Revestimiento a medida', banca: 'Banca', pcocina: 'Puerta de cocina' };
+function vChipsHtml(fn) {
+  var mesas = 0;
+  return Array.prototype.map.call(document.querySelectorAll('#s1 .pcard'), function(c, i){
+    var p = c.getAttribute('data-prod');
+    if (getComputedStyle(c).display === 'none') return '';
+    var t = p === 'mesa' ? (mesas++ ? 'Mesa de centro' : 'Mesa de comedor') : (V_CHIPS[p] || p);
+    return '<button type="button" class="v-chip" onclick="' + fn + '(' + i + ')">' + t + '</button>';
+  }).join('');
+}
 function vAgregarAbrir() {
   var box = document.getElementById('v-chips');
   if (!box) return;
   if (!box.hidden) { box.hidden = true; return; }
-  var mesas = 0;
-  box.innerHTML = Array.prototype.map.call(document.querySelectorAll('#s1 .pcard'), function(c, i){
-    var p = c.getAttribute('data-prod');
-    if (getComputedStyle(c).display === 'none') return '';
-    var t = p === 'mesa' ? (mesas++ ? 'Mesa de centro' : 'Mesa de comedor') : (V_CHIPS[p] || p);
-    return '<button type="button" class="v-chip" onclick="vAgregarProd(' + i + ')">' + t + '</button>';
-  }).join('');
+  box.innerHTML = vChipsHtml('vAgregarProd');
   box.hidden = false;
+}
+/* «Cambiar» en la línea abierta (05-11-2026, lo pidió César): se equivocó de
+   producto (marcó peldaños y era cubierta). Cambia el de pantalla por otro
+   sin volver al inicio: el cliente, el descuento y la lista se quedan. */
+function vCambiarAbrir() {
+  var box = document.getElementById('v-chips-c');
+  if (!box) return;
+  if (!box.hidden) { box.hidden = true; return; }
+  box.innerHTML = '<div class="v-chips-t">Cambiar por:</div>' + vChipsHtml('vCambiarProd');
+  box.hidden = false;
+}
+function vCambiarProd(i) {
+  var c = document.querySelectorAll('#s1 .pcard')[i];
+  if (!c) return;
+  var box = document.getElementById('v-chips-c'); if (box) box.hidden = true;
+  c.click();   /* se abre el elegido en lugar del actual, como si se tocara su tarjeta */
+  vCambio();
 }
 function vAgregarProd(i) {
   var c = document.querySelectorAll('#s1 .pcard')[i];
@@ -6023,7 +6047,8 @@ function vMontar() {
     var linea = document.createElement('div');
     linea.className = 'v-linea abierta';
     linea.innerHTML = '<div class="v-linea-hd"><div class="v-linea-t"><div class="n" id="v-act-n"></div><div class="d" id="v-act-d"></div></div>' +
-      '<div class="acc">' + vIb('duplicar', 'Duplicar', 'vActualDuplicar()') + vIb('quitar', 'Quitar', 'vActualQuitar()') + '</div></div>' +
+      '<div class="acc"><button type="button" class="v-cambiar" onclick="vCambiarAbrir()">Cambiar</button>' + vIb('duplicar', 'Duplicar', 'vActualDuplicar()') + vIb('quitar', 'Quitar', 'vActualQuitar()') + '</div></div>' +
+      '<div class="v-chips" id="v-chips-c" hidden></div>' +
       '<div class="v-linea-cuerpo"></div>';
     linea.lastChild.appendChild(fd);
     prods.appendChild(linea);
