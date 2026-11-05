@@ -2839,8 +2839,41 @@ function origenCapturar(params) {
     } else if (previo && previo.fecha && (Date.now() - new Date(previo.fecha).getTime()) < 90 * 864e5) {
       o.anterior = previo;
     }
+    if (!conAnuncio) { var t = origenTienda(); if (t) o.tienda = t; }
     origenVisita = o;
   } catch (e) { origenVisita = null; }
+}
+
+/* ── ANUNCIO QUE TRAJO A LA TIENDA (05-11-2026) ──
+   El 71 % de las cotizaciones públicas llega desde www.casazaru.cl, y el link
+   de la tienda no lleva el anuncio: se perdía de dónde venía el cliente. El
+   tema guarda el último anuncio en la cookie cz_origen del dominio
+   .casazaru.cl (snippet cz-origen.liquid), que este subdominio puede leer. Si
+   no está, sirven de respaldo las cookies de clic de Google (_gcl_aw) y de
+   Meta (_fbc), que dependen del aviso de cookies. Va en origen.tienda, APARTE
+   de los campos de arriba: vieneDeAnuncio() no lo mira, así que no cambia
+   desde qué WhatsApp se le escribe (el 0141 es para los que escribieron
+   desde el anuncio). */
+function cookieLeer(nombre) {
+  var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + nombre + '=([^;]*)'));
+  return m ? m[1] : '';
+}
+function origenTienda() {
+  try {
+    var c = cookieLeer('cz_origen');
+    if (c) {
+      var t = JSON.parse(decodeURIComponent(c)), o = {};
+      if (t && typeof t === 'object' && !(t.fecha && Date.now() - new Date(t.fecha).getTime() > 90 * 864e5)) {
+        ORIGEN_ANUNCIO.concat(['fecha', 'pag']).forEach(function(k){ if (t[k]) o[k] = String(t[k]).slice(0, 300); });
+        if (Object.keys(o).length) return o;
+      }
+    }
+    /* respaldo: «GCL.<tiempo>.<gclid>» y «fb.1.<tiempo>.<fbclid>» */
+    var g = cookieLeer('_gcl_aw').split('.'), f = cookieLeer('_fbc').split('.');
+    if (g.length >= 3 && g[2]) return { gclid: g.slice(2).join('.').slice(0, 300), fecha: new Date(+g[1] * 1000 || Date.now()).toISOString(), via: '_gcl_aw' };
+    if (f.length >= 4 && f[3]) return { fbclid: f.slice(3).join('.').slice(0, 300), fecha: new Date(+f[2] || Date.now()).toISOString(), via: '_fbc' };
+  } catch (e) {}
+  return null;
 }
 
 /* ── EMBUDO PÚBLICO ──
