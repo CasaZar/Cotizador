@@ -7653,6 +7653,48 @@ var CADENCIA = [1, 3, 13];   /* días desde la cotización para los 3 toques */
    lista diaria (Dormidos): los que venían de la cadencia vieja con 20 o 30
    días no se le cargan de golpe al vendedor */
 var CADENCIA_GRACIA = 7;
+/* ── TOPE: 2 MENSAJES SIN RESPUESTA (05-11-2026, pedido del usuario) ──
+   Después de la restricción del 5558 (21-10) la regla es: con 2 mensajes
+   nuestros seguidos sin respuesta, no se le escribe más. Se cuentan en TODAS
+   las cotizaciones del cliente: antes cada cotización llevaba su cadencia y el
+   que volvía a cotizar partía de cero (Dariolette: 1 + 1 + 3 = 5 mensajes sin
+   contestar; Jaime Ortega, 3 después de que César le cotizó). Cuentan los
+   toques y las notas que también son un mensaje (reactivaciones, campañas).
+   Reinicia la cuenta cualquier señal de que el cliente habló: una respuesta
+   anotada que no sea «No respondió», «Respondió» / «Me contestó», una
+   cotización hecha por un vendedor o un lead creado a mano (ya conversaba).
+   Se compara por día: lo del mismo día de la respuesta no cuenta.
+   El que llega al tope sale de Hoy y de Reactivar, y queda en Dormidos bajo
+   «No contestaron», sin botón de WhatsApp. Si escribe, «Me contestó» lo
+   libera. Con 2, el 3.er toque de la cadencia solo le llega a quien contestó
+   algo antes (en el cruce de octubre, 0 de 97 con 2+ sin respuesta compró). */
+var TOPE_SIN_RESP = 2;
+var NOTA_RESPONDIO = 'Respondió';
+function esNotaMensaje(n){ return /^(Reactivación|Campaña)/.test(String(n || '')); }
+function mensajesSinResp(quotes){
+  var msgs = [], ult = '';
+  (quotes || []).forEach(function(q){
+    if (!q || q.eliminada) return;
+    var fc = q.fecha_creacion ? fechaBaseISO(q.fecha_creacion) : '';
+    if ((esLeadManual(q) || !isWeb(q)) && fc > ult) ult = fc;
+    if (q.fecha_primera_respuesta){ var fr = fechaBaseISO(q.fecha_primera_respuesta); if (fr > ult) ult = fr; }
+    else if (q.respondio && fc > ult) ult = fc;
+    (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){
+      if (!h || !h.fecha) return;
+      var f = String(h.fecha).slice(0, 10);
+      /* la respuesta se anota en el toque que contestó: desde ese día, limpio */
+      if (h.resp && h.resp !== 'nada' && f > ult) ult = f;
+      if ((h.nota === NOTA_RESPONDIO || /^Reabierta/.test(String(h.nota || ''))) && f > ult) ult = f;
+      if ((h.etapa || 0) > 0 || esNotaMensaje(h.nota)) msgs.push(f);
+    });
+  });
+  return msgs.filter(function(f){ return f > ult; }).length;
+}
+function topeLleno(g){
+  if (!g) return false;
+  if (g._sinResp == null) g._sinResp = mensajesSinResp(g.quotes);
+  return g._sinResp >= TOPE_SIN_RESP;
+}
 /* ── FLUJO 0141: LOS QUE SOLO COTIZARON (23-10-2026, pedido del usuario) ──
    El que cotiza en la web y no toca ningún botón de WhatsApp («Quiero mi
    cubierta», dudas, muestrario) nunca nos habló. A esos se les escribe desde
@@ -8024,7 +8066,8 @@ function toqueHoy(x){
   var h = x && x.seg_historial;
   if (!Array.isArray(h)) return false;
   var hoy = hoyISO();
-  return h.some(function(e){ return e && String(e.fecha).slice(0,10)===hoy; });
+  /* «Me contestó» no es un contacto nuestro: no lo manda a «Hechos hoy» */
+  return h.some(function(e){ return e && e.nota !== NOTA_RESPONDIO && String(e.fecha).slice(0,10)===hoy; });
 }
 function buildSegGroups(){
   var map = {};
@@ -8076,6 +8119,7 @@ function computeSegPend(){
   buildSegGroups().forEach(function(g){
     if (segBloque && g.owner !== segBloque) return;
     if (grupoManual(g)) return;   /* lead creado a mano: se ve en la lista, no suma al contador */
+    if (topeLleno(g)) return;     /* 2 sin respuesta: no se le escribe (ver TOPE_SIN_RESP) */
     var d=dueDate(g.lead); if(d && d<=hoy) segPend++;
   });
 }
@@ -8411,16 +8455,22 @@ function reactivadoEl(g){
 }
 function renderDormidos(){
   subFiltros('');
-  var dorm = buildSegGroups().filter(grupoPasaOmni).filter(function(g){ return dueDate(g.lead)===null; });
+  /* también los que llegaron al tope de 2 sin respuesta, aunque su cadencia
+     siga corriendo (05-11-2026): van aparte, en «No contestaron» */
+  var dorm = buildSegGroups().filter(grupoPasaOmni).filter(function(g){ return dueDate(g.lead)===null || topeLleno(g); });
   dorm.sort(function(a,b){ return b.valor-a.valor; });
   var corte = addDias(hoyISO(), -REACTIVACION_DIAS);
-  var porEscribir = [], escritos = [];
-  dorm.forEach(function(g){ var f = reactivadoEl(g); (f && f >= corte ? escritos : porEscribir).push(g); });
+  var porEscribir = [], escritos = [], callados = [];
+  dorm.forEach(function(g){
+    if (topeLleno(g)) { callados.push(g); return; }
+    var f = reactivadoEl(g); (f && f >= corte ? escritos : porEscribir).push(g);
+  });
   var enJuego = dorm.reduce(function(a,g){ return a+(g.valor||0); }, 0);
   var st=document.getElementById('dash-stats'); st.style.display='grid';
   st.innerHTML =
     '<div class="stat-card"><div class="stat-v">'+porEscribir.length+'</div><div class="stat-l">Por reactivar</div></div>'+
     '<div class="stat-card"><div class="stat-v">'+escritos.length+'</div><div class="stat-l">Ya les escribiste</div></div>'+
+    '<div class="stat-card"><div class="stat-v">'+callados.length+'</div><div class="stat-l">No contestaron</div></div>'+
     '<div class="stat-card"><div class="stat-v money">'+fmt(enJuego)+'</div><div class="stat-l">Valor dormido</div></div>';
   if (!dorm.length){ document.getElementById('dash-tbl').innerHTML='<div class="seg-empty" style="padding:24px;text-align:center">No hay leads dormidos 🎉</div>'; return; }
   var html =
@@ -8432,6 +8482,12 @@ function renderDormidos(){
     html += '<details class="seg-b3"'+detAttrs('dorm-escritos')+'><summary>✉️ Ya les escribiste · '+escritos.length+
       ' <span class="seg-bloque-sub">en los últimos '+REACTIVACION_DIAS+' días — esperando respuesta</span></summary>'+
       escritos.map(function(g){ return segClientCard(g,'dorm'); }).join('')+'</details>';
+  }
+  if (callados.length){
+    html += '<details class="seg-b3"'+detAttrs('dorm-callados')+'><summary>✋ No contestaron · '+callados.length+
+      ' <span class="seg-bloque-sub">'+TOPE_SIN_RESP+' mensajes nuestros sin respuesta — no se les escribe más</span></summary>'+
+      '<div class="seg-empty" style="margin:4px 0 10px">Regla desde la restricción de WhatsApp: con '+TOPE_SIN_RESP+' mensajes seguidos sin respuesta no se insiste, para que no nos reporten. Si el cliente escribe, toca «Me contestó» y se puede volver a escribirle.</div>'+
+      callados.map(function(g){ return segClientCard(g,'dorm'); }).join('')+'</details>';
   }
   document.getElementById('dash-tbl').innerHTML = html;
 }
@@ -8466,6 +8522,7 @@ function gruposReactivar(){
     var lead = qs[0];
     if (!esCierreSilencio(lead)) return;
     if (qs.some(function(q){ return (q.estado||'enviada') !== 'perdida'; })) return;   /* otra abierta o ganada */
+    if (mensajesSinResp(qs) >= TOPE_SIN_RESP) return;   /* ya no contestó 2: no se insiste (TOPE_SIN_RESP) */
     var cerro = fechaEnHist(lead, 'Cerrada automáticamente');
     if (!cerro || cerro < addDias(hoy, -REACT_CERR_CIERRE)) return;
     if (!lead.fecha_creacion || fechaBaseISO(lead.fecha_creacion) < addDias(hoy, -REACT_CERR_COTI)) return;
@@ -8756,7 +8813,7 @@ function esBallena(g){
 }
 /* horas desde el último toque registrado (o desde que se creó, si nunca hubo) */
 function horasSinToque(g){
-  var hist = Array.isArray(g.lead.seg_historial) ? g.lead.seg_historial : [];
+  var hist = (Array.isArray(g.lead.seg_historial) ? g.lead.seg_historial : []).filter(function(h){ return h && h.nota !== NOTA_RESPONDIO; });
   var fechas = hist.map(function(h){ return String(h.fecha).slice(0,10); }).filter(Boolean).sort();
   var ref = fechas.length ? fechas[fechas.length-1] : (g.lead.fecha_creacion ? fechaBaseISO(g.lead.fecha_creacion) : null);
   if (!ref) return 0;
@@ -9056,7 +9113,7 @@ function clasificarHoy(groups, owners, cmp){
      valioso es la forma más rápida de quemarlo. Ahora se le da aire: reaparece
      recién a las 48 h, un día antes de romper el acuerdo de las 72. */
   var porDueno = {};
-  var ballenas = groups.filter(function(g){ return owners[g.owner] && !g.es0141 && esBallena(g) && !dormido(g) && !compraReciente(g.quotes, g.lead) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
+  var ballenas = groups.filter(function(g){ return owners[g.owner] && !g.es0141 && esBallena(g) && !dormido(g) && !topeLleno(g) && !compraReciente(g.quotes, g.lead) && !pospuestoAMano(g) && horasSinToque(g) >= BALLENA_ESPERA_H; })
     .sort(function(a,b){ return montoAbierto(b)-montoAbierto(a); })
     /* máximo 3 POR GRUPO (06-10-2026): con un tope global, en la vista Todos
        las del vendedor tapaban a las web y la lista no calzaba con su meta */
@@ -9067,6 +9124,7 @@ function clasificarHoy(groups, owners, cmp){
     if (!owners[g.owner]) return;
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
     if (compraReciente(g.quotes, g.lead)) return;       /* compró hace poco: no es seguimiento */
+    if (topeLleno(g)) return;                           /* 2 sin respuesta: va a Dormidos (TOPE_SIN_RESP) */
     /* Flujo 0141 (ver CAD_0141): mientras no conteste, va en su propia
        sección y solo el día que le toca. Entre toques y después del último
        duerme: ni «Próximos días» ni meta. Si contesta, sigue como cualquier
@@ -9603,6 +9661,7 @@ function campanaClientes(){
     /* cotizó con el precio nuevo ya puesto: no hay descuento que ofrecerle */
     if (fechaBaseISO(x.fecha_creacion) >= CAMPANA.desde) return;
     var hecho = qs.some(function(q){ return (q.seg_historial || []).some(function(h){ return h && h.nota === CAMPANA.nota; }); });
+    if (!hecho && mensajesSinResp(qs) >= TOPE_SIN_RESP) return;   /* 2 sin respuesta: fuera de toda campaña */
     out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
   });
   /* entre los cerrados, primero los que dijeron «caro» (el descuento es para
@@ -9723,7 +9782,18 @@ async function campanaAnotar(id){
   var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña de peldaños');
   if (ok) registrarToque(x, 0, 'cadencia');
 }
+/* En el tope de 2 sin respuesta no hay botón de WhatsApp ni de correo: un
+   aviso y «Me contestó», que anota la respuesta y lo libera. Lo que ya quedó
+   esperando confirmación («¿Le escribiste?») se deja terminar. */
+function botonTope(g, x, clase){
+  var n = g ? g._sinResp : mensajesSinResp([x]);
+  return '<span class="'+clase+' sec tope" style="cursor:default" title="'+n+' mensajes nuestros seguidos sin respuesta. No se le escribe más para que no nos reporten.">✋ '+n+' sin respuesta</span>'+
+    '<button class="'+clase+' sec" onclick="event.stopPropagation();segRespondio(\''+x.id+'\')" title="El cliente escribió: se anota y vuelve a tener botón de WhatsApp">Me contestó</button>';
+}
 function segBotonContacto(g, x, clase){
+  /* el grupo trae todas sus cotizaciones; sin grupo se juntan por cliente */
+  var gT = g || { quotes:(dashRows || []).filter(function(q){ return clientKey(q) === clientKey(x); }) };
+  if (!pendTiene(x.id) && topeLleno(gT)) return botonTope(gT, x, clase);
   if (g && g.camp) return campanaBoton(g.camp, clase);   /* fila o ficha de la campaña de peldaños */
   var etapa = x.seg_etapa||0;
   var nom = String(x.cliente||'').replace(/'/g,'');
@@ -10174,9 +10244,17 @@ async function segToggleRecurrente(id, current){
 }
 /* FASE 3 (spec §5.3): el cliente contestó. Nunca vuelve a false: es la señal
    que más pesa en el score (+50) y lo hace inmune al auto-ajuste del corte. */
+/* 05-11-2026: además deja la nota NOTA_RESPONDIO con la fecha, que es lo que
+   reinicia la cuenta del tope de 2 sin respuesta (fecha_primera_respuesta es
+   solo la PRIMERA vez). Por eso ahora también anota a quien ya había
+   respondido antes: es el «Me contestó» del tope. */
 async function segRespondio(id){
-  var x=COTIS[id]; if(!x || x.respondio) return;
-  segSave(id, {respondio:true, fecha_primera_respuesta:new Date().toISOString()}, '💬 Respondió — sube en la cola');
+  var x=COTIS[id]; if(!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:NOTA_RESPONDIO });
+  var upd = { seg_historial:hist };
+  if (!x.respondio){ upd.respondio = true; upd.fecha_primera_respuesta = new Date().toISOString(); }
+  segSave(id, upd, x.respondio ? '💬 Anotado: te contestó — ya puedes escribirle' : '💬 Respondió — sube en la cola');
 }
 /* "Sí le escribí", fuera del recuadro: para el que contestó "No, todavía no"
    por error (o lo cerró) y quedó sin forma de corregirlo. Primero saca el
