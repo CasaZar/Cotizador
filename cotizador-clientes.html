@@ -2259,15 +2259,25 @@ function mesaLabel(nombre) {
    proponen la de abajo en «Medidas a pedido»: ahí se escriben las dos. */
 var PAR_DELTA = { alto: 6, ancho: 5, largo: 10 };
 var PAR_ALTO_DEF = 40;   /* alto de la mesa superior, igual que la ficha de casazaru.cl */
-/* Los dos tamaños de la tienda, a los precios de casazaru.cl (26-10-2026,
-   pedido del usuario: «los precios que corresponden en la web; solo el
-   Oregón con el precio de oferta»). `oferta` vale SOLO en Pino Oregón;
-   `normal` es el precio de la web sin oferta, para las demás maderas. La web
-   no cambia el precio según la madera. Si cambia en Shopify, se cambia aquí. */
+/* Precio del conjunto (05-11-2026, pedido del usuario): el valor por m² de
+   las dos tapas y las cuatro patas, menos PAR_DESCUENTO, redondeado al x9.900
+   más cercano. Vale igual en la tienda y en el cotizador, por madera.
+   `precio` son esos mismos números para los dos tamaños de la tienda, con el
+   Manual del 05-11-2026; están escritos a mano porque tienen que calzar con
+   Shopify. Si cambian en Shopify (o el precio por m² del Manual), se cambian aquí. */
+var PAR_DESCUENTO = 100000;
 var PAR_CATALOGO = {
-  mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, oferta:399900, normal:499900 },
-  grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, oferta:849900, normal:849900 }
+  mediano: { nombre:'Mediano', sup:{ largo:90,  ancho:70, alto:40 }, inf:{ largo:80,  ancho:65, alto:34 }, precio:{ bajo:419900, medio:619900, alto:679900 } },
+  grande:  { nombre:'Grande',  sup:{ largo:120, ancho:80, alto:40 }, inf:{ largo:110, ancho:75, alto:34 }, precio:{ bajo:609900, medio:879900, alto:959900 } }
 };
+/* redondeo al x9.900 más cercano: 420.547 → 419.900, 617.012 → 619.900 */
+function x9900(v) { return Math.round((v - 9900) / 10000) * 10000 + 9900; }
+/* A pedido: m² × precio de cubierta de la madera, menos el descuento. En un
+   conjunto muy chico el descuento se comería casi todo: nunca baja de la mitad. */
+function parPrecioM2(m2, t) {
+  var v = m2 * PR.cubierta[t];
+  return Math.max(x9900(v - PAR_DESCUENTO), x9900(v / 2));
+}
 var parTam = 'mediano';   /* 'mediano' | 'grande' | 'pedido' */
 function mesaInferior(largo, ancho, alto) {
   return {
@@ -3250,13 +3260,14 @@ function calcLive() {
     mM2 += mesaBancasM2();   /* asientos de los conjuntos Mesa y Bancas (0 en el resto) */
     var parCat = mesaParCatalogo();
     if (parCat) {
-      /* tamaño de la tienda: Pino con la oferta de la web, las demás al precio normal de la web */
-      bajo = parCat.oferta;
-      alto = parCat.normal;
+      /* tamaño de la tienda: el precio de casazaru.cl de cada madera */
+      bajo = parCat.precio.bajo;
+      alto = parCat.precio.alto;
     } else if (mM2 > 0) {
       var mSug = mesaSugerido();
-      bajo = mM2*PR.cubierta.bajo + (mSug ? mSug.bajo*mCant : 0);
-      alto = mM2*PR.cubierta.alto + (mSug ? mSug.alto*mCant : 0);
+      var esParL = !!(mParLive && mParLive.par);   /* el par a pedido lleva el descuento */
+      bajo = (esParL ? parPrecioM2(mM2, 'bajo') : mM2*PR.cubierta.bajo) + (mSug ? mSug.bajo*mCant : 0);
+      alto = (esParL ? parPrecioM2(mM2, 'alto') : mM2*PR.cubierta.alto) + (mSug ? mSug.alto*mCant : 0);
       var parPisoL = mesaParPiso();
       if (parPisoL) {
         bajo = Math.max(bajo, mesaParPisoTier(parPisoL, 'bajo'));
@@ -4005,8 +4016,8 @@ function mesaParPiso() {
   });
   return piso;
 }
-/* el mínimo por madera: Pino con la oferta de la tienda, las demás al precio normal */
-function mesaParPisoTier(c, t) { return c ? (t === 'bajo' ? c.oferta : c.normal) : 0; }
+/* el mínimo por madera: el precio de la tienda de esa madera */
+function mesaParPisoTier(c, t) { return c ? c.precio[t] : 0; }
 /* tocar Mediano, Grande o A pedido */
 function mesaParSet(k) {
   parTam = PAR_CATALOGO[k] ? k : 'pedido';
@@ -6391,15 +6402,15 @@ function htmlMesa(cli, fecha) {
     return sug ? sug[tier] : 0;
   }
   /* cada madera = su cubierta + sus bases + reborde + extras.
-     El par en tamaño de la tienda (Mediano o Grande) va a los precios de
-     casazaru.cl: Pino Oregón con la oferta, las demás maderas al precio
-     normal de la web (26-10-2026, pedido del usuario). */
+     El par en tamaño de la tienda (Mediano o Grande) va al precio de
+     casazaru.cl de cada madera; a pedido, por m² menos PAR_DESCUENTO
+     (05-11-2026, pedido del usuario). */
   var parCatD = esPar ? mesaParCatalogo() : null;
   var parPisoD = esPar ? mesaParPiso() : null;   /* a pedido: nunca bajo la tienda */
   var tierBase   = function(t){ return parCatD ? 0 : baseTier(t) * nBases; };
   var tierMadera = function(t){
-    if (parCatD) return t === 'bajo' ? parCatD.oferta : parCatD.normal;
-    var v = sumM2*PR.cubierta[t];
+    if (parCatD) return parCatD.precio[t];
+    var v = esPar ? parPrecioM2(sumM2, t) : sumM2*PR.cubierta[t];
     if (parPisoD) v = Math.max(v, mesaParPisoTier(parPisoD, t) - tierBase(t));
     return v;
   };
@@ -6473,8 +6484,7 @@ function tierTableMesa(rows, recTier, M, esMadera, nBases, esPar, parCatalogo) {
   /* el par no tiene «cubierta + base»: son dos mesas enteras de madera, y el
      desglose decía «base $0» (26-10-2026) */
   if (esPar) return preciosCards(rows, recTier, null,
-    (!parCatalogo ? '' : parCatalogo.oferta < parCatalogo.normal
-      ? 'Pino Oregón con precio de oferta · ' : 'Precio de la tienda, el mismo en todas las maderas · ') +
+    (parCatalogo ? 'Precio de la tienda · ' : '') +
     'Valores incluyen las 2 mesas · Precios con IVA · Con tarjeta pagas el valor indicado');
   var lblBase = (nBases > 1) ? (nBases + ' bases ') : 'base ';
   var desglose = function(r) {
