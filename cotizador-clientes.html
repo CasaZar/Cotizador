@@ -1103,6 +1103,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-marca { font-size:12px; font-weight:500; padding:1px 8px; border-radius:999px; background:var(--bg3); color:var(--acd); margin-left:8px; vertical-align:1px; }
 .hz-marca.int { background:#FCE7F3; color:#9D174D; }
 .hz-marca.rec { background:#FEF3C7; color:#92400E; }
+.hz-marca.mue { background:#F6E7D9; color:#B5652E; border:1px solid #E6C4A4; }
 /* ★ con quién y cuándo (28-10-2026): la fila se pinta rosa y lleva su línea */
 .hz-fila.hz-int { background:#FFF7FB; box-shadow:inset 3px 0 0 var(--mrk-inter); }
 .hz-fila.hz-int.abierta { background:#FCEFF6; }
@@ -7709,6 +7710,31 @@ var CAD_0141 = [1, 3, 13];
 var DESDE_0141 = '2026-10-23';
 var PASOS_CLIC_WA = ['whatsapp', 'duda', 'muestrario'];
 var CLICS_WA = null;   /* sesión → true si tocó algún botón de WhatsApp */
+var CLICS_MUEST = null;   /* sesión → true si tocó el botón del muestrario */
+/* ── MUESTRARIO EN EL 2.º MENSAJE (05-11-2026, pedido del usuario) ──
+   En octubre el tramo de $700 mil a $1,5 M cerró 4 de 100 clientes, y los 3
+   muestrarios del 26-10 terminaron en compra. A quien suma MUESTRA_DESDE o más
+   en cotizaciones abiertas se le marca la fila y su 2.º mensaje (si no contestó
+   o lo está pensando) le ofrece el muestrario en vez del plazo. Fuera: los que
+   ya compraron y los que tocaron el botón del muestrario al cotizar. */
+var MUESTRA_DESDE = 700000;
+function pidioMuestra(g){
+  if (!CLICS_MUEST) return false;
+  return g.quotes.some(function(q){ var s = q.origen && q.origen.ses; return !!(s && CLICS_MUEST[s]); });
+}
+function ofreceMuestra(g){
+  if (!g || !g.lead || (g.lead.estado||'enviada') !== 'enviada') return false;
+  if (montoAbierto(g) < MUESTRA_DESDE) return false;
+  return !esRecurrente(g) && !pidioMuestra(g);
+}
+/* ¿el próximo mensaje de esta cotización es la oferta del muestrario? */
+function muestraToque2(x, g){
+  if (cadenciaAgotada(x) || Math.min((x.seg_etapa||0)+1, cadDe(x).length) !== 2) return false;
+  var r = waUltResp(x);
+  if (r && r !== 'nada' && r !== 'pensando') return false;
+  var k = clientKey(x);
+  return ofreceMuestra(g || { lead:x, quotes:(dashRows || []).filter(function(q){ return clientKey(q) === k; }) });
+}
 var LEAD0141 = {};     /* id de la cotización líder → true si su cliente va por el 0141 */
 function sinClicWa(q){
   if (!q || q.eliminada || !isWeb(q)) return false;
@@ -8294,7 +8320,10 @@ function waMsg(x){
   } else if (toque === 2) {
     /* día 3: si contestó al primero, se sigue lo que dijo; si no, un dato real
        (el plazo de fabricación) y una pregunta */
-    if (resp === 'fotos')        m = hola + ', ¿pudiste ver las fotos? Si quieres ver otra madera u otro tono, dime cuál y te la mando.';
+    if (muestraToque2(x))        m = resp === 'pensando'
+      ? hola + ', ¿cómo vas con la decisión?\n\nSi te sirve ver la madera antes, te puedo mandar un muestrario a $20.000 con envío incluido, y ese monto se descuenta de tu compra.\n\n¿Te lo envío?'
+      : (yaPres ? hola + ', c' : presento.trim() + '\n\nC') + 'otizaste ' + W.un + ' con nosotros y quería ofrecerte algo que ayuda harto a decidir.\n\nTe puedo mandar un muestrario de nuestras maderas a $20.000 con envío incluido, y ese monto se descuenta de tu compra.\n\n¿Te lo envío?';
+    else if (resp === 'fotos')   m = hola + ', ¿pudiste ver las fotos? Si quieres ver otra madera u otro tono, dime cuál y te la mando.';
     else if (resp === 'medidas') m = hola + ', ¿ya tienes las medidas definitivas? Me las mandas por acá y te actualizo la cotización al tiro.';
     else if (resp === 'pensando')m = hola + ', ¿cómo vas con la decisión? Si hay algo que te hace dudar, la madera, el precio o el plazo, dime y lo vemos.';
     else if (resp === 'precio')  m = hola + ', estuve mirando tu cotización. Si el precio te complica hay formas de bajarlo' + (bajo ? ': en la madera más económica queda en ' + bajo : '') + ', y también se puede ajustar el espesor o las medidas. ¿Te armo esa opción?';
@@ -9054,16 +9083,20 @@ async function loadDash() {
   try {
     var ck = await sbTodas(function(){
       return sbClient.from('embudo_eventos')
-        .select('sesion')
+        .select('sesion,paso')
         .in('paso', PASOS_CLIC_WA)
         .gte('creado', addDias(DESDE_0141, -1))   /* un día de margen por la hora UTC */
         .order('id');
     });
     if (!ck.error && ck.data) {
-      CLICS_WA = {};
-      ck.data.forEach(function(e){ if (e && e.sesion) CLICS_WA[e.sesion] = true; });
-    } else CLICS_WA = null;
-  } catch(e) { CLICS_WA = null; }
+      CLICS_WA = {}; CLICS_MUEST = {};
+      ck.data.forEach(function(e){
+        if (!e || !e.sesion) return;
+        CLICS_WA[e.sesion] = true;
+        if (e.paso === 'muestrario') CLICS_MUEST[e.sesion] = true;
+      });
+    } else { CLICS_WA = null; CLICS_MUEST = null; }
+  } catch(e) { CLICS_WA = null; CLICS_MUEST = null; }
   /* las eliminadas no se muestran en el panel normal (solo en la pestaña Eliminadas del admin) */
   var all = allRows.filter(function(x){ return !x.eliminada; });
   /* vendedor: sus cotizaciones + las web (salvo B2B como Jepe, que solo ve su propio canal) */
@@ -10034,6 +10067,7 @@ function hoyRazon(g, cls){
     } else partes.push('le toca hoy');
   }
   partes.push('toque '+Math.min(etapa+1, cadDe(x).length)+' de '+cadDe(x).length);
+  if (muestraToque2(x, g)) partes.push('ofrécele el muestrario');
   /* lo último que se anotó que contestó. La respuesta se guarda en el toque
      ANTERIOR al registrar el siguiente, así que se busca la más reciente. */
   var hist = Array.isArray(x.seg_historial) ? x.seg_historial : [];
@@ -10056,6 +10090,7 @@ function hoyFila(g, cls){
   else if (x.interesado) marca = '';   /* va en su propia línea, con quién y cuándo (intLinea) */
   else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
   else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
+  else if (ofreceMuestra(g)) marca = '<span class="hz-marca mue" title="Cotizó $700 mil o más: ofrécele el muestrario">muestrario</span>';
   /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
   var anuncio = (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); }))
     ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
