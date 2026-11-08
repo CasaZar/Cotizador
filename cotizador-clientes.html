@@ -1833,6 +1833,10 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
   #s-dash.pz .pz-tres .v { font-size:24px; }
 }
 #s-dash.pz .pz-wa-sec { padding:18px 0; border-bottom:1px solid var(--pz-linea); margin-bottom:14px; }
+/* sección propia de WhatsApp al día: una columna cómoda de leer, sin borde abajo */
+#s-dash.pz .pz-wa-vista { max-width:760px; padding-top:4px; border-bottom:0; }
+#s-dash.pz .pz-wa-nota { font-size:13px; color:var(--pz-sec); margin-top:6px; max-width:620px; line-height:1.45; }
+#s-dash.pz .pz-n.wa, #s-dash.pz .pz-pt.wa { background:var(--pz-wa); }
 #s-dash.pz .pz-seg { padding:4px 0 18px; min-width:0; }
 #s-dash.pz .dash-main > #dash-filters:not(:empty) { margin-top:4px; }
 @media (min-width:1200px){
@@ -8676,11 +8680,19 @@ var PZ_ICO = {
   elim:'<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
   mas:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
   nueva:'<path d="M12 5v14M5 12h14"/>',
-  venta:'<rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="12" cy="12" r="2.5"/>'
+  venta:'<rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="12" cy="12" r="2.5"/>',
+  wa:'<path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/>'
 };
+/* cuántos chats esperan respuesta (los de plata no se responden: solo se mira si llegó) */
+function waPorResponder(){
+  if (!WA) return 0;
+  return WA.filas.filter(function(f){ return f.estado === 'pendiente' && f.tipo !== 'plata'; }).length;
+}
 function pzSvg(k){ return '<svg class="pz-i" viewBox="0 0 24 24">'+(PZ_ICO[k]||PZ_ICO.cot)+'</svg>'; }
 function pzTabs(){
   var t = [{id:'seg', label:'Hoy', ico:'seg', g:1}];
+  /* WhatsApp al día: su propia sección, separada del seguimiento (pedido del 08-11) */
+  if (WA) t.push({id:'wa', label:'WhatsApp al día', ico:'wa', g:1});
   if (isPanelAdmin()){
     t.push({id:'web', label:'Clientes web', ico:'web', g:1});
     VENDEDORES.forEach(function(v){ t.push({id:v.code, label:'Cotizaciones de '+v.nombre, ico:'cot', g:1}); });
@@ -8700,7 +8712,8 @@ function pzTabs(){
   return t;
 }
 function pzLink(t){
-  var badge = (t.id==='seg' && segPend>0) ? '<b class="pz-n">'+segPend+'</b>' : '';
+  var n = t.id==='seg' ? segPend : (t.id==='wa' ? waPorResponder() : 0);
+  var badge = n > 0 ? '<b class="pz-n'+(t.id==='wa' ? ' wa' : '')+'">'+n+'</b>' : '';
   return '<a href="#" class="'+(dashView===t.id ? 'on' : '')+'" onclick="pzIr(\''+t.id+'\');return false">'+
          pzSvg(t.ico)+'<span>'+escA(t.label)+'</span>'+badge+'</a>';
 }
@@ -8712,17 +8725,19 @@ function renderTabs(){
     g = t.g; html += pzLink(t);
   });
   var nav = document.getElementById('pz-nav'); if (nav) nav.innerHTML = html;
-  /* celular: Hoy · Cotizaciones · Cotizar · Actividad · Más */
+  /* celular: Hoy · Cotizaciones · Cotizar · WhatsApp (o Actividad si no ve el 5558) · Más */
   var cotId = isPanelAdmin() ? 'web' : panelSeller.code;
-  var abajo = ['seg', cotId, 'actividad'];
+  var cuarto = WA ? 'wa' : 'actividad';
+  var abajo = ['seg', cotId, cuarto];
   function boton(id, label, ico){
-    var badge = (id==='seg' && segPend>0) ? '<b class="pz-pt">'+segPend+'</b>' : '';
+    var n = id==='seg' ? segPend : (id==='wa' ? waPorResponder() : 0);
+    var badge = n > 0 ? '<b class="pz-pt'+(id==='wa' ? ' wa' : '')+'">'+n+'</b>' : '';
     return '<a href="#" class="'+(dashView===id ? 'on' : '')+'" onclick="pzIr(\''+id+'\');return false">'+pzSvg(ico)+label+badge+'</a>';
   }
   var ab = document.getElementById('pz-abajo');
   if (ab) ab.innerHTML = boton('seg','Hoy','seg') + boton(cotId,'Cotizaciones','cot') +
     '<a href="#" class="pz-cot" onclick="pzCotizar();return false">'+pzSvg('nueva')+'Cotizar</a>' +
-    boton('actividad','Actividad','actividad') +
+    (WA ? boton('wa','WhatsApp','wa') : boton('actividad','Actividad','actividad')) +
     '<a href="#" class="'+(abajo.indexOf(dashView)===-1 ? 'on' : '')+'" onclick="pzMas(true);return false">'+pzSvg('mas')+'Más</a>';
   var ml = document.getElementById('pz-mas-lista');
   if (ml) ml.innerHTML =
@@ -8764,7 +8779,7 @@ function setDashView(v){
   dashView=v; renderTabs();
   /* el buscador va en TODAS las vistas menos el Manual, que no es una lista.
      Seguimiento además tiene sus chips de bloque, que van en la fila de abajo. */
-  if (v !== 'manual') renderDashFilters();
+  if (v !== 'manual' && v !== 'wa') renderDashFilters();
   if (v === 'seg') renderSegFilters();
   renderVistaActual();
 }
@@ -8786,8 +8801,9 @@ function pzSlotWA(html){
 function renderVistaActual(){
   _contactados = null;   /* el filtro «Nunca contactados» se rearma con lo recién marcado */
   var v = dashView;
-  if (v !== 'seg') pzSlotWA('');
+  pzSlotWA('');
   if (v==='seg')            renderSeguimiento();
+  else if (v==='wa')        renderWA();
   else if (v==='elim')      renderEliminadas();
   else if (v==='dormidos')  renderDormidos();
   else if (v==='reactivar') renderReactivar();
@@ -9824,10 +9840,28 @@ function renderSeguimiento(){
       '<div class="hz-mes" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos).">'+
         'Este mes: '+clavesMes.length+' clientes ('+mesRows.length+' cotizaciones) · conversión '+convMes+'% ('+cliGan+' de '+cliDecididos+' decididos) · contacto en menos de 24 h '+rapidPct+'%</div>'+
     '</section>';
-  var waHtml = waBloqueHtml();
-  pzSlotWA(waHtml ? '<section class="pz-wa-sec"><div class="pz-h">Lo primero<span>WhatsApp · no cuenta para la meta</span></div><div id="pz-wa">'+waHtml+'</div></section>' : '');
+  /* WhatsApp al día ya no va aquí: tiene su propia sección (renderWA) */
   document.getElementById('dash-tbl').innerHTML = segHtml;
   segPintarDetalle(pares);
+}
+/* ── SECCIÓN «WHATSAPP AL DÍA» (08-11-2026) ──
+   Página aparte del seguimiento de cotizaciones, a pedido del usuario: lo que
+   hay que responder en el 5558 no se mezcla con la meta del día. Sin buscador
+   ni cifras de cotizaciones arriba: solo su encabezado y la lista. */
+function renderWA(){
+  document.getElementById('dash-filters').innerHTML = '';
+  subFiltros('');
+  var st = document.getElementById('dash-stats'); st.style.display = 'block';
+  var a = new Date();
+  var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  st.innerHTML = '<div class="pz-cab"><div class="k">'+dias[a.getDay()]+' '+a.getDate()+' de '+meses[a.getMonth()]+'</div>'+
+    '<h1>WhatsApp al día</h1>'+
+    '<div class="pz-wa-nota">Lo que escribieron al 5558 y sigue sin respuesta. Va aparte del seguimiento de cotizaciones y no cuenta para la meta del día.</div></div>';
+  var html = waBloqueHtml();
+  document.getElementById('dash-tbl').innerHTML = html
+    ? '<section class="pz-wa-sec pz-wa-vista"><div id="pz-wa">'+html+'</div></section>'
+    : '<div class="seg-empty" style="padding:24px;text-align:center">Todavía no hay una revisión de WhatsApp cargada.</div>';
 }
 /* ── CABECERA DE HOY (08-11-2026): saludo + tres números ──
    Los tres salen de las mismas filas del panel (dashRows, ya recortadas al
@@ -9963,7 +9997,11 @@ function waBloqueHtml(){
     return (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
   });
   var sub = WA.revision ? 'Revisado ' + escA(waCuando(WA.revision)) + '<span class="wa-sub-l"> · lo que escribieron al 5558</span>' : 'Todavía no hay una revisión cargada';
-  var chip = pend.length ? '<span class="wa-estado">'+pend.length+' por responder</span>' : '<span class="wa-estado ok">Todo respondido</span>';
+  /* los de plata no se responden (solo se mira si llegó): se cuentan aparte */
+  var nResp = pend.filter(function(f){ return f.tipo !== 'plata'; }).length;
+  var nPlata = pend.length - nResp;
+  var chipTxt = [nResp ? nResp + ' por responder' : '', nPlata ? nPlata + ' por cobrar' : ''].filter(Boolean).join(' · ');
+  var chip = pend.length ? '<span class="wa-estado'+(nResp ? '' : ' ok')+'">'+chipTxt+'</span>' : '<span class="wa-estado ok">Todo respondido</span>';
   var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-ico wa-logo"><svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg></div>'+
           '<div class="wa-t"><div class="wa-tit">WhatsApp al día</div><div class="wa-sub">'+sub+'</div></div>'+chip+'</div>';
   if (pend.length) {
@@ -10002,6 +10040,7 @@ function waRepintar(){
   });
   var el = document.getElementById('pz-wa');
   if (el) el.innerHTML = waBloqueHtml();
+  renderTabs();      /* el número de la barra baja al responder */
 }
 function waBuscar(id){ return WA && WA.filas.find(function(f){ return f.id === id; }); }
 function waToggle(id){
