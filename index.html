@@ -1897,6 +1897,22 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 #s-dash.pz .pz-acc.wap { background:var(--pz-wa); border-color:var(--pz-wa); color:#fff; flex:1; font-weight:600; }
 #s-dash.pz .pz-acc.wap .pz-i { width:17px; height:17px; }
 #s-dash.pz .pz-acc.apag { opacity:.45; }
+/* Historial de WhatsApp al día */
+#s-dash.pz .wa-seg { display:flex; max-width:360px; margin:0 0 14px; border:1px solid var(--pz-borde); border-radius:4px; overflow:hidden; }
+#s-dash.pz .wa-seg button { flex:1; height:40px; border:0; background:#fff; font:inherit; font-size:14px; color:var(--pz-sec); cursor:pointer; }
+#s-dash.pz .wa-seg button + button { border-left:1px solid var(--pz-borde); }
+#s-dash.pz .wa-seg button.on { background:var(--pz-wa); color:#fff; font-weight:600; }
+#s-dash.pz .wa-revs { margin-top:14px; }
+#s-dash.pz .wa-tit2 { font-weight:600; font-size:15px; }
+#s-dash.pz .wa-dia { padding:10px 14px 6px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--pz-sec); background:var(--pz-claro); border-top:1px solid var(--pz-linea); }
+#s-dash.pz .wa-cab + .wa-dia { border-top:0; }
+#s-dash.pz .wa-h { padding:10px 14px; border-top:1px solid var(--pz-linea); }
+#s-dash.pz .wa-dia + .wa-h { border-top:0; }
+#s-dash.pz .wa-h .wa-n em { color:var(--pz-sec); font-weight:400; }
+#s-dash.pz .wa-ctx { font-size:12.5px; margin-top:2px; }
+#s-dash.pz .wa-tag { font-size:11px; font-weight:600; color:var(--pz-ambar); background:#F7EEDB; border-radius:3px; padding:1px 6px; white-space:nowrap; }
+#s-dash.pz .wa-tag.rojo { color:var(--pz-rojo); background:#F6E9E7; }
+#s-dash.pz .wa-alerta { padding:10px 14px; font-size:13px; color:var(--pz-rojo); background:#F6E9E7; border-bottom:1px solid var(--pz-linea); }
 #s-dash.pz .wa-no { height:40px; border:0; background:none; font:inherit; font-size:13px; color:var(--pz-sec); text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--pz-borde); cursor:pointer; padding:0 4px; }
 @media (max-width:560px){
   #s-dash.pz .wa-msg { width:calc(100% - 28px); margin:0 14px 8px; }
@@ -9862,9 +9878,12 @@ function renderWA(){
   st.innerHTML = '<div class="pz-cab"><div class="k">'+dias[a.getDay()]+' '+a.getDate()+' de '+meses[a.getMonth()]+'</div>'+
     '<h1>WhatsApp al día</h1>'+
     '<div class="pz-wa-nota">Lo que escribieron al 5558 y sigue sin respuesta. Va aparte del seguimiento de cotizaciones y no cuenta para la meta del día.</div></div>';
-  var html = waBloqueHtml();
+  var seg = '<div class="wa-seg">'+
+    '<button class="'+(waVista === 'pend' ? 'on' : '')+'" onclick="waVer(\'pend\')">Por responder</button>'+
+    '<button class="'+(waVista === 'hist' ? 'on' : '')+'" onclick="waVer(\'hist\')">Historial</button></div>';
+  var html = waVista === 'hist' ? waHistHtml() : waBloqueHtml();
   document.getElementById('dash-tbl').innerHTML = html
-    ? '<section class="pz-wa-sec pz-wa-vista"><div id="pz-wa">'+html+'</div></section>'
+    ? '<section class="pz-wa-sec pz-wa-vista">'+seg+'<div id="pz-wa">'+html+'</div></section>'
     : '<div class="seg-empty" style="padding:24px;text-align:center">Todavía no hay una revisión de WhatsApp cargada.</div>';
 }
 /* ── CABECERA DE HOY (08-11-2026): saludo + tres números ──
@@ -10043,7 +10062,7 @@ function waRepintar(){
     var f = waBuscar(t.id.replace('wa-m-', '')); if (f) f.mensaje = t.value;
   });
   var el = document.getElementById('pz-wa');
-  if (el) el.innerHTML = waBloqueHtml();
+  if (el) el.innerHTML = waVista === 'hist' ? waHistHtml() : waBloqueHtml();
   renderTabs();      /* el número de la barra baja al responder */
 }
 function waBuscar(id){ return WA && WA.filas.find(function(f){ return f.id === id; }); }
@@ -10089,8 +10108,101 @@ async function waMarcar(id, estado){
   if (r.error) { showToast('No se pudo guardar: ' + r.error.message, false); return; }
   var f = waBuscar(id);
   if (f) { f.estado = estado; f.resuelto_at = estado === 'pendiente' ? null : new Date().toISOString(); }
+  WAH = null;        /* el historial cambió: se vuelve a pedir al abrirlo */
   waRepintar();
   showToast(estado === 'pendiente' ? 'Volvió a la lista' : 'Listo, salió de la lista', true);
+}
+
+/* ── HISTORIAL (08-11-2026) ──
+   Qué se cerró en los últimos 30 días, quién y cuándo (César, Tomás o «la
+   revisión», que cierra lo que ya no ve pendiente), y la lista de revisiones
+   con desde cuándo cubrió cada una: si entre dos revisiones quedó un rato sin
+   mirar, se avisa en rojo. Sale de wa_historial() (whatsapp-al-dia-historial.sql),
+   que lo arma del historial de versiones: nada de esto se borra. */
+var waVista = 'pend';     /* 'pend' | 'hist' */
+var WAH = null;           /* { cierres:[...], revisiones:[...] } | { error:'...' } */
+var WAH_DIAS = 30;
+function waVer(v){
+  waVista = v;
+  renderWA();
+  if (v === 'hist' && !WAH) waHistCargar();
+}
+async function waHistCargar(){
+  try {
+    var r = await sbClient.rpc('wa_historial', { p_dias:WAH_DIAS });
+    WAH = r.error ? { error:r.error.message } : (r.data || { cierres:[], revisiones:[] });
+  } catch (e) { WAH = { error:String(e && e.message || e) }; }
+  if (waVista === 'hist') waRepintar();
+}
+function waQuienCerro(por){
+  if (por === 'revision') return 'la revisión';
+  if (por === 'crodriguez.casazaru@gmail.com') return 'César';
+  if (por === 'hola@casazaru.cl') return 'Tomás';
+  return por || '—';
+}
+function waDiaTxt(iso){
+  var dia = isoDate(new Date(iso)), hoy = hoyISO();
+  if (dia === hoy) return 'Hoy';
+  if (dia === addDias(hoy, -1)) return 'Ayer';
+  var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  return dias[new Date(iso).getDay()] + ' ' + fmtFechaCorta(dia);
+}
+function waHora(iso){
+  var d = new Date(iso);
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+function waHistHtml(){
+  if (!WAH) return '<div class="wa-caja"><div class="wa-vacio">Cargando el historial…</div></div>';
+  if (WAH.error) return '<div class="wa-caja"><div class="wa-vacio">No se pudo leer el historial: '+escA(WAH.error)+'</div></div>';
+  var cierres = WAH.cierres || [], revs = WAH.revisiones || [];
+  var nResp = 0, nRev = 0, nNo = 0;
+  cierres.forEach(function(c){
+    if (c.estado === 'no_corresponde') nNo++;
+    else if (c.resuelto_por === 'revision') nRev++;
+    else nResp++;
+  });
+  /* avisos: revisión vieja y ratos sin revisar entre dos revisiones */
+  var avisos = [];
+  if (!revs.length) avisos.push('Todavía no hay revisiones registradas.');
+  else {
+    var hDesde = Math.round((Date.now() - new Date(revs[0].revision_at).getTime()) / 3600000);
+    if (hDesde > 30) avisos.push('La última revisión fue hace ' + (hDesde < 48 ? hDesde + ' h' : Math.round(hDesde / 24) + ' días') + ': lo que llegó después todavía no está aquí.');
+    for (var i = 0; i < revs.length - 1; i++) {
+      var nueva = revs[i], vieja = revs[i + 1];
+      if (nueva.desde && new Date(nueva.desde).getTime() > new Date(vieja.revision_at).getTime() + 60000)
+        avisos.push('Quedó sin revisar de ' + waCuando(vieja.revision_at) + ' a ' + waCuando(nueva.desde) + '.');
+    }
+  }
+  var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-t"><div class="wa-sub">Últimos '+WAH_DIAS+' días · '+
+          nResp+(nResp === 1 ? ' respondido' : ' respondidos')+' · '+nRev+(nRev === 1 ? ' cerrado' : ' cerrados')+' por la revisión · '+nNo+(nNo === 1 ? ' no correspondía' : ' no correspondían')+'</div></div></div>';
+  avisos.forEach(function(a){ h += '<div class="wa-alerta">'+escA(a)+'</div>'; });
+  if (!cierres.length) h += '<div class="wa-vacio">Todavía no se ha cerrado ningún chat.</div>';
+  var diaAnt = '';
+  cierres.forEach(function(c){
+    var dia = waDiaTxt(c.resuelto_at);
+    if (dia !== diaAnt) { h += '<div class="wa-dia">'+escA(dia)+'</div>'; diaAnt = dia; }
+    var que = c.resuelto_por === 'revision'
+            ? 'Lo cerró la revisión: ya no estaba esperando'
+            : (c.estado === 'no_corresponde' ? 'No correspondía'
+            : (c.tipo === 'plata' ? 'Llegó el pago' : 'Respondido')) + ' · ' + waQuienCerro(c.resuelto_por);
+    var vuelta = c.vigente ? '' : ' <b class="wa-tag rojo">volvió a la lista</b>';
+    var monto = (c.tipo === 'plata' && c.monto) ? ' · ' + pzM(c.monto) : '';
+    h += '<div class="wa-h"><div class="wa-n"><span>'+(c.pedido ? '<small>#'+escA(c.pedido)+'</small>' : '')+escA(c.cliente)+'</span><em>'+escA(waHora(c.resuelto_at))+'</em></div>'+
+         '<div class="wa-d">'+escA(que)+escA(monto)+vuelta+'</div>'+
+         (c.contexto ? '<div class="wa-d wa-ctx">'+escA(c.contexto)+'</div>' : '')+'</div>';
+  });
+  h += '</div>';
+  /* revisiones */
+  h += '<div class="wa-caja wa-revs"><div class="wa-cab"><div class="wa-t"><div class="wa-tit2">Revisiones</div>'+
+       '<div class="wa-sub">Cada vez que se revisó el 5558 y desde cuándo</div></div></div>';
+  revs.forEach(function(r){
+    var cubre = r.desde ? 'cubrió desde ' + waCuando(r.desde) : (r.nota ? r.nota : 'sin dato de desde cuándo');
+    h += '<div class="wa-h"><div class="wa-n"><span>'+escA(waDiaTxt(r.revision_at))+' · '+escA(waHora(r.revision_at))+'</span>'+
+         '<em>'+r.chats+(r.chats === 1 ? ' chat' : ' chats')+'</em></div>'+
+         '<div class="wa-d">'+escA(cubre)+' · '+r.nuevos+' nuevos · '+r.cerrados+' cerrados'+(r.forzada ? ' <b class="wa-tag rojo">pasó el freno</b>' : '')+'</div></div>';
+  });
+  if (!revs.length) h += '<div class="wa-vacio">Sin revisiones registradas.</div>';
+  return h + '</div>';
 }
 
 /* salta al encabezado del bloque 1 o 2 desde el recuadro "Tu meta de hoy",
