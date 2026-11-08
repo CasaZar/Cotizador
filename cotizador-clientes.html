@@ -1739,6 +1739,207 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
   .marca .wood-name { font-size: 16px; padding: 2px 10px 1px; align-self: end; }
   .marca .wood-desc { font-size: 13.5px; line-height: 1.45; padding: 0 10px 2px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MARCO NUEVO DEL PANEL (08-11-2026) — boceto aprobado el 08-11
+   Mismos tokens que la Gestión (cd7a79b) y el cotizador de vendedores
+   (0cf0183): papel, Poppins, títulos en Nanum Myeongjo, verde #485B3D,
+   terracota #A85D2A, bordes de 4 px, íconos de línea. Todo cuelga de
+   #s-dash.pz: el cotizador público no cambia en nada.
+   Las variables viejas (--bg, --ac, --tx…) se redefinen dentro del panel,
+   así las vistas que no se rehicieron (tablas, Dormidos, Manual) toman la
+   paleta nueva sin tocar su código.
+   ═══════════════════════════════════════════════════════════════════ */
+#s-dash.pz {
+  --bg:#F7F4EE; --bg2:#FFFFFF; --bg3:#EFE9DF; --ac:#A85D2A; --acd:#6E4A2A;
+  --tx:#1F1D24; --tm:#57524B; --bd:#E4DDD2; --bd2:#E4DDD2; --crt:#FBF9F5;
+  --pz-papel:#F7F4EE; --pz-claro:#FBF9F5; --pz-tinta:#1F1D24; --pz-sec:#57524B;
+  --pz-linea:#E4DDD2; --pz-borde:#948A7C; --pz-verde:#485B3D; --pz-terra:#A85D2A;
+  --pz-rojo:#9B2C2C; --pz-ambar:#8A5A00; --pz-wa:#1F7A4A;
+  background:var(--pz-papel); color:var(--pz-tinta); min-height:100vh;
+  font-family:Poppins, ui-sans-serif, system-ui, sans-serif; font-size:15px; line-height:1.45;
+}
+#s-dash.pz .logotype, #s-dash.pz .stat-v, #s-dash.pz .seg-cli, #s-dash.pz .seg-block-h,
+#s-dash.pz .perde-h { font-family:'Nanum Myeongjo', serif; font-weight:800; }
+.pz-i { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+
+/* marco: celular */
+#s-dash.pz .pz-lado { display:none; }
+#s-dash.pz .pz-top { background:var(--pz-verde); color:#fff; display:flex; justify-content:space-between; align-items:center; padding:12px 16px; position:sticky; top:0; z-index:30; }
+#s-dash.pz .pz-top img { height:18px; display:block; }
+#s-dash.pz .dash-wrap { display:block; max-width:1180px; margin:0 auto; padding:0 16px 96px; }
+#s-dash.pz .dash-main { grid-column:auto; grid-row:auto; min-width:0; }
+#s-dash.pz .pz-abajo { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--pz-linea); display:grid; grid-template-columns:repeat(5,1fr); padding:6px 4px calc(6px + env(safe-area-inset-bottom)); z-index:40; }
+#s-dash.pz .pz-abajo a { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; color:var(--pz-sec); text-decoration:none; padding:4px 0; min-height:44px; justify-content:center; position:relative; }
+#s-dash.pz .pz-abajo a.on { color:var(--pz-tinta); font-weight:600; }
+#s-dash.pz .pz-abajo a.on .pz-i { color:var(--pz-verde); }
+#s-dash.pz .pz-abajo a.pz-cot .pz-i { background:var(--pz-terra); color:#fff; border-radius:4px; padding:4px; width:30px; height:30px; }
+#s-dash.pz .pz-pt { position:absolute; top:1px; left:calc(50% + 6px); background:var(--pz-rojo); color:#fff; font-size:10px; font-weight:600; border-radius:8px; padding:0 5px; line-height:15px; }
+#s-dash.pz .pz-mas-bg { position:fixed; inset:0; background:rgba(31,29,36,.35); z-index:60; display:flex; align-items:flex-end; }
+#s-dash.pz .pz-mas-bg.hidden { display:none !important; }
+#s-dash.pz .pz-mas-hoja { background:#fff; width:100%; border-radius:8px 8px 0 0; padding:8px 10px calc(14px + env(safe-area-inset-bottom)); max-height:80vh; overflow-y:auto; }
+#s-dash.pz .pz-mas-t { display:flex; justify-content:space-between; align-items:center; font-weight:600; padding:8px 8px 10px; border-bottom:1px solid var(--pz-linea); margin-bottom:4px; }
+#s-dash.pz .pz-mas-t button { border:0; background:none; font-size:18px; color:var(--pz-sec); cursor:pointer; padding:4px 8px; }
+#s-dash.pz #pz-mas-lista a, #s-dash.pz #pz-nav a { display:flex; align-items:center; gap:12px; padding:0 12px; min-height:44px; border-radius:4px; color:var(--pz-sec); text-decoration:none; font-size:14.5px; }
+#s-dash.pz #pz-mas-lista a.on, #s-dash.pz #pz-nav a.on { background:var(--pz-papel); color:var(--pz-tinta); font-weight:600; }
+#s-dash.pz #pz-mas-lista a.on .pz-i, #s-dash.pz #pz-nav a.on .pz-i { color:var(--pz-verde); }
+#s-dash.pz .pz-n { margin-left:auto; font-size:11.5px; font-weight:600; background:var(--pz-rojo); color:#fff; border-radius:8px; padding:0 6px; line-height:17px; }
+#s-dash.pz .pz-mas-pie { border-top:1px solid var(--pz-linea); margin-top:6px; padding:10px 8px 0; }
+#s-dash.pz .pz-pie-l { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; font-size:13px; color:var(--pz-sec); }
+#s-dash.pz .btn-logout { background:#fff; border:1px solid var(--pz-borde); border-radius:4px; color:var(--pz-tinta); font-size:13px; padding:5px 12px; cursor:pointer; position:static; transform:none; }
+#s-dash.pz .ver-tag { font-size:11.5px; color:var(--pz-sec); cursor:pointer; background:none; padding:0; }
+#s-dash.pz .ver-como-sel { border-radius:4px; border:1px dashed var(--pz-borde); color:var(--pz-tinta); font-size:13.5px; margin-top:0; }
+
+/* marco: PC */
+@media (min-width:990px){
+  #s-dash.pz { display:grid; grid-template-columns:232px minmax(0,1fr); }
+  #s-dash.pz .pz-top, #s-dash.pz .pz-abajo { display:none; }
+  #s-dash.pz .pz-lado { display:flex; flex-direction:column; background:#fff; border-right:1px solid var(--pz-linea); position:sticky; top:0; height:100vh; overflow-y:auto; }
+  #s-dash.pz .pz-logo { background:var(--pz-verde); padding:16px 18px; }
+  #s-dash.pz .pz-logo img { height:18px; display:block; }
+  #s-dash.pz .pz-nueva { margin:12px 10px 0; height:42px; border-radius:4px; background:var(--pz-terra); color:#fff; border:0; display:flex; align-items:center; gap:10px; padding:0 12px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+  #s-dash.pz .pz-nueva:hover { background:#8F4E22; }
+  #s-dash.pz .pz-venta { margin:6px 10px 0; height:38px; border-radius:4px; background:#fff; color:var(--pz-tinta); border:1px solid var(--pz-borde); font-size:13.5px; cursor:pointer; font-family:inherit; }
+  #s-dash.pz #pz-nav { padding:10px 10px; display:flex; flex-direction:column; gap:2px; }
+  #s-dash.pz #pz-nav a { min-height:40px; font-size:14px; }
+  #s-dash.pz #pz-nav a:hover { background:var(--pz-papel); color:var(--pz-tinta); }
+  #s-dash.pz .pz-sep { height:1px; background:var(--pz-linea); margin:8px 12px; }
+  #s-dash.pz .pz-pie { margin-top:auto; padding:14px 18px; border-top:1px solid var(--pz-linea); font-size:13px; color:var(--pz-sec); }
+  #s-dash.pz #pz-vercomo:not(:empty) { margin-top:8px; }
+  #s-dash.pz .dash-wrap { padding:0 32px 40px; max-width:none; width:100%; }
+}
+#s-dash.pz .pz-sep { height:1px; background:var(--pz-linea); margin:6px 12px; }
+
+/* Hoy: saludo y tres números */
+#s-dash.pz .pz-cab { padding:20px 0 14px; border-bottom:1px solid var(--pz-linea); }
+#s-dash.pz .pz-cab .k { font-size:12px; color:var(--pz-sec); }
+#s-dash.pz .pz-cab h1 { font-family:'Nanum Myeongjo', serif; font-weight:800; font-size:26px; line-height:1.2; margin:2px 0 0; color:var(--pz-tinta); }
+#s-dash.pz .pz-tres { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:16px 0; border-bottom:1px solid var(--pz-linea); }
+#s-dash.pz .pz-tres > div { background:#fff; border:1px solid var(--pz-linea); border-radius:4px; padding:10px; min-width:0; }
+#s-dash.pz .pz-tres .l { font-size:11.5px; color:var(--pz-sec); line-height:1.3; }
+#s-dash.pz .pz-tres .v { font-family:'Nanum Myeongjo', serif; font-weight:800; font-size:18px; line-height:1.25; margin-top:4px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+#s-dash.pz .pz-tres .s { font-size:11.5px; color:var(--pz-sec); margin-top:2px; }
+#s-dash.pz .pz-mini { height:4px; background:#EAE3D8; border-radius:2px; margin-top:6px; overflow:hidden; }
+#s-dash.pz .pz-mini i { display:block; height:100%; background:var(--pz-verde); }
+#s-dash.pz .pz-h { font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--pz-sec); margin:0 0 12px; display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+#s-dash.pz .pz-h span { letter-spacing:0; text-transform:none; font-weight:400; text-align:right; }
+#s-dash.pz .pz-cols > section { padding:18px 0; border-bottom:1px solid var(--pz-linea); min-width:0; }
+@media (min-width:990px){
+  #s-dash.pz .pz-cab { padding:28px 0 18px; }
+  #s-dash.pz .pz-cab h1 { font-size:30px; }
+  #s-dash.pz .pz-tres { gap:12px; padding:20px 0; }
+  #s-dash.pz .pz-tres > div { padding:14px 16px; }
+  #s-dash.pz .pz-tres .l { font-size:12.5px; }
+  #s-dash.pz .pz-tres .v { font-size:24px; }
+}
+#s-dash.pz .pz-wa-sec { padding:18px 0; border-bottom:1px solid var(--pz-linea); margin-bottom:14px; }
+#s-dash.pz .pz-seg { padding:4px 0 18px; min-width:0; }
+#s-dash.pz .dash-main > #dash-filters:not(:empty) { margin-top:4px; }
+@media (min-width:1200px){
+  /* dos columnas: WhatsApp a la izquierda; buscador, chips y lista a la derecha.
+     La última fila es 1fr para que el alto de WhatsApp no abra huecos entre
+     el buscador y la lista. */
+  #s-dash.pz .dash-main.con-wa { display:grid; grid-template-columns:minmax(0,6fr) minmax(0,5fr); grid-template-rows:auto auto auto auto 1fr; column-gap:32px; align-items:start; }
+  #s-dash.pz .dash-main.con-wa > * { grid-column:2; }
+  #s-dash.pz .dash-main.con-wa > .vista-como { grid-column:1 / -1; grid-row:1; }
+  #s-dash.pz .dash-main.con-wa > #dash-stats { grid-column:1 / -1; grid-row:2; }
+  #s-dash.pz .dash-main.con-wa > #pz-wa-slot { grid-column:1; grid-row:3 / span 3; align-self:start; }
+  #s-dash.pz .dash-main.con-wa > #dash-filters { grid-row:3; }
+  #s-dash.pz .dash-main.con-wa > #dash-subfilters { grid-row:4; }
+  #s-dash.pz .dash-main.con-wa > #dash-split { grid-row:5; }
+  #s-dash.pz .dash-main.con-wa .pz-wa-sec { border-bottom:0; margin-bottom:0; }
+  #s-dash.pz .dash-main.con-wa > #dash-filters { padding-top:18px; }
+  #s-dash.pz .dash-main:not(.con-wa) { max-width:900px; }
+}
+
+/* «WhatsApp al día»: caja propia, borde verde, nada que ver con la meta */
+#s-dash.pz .wa-caja { background:#fff; border:1px solid var(--pz-linea); border-left:4px solid var(--pz-wa); border-radius:4px; }
+#s-dash.pz .wa-cab { display:flex; align-items:center; gap:12px; padding:12px 14px; border-bottom:1px solid var(--pz-linea); }
+#s-dash.pz .wa-ico { width:36px; height:36px; border-radius:4px; background:var(--pz-papel); display:flex; align-items:center; justify-content:center; color:var(--pz-sec); flex-shrink:0; }
+#s-dash.pz .wa-logo { background:#E5F1EA; color:var(--pz-wa); }
+#s-dash.pz .wa-t { flex:1; min-width:0; }
+#s-dash.pz .wa-tit { font-family:'Nanum Myeongjo', serif; font-weight:800; font-size:19px; line-height:1.2; white-space:nowrap; }
+#s-dash.pz .wa-sub { font-size:12.5px; color:var(--pz-sec); }
+#s-dash.pz .wa-estado { font-size:12.5px; font-weight:600; color:var(--pz-rojo); background:#F6E9E7; border-radius:4px; padding:3px 8px; white-space:nowrap; }
+#s-dash.pz .wa-estado.ok { color:var(--pz-wa); background:#E5F1EA; }
+#s-dash.pz .wa-num { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid var(--pz-linea); font-variant-numeric:tabular-nums; }
+#s-dash.pz .wa-num div { padding:8px 14px; min-width:0; }
+#s-dash.pz .wa-num div + div { border-left:1px solid var(--pz-linea); }
+#s-dash.pz .wa-num b { display:block; font-weight:600; font-size:15px; }
+#s-dash.pz .wa-num small { font-size:11.5px; color:var(--pz-sec); line-height:1.3; display:block; }
+#s-dash.pz .wa-fila { border-top:1px solid var(--pz-linea); }
+#s-dash.pz .wa-num + .wa-fila { border-top:0; }
+#s-dash.pz .wa-fl { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; cursor:pointer; }
+#s-dash.pz .wa-n { font-weight:600; font-size:14.5px; display:flex; justify-content:space-between; gap:8px; }
+#s-dash.pz .wa-n small { font-weight:400; color:var(--pz-sec); font-size:13px; margin-right:4px; }
+#s-dash.pz .wa-n em { font-style:normal; font-size:12.5px; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+#s-dash.pz .wa-d { font-size:13px; color:var(--pz-sec); }
+#s-dash.pz .wa-q { font-size:13.5px; margin-top:6px; padding:6px 10px; background:var(--pz-claro); border-left:2px solid var(--pz-linea); color:#3B362F; }
+#s-dash.pz .wa-fila.rojo .wa-ico { background:#F6E9E7; color:var(--pz-rojo); }
+#s-dash.pz .wa-fila.rojo .wa-n em { color:var(--pz-rojo); }
+#s-dash.pz .wa-fila.ambar .wa-ico { background:#F7EEDB; color:var(--pz-ambar); }
+#s-dash.pz .wa-fila.ambar .wa-n em { color:var(--pz-ambar); }
+#s-dash.pz .wa-fila.verde .wa-ico { background:#E5F1EA; color:var(--pz-wa); }
+#s-dash.pz .wa-fila.verde .wa-n em { color:var(--pz-wa); }
+#s-dash.pz .wa-msg { display:block; width:calc(100% - 76px); margin:0 14px 8px 62px; border:1px dashed var(--pz-borde); border-radius:4px; padding:9px 11px; font:inherit; font-size:13.5px; line-height:1.45; background:var(--pz-claro); color:var(--pz-tinta); resize:vertical; min-height:120px; }
+#s-dash.pz .wa-av { margin:-2px 14px 10px 62px; font-size:12px; color:var(--pz-rojo); }
+#s-dash.pz .wa-botones { display:flex; gap:8px; padding:0 14px 12px 62px; flex-wrap:wrap; }
+#s-dash.pz .pz-acc { height:40px; padding:0 14px; border:1px solid var(--pz-borde); border-radius:4px; background:#fff; font:inherit; font-size:14px; color:var(--pz-tinta); white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; text-decoration:none; }
+#s-dash.pz .pz-acc.sec { color:var(--pz-sec); border-color:var(--pz-linea); }
+#s-dash.pz .pz-acc.wap { background:var(--pz-wa); border-color:var(--pz-wa); color:#fff; flex:1; font-weight:600; }
+#s-dash.pz .pz-acc.wap .pz-i { width:17px; height:17px; }
+#s-dash.pz .pz-acc.apag { opacity:.45; }
+#s-dash.pz .wa-no { height:40px; border:0; background:none; font:inherit; font-size:13px; color:var(--pz-sec); text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--pz-borde); cursor:pointer; padding:0 4px; }
+@media (max-width:560px){
+  #s-dash.pz .wa-msg { width:calc(100% - 28px); margin:0 14px 8px; }
+  #s-dash.pz .wa-av { margin:-2px 14px 10px; }
+  #s-dash.pz .wa-botones { padding:0 14px 12px; }
+  #s-dash.pz .wa-sub .wa-sub-l { display:none; }
+}
+#s-dash.pz .wa-mas { display:block; text-align:center; font-size:13px; color:var(--pz-sec); padding:12px 0; border-top:1px solid var(--pz-linea); text-decoration:underline; text-underline-offset:3px; text-decoration-color:var(--pz-borde); }
+#s-dash.pz .wa-vacio { padding:16px 14px; font-size:13.5px; color:var(--pz-sec); }
+#s-dash.pz .wa-hechos { border-top:1px solid var(--pz-linea); }
+#s-dash.pz .wa-hechos > summary { padding:10px 14px; font-size:13px; color:var(--pz-sec); cursor:pointer; }
+#s-dash.pz .wa-hecho { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 14px 8px; font-size:14px; }
+#s-dash.pz .wa-hecho small { display:block; font-size:12px; color:var(--pz-sec); }
+#s-dash.pz .wa-hecho .pz-acc { height:34px; font-size:13px; }
+
+/* Seguimiento de cotizaciones: la lista de siempre con la piel nueva */
+#s-dash.pz .hz-lista { border-radius:4px; border-color:var(--pz-linea); }
+#s-dash.pz .hz-fila { border-bottom-color:var(--pz-linea); }
+#s-dash.pz .hz-fila.abierta { background:var(--pz-claro); }
+#s-dash.pz .hz-ini { border-radius:4px; }
+#s-dash.pz .hz-nom { font-size:14.5px; }
+#s-dash.pz .hz-det { font-size:13px; color:var(--pz-sec); }
+#s-dash.pz .hz-monto { color:var(--pz-tinta); }
+#s-dash.pz .hz-btn { border-radius:4px; border-color:var(--pz-borde); height:40px; display:inline-flex; align-items:center; padding:0 14px; }
+#s-dash.pz .hz-btn.wa { background:var(--pz-terra); border-color:var(--pz-terra); color:#fff; }
+#s-dash.pz .hz-btn.mail { border-color:var(--pz-terra); color:var(--pz-terra); }
+#s-dash.pz .hz-r { border-radius:4px; border-color:var(--pz-borde); }
+#s-dash.pz .hz-metas { gap:6px 12px; margin:0 0 14px; }
+#s-dash.pz .hz-meta { border-radius:4px; padding:8px 10px 10px; background:#fff; border:1px solid var(--pz-linea); }
+#s-dash.pz .hz-meta.on { border-color:var(--pz-verde); }
+#s-dash.pz .hz-meta-l { font-size:14px; }
+#s-dash.pz .hz-meta-l span { font-size:12.5px; }
+#s-dash.pz .hz-barra { height:6px; border-radius:3px; background:#EAE3D8; }
+#s-dash.pz .hz-barra span { background:var(--pz-verde); border-radius:3px; }
+#s-dash.pz .hz-pleg > summary { border-radius:4px; border-color:var(--pz-linea); }
+#s-dash.pz .hz-pleg[open] > summary { border-radius:4px 4px 0 0; }
+#s-dash.pz .hz-pleg[open] > .hz-lista { border-radius:0 0 4px 4px; }
+#s-dash.pz .hz-pleg.hz-camp { border-radius:4px; border-width:1px; }
+#s-dash.pz .hz-sec-main { font-size:12px; letter-spacing:.1em; color:var(--pz-sec); font-weight:600; }
+#s-dash.pz .hz-mes { font-size:12px; color:var(--pz-sec); }
+#s-dash.pz .dash-filters input, #s-dash.pz .dash-filters select { border-radius:4px; border-color:var(--pz-linea); }
+#s-dash.pz .stat-card, #s-dash.pz .seg-card { border-radius:4px; }
+/* las tarjetas de cifras de cada vista no empujan la página a lo ancho en el celular */
+@media (max-width:989px){
+  #s-dash.pz #dash-stats[style*="grid"] { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+}
+@media (max-width:560px){
+  #s-dash.pz .stat-card { padding:10px 5px; min-width:0; }
+  #s-dash.pz .stat-v { font-size:clamp(14px,4.2vw,20px); white-space:nowrap; letter-spacing:-.02em; }
+  #s-dash.pz .stat-l { font-size:10px; letter-spacing:.02em; overflow-wrap:anywhere; }
+}
 </style>
 </head>
 <body>
@@ -1992,18 +2193,28 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 </div>
 
 <!-- ══ s-dash: PANEL INTERNO ══ -->
-<div id="s-dash" class="hidden">
-  <div class="logo-bar">
-    <div class="logotype">CASA ZARU</div>
-    <div><span class="badge" style="background:var(--acd)">Panel Interno</span> <span class="ver-tag" id="ver-tag" onclick="verForzarRecarga()" title="Versión del panel. Tócala para recargar sin caché si algo se ve viejo."></span> <button class="btn-logout" id="btn-logout" onclick="doPanelLogout()">Salir</button></div>
-  </div>
-  <div class="dash-wrap">
-    <div class="dash-topbar">
-      <div id="dash-tabs" style="display:flex;gap:8px;overflow-x:auto;flex:1;-webkit-overflow-scrolling:touch"></div>
-      <button class="btn-venta" id="btn-venta" onclick="ventaUI()">+ Venta</button>
+<div id="s-dash" class="hidden pz">
+  <!-- ── MARCO NUEVO (08-11-2026): el de la Gestión (cd7a79b) ──
+       PC: barra lateral blanca. Celular: barra verde arriba y pestañas abajo.
+       renderTabs() llena #pz-nav, #pz-abajo y #pz-mas-lista. -->
+  <aside class="pz-lado">
+    <div class="pz-logo"><img src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"></div>
+    <button class="pz-nueva" onclick="pzCotizar()"><svg class="pz-i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nueva cotización</button>
+    <button class="pz-venta" id="btn-venta" onclick="ventaUI()">Registrar venta</button>
+    <nav id="pz-nav"></nav>
+    <div class="pz-pie">
+      <div id="pz-quien"></div>
+      <div id="pz-vercomo"></div>
+      <div class="pz-pie-l"><span class="ver-tag" id="ver-tag" onclick="verForzarRecarga()" title="Versión del panel. Tócala para recargar sin caché si algo se ve viejo."></span><button class="btn-logout" id="btn-logout" onclick="doPanelLogout()">Salir</button></div>
     </div>
+  </aside>
+  <div class="pz-top"><img src="fotos/logo-casa-zaru-blanco.svg" alt="Casa Zaru"><span id="pz-top-quien"></span></div>
+  <div class="dash-wrap">
     <div class="dash-main">
     <div id="dash-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <!-- «WhatsApp al día»: solo en Hoy. En el PC es la columna izquierda y el
+         buscador + la lista de seguimiento van a la derecha -->
+    <div id="pz-wa-slot"></div>
     <div id="dash-filters" class="dash-filters"></div>
     <!-- chips propios de cada vista (bloques de Seguimiento, vendedores de
          Actividad). Van aparte para que no pisen el buscador de arriba. -->
@@ -2013,6 +2224,10 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
       <aside id="dash-detalle" aria-live="polite"></aside>
     </div>
     </div>
+  </div>
+  <nav class="pz-abajo" id="pz-abajo"></nav>
+  <div class="pz-mas-bg hidden" id="pz-mas" onclick="if(event.target===this)pzMas(false)">
+    <div class="pz-mas-hoja"><div class="pz-mas-t">Más<button onclick="pzMas(false)" aria-label="Cerrar">✕</button></div><div id="pz-mas-lista"></div></div>
   </div>
 </div>
 <div class="pmodal-bg hidden" id="pmodal-bg"><div class="pmodal" id="pmodal"></div></div>
@@ -8444,29 +8659,106 @@ function waLimpio(s){
 function pModal(html){ document.getElementById('pmodal').innerHTML=html; document.getElementById('pmodal-bg').classList.remove('hidden'); }
 function pClose(){ document.getElementById('pmodal-bg').classList.add('hidden'); }
 
-function renderTabs(){
-  var tabs=[{id:'seg',label:'Seguimiento'}];
+/* ── NAVEGACIÓN DEL MARCO NUEVO (08-11-2026) ──
+   Las mismas vistas de siempre (setDashView), ahora en la barra lateral del PC
+   y, en el celular, en la barra de abajo + la hoja «Más». Íconos de línea, sin
+   emojis. «Próximos días» no es una vista: abre ese plegado dentro de Hoy. */
+var PZ_ICO = {
+  seg:'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>',
+  cot:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>',
+  web:'<circle cx="9" cy="9" r="3"/><path d="M4 19c0-3 2.2-5 5-5s5 2 5 5M16 7.5a2.5 2.5 0 1 1 0 5M17 14c2 .4 3.5 2 3.5 5"/>',
+  prox:'<rect x="4" y="5" width="16" height="15" rx="1"/><path d="M4 9h16M8 3v4M16 3v4"/>',
+  dormidos:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  reactivar:'<path d="M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4"/>',
+  backlog:'<path d="M3 7h18v12H3zM3 7l3-3h12l3 3"/>',
+  actividad:'<path d="M4 19h16M7 16V9M12 16V5M17 16v-4"/>',
+  manual:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  elim:'<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>',
+  mas:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  nueva:'<path d="M12 5v14M5 12h14"/>',
+  venta:'<rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="12" cy="12" r="2.5"/>'
+};
+function pzSvg(k){ return '<svg class="pz-i" viewBox="0 0 24 24">'+(PZ_ICO[k]||PZ_ICO.cot)+'</svg>'; }
+function pzTabs(){
+  var t = [{id:'seg', label:'Hoy', ico:'seg', g:1}];
   if (isPanelAdmin()){
-    tabs.push({id:'web',label:'Clientes Web'});
-    VENDEDORES.forEach(function(v){ tabs.push({id:v.code,label:v.nombre}); });
-    tabs.push({id:'backlog',label:'📦 Backlog'});
-    tabs.push({id:'dormidos',label:'😴 Dormidos'});
-    tabs.push({id:'reactivar',label:'🔁 Reactivar'});
-    tabs.push({id:'actividad',label:'📊 Actividad'});
-    tabs.push({id:'manual',label:'📖 Manual'});
-    tabs.push({id:'elim',label:'🗑 Eliminadas'});
+    t.push({id:'web', label:'Clientes web', ico:'web', g:1});
+    VENDEDORES.forEach(function(v){ t.push({id:v.code, label:'Cotizaciones de '+v.nombre, ico:'cot', g:1}); });
   } else {
-    tabs.push({id:panelSeller.code,label:'Mis cotizaciones'});
-    if (!panelSeller.b2b) tabs.push({id:'web',label:'Clientes Web'});
-    tabs.push({id:'backlog',label:'📦 Backlog'});
-    tabs.push({id:'dormidos',label:'😴 Dormidos'});
-    tabs.push({id:'reactivar',label:'🔁 Reactivar'});
-    tabs.push({id:'actividad',label:'📊 Mi actividad'});
+    t.push({id:panelSeller.code, label:'Mis cotizaciones', ico:'cot', g:1});
+    if (!panelSeller.b2b) t.push({id:'web', label:'Clientes web', ico:'web', g:1});
   }
-  document.getElementById('dash-tabs').innerHTML = tabs.map(function(t){
-    var badge = (t.id==='seg' && segPend>0) ? '<span class="badge-red">'+segPend+'</span>' : '';
-    return '<button class="btn-dtab'+(dashView===t.id?' active':'')+'" onclick="setDashView(\''+t.id+'\')">'+t.label+badge+'</button>';
-  }).join('') + verSelectorHtml();
+  t.push({id:'prox', label:'Próximos días', ico:'prox', g:1});
+  t.push({id:'dormidos', label:'Dormidos', ico:'dormidos', g:2});
+  t.push({id:'reactivar', label:'Reactivar', ico:'reactivar', g:2});
+  t.push({id:'backlog', label:'Nunca contactados', ico:'backlog', g:2});
+  t.push({id:'actividad', label:isPanelAdmin() ? 'Actividad' : 'Mi actividad', ico:'actividad', g:3});
+  if (isPanelAdmin()){
+    t.push({id:'manual', label:'Manual', ico:'manual', g:3});
+    t.push({id:'elim', label:'Eliminadas', ico:'elim', g:3});
+  }
+  return t;
+}
+function pzLink(t){
+  var badge = (t.id==='seg' && segPend>0) ? '<b class="pz-n">'+segPend+'</b>' : '';
+  return '<a href="#" class="'+(dashView===t.id ? 'on' : '')+'" onclick="pzIr(\''+t.id+'\');return false">'+
+         pzSvg(t.ico)+'<span>'+escA(t.label)+'</span>'+badge+'</a>';
+}
+function renderTabs(){
+  var tabs = pzTabs();
+  var html = '', g = 0;
+  tabs.forEach(function(t){
+    if (g && t.g !== g) html += '<div class="pz-sep"></div>';
+    g = t.g; html += pzLink(t);
+  });
+  var nav = document.getElementById('pz-nav'); if (nav) nav.innerHTML = html;
+  /* celular: Hoy · Cotizaciones · Cotizar · Actividad · Más */
+  var cotId = isPanelAdmin() ? 'web' : panelSeller.code;
+  var abajo = ['seg', cotId, 'actividad'];
+  function boton(id, label, ico){
+    var badge = (id==='seg' && segPend>0) ? '<b class="pz-pt">'+segPend+'</b>' : '';
+    return '<a href="#" class="'+(dashView===id ? 'on' : '')+'" onclick="pzIr(\''+id+'\');return false">'+pzSvg(ico)+label+badge+'</a>';
+  }
+  var ab = document.getElementById('pz-abajo');
+  if (ab) ab.innerHTML = boton('seg','Hoy','seg') + boton(cotId,'Cotizaciones','cot') +
+    '<a href="#" class="pz-cot" onclick="pzCotizar();return false">'+pzSvg('nueva')+'Cotizar</a>' +
+    boton('actividad','Actividad','actividad') +
+    '<a href="#" class="'+(abajo.indexOf(dashView)===-1 ? 'on' : '')+'" onclick="pzMas(true);return false">'+pzSvg('mas')+'Más</a>';
+  var ml = document.getElementById('pz-mas-lista');
+  if (ml) ml.innerHTML =
+    '<a href="#" onclick="pzMas(false);ventaUI();return false">'+pzSvg('venta')+'<span>Registrar venta</span></a>' +
+    tabs.filter(function(t){ return abajo.indexOf(t.id) === -1; }).map(pzLink).join('') +
+    '<div class="pz-mas-pie">'+verSelectorHtml()+
+      '<div class="pz-pie-l"><span>'+escA(pzQuien())+'</span><button class="btn-logout" onclick="doPanelLogout()">Salir</button></div></div>';
+  var vc = document.getElementById('pz-vercomo'); if (vc) vc.innerHTML = verSelectorHtml();
+  var q = document.getElementById('pz-quien'); if (q) q.textContent = pzQuien();
+}
+function pzQuien(){
+  return panelSeller ? panelSeller.nombre + ' · vendedor' : 'Sesión de administrador';
+}
+function pzIr(id){
+  pzMas(false);
+  if (id === 'prox') { pzProximos(); return; }
+  setDashView(id);
+  window.scrollTo(0, 0);
+}
+/* «Próximos días» vive plegado al final de Hoy: lo abre y baja hasta él */
+function pzProximos(){
+  if (dashView !== 'seg') setDashView('seg');
+  var d = document.querySelector('details[data-det="semana"]');
+  if (!d) { showToast('No hay nadie agendado para los próximos días', false); return; }
+  d.open = true;
+  d.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function pzMas(abrir){
+  var m = document.getElementById('pz-mas');
+  if (m) m.classList.toggle('hidden', !abrir);
+}
+/* «Nueva cotización» / «Cotizar»: el cotizador de vendedores en otra pestaña,
+   con el canal del vendedor (lo mismo que hace segNuevaCoti, sin cliente) */
+function pzCotizar(){
+  var v = panelSeller || (vistaComo ? sellerByCode(vistaComo) : null);
+  window.open(BASE_URL + '/?pro=zr' + (v && v.src ? '&src=' + v.src : ''), '_blank');
 }
 function setDashView(v){
   dashView=v; renderTabs();
@@ -8482,9 +8774,19 @@ function setDashView(v){
    Actividad y Manual ese `else` dibujaba la tabla de ventas encima de la
    pestaña abierta, y como filtra por dashView (que ahí vale 'backlog', no un
    vendedor) no encontraba filas: todo en cero y "Sin cotizaciones". */
+/* «WhatsApp al día» vive en su propio hueco (#pz-wa-slot), fuera de la lista.
+   Solo Hoy lo llena; cualquier otra vista lo vacía. La clase con-wa arma las
+   dos columnas del PC (WhatsApp a la izquierda, seguimiento a la derecha). */
+function pzSlotWA(html){
+  var s = document.getElementById('pz-wa-slot');
+  if (s) s.innerHTML = html || '';
+  var m = document.querySelector('#s-dash .dash-main');
+  if (m) m.classList.toggle('con-wa', !!html);
+}
 function renderVistaActual(){
   _contactados = null;   /* el filtro «Nunca contactados» se rearma con lo recién marcado */
   var v = dashView;
+  if (v !== 'seg') pzSlotWA('');
   if (v==='seg')            renderSeguimiento();
   else if (v==='elim')      renderEliminadas();
   else if (v==='dormidos')  renderDormidos();
@@ -9165,6 +9467,7 @@ async function loadDash() {
   COTIS = {};
   dashRows.forEach(function(x){ COTIS[x.id]=x; });
   await cargarConfigSeg();   /* corte y metas del día antes de armar la cola */
+  await waCargar();          /* «WhatsApp al día»: si falla, la sección no aparece */
   computeSegPend();
   setDashView(dashView);
   /* jobs diarios (fases 7 y 8), después de pintar: no bloquean la carga y
@@ -9505,12 +9808,248 @@ function renderSeguimiento(){
   st.style.display='block';
   /* las métricas del mes quedan como una línea discreta al final: el detalle
      vive en Actividad, y arriba solo va lo que hay que hacer hoy */
-  st.innerHTML = '<div class="hz-wrap">' + diaBanner + '</div>';
-  document.getElementById('dash-tbl').innerHTML = '<div class="hz-wrap">' + html +
-    '<div class="hz-mes" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos).">'+
-      'Este mes: '+clavesMes.length+' clientes ('+mesRows.length+' cotizaciones) · conversión '+convMes+'% ('+cliGan+' de '+cliDecididos+' decididos) · contacto en menos de 24 h '+rapidPct+'%</div></div>';
+  /* ── MARCO NUEVO (08-11-2026) ──
+     Arriba: el saludo y tres números. Abajo, DOS secciones que no se mezclan:
+     «WhatsApp al día» (lo que escribieron al 5558, sale de la revisión de
+     WhatsApp y NO cuenta para la meta) y «Seguimiento de cotizaciones» (la
+     lista de siempre, con sus metas). diaBanner queda sin usar: sus metas
+     pasaron a la cabecera de la sección de seguimiento. */
+  void diaBanner;
+  st.innerHTML = pzCabecera(metas);
+  var segHtml =
+    '<section class="pz-seg">'+
+      '<div class="pz-h">Seguimiento de cotizaciones<span>'+(diaVerde ? 'meta cumplida' : 'tu meta de hoy')+' · '+fmtM(enJuegoHoy)+' en juego</span></div>'+
+      (metas.length ? '<div class="hz-metas">'+metas.map(lineaMeta).join('')+'</div>' : '')+
+      html +
+      '<div class="hz-mes" title="Todo contado por CLIENTE, no por cotización. La conversión va sobre los clientes ya decididos (ganados + perdidos).">'+
+        'Este mes: '+clavesMes.length+' clientes ('+mesRows.length+' cotizaciones) · conversión '+convMes+'% ('+cliGan+' de '+cliDecididos+' decididos) · contacto en menos de 24 h '+rapidPct+'%</div>'+
+    '</section>';
+  var waHtml = waBloqueHtml();
+  pzSlotWA(waHtml ? '<section class="pz-wa-sec"><div class="pz-h">Lo primero<span>WhatsApp · no cuenta para la meta</span></div><div id="pz-wa">'+waHtml+'</div></section>' : '');
+  document.getElementById('dash-tbl').innerHTML = segHtml;
   segPintarDetalle(pares);
 }
+/* ── CABECERA DE HOY (08-11-2026): saludo + tres números ──
+   Los tres salen de las mismas filas del panel (dashRows, ya recortadas al
+   alcance de quien mira), sin pruebas ni eliminadas:
+   1) seguimiento de hoy = suma de las metas de la sección de seguimiento;
+   2) cotizado desde el lunes (total_alto, como el resto del panel);
+   3) cerrado en el mes (monto_cierre de las ganadas con fecha_concretada). */
+function pzM(n){
+  n = Math.round(n || 0);
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(1).replace('.', ',') + ' M';
+  return '$' + n.toLocaleString('es-CL');
+}
+function pzCabecera(metas){
+  var ahora = new Date();
+  var dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var h = ahora.getHours();
+  var saludo = h < 12 ? 'Buenos días' : (h < 20 ? 'Buenas tardes' : 'Buenas noches');
+  var hecho = 0, total = 0;
+  (metas || []).forEach(function(m){ hecho += Math.min(m.hecho, m.total); total += m.total; });
+  var pct = total ? Math.round(hecho / total * 100) : 100;
+  var lunes = addDias(hoyISO(), -((ahora.getDay() + 6) % 7));
+  var mes = hoyISO().slice(0, 7);
+  var semMonto = 0, semCli = {}, cerMonto = 0, cerN = 0;
+  dashRows.forEach(function(x){
+    if (x.eliminada || noCuenta(x)) return;
+    if (x.fecha_creacion && fechaBaseISO(x.fecha_creacion) >= lunes) {
+      semMonto += medidaRara(x) ? 0 : (x.total_alto || 0);
+      semCli[clientKey(x)] = true;
+    }
+    if (x.estado === 'ganado' && x.fecha_concretada && String(fechaBaseISO(x.fecha_concretada)).slice(0, 7) === mes) {
+      cerMonto += (x.monto_cierre || x.total_alto || 0); cerN++;
+    }
+  });
+  var nCli = Object.keys(semCli).length;
+  return '<div class="pz-cab"><div class="k">'+dias[ahora.getDay()]+' '+ahora.getDate()+' de '+meses[ahora.getMonth()]+'</div>'+
+           '<h1>'+saludo+', '+escA(quienMarca())+'</h1></div>'+
+         '<div class="pz-tres">'+
+           '<div><div class="l">Seguimiento de hoy</div><div class="v">'+hecho+' de '+total+'</div><div class="pz-mini"><i style="width:'+pct+'%"></i></div></div>'+
+           '<div><div class="l">Cotizado esta semana</div><div class="v">'+pzM(semMonto)+'</div><div class="s">'+nCli+(nCli === 1 ? ' cliente' : ' clientes')+'</div></div>'+
+           '<div><div class="l">Cerrado en '+meses[ahora.getMonth()]+'</div><div class="v">'+pzM(cerMonto)+'</div><div class="s">'+cerN+(cerN === 1 ? ' venta' : ' ventas')+'</div></div>'+
+         '</div>';
+}
+
+/* ══ WHATSAPP AL DÍA (08-11-2026) ══
+   Lo que la revisión de WhatsApp (skill revision-whatsapp) encontró sin
+   responder en el 5558. Vive en la tabla whatsapp_pendientes del Cotizador
+   (supabase-cotizador/whatsapp-al-dia.sql) y se carga con wa_cargar() desde
+   la sesión del admin. NO es seguimiento: no cuenta para la meta, no toca
+   seg_historial ni toques, y va en su propia sección. El panel no envía nada:
+   «Responder» abre WhatsApp con el mensaje sugerido y César lo manda él.
+   Si la tabla no existe todavía o quien mira no es del 5558, la sección no
+   aparece y el panel queda como siempre. */
+var WA = null;            /* { filas:[...], revision:'iso' } o null */
+var waAbiertos = {};      /* id → true/false, lo que el usuario abrió o cerró */
+var waVerTodos = false;
+var WA_MAX = 5;
+function waPuede(){ return isPanelAdmin() || !!(panelSeller && panelSeller.code === 'cesar'); }
+async function waCargar(){
+  WA = null;
+  if (!waPuede()) return;
+  try {
+    var h0 = new Date(); h0.setHours(0, 0, 0, 0);
+    var r = await sbClient.from('whatsapp_pendientes').select('*')
+      .or('estado.eq.pendiente,resuelto_at.gte.' + h0.toISOString())
+      .order('prioridad').order('espera_desde', { ascending:true, nullsFirst:false }).limit(300);
+    if (r.error) return;           /* tabla sin crear o sin permiso: no se muestra */
+    var filas = r.data || [];
+    var rev = '';
+    var u = await sbClient.from('whatsapp_pendientes').select('revision_at').order('revision_at', { ascending:false }).limit(1);
+    if (!u.error && u.data && u.data[0]) rev = u.data[0].revision_at;
+    WA = { filas:filas, revision:rev || null };
+  } catch (e) { WA = null; }
+}
+function waCuando(iso){
+  var d = new Date(iso); if (isNaN(d.getTime())) return '';
+  var hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  var dia = isoDate(d), hoy = hoyISO();
+  if (dia === hoy) return 'hoy ' + hm;
+  if (dia === addDias(hoy, -1)) return 'ayer ' + hm;
+  return fmtFechaCorta(dia) + ' ' + hm;
+}
+function waEspera(iso){
+  var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (!isFinite(min)) return '';
+  if (min < 60) return 'hace ' + min + ' min';
+  var h = Math.round(min / 60);
+  return h < 48 ? h + ' h' : Math.round(h / 24) + ' días';
+}
+var WA_HUECO = /\[[^\]]*\]/;
+function waIco(f){
+  if (f.tipo === 'plata') return pzSvg('venta');
+  if (f.tipo === 'promesa') return '<svg class="pz-i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>';
+  return '<svg class="pz-i" viewBox="0 0 24 24"><path d="M5 5h14v10H9l-4 4z"/></svg>';
+}
+function waFila(f, i){
+  var cls = f.tipo === 'responder' ? 'rojo' : (f.tipo === 'promesa' ? 'ambar' : 'verde');
+  var abierta = (f.id in waAbiertos) ? waAbiertos[f.id] : (i === 0 && f.tipo !== 'plata' && !!f.mensaje);
+  var em = (f.tipo === 'plata' && f.monto) ? pzM(f.monto) : (f.espera_desde ? waEspera(f.espera_desde) : '');
+  var id = escA(f.id);
+  var hueco = WA_HUECO.test(f.mensaje || '');
+  var h = '<div class="wa-fila '+cls+(abierta ? ' abierta' : '')+'">'+
+    '<div class="wa-fl" onclick="waToggle(\''+id+'\')">'+
+      '<div class="wa-ico">'+waIco(f)+'</div>'+
+      '<div class="wa-t"><div class="wa-n"><span>'+(f.pedido ? '<small>#'+escA(f.pedido)+'</small>' : '')+escA(f.cliente)+'</span>'+(em ? '<em>'+escA(em)+'</em>' : '')+'</div>'+
+        (f.contexto ? '<div class="wa-d">'+escA(f.contexto)+'</div>' : '')+
+        (f.cita ? '<div class="wa-q">«'+escA(f.cita)+'»</div>' : '')+
+      '</div></div>';
+  if (abierta && f.mensaje) {
+    h += '<textarea class="wa-msg" id="wa-m-'+id+'" rows="6" oninput="waRevisar(\''+id+'\')">'+escA(f.mensaje)+'</textarea>'+
+         '<div class="wa-av'+(hueco ? '' : ' hidden')+'" id="wa-av-'+id+'">Completa lo que está entre corchetes antes de enviarlo.</div>';
+  }
+  h += '<div class="wa-botones">';
+  if (f.tipo === 'plata') {
+    h += '<button class="pz-acc" style="flex:1" onclick="waMarcar(\''+id+'\',\'respondido\')">Llegó</button>'+
+         '<button class="wa-no" onclick="waMarcar(\''+id+'\',\'no_corresponde\')">No corresponde</button>';
+  } else {
+    if (f.mensaje && f.telefono)
+      h += '<a class="pz-acc wap'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" target="_blank" rel="noopener" href="#" onclick="return waResponder(this,\''+id+'\')">'+
+           '<svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg>Responder</a>';
+    else if (f.mensaje)
+      h += '<button class="pz-acc wap'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" onclick="waCopiar(\''+id+'\')" title="No tengo su número: copia el mensaje y búscalo en WhatsApp">Copiar mensaje</button>';
+    h += '<button class="pz-acc" onclick="waMarcar(\''+id+'\',\'respondido\')">Ya respondí</button>';
+    if (abierta) h += '<button class="wa-no" onclick="waMarcar(\''+id+'\',\'no_corresponde\')">No corresponde</button>';
+  }
+  return h + '</div></div>';
+}
+function waBloqueHtml(){
+  if (!WA) return '';
+  var h0 = new Date(); h0.setHours(0, 0, 0, 0);
+  var pend = WA.filas.filter(function(f){ return f.estado === 'pendiente'; });
+  var hechos = WA.filas.filter(function(f){
+    return (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
+  });
+  var sub = WA.revision ? 'Revisado ' + escA(waCuando(WA.revision)) + '<span class="wa-sub-l"> · lo que escribieron al 5558</span>' : 'Todavía no hay una revisión cargada';
+  var chip = pend.length ? '<span class="wa-estado">'+pend.length+' por responder</span>' : '<span class="wa-estado ok">Todo respondido</span>';
+  var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-ico wa-logo"><svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg></div>'+
+          '<div class="wa-t"><div class="wa-tit">WhatsApp al día</div><div class="wa-sub">'+sub+'</div></div>'+chip+'</div>';
+  if (pend.length) {
+    var plata = pend.reduce(function(a, f){ return a + (f.monto || 0); }, 0);
+    var espMax = pend.reduce(function(a, f){
+      if (f.tipo === 'plata' || !f.espera_desde) return a;
+      var t = new Date(f.espera_desde).getTime(); return (!a || t < a) ? t : a;
+    }, 0);
+    h += '<div class="wa-num">'+
+           '<div><b>'+(plata ? pzM(plata) : '—')+'</b><small>en juego en estos chats</small></div>'+
+           '<div><b>'+(espMax ? waEspera(new Date(espMax).toISOString()).replace('hace ', '') : '—')+'</b><small>la espera más larga</small></div>'+
+           '<div><b>'+hechos.length+' de '+(hechos.length + pend.length)+'</b><small>respondidos hoy</small></div>'+
+         '</div>';
+    var ver = waVerTodos ? pend : pend.slice(0, WA_MAX);
+    h += ver.map(waFila).join('');
+    if (pend.length > ver.length) {
+      var resto = pend.slice(WA_MAX).map(function(f){ return f.cliente; });
+      h += '<a class="wa-mas" href="#" onclick="waVerTodos=true;waRepintar();return false">Ver '+resto.length+' más · '+escA(resto.slice(0, 2).join(', '))+(resto.length > 2 ? '…' : '')+'</a>';
+    }
+  } else {
+    h += '<div class="wa-vacio">'+(WA.revision ? 'Nadie está esperando respuesta en el 5558.' : 'Cuando corra la revisión de WhatsApp, aquí aparece lo que hay que responder.')+'</div>';
+  }
+  if (hechos.length) {
+    h += '<details class="wa-hechos"><summary>Respondidos hoy · '+hechos.length+'</summary>'+
+      hechos.map(function(f){
+        return '<div class="wa-hecho"><span>'+escA(f.cliente)+'<small>'+(f.estado === 'no_corresponde' ? 'no correspondía' : 'respondido')+' '+escA(waCuando(f.resuelto_at))+'</small></span>'+
+               '<button class="pz-acc sec" onclick="waMarcar(\''+escA(f.id)+'\',\'pendiente\')">Deshacer</button></div>';
+      }).join('')+'</details>';
+  }
+  return h + '</div>';
+}
+function waRepintar(){
+  /* lo que se editó en cualquier mensaje abierto se guarda antes de redibujar */
+  document.querySelectorAll('#pz-wa textarea.wa-msg').forEach(function(t){
+    var f = waBuscar(t.id.replace('wa-m-', '')); if (f) f.mensaje = t.value;
+  });
+  var el = document.getElementById('pz-wa');
+  if (el) el.innerHTML = waBloqueHtml();
+}
+function waBuscar(id){ return WA && WA.filas.find(function(f){ return f.id === id; }); }
+function waToggle(id){
+  var f = waBuscar(id); if (!f) return;
+  var el = document.getElementById('wa-m-' + id);
+  if (el) f.mensaje = el.value;          /* lo editado no se pierde al cerrar */
+  var idx = WA.filas.filter(function(x){ return x.estado === 'pendiente'; }).indexOf(f);
+  var abierta = (id in waAbiertos) ? waAbiertos[id] : (idx === 0 && f.tipo !== 'plata' && !!f.mensaje);
+  waAbiertos[id] = !abierta;
+  waRepintar();
+}
+function waTexto(id){
+  var f = waBuscar(id); if (!f) return '';
+  var el = document.getElementById('wa-m-' + id);
+  if (el) f.mensaje = el.value;
+  return f.mensaje || '';
+}
+function waRevisar(id){
+  var hueco = WA_HUECO.test(waTexto(id));
+  var av = document.getElementById('wa-av-' + id); if (av) av.classList.toggle('hidden', !hueco);
+  var b = document.getElementById('wa-b-' + id); if (b) b.classList.toggle('apag', hueco);
+}
+function waResponder(a, id){
+  var f = waBuscar(id); if (!f) return false;
+  var txt = waTexto(id);
+  if (WA_HUECO.test(txt)) {
+    waAbiertos[id] = true; waRepintar();
+    showToast('Completa lo que está entre corchetes antes de enviarlo', false);
+    return false;
+  }
+  a.href = 'https://wa.me/' + f.telefono + '?text=' + encodeURIComponent(txt);
+  return true;
+}
+function waCopiar(id){
+  var txt = waTexto(id);
+  if (WA_HUECO.test(txt)) { waAbiertos[id] = true; waRepintar(); showToast('Completa lo que está entre corchetes antes de copiarlo', false); return; }
+  try { navigator.clipboard.writeText(txt).then(function(){ showToast('Mensaje copiado: búscalo en WhatsApp y pégalo', true); }); }
+  catch (e) { showToast('No se pudo copiar', false); }
+}
+async function waMarcar(id, estado){
+  var r = await sbClient.rpc('wa_marcar', { p_id:id, p_estado:estado });
+  if (r.error) { showToast('No se pudo guardar: ' + r.error.message, false); return; }
+  var f = waBuscar(id);
+  if (f) { f.estado = estado; f.resuelto_at = estado === 'pendiente' ? null : new Date().toISOString(); }
+  waRepintar();
+  showToast(estado === 'pendiente' ? 'Volvió a la lista' : 'Listo, salió de la lista', true);
+}
+
 /* salta al encabezado del bloque 1 o 2 desde el recuadro "Tu meta de hoy",
    con un destello para que se note dónde quedó parado */
 function scrollToBloque(n){
