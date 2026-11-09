@@ -691,6 +691,33 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .mbtn:hover { border-color:var(--ac);background:var(--bg3); }
 .mbtn.pri { background:var(--ac);color:white;border-color:var(--ac);text-align:center;letter-spacing:.5px; }
 .mbtn.cancel { border:none;color:var(--tm);text-align:center;font-size:14px; }
+/* ── FICHA DE VENTA (09-11-2026) ── */
+.fv-sub { font-size:13px;color:var(--tm);margin:-8px 0 6px; }
+.fv-lbl { font-size:11.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--acd);margin:14px 2px 6px; }
+.fv-lbl span { font-weight:400;text-transform:none;letter-spacing:0;color:var(--tm); }
+.fv-in { width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--bd);border-radius:9px;font-size:15px;font-family:'Jost',sans-serif;background:white;color:var(--tx); }
+.fv-in:focus { outline:none;border-color:var(--ac); }
+.fv-items { resize:vertical;line-height:1.4; }
+.fv-tiers { display:flex;flex-direction:column;gap:6px; }
+.fv-tier { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--bd);border-radius:9px;background:white;font:14px 'Jost',sans-serif;color:var(--tx);cursor:pointer;text-align:left; }
+.fv-tier b { font-weight:600;white-space:nowrap; }
+.fv-tier.on { border-color:var(--ac);background:#F5EBDD;box-shadow:inset 0 0 0 1px var(--ac); }
+.fv-segs { display:flex;gap:6px;margin-top:6px; }
+.fv-seg { flex:1;padding:9px 6px;border:1px solid var(--bd);border-radius:9px;background:white;font:14px 'Jost',sans-serif;color:var(--tx);cursor:pointer;line-height:1.2; }
+.fv-seg.on { background:var(--ac);border-color:var(--ac);color:white; }
+.fv-row1 { display:flex;align-items:center;gap:10px;margin-top:8px;font-size:14px; }
+.fv-row1 span { flex:1; }
+.fv-row1 .fv-in { width:130px;flex:none;text-align:right; }
+.fv-row2 { display:flex;gap:6px;margin-top:8px; }
+.fv-row2 .fv-in { flex:1;min-width:0; }
+.fv-nota { font-size:12px;color:var(--tm);margin:4px 2px 0; }
+.fv-tot { margin:14px 0 12px;padding:10px 12px;border-radius:10px;background:var(--bg,#FAF8F2);border:1px solid var(--bd);font-size:14px; }
+.fv-tot div { display:flex;justify-content:space-between;gap:8px;padding:2px 0; }
+.fv-tot .t { font-weight:700;font-size:16px;border-top:1px solid var(--bd);margin-top:4px;padding-top:6px; }
+.fv-tot .s { color:var(--tm);font-size:13px; }
+.fv-bub { background:#DCF8C6;border-radius:9px 0 9px 9px;padding:10px 12px;font-size:14px;line-height:1.45;color:#111;margin-bottom:12px;word-wrap:break-word; }
+.fv-res { font-size:14px;line-height:1.45;margin:8px 0 0; }
+.fv-sin { display:block;width:100%;margin-top:6px;border:none;background:none;color:var(--tm);font:12.5px 'Jost',sans-serif;text-decoration:underline;cursor:pointer; }
 .mresp-h { font-size:11.5px;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;margin:12px 2px 6px; }
 /* lo que contestó el cliente a ese toque, al lado de su fecha */
 .tq-resp { display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font-size:11px;font-weight:600;background:var(--bg3);color:var(--tm); }
@@ -10884,7 +10911,7 @@ function hoyFila(g, cls){
         '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
         (puedePasar0141(g) ? '<button class="hz-l b0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">No nos escribió → 0141</button>' : '')+
         (pasado0141(g) ? '<button class="hz-l" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
-        '<button class="hz-l ok" onclick="updateEstado(\''+x.id+'\',\'ganado\')">Ganada</button>'+
+        '<button class="hz-l ok" onclick="fichaUI(\''+x.id+'\')">'+fvBotonTxt(x, true)+'</button>'+
         '<button class="hz-l mal" onclick="segPerderUI(\''+x.id+'\')">Perdida</button>'+
         '<button class="hz-l" onclick="hoyVerFicha()">'+(hoyFicha?'Ocultar ficha':'Ficha completa')+'</button>'+
       '</div>'+
@@ -11020,7 +11047,7 @@ function segClientCard(g, cls){
       (puedePasar0141(g) ? '<button class="sbtn p0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">📱 No nos escribió → 0141</button>' : '')+
       (pasado0141(g) ? '<button class="sbtn" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
       wa+
-      '<button class="sbtn win" onclick="updateEstado(\''+x.id+'\',\'ganado\')">💰 Ganada</button>'+
+      '<button class="sbtn win" onclick="fichaUI(\''+x.id+'\')">'+fvBotonTxt(x)+'</button>'+
       '<button class="sbtn lost" onclick="segPerderUI(\''+x.id+'\')">✗ Perdida</button>'+
     '</div></div>';
 }
@@ -11423,6 +11450,342 @@ async function ventaGuardar(){
   if (!res.data || !res.data.length){ showToast('No se pudo guardar — falta el permiso "anon insert" en Supabase', false); return; }
   pClose(); showToast('Venta registrada ✓', true); loadDash();
 }
+
+/* ── FICHA DE VENTA (etapa 1, 09-11-2026, boceto aprobado) ──
+   «Ganada» ya no pide solo un monto: arma la ficha de venta a partir de la
+   cotización (productos y medidas del link, precio del nivel de madera), se
+   le suman pago, envío y documento, y el resumen se le manda al cliente por
+   WhatsApp para que lo revise. Recién cuando el cliente confirma, César toca
+   «Sí, confirmó» y la cotización queda ganada, con el monto real.
+   Todo vive en la columna `ficha_venta` (jsonb, supabase-cotizador/
+   ficha-venta.sql): estado borrador → enviada → confirmada, y en `hist`
+   cada paso con fecha y quién. monto_cierre sigue siendo SOLO productos
+   (con el descuento por transferencia, sin envío), como siempre se anotó,
+   para que las cifras de antes y después se puedan comparar.
+   Etapa 2 (pendiente): la ficha confirmada llega a la Gestión «por cargar».
+   El mensaje no lleva N° de pedido: ese lo pone la Gestión al cargarla. */
+var FV = null, FV_ID = null, FV_VISTA = 'ficha';
+var FV_SING = { cubierta:'Cubierta', repisa:'Repisa', peldano:'Peldaño', granero:'Puerta granero',
+  maciza:'Puerta sin vidrio', vidrios:'Puerta con vidrio', revestimiento:'Revestimiento',
+  revlibre:'Revestimiento a medida', mesa:'Mesa', banca:'Banca', pcocina:'Puerta de mueble de cocina' };
+function fvPctTransf(){
+  var g = (typeof VALORES !== 'undefined' && VALORES && VALORES.generales) || {};
+  return (g.transferencia > 0 && g.transferencia < 0.5) ? g.transferencia : 0.05;
+}
+function fvPesos(v){ var n = parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10); return isNaN(n) ? 0 : n; }
+function fvNueva(x){
+  return { v:1, estado:'borrador', cot:x.numero||'', items:'', tier:'', madera:'', lista:0,
+    pago:'transferencia', envio:{ tipo:'starken', comuna:'', cod:0, kg:0, monto:0 },
+    doc:{ tipo:'boleta', rut:'', razon:'' }, direccion:'', abono_pct:70, hist:[] };
+}
+/* las cuentas, siempre desde la ficha: nunca se guarda un total escrito a mano */
+function fvCalc(f){
+  var lista = fvPesos(f.lista);
+  var pct = fvPctTransf();
+  var productos = f.pago === 'transferencia' ? Math.round(lista * (1 - pct)) : lista;
+  var envio = f.envio.tipo === 'retiro' ? 0 : fvPesos(f.envio.monto);
+  var total = productos + envio;
+  var abono = f.abono_pct === 100 ? total : Math.round(total * f.abono_pct / 100);
+  return { lista:lista, pct:pct, productos:productos, envio:envio, total:total, abono:abono, saldo:total - abono };
+}
+/* lo que se cotizó, en palabras, desde la fila del link (quote_links.data) */
+function fvItemsDesde(d, x){
+  var p = String((d && d.p) || x.producto || '');
+  if (!d || !Array.isArray(d.rows) || !d.rows.length || p.indexOf('+') !== -1 || d.combo) return prodNombre(x.producto);
+  var nom = FV_SING[p] || prodNombre(p);
+  if (p === 'mesa' && d.mesa && (d.mesa.nombre || d.mesa.modelo)) nom = d.mesa.nombre || d.mesa.modelo;
+  var esp = d.esp ? ' · ' + d.esp + ' cm' : '';
+  var lin = d.rows.filter(function(r){ return r && r.lg; }).map(function(r, i){
+    var mod = (Array.isArray(d.mods) && d.mods[i]) ? ' ' + d.mods[i] : '';
+    return (r.ca || 1) + ' × ' + nom + mod + ' ' + r.lg + (r.an ? ' × ' + r.an : '') + ' cm' + esp;
+  });
+  if (p === 'mesa' && d.mesa && d.mesa.baseTipo){
+    lin.push('Base de ' + (d.mesa.baseTipo === 'madera' ? 'madera' : 'fierro') + (d.mesa.color ? ', ' + String(d.mesa.color).toLowerCase() : ''));
+  }
+  return lin.join('\n');
+}
+/* kilos para Starken, con las mismas reglas que la cotización (stkKgActual);
+   0 si el producto no es de los simples: entonces el envío se escribe a mano */
+function fvKg(d){
+  if (!d || !Array.isArray(d.rows) || d.combo) return 0;
+  var p = d.p;
+  var m2 = d.rows.reduce(function(a, r){ return a + ((r.lg||0)/100) * ((r.an||0)/100) * (r.ca||1); }, 0);
+  if (['cubierta','repisa','peldano','pcocina','granero','maciza','vidrios'].indexOf(p) !== -1) return Math.round(m2 * STK_KG_M2 * stkFactorEspesor(p) * 10) / 10;
+  if (p === 'mesa' && d.mesa){
+    var n = d.rows.reduce(function(a, r){ return a + (r.ca||1); }, 0) || 1;
+    var kgBase = STK_KG_BASE[d.mesa.nombre] || STK_KG_BASE_TIPO[d.mesa.baseTipo === 'madera' ? 'madera' : 'fierro'];
+    return Math.round((m2 * STK_KG_M2 + kgBase * n) * 10) / 10;
+  }
+  return 0;
+}
+function fvToken(x){ var m = /[?&]s=([^&#]+)/.exec(x.link || ''); return m ? m[1] : null; }
+
+/* el botón de la tarjeta: dice en qué va la ficha */
+function fvBotonTxt(x, corto){
+  var f = x.ficha_venta;
+  if (f && f.estado === 'enviada') return corto ? 'Ficha enviada' : '📝 Ficha enviada · ¿confirmó?';
+  if (f && f.estado === 'borrador') return corto ? 'Ficha a medias' : '📝 Ficha a medias';
+  return corto ? 'Vendida' : '💰 Vendida — armar ficha';
+}
+function fichaUI(id){
+  var x = COTIS[id]; if (!x) return;
+  FV_ID = id;
+  var f = x.ficha_venta;
+  if (f && f.estado === 'enviada'){ FV = JSON.parse(JSON.stringify(f)); FV_VISTA = 'confirmar'; fvPintar(); return; }
+  FV = (f && f.estado === 'borrador') ? JSON.parse(JSON.stringify(f)) : fvNueva(x);
+  FV_VISTA = 'ficha';
+  fvPintar();
+  if (!FV.items) fvCargarCotizacion(id);
+}
+/* trae del link lo que se cotizó (filas, medidas, comuna) y cotiza el envío */
+async function fvCargarCotizacion(id){
+  var x = COTIS[id], tok = x && fvToken(x);
+  var d = null;
+  if (tok){
+    try {
+      var r = await sbClient.from('quote_links').select('data').eq('token', tok).maybeSingle();
+      if (!r.error && r.data) d = r.data.data;
+    } catch(e){ console.warn('ficha: no se pudo leer el link', e); }
+  }
+  if (FV_ID !== id || !FV) return;          /* cerró o abrió otra mientras cargaba */
+  if (!FV.items) FV.items = fvItemsDesde(d, x);
+  if (d && d.com && d.com.cod && !FV.envio.comuna){
+    FV.envio.comuna = stkTitulo(d.com.c); FV.envio.cod = Number(d.com.cod);
+  }
+  FV.envio.kg = fvKg(d);
+  if (FV_VISTA === 'ficha') fvPintar();
+  if (FV.envio.tipo === 'starken' && FV.envio.cod && FV.envio.kg && !FV.envio.monto) fvCotizarEnvio();
+}
+function fvCotizarEnvio(){
+  var id = FV_ID, cod = FV.envio.cod, kg = FV.envio.kg;
+  var out = document.getElementById('fv-stk');
+  if (out) out.textContent = 'Consultando a Starken…';
+  stkPedir({ accion:'tarifa', destino:cod, kilos:kg }).then(function(res){
+    if (FV_ID !== id || !FV) return;
+    var t = res.ok && !res.d.error ? ((res.d.tarifas||[]).find(function(t){ return /DOMICILIO/i.test(t.entrega); }) ||
+                                      (res.d.tarifas||[]).find(function(t){ return /AGENCIA/i.test(t.entrega); })) : null;
+    var o = document.getElementById('fv-stk');
+    if (!t){ if (o) o.textContent = stkMensajeError(res.status) + ' — escríbelo a mano'; return; }
+    FV.envio.monto = Math.round(t.total);
+    var inp = document.getElementById('fv-env-monto'); if (inp) inp.value = FV.envio.monto;
+    if (o) o.textContent = 'Starken a domicilio, ' + _n(kg) + ' kg' + (/AGENCIA/i.test(t.entrega) ? ' (solo agencia)' : '');
+    fvTotales();
+  }).catch(function(){ var o = document.getElementById('fv-stk'); if (o) o.textContent = 'Starken no respondió — escríbelo a mano'; });
+}
+
+function fvSeg(campo, valor, txt, actual){
+  return '<button type="button" class="fv-seg'+(actual === valor ? ' on' : '')+'" onclick="fvSet(\''+campo+'\',\''+valor+'\')">'+txt+'</button>';
+}
+function fvSet(campo, valor){
+  if (!FV) return;
+  if (campo === 'tier'){
+    var x = COTIS[FV_ID] || {};
+    FV.tier = valor;
+    FV.lista = Math.round(x['total_' + valor] || 0);
+    var mads = MADERA_FOTOS[valor] || [];
+    FV.madera = mads.length === 1 ? mads[0].n : '';
+  }
+  else if (campo === 'madera') FV.madera = valor;
+  else if (campo === 'pago') FV.pago = valor;
+  else if (campo === 'envio'){
+    FV.envio.tipo = valor;
+    if (valor === 'starken' && FV.envio.cod && FV.envio.kg && !FV.envio.monto){ fvPintar(); fvCotizarEnvio(); return; }
+  }
+  else if (campo === 'doc') FV.doc.tipo = valor;
+  else if (campo === 'abono') FV.abono_pct = valor === '100' ? 100 : 70;
+  fvPintar();
+}
+/* los campos de texto se leen sin repintar (si no, se pierde el cursor) */
+function fvLeer(){
+  if (!FV) return;
+  var v = function(id){ var el = document.getElementById(id); return el ? el.value : null; };
+  if (v('fv-items') !== null) FV.items = v('fv-items');
+  if (v('fv-lista') !== null) FV.lista = fvPesos(v('fv-lista'));
+  if (v('fv-env-monto') !== null) FV.envio.monto = fvPesos(v('fv-env-monto'));
+  if (v('fv-env-comuna') !== null) FV.envio.comuna = v('fv-env-comuna').trim();
+  if (v('fv-dir') !== null) FV.direccion = v('fv-dir').trim();
+  if (v('fv-rut') !== null) FV.doc.rut = v('fv-rut').trim();
+  if (v('fv-razon') !== null) FV.doc.razon = v('fv-razon').trim();
+}
+function fvTotales(){
+  fvLeer();
+  var el = document.getElementById('fv-tot'); if (!el || !FV) return;
+  var c = fvCalc(FV);
+  var envTxt = FV.envio.tipo === 'retiro' ? 'Retira en Villarrica' : (FV.envio.tipo === 'starken' ? 'Envío Starken' : 'Envío');
+  el.innerHTML =
+    '<div><span>Productos'+(FV.pago === 'transferencia' ? ' (−'+Math.round(c.pct*100)+' %)' : '')+'</span><span>'+fmt(c.productos)+'</span></div>'+
+    '<div><span>'+envTxt+'</span><span>'+(FV.envio.tipo === 'retiro' ? '—' : fmt(c.envio))+'</span></div>'+
+    '<div class="t"><span>Total</span><span>'+fmt(c.total)+'</span></div>'+
+    (FV.abono_pct === 100
+      ? '<div class="s"><span>Paga todo al confirmar</span><span>'+fmt(c.total)+'</span></div>'
+      : '<div class="s"><span>Abono 70 %</span><span>'+fmt(c.abono)+'</span></div>'+
+        '<div class="s"><span>Saldo 30 % antes del despacho</span><span>'+fmt(c.saldo)+'</span></div>');
+}
+function fvPintar(){
+  if (!FV) return;
+  var x = COTIS[FV_ID] || {};
+  var box = document.getElementById('pmodal');
+  var top = box ? box.scrollTop : 0;
+  if (FV_VISTA === 'mensaje') pModal(fvHtmlMensaje(x));
+  else if (FV_VISTA === 'confirmar') pModal(fvHtmlConfirmar(x));
+  else { pModal(fvHtmlFicha(x)); fvTotales(); }
+  if (box) box.scrollTop = top;
+}
+function fvHtmlFicha(x){
+  var f = FV;
+  var tiers = V_TIERS.map(function(t){
+    var tot = Math.round(x['total_' + t[0]] || 0);
+    if (!tot) return '';
+    return '<button type="button" class="fv-tier'+(f.tier === t[0] ? ' on' : '')+'" onclick="fvSet(\'tier\',\''+t[0]+'\')">'+
+      '<span>'+escA(t[1])+'</span><b>'+fmt(tot)+'</b></button>';
+  }).join('');
+  var mads = f.tier ? (MADERA_FOTOS[f.tier] || []) : [];
+  var madSel = mads.length > 1
+    ? '<div class="fv-segs">'+mads.map(function(m){ return fvSeg('madera', m.n, m.n, f.madera); }).join('')+'</div>'
+    : '';
+  var envio = f.envio.tipo === 'retiro' ? '' :
+    '<div class="fv-row2">'+
+      '<input class="fv-in" id="fv-env-comuna" placeholder="Comuna" value="'+escA(f.envio.comuna)+'" oninput="fvTotales()">'+
+      '<input class="fv-in" id="fv-env-monto" inputmode="numeric" placeholder="Valor envío" value="'+(f.envio.monto||'')+'" oninput="fvTotales()">'+
+    '</div>'+
+    (f.envio.tipo === 'starken' ? '<div class="fv-nota" id="fv-stk">'+
+      (f.envio.cod && f.envio.kg ? (f.envio.monto ? 'Cotizado con Starken, '+_n(f.envio.kg)+' kg · <a href="#" onclick="event.preventDefault();fvLeer();fvCotizarEnvio()">volver a cotizar</a>' : '')
+                                 : 'Sin comuna o sin peso en la cotización: escribe el valor de Starken.')+'</div>' : '');
+  var fact = f.doc.tipo !== 'factura' ? '' :
+    '<div class="fv-row2">'+
+      '<input class="fv-in" id="fv-rut" placeholder="RUT empresa" value="'+escA(f.doc.rut)+'" oninput="fvLeer()">'+
+      '<input class="fv-in" id="fv-razon" placeholder="Razón social" value="'+escA(f.doc.razon)+'" oninput="fvLeer()">'+
+    '</div>';
+  return '<h3>Ficha de venta · '+escA(x.cliente||'')+'</h3>'+
+    '<div class="fv-sub">'+escA(x.numero||'')+(x.contacto ? ' · '+escA(x.contacto) : '')+'</div>'+
+    '<div class="fv-lbl">Productos <span>de la cotización</span></div>'+
+    '<textarea class="fv-in fv-items" id="fv-items" rows="3" placeholder="Cargando lo cotizado…" oninput="fvLeer()">'+escA(f.items)+'</textarea>'+
+    '<div class="fv-lbl">Madera</div>'+
+    '<div class="fv-tiers">'+tiers+'</div>'+madSel+
+    (f.tier ? '<div class="fv-row1"><span>Precio de los productos</span><input class="fv-in" id="fv-lista" inputmode="numeric" value="'+(f.lista||'')+'" oninput="fvTotales()"></div>'+
+              '<div class="fv-nota">El de la cotización, con tarjeta. Cámbialo solo si acordaron otro.</div>' : '')+
+    '<div class="fv-lbl">Pago</div>'+
+    '<div class="fv-segs">'+fvSeg('pago','transferencia','Transferencia −'+Math.round(fvPctTransf()*100)+' %',f.pago)+fvSeg('pago','link','Link de pago',f.pago)+'</div>'+
+    '<div class="fv-segs">'+fvSeg('abono','70','Abono 70 %',String(f.abono_pct))+fvSeg('abono','100','Paga todo',String(f.abono_pct))+'</div>'+
+    '<div class="fv-lbl">Envío</div>'+
+    '<div class="fv-segs">'+fvSeg('envio','starken','Starken',f.envio.tipo)+fvSeg('envio','retiro','Retira en Villarrica',f.envio.tipo)+fvSeg('envio','otro','Otro',f.envio.tipo)+'</div>'+
+    envio+
+    '<div class="fv-lbl">Documento</div>'+
+    '<div class="fv-segs">'+fvSeg('doc','boleta','Boleta',f.doc.tipo)+fvSeg('doc','factura','Factura',f.doc.tipo)+'</div>'+
+    fact+
+    (f.envio.tipo === 'retiro' ? '' : '<input class="fv-in" id="fv-dir" placeholder="Dirección de entrega" value="'+escA(f.direccion)+'" oninput="fvLeer()" style="margin-top:8px">')+
+    '<div class="fv-tot" id="fv-tot"></div>'+
+    '<button class="mbtn pri" onclick="fvVerMensaje()">Ver mensaje para el cliente</button>'+
+    '<button class="mbtn" style="text-align:center" onclick="fvGuardarBorrador()">Guardar sin mandar</button>'+
+    '<button class="mbtn cancel" onclick="fvCerrar()">Cancelar</button>'+
+    '<button class="fv-sin" onclick="fvCerrar();updateEstado(\''+FV_ID+'\',\'ganado\')">Ya está confirmada: marcar ganada sin ficha</button>';
+}
+/* lo que falta para poder mandarla; '' si está completa */
+function fvFalta(f){
+  if (!String(f.items||'').trim()) return 'Escribe qué productos son';
+  if (!f.tier) return 'Elige la madera';
+  if (!f.madera) return 'Elige cuál madera del grupo';
+  if (!(fvPesos(f.lista) > 0)) return 'Falta el precio de los productos';
+  if (f.envio.tipo !== 'retiro' && !(fvPesos(f.envio.monto) > 0)) return 'Falta el valor del envío (o elige «Retira en Villarrica»)';
+  if (f.envio.tipo !== 'retiro' && !String(f.envio.comuna||'').trim()) return 'Falta la comuna de entrega';
+  if (f.doc.tipo === 'factura' && (!f.doc.rut || !f.doc.razon)) return 'Para factura faltan RUT y razón social';
+  return '';
+}
+function fvMensaje(x, f){
+  var c = fvCalc(f);
+  var nom = waNombre(x);
+  var envTxt = f.envio.tipo === 'retiro' ? 'Retiro en el taller de Villarrica: sin costo'
+             : (f.envio.tipo === 'starken' ? 'Envío Starken a ' : 'Envío a ') + (f.envio.comuna || '') + ': ' + fmt(c.envio);
+  var pagoTxt = f.abono_pct === 100
+    ? 'Pago total al confirmar: ' + fmt(c.total)
+    : 'Abono 70 %: ' + fmt(c.abono) + '\nSaldo 30 % antes del despacho: ' + fmt(c.saldo);
+  var docTxt = f.doc.tipo === 'factura'
+    ? 'Factura a nombre de ' + f.doc.razon + ', RUT ' + f.doc.rut + '.'
+    : 'Boleta a nombre de ' + (x.cliente || '').trim() + '.';
+  var dirTxt = (f.envio.tipo !== 'retiro' && f.direccion) ? '\nDirección de entrega: ' + f.direccion + '.' : '';
+  return 'Hola' + (nom ? ' ' + nom : '') + ', te dejo el resumen de tu pedido para que lo revises:\n\n' +
+    String(f.items).trim() + '\nMadera: ' + f.madera + '\n\n' +
+    'Productos: ' + fmt(c.productos) + (f.pago === 'transferencia' ? ' (con ' + Math.round(c.pct*100) + ' % por transferencia)' : '') + '\n' +
+    envTxt + '\n*Total: ' + fmt(c.total) + '*\n\n' +
+    pagoTxt + '\n\n' +
+    docTxt + dirTxt + '\nPlazo de fabricación: 7 a 15 días hábiles.\n\n' +
+    '¿Está todo bien? Si me confirmas, lo pasamos a producción.';
+}
+function fvVerMensaje(){
+  fvLeer();
+  var falta = fvFalta(FV);
+  if (falta){ showToast(falta, false); return; }
+  FV_VISTA = 'mensaje'; fvPintar();
+}
+function fvHtmlMensaje(x){
+  var tel = waPhone(x.contacto);
+  return '<h3>Mensaje para '+escA(waNombre(x) || x.cliente || 'el cliente')+'</h3>'+
+    '<div class="fv-bub">'+escA(fvMensaje(x, FV)).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/\n/g,'<br>')+'</div>'+
+    (tel ? '<button class="mbtn pri" onclick="fvEnviar(true)">Abrir WhatsApp y marcar enviada</button>'
+         : '<div class="fv-nota" style="margin-bottom:8px">Sin teléfono válido: copia el mensaje y mándalo por donde le escribes.</div>')+
+    '<button class="mbtn" style="text-align:center" onclick="fvEnviar(false)">Copiar mensaje y marcar enviada</button>'+
+    '<button class="mbtn cancel" onclick="FV_VISTA=\'ficha\';fvPintar()">← Volver a la ficha</button>';
+}
+function fvPaso(f, que){
+  f.hist = Array.isArray(f.hist) ? f.hist : [];
+  f.hist.push({ t:new Date().toISOString(), que:que, por:quienMarca() });
+}
+/* guarda la ficha en la cotización; devuelve true si quedó */
+async function fvGuardar(f, okMsg){
+  var c = fvCalc(f);
+  f.calc = { productos:c.productos, envio:c.envio, total:c.total, abono:c.abono, saldo:c.saldo, pct_transf:c.pct };
+  var ok = await segSave(FV_ID, { ficha_venta:f }, okMsg);
+  if (!ok) showToast('No se guardó la ficha. ¿Ya se corrió supabase-cotizador/ficha-venta.sql?', false);
+  return ok;
+}
+async function fvGuardarBorrador(){
+  fvLeer();
+  var f = JSON.parse(JSON.stringify(FV));
+  f.estado = 'borrador'; fvPaso(f, 'borrador');
+  if (await fvGuardar(f, 'Ficha guardada — la retomas desde la tarjeta')) fvCerrar();
+}
+/* el WhatsApp se abre DENTRO del click (si espera al guardado, el navegador
+   lo bloquea como ventana emergente); la ficha se guarda justo después */
+async function fvEnviar(conWa){
+  var x = COTIS[FV_ID] || {};
+  var msg = waParrafos(fvMensaje(x, FV));
+  if (conWa){
+    var tel = waPhone(x.contacto);
+    window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(msg), '_blank');
+  } else {
+    try { await navigator.clipboard.writeText(msg); } catch(e){ prompt('Copia el mensaje:', msg); }
+  }
+  var f = JSON.parse(JSON.stringify(FV));
+  f.estado = 'enviada'; f.enviada = new Date().toISOString(); fvPaso(f, conWa ? 'enviada_wa' : 'enviada_copia');
+  if (await fvGuardar(f, conWa ? 'Ficha enviada — cuando confirme, toca «Ficha enviada»' : 'Mensaje copiado y ficha enviada')) fvCerrar();
+}
+function fvHtmlConfirmar(x){
+  var f = FV, c = fvCalc(f);
+  return '<h3>¿Confirmó '+escA(waNombre(x) || x.cliente || 'el cliente')+'?</h3>'+
+    '<div class="fv-sub">Ficha enviada el '+fmtFechaCorta(f.enviada || '')+'</div>'+
+    '<div class="fv-res">'+escA(f.items).replace(/\n/g,'<br>')+'<br>Madera: '+escA(f.madera)+'</div>'+
+    '<div class="fv-tot">'+
+      '<div class="t"><span>Total</span><span>'+fmt(c.total)+'</span></div>'+
+      (f.abono_pct === 100 ? '<div class="s"><span>Paga todo</span><span>'+fmt(c.total)+'</span></div>'
+                           : '<div class="s"><span>Abono 70 %</span><span>'+fmt(c.abono)+'</span></div>')+
+    '</div>'+
+    '<button class="mbtn pri" onclick="fvConfirmar()">Sí, confirmó — venta ganada</button>'+
+    '<button class="mbtn" style="text-align:center" onclick="fvCorregir()">Pidió un cambio: corregir la ficha</button>'+
+    (waPhone(x.contacto) ? '<button class="mbtn" style="text-align:center" onclick="FV_VISTA=\'mensaje\';fvPintar()">Volver a mandar el mensaje</button>' : '')+
+    '<button class="mbtn cancel" onclick="fvCerrar()">Todavía no</button>';
+}
+function fvCorregir(){ FV.estado = 'borrador'; FV_VISTA = 'ficha'; fvPintar(); }
+async function fvConfirmar(){
+  var f = JSON.parse(JSON.stringify(FV));
+  var c = fvCalc(f);
+  f.estado = 'confirmada'; f.confirmada = new Date().toISOString(); fvPaso(f, 'confirmada');
+  f.calc = { productos:c.productos, envio:c.envio, total:c.total, abono:c.abono, saldo:c.saldo, pct_transf:c.pct };
+  var id = FV_ID;
+  fvCerrar();
+  var ok = await cerrarGanada(id, c.productos, { ficha_venta:f }, '¡Venta confirmada! 🎉');
+  if (!ok) showToast('No se guardó. ¿Ya se corrió supabase-cotizador/ficha-venta.sql?', false);
+}
+function fvCerrar(){ FV = null; FV_ID = null; FV_VISTA = 'ficha'; pClose(); }
 /* meses con al menos una cotización, más reciente primero (para el selector) */
 var MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function fmtMesLabel(ym){
@@ -11727,7 +12090,23 @@ async function updateEstado(id, estado) {
     if (m === undefined) { renderVistaActual(); return; }   /* canceló el monto: repinta donde está */
     /* la fecha del cierre es la única forma de saber después cuántos días
        tarda una venta, y con eso hasta cuándo vale la pena insistir */
-    segSave(id, {estado:'ganado', monto_cierre:m, fecha_concretada:new Date().toISOString()}, '¡Venta ganada! 🎉');
+    cerrarGanada(id, m, null, '¡Venta ganada! 🎉');
+    return;
+  }
+  if (estado === 'perdida') { renderVistaActual(); segPerderUI(id); return; }
+  /* volver a "enviada" deshace una venta: la fecha de cierre ya no corresponde */
+  segSave(id, {estado:estado, seg_proxima:null, fecha_concretada:null}, 'Estado actualizado');
+}
+/* Marca la venta y hace lo que siempre venía detrás. La usan el «Ganada» de
+   siempre (con el monto del prompt) y la ficha de venta al confirmar el
+   cliente (09-11-2026). `extra` son columnas que se guardan en el mismo update. */
+async function cerrarGanada(id, m, extra, okMsg){
+  var x = COTIS[id] || {};
+  var upd = {estado:'ganado', monto_cierre:m, fecha_concretada:new Date().toISOString()};
+  if (extra) Object.keys(extra).forEach(function(k){ upd[k] = extra[k]; });
+  var ok = await segSave(id, upd, okMsg);
+  if (!ok) return false;
+  {
     /* ── ¿Y LAS OTRAS COTIZACIONES ABIERTAS DEL CLIENTE? ──
        Marcar la venta cierra al cliente entero en el seguimiento, y a veces
        una de las otras es un proyecto APARTE que sigue vivo (Carolina Hito:
@@ -11764,11 +12143,8 @@ async function updateEstado(id, estado) {
       if (r && r.error) console.warn('canal (¿falta ejecutar el SQL?):', r.error.message);
       else if (COTIS[id]) COTIS[id].canal = canal;
     });
-    return;
   }
-  if (estado === 'perdida') { renderVistaActual(); segPerderUI(id); return; }
-  /* volver a "enviada" deshace una venta: la fecha de cierre ya no corresponde */
-  segSave(id, {estado:estado, seg_proxima:null, fecha_concretada:null}, 'Estado actualizado');
+  return true;
 }
 async function deleteQuote(id, numero) {
   var motivo = prompt('¿Por qué eliminas la cotización ' + numero + '?\n(Queda registrada para el administrador)');
