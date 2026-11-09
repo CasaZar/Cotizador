@@ -60,9 +60,17 @@ main .wrap{padding-block:14px 40px}
 .aviso-per{background:var(--terra-suave);color:var(--terra);border-radius:8px;padding:8px 10px;font-size:.85rem;margin:8px 0}
 .vacio{padding:40px 0;color:var(--muted);text-align:center}
 .mas{display:block;margin:18px auto 0;font:inherit;padding:10px 18px;border-radius:999px;border:1px solid var(--verde);color:var(--verde);background:transparent;cursor:pointer}
+[hidden]{display:none!important}
 .bloqueo{max-width:420px;margin:12vh auto 0;text-align:center;padding-inline:16px}
 .bloqueo h2{font-family:var(--display);color:var(--verde);margin:0 0 8px}
 .bloqueo p{color:var(--muted)}
+.login{display:grid;gap:10px;text-align:left;margin-top:18px}
+.login label{font-size:.8rem;color:var(--muted);display:grid;gap:4px}
+.login input{font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.login .btn{width:100%}
+.login .link{font:inherit;font-size:.85rem;border:0;background:transparent;color:var(--terra);cursor:pointer;padding:6px;text-decoration:underline}
+.login .msg{font-size:.85rem;color:var(--terra);min-height:1.2em;margin:0;text-align:center}
+.salir{font:inherit;font-size:.8rem;border:0;background:transparent;color:var(--muted);cursor:pointer;text-decoration:underline;padding:2px 4px}
 .velo{position:fixed;inset:0;background:rgba(10,12,9,.45);z-index:20}
 .ficha{position:fixed;z-index:21;background:var(--surface);color:var(--ink);overflow:auto;
   left:0;right:0;bottom:0;max-height:88vh;border-radius:16px 16px 0 0;
@@ -88,7 +96,7 @@ main .wrap{padding-block:14px 40px}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="marca"><img src="fotos/logo-casa-zaru.svg" alt="Casa Zaru"><h1>Fototeca</h1><span class="cuenta" id="cuenta">Cargando…</span></div>
+  <div class="marca"><img src="fotos/logo-casa-zaru.svg" alt="Casa Zaru"><h1>Fototeca</h1><span class="cuenta" id="cuenta">Cargando…</span><button class="salir" id="salir" hidden>Salir</button></div>
   <div id="controles" hidden>
     <input id="q" type="search" placeholder="Busca: isla castaño, peldaños, M2569…" autocomplete="off" aria-label="Buscar fotos y videos">
     <div class="filtros" id="filtros" style="margin-top:10px">
@@ -237,6 +245,49 @@ function sprites(){
   var n = {}; DATA.forEach(function(d){ n[d.s] = 1; });
   return Object.keys(n).map(Number);
 }
+/* Inicio de sesión propio (09-11-2026): quien solo tiene acceso a la Fototeca (la persona de
+   contenido) entra por aquí sin pasar por el panel. La sesión es la misma del sitio, así que
+   el equipo que ya inició sesión en el panel entra directo. Qué ve cada cuenta lo decide RLS. */
+var HASH0 = location.hash;   /* supabase-js limpia el #… del link del correo al iniciar: leerlo antes */
+var sb = LOCAL ? null : supabase.createClient(SB_URL, SB_KEY);
+var AQUI = location.origin + location.pathname;
+function formLogin(msg){
+  bloquear('Fototeca de Casa Zaru', 'Entra con el correo y la contraseña que te dio Casa Zaru.');
+  $('#bloqueo').insertAdjacentHTML('beforeend',
+    '<form class="login" id="login"><label>Correo<input type="email" id="lg-mail" autocomplete="username" required></label>'+
+    '<label>Contraseña<input type="password" id="lg-clave" autocomplete="current-password" required></label>'+
+    '<button class="btn" type="submit">Entrar</button><p class="msg" id="lg-msg">'+esc(msg||'')+'</p>'+
+    '<button class="link" type="button" id="lg-olvido">Primera vez u olvidé mi contraseña</button></form>');
+  $('#login').onsubmit = async function(e){
+    e.preventDefault(); $('#lg-msg').textContent = 'Entrando…';
+    var x = await sb.auth.signInWithPassword({ email: $('#lg-mail').value.trim(), password: $('#lg-clave').value });
+    if (x.error) { $('#lg-msg').textContent = 'Correo o contraseña incorrectos.'; return; }
+    location.reload();
+  };
+  $('#lg-olvido').onclick = async function(){
+    var m = $('#lg-mail').value.trim();
+    if (!m) { $('#lg-msg').textContent = 'Escribe tu correo arriba y vuelve a tocar aquí.'; return; }
+    $('#lg-msg').textContent = 'Enviando…';
+    var x = await sb.auth.resetPasswordForEmail(m, { redirectTo: AQUI });
+    $('#lg-msg').textContent = x.error ? 'No se pudo enviar. Intenta en unos minutos.' :
+      'Si ese correo tiene acceso, te llegó un link para crear tu contraseña.';
+  };
+}
+function formClave(){
+  bloquear('Crea tu contraseña', 'Elige una contraseña de al menos 8 caracteres.');
+  $('#bloqueo').insertAdjacentHTML('beforeend',
+    '<form class="login" id="clave"><label>Contraseña nueva<input type="password" id="cl-1" autocomplete="new-password" minlength="8" required></label>'+
+    '<label>Repítela<input type="password" id="cl-2" autocomplete="new-password" minlength="8" required></label>'+
+    '<button class="btn" type="submit">Guardar y entrar</button><p class="msg" id="cl-msg"></p></form>');
+  $('#clave').onsubmit = async function(e){
+    e.preventDefault();
+    if ($('#cl-1').value !== $('#cl-2').value) { $('#cl-msg').textContent = 'No coinciden.'; return; }
+    $('#cl-msg').textContent = 'Guardando…';
+    var x = await sb.auth.updateUser({ password: $('#cl-1').value });
+    if (x.error) { $('#cl-msg').textContent = 'El link venció. Vuelve a pedirlo desde «Primera vez».'; return; }
+    location.replace(AQUI);
+  };
+}
 async function cargar(){
   if (LOCAL) {
     var j = await (await fetch('fototeca-local/datos.json')).json();
@@ -244,14 +295,11 @@ async function cargar(){
     sprites().forEach(function(s){ SPR[s] = 'fototeca-local/'+nomSprite(s); });
     arrancar(j); return;
   }
-  var sb = supabase.createClient(SB_URL, SB_KEY);
   var r = await sb.auth.getSession();
   var sess = r && r.data && r.data.session;
-  if (!sess) {
-    bloquear('Primero inicia sesión en tu panel',
-      'La Fototeca usa la misma sesión del panel de seguimiento. Entra a tu panel, inicia sesión y vuelve a tocar «Fototeca».');
-    return;
-  }
+  if (sess && /type=(recovery|invite)/.test(HASH0)) { formClave(); return; }
+  if (!sess) { formLogin(); return; }
+  $('#salir').hidden = false;
   var a = await sb.storage.from(BUCKET).createSignedUrl('datos.json', FIRMA_SEG);
   if (a.error || !a.data) {
     bloquear('Esta cuenta no tiene acceso a la Fototeca',
@@ -281,6 +329,7 @@ document.addEventListener('keydown', function(e){ if (e.key === 'Escape') cerrar
 });
 var tq; $('#q').addEventListener('input', function(){ clearTimeout(tq); tq = setTimeout(filtrar, 150); });
 $('#mas').onclick = pintar;
+$('#salir').onclick = async function(){ await sb.auth.signOut(); location.replace(AQUI); };
 var tr; addEventListener('resize', function(){ clearTimeout(tr); tr = setTimeout(ajustar, 150); });
 cargar().catch(function(){
   bloquear('No se pudo cargar la Fototeca', 'Revisa la conexión y recarga la página.');
