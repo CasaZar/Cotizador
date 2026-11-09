@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Fototeca · Casa Zaru</title>
+<link rel="icon" href="fotos/logo-casa-zaru-og-200.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap">
+<!--
+  Fototeca del panel (09-11-2026): buscador de las fotos y videos del Drive.
+  Esta página NO trae datos: el índice (datos.json) y las miniaturas (s00.jpg…)
+  viven en el bucket PRIVADO «fototeca» del proyecto Cotizador
+  (supabase-cotizador/fototeca-bucket.sql en el repo de Gestión). Sin la sesión
+  del panel no se ve nada. El repo es público: nunca subir esos archivos acá.
+-->
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#ffffff; --ink:#22261f; --muted:#6b6f63; --line:#e1ddd3;
+  --verde:#485B3D; --verde-suave:#e6ebe1; --terra:#B5652E; --terra-suave:#f5e6da;
+  --ia:#5b2e8c; --ia-suave:#efe6f8; --ia-tinta:#4a2373;
+  --display:'Playfair Display', Georgia, 'Times New Roman', serif;
+  --body:'Poppins', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#171a15; --surface:#20241d; --ink:#ecebe5; --muted:#a3a698; --line:#343a30;
+  --verde:#9db58c; --verde-suave:#2c3627; --terra:#e0925c; --terra-suave:#3a2a1f;
+  --ia-suave:#2f2340; --ia-tinta:#dcc8f2; color-scheme:dark } }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1400px;margin:0 auto}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+header .wrap{padding-block:12px 10px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+header .wrap > *{min-width:0}
+.marca{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.marca img{height:28px;width:auto}
+h1{font-family:var(--display);font-size:1.35rem;margin:0;color:var(--verde);letter-spacing:.2px}
+.cuenta{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;margin-left:auto}
+#q{width:100%;font:inherit;font-size:16px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+#q:focus,button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--terra);outline-offset:1px}
+.filtros{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filtros::-webkit-scrollbar{display:none}
+select{font:inherit;font-size:.85rem;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);flex:none;max-width:60vw}
+select.on{border-color:var(--verde);background:var(--verde-suave);font-weight:500}
+.chip{font:inherit;font-size:.85rem;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:none;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--verde);border-color:var(--verde);color:var(--bg)}
+.sugerencias{display:flex;gap:6px;flex-wrap:wrap}
+.sug{font:inherit;font-size:.8rem;border:0;background:var(--terra-suave);color:var(--terra);padding:5px 10px;border-radius:999px;cursor:pointer}
+main .wrap{padding-block:14px 40px}
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+@media (max-width:480px){.grilla{grid-template-columns:repeat(3,1fr);gap:4px}}
+.item{position:relative;aspect-ratio:1;max-width:100%;border-radius:8px;overflow:hidden;background-color:var(--line);background-repeat:no-repeat;border:0;padding:0;cursor:pointer}
+.item .tag{position:absolute;left:5px;bottom:5px;font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:999px;background:rgba(20,22,18,.72);color:#fff;font-variant-numeric:tabular-nums}
+.item .top{position:absolute;right:5px;top:5px;font-size:.7rem;padding:2px 6px;border-radius:999px;background:var(--terra);color:#fff;font-weight:600}
+.item .ia{position:absolute;left:5px;top:5px;font-size:.68rem;letter-spacing:.04em;padding:2px 7px;border-radius:999px;background:var(--ia);color:#fff;font-weight:700}
+.item .ia.posible{opacity:.7}
+.aviso-ia{background:var(--ia-suave);color:var(--ia-tinta);border-radius:8px;padding:8px 10px;font-size:.85rem;margin:8px 0}
+.aviso-per{background:var(--terra-suave);color:var(--terra);border-radius:8px;padding:8px 10px;font-size:.85rem;margin:8px 0}
+.vacio{padding:40px 0;color:var(--muted);text-align:center}
+.mas{display:block;margin:18px auto 0;font:inherit;padding:10px 18px;border-radius:999px;border:1px solid var(--verde);color:var(--verde);background:transparent;cursor:pointer}
+.bloqueo{max-width:420px;margin:12vh auto 0;text-align:center;padding-inline:16px}
+.bloqueo h2{font-family:var(--display);color:var(--verde);margin:0 0 8px}
+.bloqueo p{color:var(--muted)}
+.velo{position:fixed;inset:0;background:rgba(10,12,9,.45);z-index:20}
+.ficha{position:fixed;z-index:21;background:var(--surface);color:var(--ink);overflow:auto;
+  left:0;right:0;bottom:0;max-height:88vh;border-radius:16px 16px 0 0;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+@media (min-width:900px){.ficha{left:auto;top:0;bottom:0;width:440px;max-height:none;border-radius:0}}
+.ficha .img{width:100%;max-width:100%;aspect-ratio:1;border-radius:10px;background-repeat:no-repeat;background-color:var(--line)}
+.ficha h2{font-family:var(--display);font-size:1.25rem;margin:12px 0 4px;text-wrap:balance}
+.ficha h2::first-letter{text-transform:uppercase}
+.ficha .desc{margin:0 0 10px}
+.datos{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.85rem;margin:10px 0}
+.datos dt{color:var(--muted);text-transform:uppercase;font-size:.7rem;letter-spacing:.06em;padding-top:2px}
+.datos dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.etq{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 14px}
+.etq button{font:inherit;font-size:.75rem;border:1px solid var(--line);background:transparent;color:var(--ink);padding:3px 9px;border-radius:999px;cursor:pointer}
+.acciones{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:500;padding:10px 14px;border-radius:10px;border:0;background:var(--verde);color:var(--bg);text-decoration:none;cursor:pointer}
+.btn.sec{background:var(--terra-suave);color:var(--terra)}
+.cerrar{float:right;font:inherit;font-size:1.3rem;line-height:1;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:4px 8px}
+.gancho{background:var(--terra-suave);color:var(--terra);border-radius:8px;padding:8px 10px;font-size:.85rem;margin:8px 0}
+.nota{color:var(--muted);font-size:.78rem;margin-top:12px}
+@media (prefers-reduced-motion:no-preference){.item{transition:transform .12s}.item:hover{transform:scale(1.02)}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="marca"><img src="fotos/logo-casa-zaru.svg" alt="Casa Zaru"><h1>Fototeca</h1><span class="cuenta" id="cuenta">Cargando…</span></div>
+  <div id="controles" hidden>
+    <input id="q" type="search" placeholder="Busca: isla castaño, peldaños, M2569…" autocomplete="off" aria-label="Buscar fotos y videos">
+    <div class="filtros" id="filtros" style="margin-top:10px">
+      <select id="f-producto" aria-label="Producto"></select>
+      <select id="f-madera" aria-label="Madera"></select>
+      <select id="f-tipo" aria-label="Foto o video"></select>
+      <select id="f-uso" aria-label="Uso"></select>
+      <select id="f-ambiente" aria-label="Ambiente"></select>
+      <button class="chip" id="f-mejores" aria-pressed="false">Solo las mejores</button>
+      <button class="chip" id="f-sinia" aria-pressed="false">Ocultar IA</button>
+      <button class="chip" id="f-soloia" aria-pressed="false">Solo IA</button>
+      <button class="chip" id="f-sinper" aria-pressed="false">Sin personas</button>
+      <button class="chip" id="f-descartes" aria-pressed="false">Ver descartadas</button>
+    </div>
+    <div class="sugerencias" id="sugerencias" style="margin-top:10px"></div>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <div class="bloqueo" id="bloqueo" hidden></div>
+  <div class="grilla" id="grilla"></div>
+  <p class="vacio" id="vacio" hidden>No hay nada con esa búsqueda. Prueba con menos palabras o quita un filtro.</p>
+  <button class="mas" id="mas" hidden>Ver más</button>
+</div></main>
+
+<div class="velo" id="velo" hidden></div>
+<aside class="ficha" id="ficha" hidden aria-label="Detalle"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
+var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
+var BUCKET = 'fototeca';
+var FIRMA_SEG = 12 * 3600;   /* las URLs firmadas duran 12 horas; después, recargar */
+/* solo para probar en el PC (localhost + ?local): lee los archivos de la carpeta */
+var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]local\b/.test(location.search);
+
+var ETQ = {producto:'Producto', madera:'Madera', tipo:'Foto o video', uso:'Uso', ambiente:'Ambiente'};
+var PASO = 120, DATA = [], DATA_BY = {}, META = {}, SPR = {}, vista = [], mostrados = 0;
+function $(s){ return document.querySelector(s); }
+function norm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function esc(s){ return (s||'').toString().replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function esIA(d){ return d.ia==='sí' || d.ia==='posible'; }
+function fmtDur(s){ s = +s||0; return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function nomSprite(n){ return 's'+String(n).padStart(2,'0')+'.jpg'; }
+
+function bloquear(titulo, texto){
+  $('#cuenta').textContent = '';
+  $('#bloqueo').innerHTML = '<h2>'+esc(titulo)+'</h2><p>'+texto+'</p>';
+  $('#bloqueo').hidden = false;
+}
+function sprite(el, d, lado){
+  var k = lado / META.celda, u = SPR[d.s];
+  if (!u) return;
+  el.style.backgroundImage = 'url("'+u+'")';
+  el.style.backgroundSize = (META.cols*META.celda*k)+'px '+(META.filas*META.celda*k)+'px';
+  el.style.backgroundPosition = (-d.x*META.celda*k)+'px '+(-d.y*META.celda*k)+'px';
+}
+function opciones(){
+  Object.keys(ETQ).forEach(function(c){
+    var cnt = {}; DATA.forEach(function(d){ if (d[c]) cnt[d[c]] = (cnt[d[c]]||0)+1; });
+    var sel = $('#f-'+c);
+    sel.innerHTML = '<option value="">'+ETQ[c]+': todos</option>' +
+      Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a]; })
+        .map(function(v){ return '<option value="'+esc(v)+'">'+esc(v)+' ('+cnt[v]+')</option>'; }).join('');
+    sel.onchange = function(){ sel.classList.toggle('on', !!sel.value); filtrar(); };
+  });
+}
+function on(id){ return $(id).getAttribute('aria-pressed') === 'true'; }
+function filtrar(){
+  var toks = norm($('#q').value).split(/\s+/).filter(Boolean);
+  var f = {}; Object.keys(ETQ).forEach(function(c){ f[c] = $('#f-'+c).value; });
+  var mejores = on('#f-mejores'), desc = on('#f-descartes'), sinia = on('#f-sinia'), soloia = on('#f-soloia'), sinper = on('#f-sinper');
+  vista = DATA.filter(function(d){
+    if (!desc && d.uso === 'descartar') return false;
+    if (mejores && (d.calidad||0) < 4) return false;
+    if (sinia && esIA(d)) return false;
+    if (soloia && !esIA(d)) return false;
+    if (sinper && d.personas) return false;
+    for (var c in f) if (f[c] && d[c] !== f[c]) return false;
+    return toks.every(function(t){ return d._txt.indexOf(t) !== -1; });
+  }).sort(function(a,b){ return (b.calidad||0) - (a.calidad||0); });
+  mostrados = 0; $('#grilla').innerHTML = ''; pintar();
+  $('#cuenta').textContent = vista.length.toLocaleString('es-CL')+' de '+DATA.length.toLocaleString('es-CL');
+  $('#vacio').hidden = vista.length > 0;
+}
+function pintar(){
+  var g = $('#grilla'), frag = document.createDocumentFragment();
+  vista.slice(mostrados, mostrados+PASO).forEach(function(d){
+    var b = document.createElement('button'); b.className = 'item';
+    b.setAttribute('aria-label', d.descripcion || d.id); b.dataset.id = d.id;
+    b.innerHTML = (d.tipo==='video' ? '<span class="tag">▶ '+fmtDur(d.dur)+'</span>' : '') +
+      ((d.calidad||0) >= 5 ? '<span class="top">top</span>' : '') +
+      (esIA(d) ? '<span class="ia'+(d.ia==='posible'?' posible':'')+'">'+(d.ia==='posible'?'IA?':'IA')+'</span>' : '');
+    b.onclick = function(){ abrir(d); }; frag.appendChild(b);
+  });
+  g.appendChild(frag); mostrados = Math.min(vista.length, mostrados+PASO);
+  ajustar(); $('#mas').hidden = mostrados >= vista.length;
+}
+function ajustar(){
+  document.querySelectorAll('.item').forEach(function(el){ var d = DATA_BY[el.dataset.id]; if (d) sprite(el, d, el.offsetWidth); });
+}
+function abrir(d){
+  var url = 'https://drive.google.com/file/d/'+d.drive+'/view';
+  var filas = [['Producto',d.producto],
+    ['Madera',d.madera+(d.confianza&&d.confianza!=='alta'?' (confianza '+d.confianza+')':'')],
+    ['Tipo',d.tipo==='video'?'Video · '+fmtDur(d.dur)+(d.tipo_video?' · '+d.tipo_video:''):'Foto'],
+    ['Etapa',d.etapa],['Ambiente',d.ambiente],['Uso',d.uso],['Calidad',d.calidad?d.calidad+' de 5':''],
+    ['Formato',d.orientacion],['Carpeta',d.ruta]].filter(function(r){ return r[1]; });
+  $('#ficha').innerHTML = '<button class="cerrar" id="cerrar" aria-label="Cerrar">×</button>'+
+    '<div class="img" id="fimg"></div><h2>'+esc(d.producto||'Archivo')+(d.madera&&d.madera!=='no se distingue'?' de '+esc(d.madera):'')+'</h2>'+
+    (esIA(d)?'<div class="aviso-ia"><b>'+(d.ia==='sí'?'Imagen hecha con IA.':'Posible imagen hecha con IA.')+'</b> No usarla como foto de un trabajo real'+(d.ia_nota?' ('+esc(d.ia_nota)+')':'')+'.</div>':'')+
+    (d.personas?'<div class="aviso-per"><b>Aparecen personas.</b> Pedir permiso antes de publicar.</div>':'')+
+    '<p class="desc">'+esc(d.descripcion)+'</p>'+(d.que_pasa?'<p class="desc"><b>En el video:</b> '+esc(d.que_pasa)+'</p>':'')+
+    (d.gancho?'<div class="gancho">Para contenido: '+esc(d.gancho)+'</div>':'')+
+    '<dl class="datos">'+filas.map(function(r){ return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'; }).join('')+'</dl>'+
+    '<div class="etq">'+(d.etiquetas||[]).map(function(t){ return '<button data-t="'+esc(t)+'">'+esc(t)+'</button>'; }).join('')+'</div>'+
+    '<div class="acciones"><a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir original en Drive</a>'+
+    '<button class="btn sec" id="copiar">Copiar link</button></div>'+
+    '<p class="nota">'+esc(d.nombre)+' · '+esc(d.id)+'</p>';
+  $('#ficha').hidden = false; $('#velo').hidden = false;
+  var im = $('#fimg'); sprite(im, d, im.offsetWidth);
+  $('#cerrar').onclick = cerrar;
+  $('#copiar').onclick = function(e){
+    var b = e.currentTarget;
+    try { navigator.clipboard.writeText(url).then(function(){ b.textContent = 'Link copiado'; }, function(){ b.textContent = url; }); }
+    catch (err) { b.textContent = url; }
+  };
+  $('#ficha').querySelectorAll('.etq button').forEach(function(b){ b.onclick = function(){ $('#q').value = b.dataset.t; cerrar(); filtrar(); }; });
+}
+function cerrar(){ $('#ficha').hidden = true; $('#velo').hidden = true; }
+
+function arrancar(j){
+  META = j.meta; DATA = j.items;
+  DATA.forEach(function(d){
+    DATA_BY[d.id] = d;
+    d._txt = norm([d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre].join(' '));
+  });
+  $('#controles').hidden = false;
+  opciones();
+  $('#sugerencias').innerHTML = (META.sugerencias||[]).map(function(s){ return '<button class="sug">'+esc(s)+'</button>'; }).join('');
+  $('#sugerencias').querySelectorAll('.sug').forEach(function(b){ b.onclick = function(){ $('#q').value = b.textContent; filtrar(); }; });
+  filtrar();
+}
+function sprites(){
+  var n = {}; DATA.forEach(function(d){ n[d.s] = 1; });
+  return Object.keys(n).map(Number);
+}
+async function cargar(){
+  if (LOCAL) {
+    var j = await (await fetch('fototeca-local/datos.json')).json();
+    META = j.meta; DATA = j.items;
+    sprites().forEach(function(s){ SPR[s] = 'fototeca-local/'+nomSprite(s); });
+    arrancar(j); return;
+  }
+  var sb = supabase.createClient(SB_URL, SB_KEY);
+  var r = await sb.auth.getSession();
+  var sess = r && r.data && r.data.session;
+  if (!sess) {
+    bloquear('Primero inicia sesión en tu panel',
+      'La Fototeca usa la misma sesión del panel de seguimiento. Entra a tu panel, inicia sesión y vuelve a tocar «Fototeca».');
+    return;
+  }
+  var a = await sb.storage.from(BUCKET).createSignedUrl('datos.json', FIRMA_SEG);
+  if (a.error || !a.data) {
+    bloquear('Esta cuenta no tiene acceso a la Fototeca',
+      'Si deberías verla, pídele a Casa Zaru que agregue tu correo.');
+    return;
+  }
+  var j2 = await (await fetch(a.data.signedUrl)).json();
+  DATA = j2.items;
+  var nombres = sprites().map(nomSprite);
+  var b = await sb.storage.from(BUCKET).createSignedUrls(nombres, FIRMA_SEG);
+  (b.data || []).forEach(function(x){
+    var m = /^s(\d+)\.jpg$/.exec(x.path || ''); if (m && x.signedUrl) SPR[+m[1]] = x.signedUrl;
+  });
+  arrancar(j2);
+}
+
+$('#velo').onclick = cerrar;
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') cerrar(); });
+['#f-mejores','#f-descartes','#f-sinia','#f-soloia','#f-sinper'].forEach(function(s){
+  $(s).onclick = function(e){
+    var b = e.currentTarget, nuevo = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', nuevo ? 'true' : 'false');
+    if (nuevo && s === '#f-sinia') $('#f-soloia').setAttribute('aria-pressed','false');
+    if (nuevo && s === '#f-soloia') $('#f-sinia').setAttribute('aria-pressed','false');
+    filtrar();
+  };
+});
+var tq; $('#q').addEventListener('input', function(){ clearTimeout(tq); tq = setTimeout(filtrar, 150); });
+$('#mas').onclick = pintar;
+var tr; addEventListener('resize', function(){ clearTimeout(tr); tr = setTimeout(ajustar, 150); });
+cargar().catch(function(){
+  bloquear('No se pudo cargar la Fototeca', 'Revisa la conexión y recarga la página.');
+});
+</script>
+</body>
+</html>
