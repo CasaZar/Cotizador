@@ -102,6 +102,7 @@ main .wrap{padding-block:14px 40px}
     <div class="filtros" id="filtros" style="margin-top:10px">
       <select id="f-producto" aria-label="Producto"></select>
       <select id="f-madera" aria-label="Madera"></select>
+      <select id="f-anio" aria-label="Año"></select>
       <select id="f-tipo" aria-label="Foto o video"></select>
       <select id="f-uso" aria-label="Uso"></select>
       <select id="f-ambiente" aria-label="Ambiente"></select>
@@ -134,7 +135,7 @@ var FIRMA_SEG = 12 * 3600;   /* las URLs firmadas duran 12 horas; después, reca
 /* solo para probar en el PC (localhost + ?local): lee los archivos de la carpeta */
 var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]local\b/.test(location.search);
 
-var ETQ = {producto:'Producto', madera:'Madera', tipo:'Foto o video', uso:'Uso', ambiente:'Ambiente'};
+var ETQ = {producto:'Producto', madera:'Madera', anio:'Año', tipo:'Foto o video', uso:'Uso', ambiente:'Ambiente'};
 var PASO = 120, DATA = [], DATA_BY = {}, META = {}, SPR = {}, vista = [], mostrados = 0;
 function $(s){ return document.querySelector(s); }
 function norm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
@@ -160,7 +161,7 @@ function opciones(){
     var cnt = {}; DATA.forEach(function(d){ if (d[c]) cnt[d[c]] = (cnt[d[c]]||0)+1; });
     var sel = $('#f-'+c);
     sel.innerHTML = '<option value="">'+ETQ[c]+': todos</option>' +
-      Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a]; })
+      Object.keys(cnt).sort(function(a,b){ return c === 'anio' ? (a < b ? 1 : -1) : cnt[b]-cnt[a]; })
         .map(function(v){ return '<option value="'+esc(v)+'">'+esc(v)+' ('+cnt[v]+')</option>'; }).join('');
     sel.onchange = function(){ sel.classList.toggle('on', !!sel.value); filtrar(); };
   });
@@ -188,7 +189,7 @@ function pintar(){
   vista.slice(mostrados, mostrados+PASO).forEach(function(d){
     var b = document.createElement('button'); b.className = 'item';
     b.setAttribute('aria-label', d.descripcion || d.id); b.dataset.id = d.id;
-    b.innerHTML = (d.tipo==='video' ? '<span class="tag">▶ '+fmtDur(d.dur)+'</span>' : '') +
+    b.innerHTML = (d.tipo==='video' ? '<span class="tag">▶'+(d.dur ? ' '+fmtDur(d.dur) : '')+'</span>' : '') +
       ((d.calidad||0) >= 5 ? '<span class="top">top</span>' : '') +
       (esIA(d) ? '<span class="ia'+(d.ia==='posible'?' posible':'')+'">'+(d.ia==='posible'?'IA?':'IA')+'</span>' : '');
     b.onclick = function(){ abrir(d); }; frag.appendChild(b);
@@ -203,7 +204,8 @@ function abrir(d){
   var url = 'https://drive.google.com/file/d/'+d.drive+'/view';
   var filas = [['Producto',d.producto],
     ['Madera',d.madera+(d.confianza&&d.confianza!=='alta'?' (confianza '+d.confianza+')':'')],
-    ['Tipo',d.tipo==='video'?'Video · '+fmtDur(d.dur)+(d.tipo_video?' · '+d.tipo_video:''):'Foto'],
+    ['Tipo',d.tipo==='video'?'Video'+(d.dur?' · '+fmtDur(d.dur):'')+(d.tipo_video?' · '+d.tipo_video:''):'Foto'],
+    ['Año',d.anio],
     ['Etapa',d.etapa],['Ambiente',d.ambiente],['Uso',d.uso],['Calidad',d.calidad?d.calidad+' de 5':''],
     ['Formato',d.orientacion],['Carpeta',d.ruta]].filter(function(r){ return r[1]; });
   $('#ficha').innerHTML = '<button class="cerrar" id="cerrar" aria-label="Cerrar">×</button>'+
@@ -214,13 +216,13 @@ function abrir(d){
     (d.gancho?'<div class="gancho">Para contenido: '+esc(d.gancho)+'</div>':'')+
     '<dl class="datos">'+filas.map(function(r){ return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'; }).join('')+'</dl>'+
     '<div class="etq">'+(d.etiquetas||[]).map(function(t){ return '<button data-t="'+esc(t)+'">'+esc(t)+'</button>'; }).join('')+'</div>'+
-    '<div class="acciones"><a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir original en Drive</a>'+
-    '<button class="btn sec" id="copiar">Copiar link</button></div>'+
+    (d.drive ? '<div class="acciones"><a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir original en Drive</a>'+
+    '<button class="btn sec" id="copiar">Copiar link</button></div>' : '<p class="nota">El original está en el Drive, en la carpeta de arriba.</p>')+
     '<p class="nota">'+esc(d.nombre)+' · '+esc(d.id)+'</p>';
   $('#ficha').hidden = false; $('#velo').hidden = false;
   var im = $('#fimg'); sprite(im, d, im.offsetWidth);
   $('#cerrar').onclick = cerrar;
-  $('#copiar').onclick = function(e){
+  if ($('#copiar')) $('#copiar').onclick = function(e){
     var b = e.currentTarget;
     try { navigator.clipboard.writeText(url).then(function(){ b.textContent = 'Link copiado'; }, function(){ b.textContent = url; }); }
     catch (err) { b.textContent = url; }
@@ -233,7 +235,7 @@ function arrancar(j){
   META = j.meta; DATA = j.items;
   DATA.forEach(function(d){
     DATA_BY[d.id] = d;
-    d._txt = norm([d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre].join(' '));
+    d._txt = norm([d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre,d.anio].join(' '));
   });
   $('#controles').hidden = false;
   opciones();
