@@ -1163,6 +1163,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-sec0141 { display:flex; justify-content:space-between; align-items:center; margin:4px 2px 8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#6D28D9; }
 .hz-sec0141 span { font-weight:600; }
 .hz-bloque0141 { margin-bottom:16px; }
+.hz-secventa { display:flex; justify-content:space-between; align-items:center; margin:4px 2px 8px; font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#2E7D32; }
+.hz-secventa span { font-weight:600; }
+.hz-bloqueventa { margin-bottom:16px; }
+.hz-venta { border-left:3px solid #2E7D32; }
 .hz-mas { padding:2px 14px 14px 62px; }
 .hz-preg { font-size:14px; color:var(--tx); margin-bottom:8px; }
 .hz-preg span { color:var(--tm); font-size:13px; }
@@ -8546,6 +8550,7 @@ function computeSegPend(){
     if (segBloque && g.owner !== segBloque) return;
     if (grupoManual(g)) return;   /* lead creado a mano: se ve en la lista, no suma al contador */
     if (topeLleno(g)) return;     /* 2 sin respuesta: no se le escribe (ver TOPE_SIN_RESP) */
+    if (fvActiva(g)) return;      /* venta por cerrar: no es seguimiento (11-11-2026) */
     var d=dueDate(g.lead); if(d && d<=hoy) segPend++;
   });
 }
@@ -9668,9 +9673,15 @@ function clasificarHoy(groups, owners, cmp){
        las del vendedor tapaban a las web y la lista no calzaba con su meta */
     .filter(function(g){ porDueno[g.owner] = (porDueno[g.owner]||0) + 1; return porDueno[g.owner] <= 3; });
   var esBall = {}; ballenas.forEach(function(g){ esBall[g.key] = true; });
-  var b1=[], b1Viejos=[], b1Hoy=[], b2=[], b3=[], conv=[], futuro=[], hoyDone=[], b0141=[], enJuego=0;
+  var b1=[], b1Viejos=[], b1Hoy=[], b2=[], b3=[], conv=[], futuro=[], hoyDone=[], b0141=[], ventas=[], enJuego=0;
   groups.forEach(function(g){
     if (!owners[g.owner]) return;
+    /* ── VENTA POR CERRAR (11-11-2026) ──
+       Con la ficha armada (a medias o ya enviada) el cliente ya dijo que
+       compra: no se le sigue la cadencia de toques. Va a su propia sección,
+       arriba, hasta que confirme (queda ganada) o se pierda. Antes seguía en
+       la lista como si hubiera que volver a escribirle (caso César, 10-11). */
+    if (fvActiva(g)){ ventas.push(g); return; }
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
     if (compraReciente(g.quotes, g.lead)) return;       /* compró hace poco: no es seguimiento */
     if (topeLleno(g)) return;                           /* 2 sin respuesta: va a Dormidos (TOPE_SIN_RESP) */
@@ -9749,10 +9760,10 @@ function clasificarHoy(groups, owners, cmp){
       });
     b3 = b3.filter(function(g){ if (rescSet[g.key]){ rescate.push(g); return false; } return true; });
   }
-  [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone,b0141].forEach(function(a){ a.sort(cmp); });
+  [b1,b1Viejos,b1Hoy,b2,b3,rescate,conv,futuro,hoyDone,b0141,ventas].forEach(function(a){ a.sort(cmp); });
   b1.concat(b2,rescate,b3,b0141).forEach(function(g){ if (!grupoManual(g)) enJuego += g.valor; });
   return { ballenas:ballenas, b1:b1, b1Viejos:b1Viejos, b1Hoy:b1Hoy, b2:b2, b3:b3, b0141:b0141,
-           rescate:rescate, rescSet:rescSet,
+           rescate:rescate, rescSet:rescSet, ventas:ventas,
            conv:conv, futuro:futuro, hoyDone:hoyDone, enJuego:enJuego };
 }
 /* ── VISTA SEGUIMIENTO (un recuadro por cliente, bloques por vendedor / web) ── */
@@ -9774,7 +9785,8 @@ function renderSeguimiento(){
   var hoy=hoyISO(), lim=addDias(hoy,7);
   var C = clasificarHoy(groups, owners, cmp);
   var ballenas=C.ballenas, b1=C.b1, b1Viejos=C.b1Viejos, b1Hoy=C.b1Hoy, b2=C.b2, b3=C.b3,
-      rescate=C.rescate, conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego, b0141=C.b0141;
+      rescate=C.rescate, conv=C.conv, futuro=C.futuro, hoyDone=C.hoyDone, enJuego=C.enJuego, b0141=C.b0141,
+      ventas=C.ventas;
   /* Progreso del día. La meta de toques cuenta TODO el seguimiento real del
      día: ballenas, conversaciones activas y bloque 2. Antes el texto decía que
      ballenas y conversaciones iban "fuera de la meta" pero el cálculo sí las
@@ -9871,7 +9883,7 @@ function renderSeguimiento(){
      si no, buscar a un cliente que existe decía «Nadie calza con el filtro»
      (29-10-2026, caso Andrea). Sin filtro la lista no cambia. */
   var vistos = {};
-  [ballenas, b1, b1Viejos, b1Hoy, b2, b3, rescate, conv, futuro, hoyDone, b0141].forEach(function(a){
+  [ballenas, b1, b1Viejos, b1Hoy, b2, b3, rescate, conv, futuro, hoyDone, b0141, ventas].forEach(function(a){
     a.forEach(function(g){ vistos[g.key] = true; });
   });
   var espera0141 = !filtrado ? [] : groups.filter(function(g){
@@ -9887,8 +9899,13 @@ function renderSeguimiento(){
   /* con la campaña o el 0141 arriba, la lista de siempre lleva su título para
      que se sepa dónde empieza */
   var campHtml = campanaHtml();
-  if ((campHtml || html0141 || filtrado) && lista.length) html = '<div class="hz-sec-main">'+(filtrado ? 'Con el filtro · ' : 'Seguimiento de hoy · ')+lista.length+'</div>' + html;
-  html = campHtml + html0141 + html;
+  /* ventas con ficha: arriba de todo, fuera de la meta y sin toques */
+  var htmlVentas = ventas.length
+    ? '<div class="hz-bloqueventa"><div class="hz-secventa">Ventas por cerrar<span>'+ventas.length+'</span></div>'+
+      '<div class="hz-lista">'+ventas.map(function(g){ return filaReg(g, 'venta'); }).join('')+'</div></div>'
+    : '';
+  if ((campHtml || html0141 || htmlVentas || filtrado) && lista.length) html = '<div class="hz-sec-main">'+(filtrado ? 'Con el filtro · ' : 'Seguimiento de hoy · ')+lista.length+'</div>' + html;
+  html = htmlVentas + campHtml + html0141 + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
   html += plegado('semana', 'Próximos días', futuro, 'future', '');
@@ -11097,6 +11114,12 @@ function hoyIniciales(nombre){
 function hoyRazon(g, cls){
   var x = g.lead, etapa = x.seg_etapa||0;
   if (cls === 'donehoy') return 'contactado hoy';
+  if (cls === 'venta'){
+    var fv = fvActiva(g).ficha_venta;
+    return fv.estado === 'enviada'
+      ? 'ficha enviada ' + fmtFechaCorta(fv.enviada || '') + ' · falta su sí'
+      : 'ficha sin mandar';
+  }
   if (cls === 'future') return 'le toca el '+fmtFechaCorta(dueDate(x));
   if (cls === 'camp') return 'cotizó el '+fmtFechaCorta(fechaBaseISO(x.fecha_creacion))+' · '+campanaEstado(g.camp);
   if (cls === 'c0141'){
@@ -11155,14 +11178,17 @@ function hoyFila(g, cls){
   /* el del anuncio no es adorno: cambia DESDE QUÉ WhatsApp se le escribe */
   var anuncio = (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); }))
     ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
-  var boton = (cls === 'donehoy')
+  /* una venta por cerrar no se persigue: su botón es la ficha (11-11-2026) */
+  var boton = (cls === 'venta')
+    ? '<button class="hz-btn" onclick="fichaUI(\''+fvCoti(g).id+'\')">'+(fvActiva(g).ficha_venta.estado === 'enviada' ? '¿Confirmó?' : 'Terminar ficha')+'</button>'
+    : (cls === 'donehoy')
     ? '<button class="hz-btn sec" onclick="segDeshacer(\''+x.id+'\')">Deshacer</button>'
     : segBotonContacto(g, x, 'hz-btn');
   var mas = '';
   if (abierta){
     var resp = '';
     /* en la campaña aparecen también cerrados: a esos no se les anota toque */
-    if (cls !== 'donehoy' && !cadenciaAgotada(x) && (x.estado||'enviada') === 'enviada'){
+    if (cls !== 'donehoy' && cls !== 'venta' && !cadenciaAgotada(x)&& (x.estado||'enviada') === 'enviada'){
       if (etapa === 0){
         resp = '<div class="hz-preg">¿Ya le escribiste por otro lado?</div>'+
           '<div class="hz-resps"><button class="hz-r" onclick="hoyAbierto=null;segYaEscribi(\''+x.id+'\')">Sí, anotar el primer contacto</button></div>';
@@ -11185,7 +11211,7 @@ function hoyFila(g, cls){
         '<button class="hz-l" onclick="segPosponerUI(\''+x.id+'\')">Posponer</button>'+
         (puedePasar0141(g) ? '<button class="hz-l b0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">No nos escribió → 0141</button>' : '')+
         (pasado0141(g) ? '<button class="hz-l" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
-        '<button class="hz-l ok" onclick="fichaUI(\''+x.id+'\')">'+fvBotonTxt(x, true)+'</button>'+
+        (cls !== 'venta' ? '<button class="hz-l ok" onclick="fichaUI(\''+fvCoti(g).id+'\')">'+fvBotonTxt(fvCoti(g), true)+'</button>' : '')+
         '<button class="hz-l mal" onclick="segPerderUI(\''+x.id+'\')">Perdida</button>'+
         '<button class="hz-l" onclick="hoyVerFicha()">'+(hoyFicha?'Ocultar ficha':'Ficha completa')+'</button>'+
       '</div>'+
@@ -11321,7 +11347,7 @@ function segClientCard(g, cls){
       (puedePasar0141(g) ? '<button class="sbtn p0141" onclick="pasarA0141(\''+x.id+'\')" title="Tocó el botón de WhatsApp pero no llegó su mensaje: se le escribe desde el 0141">📱 No nos escribió → 0141</button>' : '')+
       (pasado0141(g) ? '<button class="sbtn" onclick="pasarA0141(\''+x.id+'\',true)">Volver al 5558</button>' : '')+
       wa+
-      '<button class="sbtn win" onclick="fichaUI(\''+x.id+'\')">'+fvBotonTxt(x)+'</button>'+
+      '<button class="sbtn win" onclick="fichaUI(\''+fvCoti(g).id+'\')">'+fvBotonTxt(fvCoti(g))+'</button>'+
       '<button class="sbtn lost" onclick="segPerderUI(\''+x.id+'\')">✗ Perdida</button>'+
     '</div></div>';
 }
@@ -11794,6 +11820,17 @@ function fvKg(d){
 }
 function fvToken(x){ var m = /[?&]s=([^&#]+)/.exec(x.link || ''); return m ? m[1] : null; }
 
+/* La ficha vive en UNA cotización del cliente, que puede no ser la más nueva
+   (g.lead): si cotizó otra cosa después, el panel igual tiene que encontrarla.
+   fvActiva → la cotización abierta con ficha a medias o enviada (o null).
+   fvCoti   → esa, o el lead si no hay ninguna (ahí se arma la ficha nueva). */
+function fvActiva(g){
+  return (g.quotes || []).filter(function(q){
+    var f = q.ficha_venta;
+    return f && (f.estado === 'borrador' || f.estado === 'enviada') && (q.estado || 'enviada') === 'enviada';
+  })[0] || null;
+}
+function fvCoti(g){ return fvActiva(g) || g.lead; }
 /* el botón de la tarjeta: dice en qué va la ficha */
 function fvBotonTxt(x, corto){
   var f = x.ficha_venta;
@@ -12016,7 +12053,7 @@ async function fvGuardarBorrador(){
   fvLeer();
   var f = JSON.parse(JSON.stringify(FV));
   f.estado = 'borrador'; fvPaso(f, 'borrador');
-  if (await fvGuardar(f, 'Ficha guardada — la retomas desde la tarjeta')) fvCerrar();
+  if (await fvGuardar(f, 'Ficha guardada en «Ventas por cerrar» — falta mandársela')) fvCerrar();
 }
 /* el WhatsApp se abre DENTRO del click (si espera al guardado, el navegador
    lo bloquea como ventana emergente); la ficha se guarda justo después */
@@ -12031,7 +12068,7 @@ async function fvEnviar(conWa){
   }
   var f = JSON.parse(JSON.stringify(FV));
   f.estado = 'enviada'; f.enviada = new Date().toISOString(); fvPaso(f, conWa ? 'enviada_wa' : 'enviada_copia');
-  if (await fvGuardar(f, conWa ? 'Ficha enviada — cuando confirme, toca «Ficha enviada»' : 'Mensaje copiado y ficha enviada')) fvCerrar();
+  if (await fvGuardar(f, conWa ? 'Ficha enviada — cuando confirme, toca «¿Confirmó?» en Ventas por cerrar' : 'Mensaje copiado — cuando confirme, toca «¿Confirmó?» en Ventas por cerrar')) fvCerrar();
 }
 function fvHtmlConfirmar(x){
   var f = FV, c = fvCalc(f);
