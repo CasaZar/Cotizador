@@ -727,6 +727,7 @@ function formClave(){
 async function cargar(){
   if (LOCAL) {
     var j = await (await fetch('fototeca-local/datos.json')).json();
+    try { var j2l = await (await fetch('fototeca-local/datos-2.json')).json(); j.items = j.items.concat(j2l.items || []); } catch (e) {}
     META = j.meta; DATA = j.items;
     sprites().forEach(function(s){ SPR[s] = 'fototeca-local/'+nomSprite(s); });
     ES_ADMIN = /[?&]admin\b/.test(location.search);
@@ -748,6 +749,12 @@ async function cargar(){
     return;
   }
   var j2 = await (await fetch(a.data.signedUrl)).json();
+  /* Segundo índice (11-11-2026): las fotos del PC van en datos-2.json porque datos.json ya roza
+     el límite de 5 MB por archivo del bucket. Si no está, la Fototeca sigue con el primero. */
+  var a2 = await sb.storage.from(BUCKET).createSignedUrl('datos-2.json', FIRMA_SEG);
+  if (!a2.error && a2.data) {
+    try { var x2 = await (await fetch(a2.data.signedUrl)).json(); j2.items = j2.items.concat(x2.items || []); } catch (e) {}
+  }
   DATA = j2.items;
   var nombres = sprites().map(nomSprite);
   var b = await sb.storage.from(BUCKET).createSignedUrls(nombres, FIRMA_SEG);
