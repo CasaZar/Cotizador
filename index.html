@@ -6386,7 +6386,7 @@ function vTrasGuardar(numero) {
 /* el link de la cotización a la vista, sin lo que traiga la barra del vendedor */
 function linkLimpio() {
   var m = /[?&]s=([A-Za-z0-9]+)/.exec(shareShortUrl || '');
-  return m ? BASE_URL + '?s=' + m[1] : shareShortUrl;
+  return m ? SHARE_URL + '?s=' + m[1] : shareShortUrl;
 }
 /* arma el formulario del vendedor una sola vez (lo llama habilitarInternos) */
 function vMontar() {
@@ -7256,7 +7256,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   if (dctoPct() > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA' +
     (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
-  var link = '\n\nVer detalle: ' + (shareShortUrl || buildShareUrl());
+  var link = '\n\nVer detalle: ' + (linkLimpio() || buildShareUrl(SHARE_URL));
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
   /* dos salidas más para el que todavía duda (06-10-2026, pedido del usuario:
@@ -7449,7 +7449,7 @@ async function descargarPDF(){
     pdf.setTextColor(150);
     for (var pg = 1; pg <= totPag; pg++){
       pdf.setPage(pg);
-      pdf.text('Casa Zaru · cotizador.casazaru.cl', PDF_MARG.izq, 276);
+      pdf.text('Casa Zaru · casazaru.cl/cotizador', PDF_MARG.izq, 276);
       pdf.text('Página ' + pg + ' de ' + totPag, 216 - PDF_MARG.izq, 276, { align: 'right' });
     }
     pdf.setProperties({ title: pdfNombre().replace(/\.pdf$/, ''), creator: 'Cotizador Casa Zaru' });
@@ -7585,9 +7585,14 @@ function getShareDataProducto(conValores) {
 }
 
 var BASE_URL = 'https://cotizador.casazaru.cl';
-function buildShareUrl() {
+/* Los links que se le mandan al cliente salen con la dirección de la tienda (11-11).
+   La redirección /cotizador → cotizador.casazaru.cl vive en Shopify (Navegación →
+   Redirecciones de URL) y pasa el ?s= y el #q=. BASE_URL queda para lo interno:
+   replaceState no acepta otro origen y el panel abre directo, sin el salto. */
+var SHARE_URL = 'https://www.casazaru.cl/cotizador';
+function buildShareUrl(base) {
   var enc = btoa(unescape(encodeURIComponent(JSON.stringify(getShareData()))));
-  return BASE_URL + '#q=' + enc;
+  return (base || BASE_URL) + '#q=' + enc;
 }
 
 function randToken() {
@@ -7604,14 +7609,14 @@ async function buildShortUrl() {
     var token = randToken();
     try {
       var res = await sbClient.from('quote_links').insert({token: token, data: data});
-      if (!res.error) return BASE_URL + '?s=' + token;
+      if (!res.error) return SHARE_URL + '?s=' + token;
       console.error('quote_links intento ' + (i+1) + ':', res.error);
     } catch(e) { console.error('quote_links intento ' + (i+1) + ' ex:', e); }
     await new Promise(function(r){ setTimeout(r, 400); });
   }
   /* respaldo: link largo autocontenido (conserva el N° de cotización) */
   var enc = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  return BASE_URL + '#q=' + enc;
+  return SHARE_URL + '#q=' + enc;
 }
 
 function restoreFromData(d) {
@@ -8696,6 +8701,8 @@ function waMsg(x){
   var nom = waNombre(x), hola = nom ? 'Hola ' + nom : 'Hola';
   var yo = waQuien();
   var link = (x.link||'').trim();
+  var mS = /[?&]s=([A-Za-z0-9]+)/.exec(link);   /* las antiguas guardaron cotizador.casazaru.cl */
+  if (mS) link = SHARE_URL + '?s=' + mS[1];
   var P = prodTexto(x.producto);
   var W = WA_PROD[String(x.producto||'')] || { un:'un proyecto', preg:'¿En qué etapa vas?' };
   var suyo = P.suyo;                                   /* "tu cubierta" */
