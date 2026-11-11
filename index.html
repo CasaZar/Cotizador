@@ -8018,13 +8018,20 @@ var VENDEDORES = [
   /* firma/cargo: van al pie de los correos. nombre es el corto, para la
      interfaz y los mensajes; firma es el nombre que ve el cliente. */
   { code:'cesar', src:'k7m2', nombre:'César', firma:'César Rodríguez', cargo:'Asesor de ventas', email:'crodriguez.casazaru@gmail.com', srcEmail:'hola@casazaru.cl', legacy:['hola@casazaru.cl'] },
-  { code:'jepe',  src:'p4x9', nombre:'Jepe',  firma:'Jepe Roman',        cargo:'Asesor de ventas', email:'jeperomanosorio@gmail.com', srcEmail:'jeperomanosorio@gmail.com', b2b:true }
+  /* baja: ya no trabaja aquí (cuenta Auth bloqueada el 03-11-2026). Sigue en la lista solo
+     para que sus 64 cotizaciones antiguas queden a su nombre y no caigan en César ni en Web;
+     no sale en pestañas, chips, filtros ni «Ver como», y su link (?src=p4x9 / jepe) ya no le
+     atribuye cotizaciones: entran como web. */
+  { code:'jepe',  src:'p4x9', nombre:'Jepe',  firma:'Jepe Roman',        cargo:'Asesor de ventas', email:'jeperomanosorio@gmail.com', srcEmail:'jeperomanosorio@gmail.com', b2b:true, baja:'2026-11-03' }
 ];
+/* los que trabajan hoy: lo que se muestra en el panel sale de acá, no de VENDEDORES */
+function vendedoresActivos(){ return VENDEDORES.filter(function(v){ return !v.baja; }); }
 /* resuelve el ?src= : primero el código opaco, luego el nombre antiguo */
 function vendedorPorSrc(code){
   code = String(code||'').toLowerCase();
   for (var i=0;i<VENDEDORES.length;i++){
     var v = VENDEDORES[i];
+    if (v.baja) continue;   /* el link de alguien que se fue entra como web */
     if (code === v.src || code === v.code) return v;
   }
   return null;
@@ -8344,7 +8351,7 @@ function verPintaAviso(){
 /* selector en el rail, solo para el admin */
 function verSelectorHtml(){
   if (!panelEsAdminReal || !esDueno()) return '';
-  var opts = VENDEDORES.map(function(v){
+  var opts = vendedoresActivos().map(function(v){
     return '<option value="' + v.code + '"' + (vistaComo === v.code ? ' selected' : '') + '>Ver como ' + escA(v.nombre) + '</option>';
   }).join('');
   return '<select class="ver-como-sel" onchange="verComoVendedor(this.value||null)" ' +
@@ -8817,7 +8824,7 @@ function pzTabs(){
   if (WA) t.push({id:'wa', label:'WhatsApp al día', ico:'wa', g:1});
   if (isPanelAdmin()){
     t.push({id:'web', label:'Clientes web', ico:'web', g:1});
-    VENDEDORES.forEach(function(v){ t.push({id:v.code, label:'Cotizaciones de '+v.nombre, ico:'cot', g:1}); });
+    vendedoresActivos().forEach(function(v){ t.push({id:v.code, label:'Cotizaciones de '+v.nombre, ico:'cot', g:1}); });
   } else {
     t.push({id:panelSeller.code, label:'Mis cotizaciones', ico:'cot', g:1});
     if (!panelSeller.b2b) t.push({id:'web', label:'Clientes web', ico:'web', g:1});
@@ -9146,8 +9153,8 @@ async function reactReabrir(id){
 }
 function segBloquesDef(){
   var b=[];
-  if (isPanelAdmin()){ VENDEDORES.forEach(function(v){ b.push({t:'👤 '+v.nombre, o:v.code}); }); b.push({t:'🌐 Clientes Web', o:'web'}); }
-  else { b.push({t:'👤 Mis clientes', o:panelSeller.code}); if(!panelSeller.b2b) b.push({t:'🌐 Clientes Web', o:'web'}); }
+  if (isPanelAdmin()){ vendedoresActivos().forEach(function(v){ b.push({t:v.nombre, o:v.code}); }); b.push({t:'Clientes Web', o:'web'}); }
+  else { b.push({t:'Mis clientes', o:panelSeller.code}); if(!panelSeller.b2b) b.push({t:'Clientes Web', o:'web'}); }
   return b;
 }
 function setSegBloque(o){ segBloque=o; computeSegPend(); renderTabs(); renderSegFilters(); renderSeguimiento(); }
@@ -11689,9 +11696,9 @@ function panelNextNum(){ var d=new Date(); return 'V-'+String(d.getMonth()+1).pa
 function ventaUI(){
   var prodOpts=Object.keys(PNAME).map(function(k){ return '<option value="'+k+'">'+PNAME[k]+'</option>'; }).join('');
   var vendSel='';
-  if (isPanelAdmin() && VENDEDORES.length){
+  if (isPanelAdmin() && vendedoresActivos().length){
     vendSel='<div class="fsec"><label class="flabel">Vendedor</label><select class="fsel" id="v-vend"><option value="">Web / sin asignar</option>'+
-      VENDEDORES.map(function(v){ return '<option value="'+v.code+'">'+v.nombre+'</option>'; }).join('')+'</select></div>';
+      vendedoresActivos().map(function(v){ return '<option value="'+v.code+'">'+v.nombre+'</option>'; }).join('')+'</select></div>';
   }
   pModal('<h3>Registrar venta</h3>'+
     '<div class="fsec"><label class="flabel">Cliente</label><input class="finput" id="v-cli" placeholder="Nombre"></div>'+
@@ -12506,7 +12513,7 @@ function renderActividad(){
   /* el admin puede filtrar por vendedor; un vendedor ya ve solo lo suyo */
   if (esAdmin) {
     var chips = '<button class="seg-chip'+(actVendedor===''?' on':'')+'" onclick="setActVendedor(\'\')">Todos</button>' +
-      VENDEDORES.map(function(v){
+      vendedoresActivos().map(function(v){
         return '<button class="seg-chip'+(actVendedor===v.code?' on':'')+'" onclick="setActVendedor(\''+v.code+'\')">'+escA(v.nombre)+'</button>';
       }).join('');
     subFiltros('<div class="seg-chips">'+chips+'</div>');
