@@ -22,14 +22,14 @@
 :root{
   --bg:#f6f4ef; --surface:#ffffff; --ink:#22261f; --muted:#6b6f63; --line:#e1ddd3;
   --verde:#485B3D; --verde-suave:#e6ebe1; --terra:#B5652E; --terra-suave:#f5e6da;
-  --ia:#5b2e8c; --ia-suave:#efe6f8; --ia-tinta:#4a2373; --sombra:rgba(10,12,9,.12);
+  --ia:#5b2e8c; --ia-suave:#efe6f8; --ia-tinta:#4a2373; --sombra:rgba(10,12,9,.12); --azul:#2f5d7c; --azul-suave:#e3edf3;
   --display:'Playfair Display', Georgia, 'Times New Roman', serif;
   --body:'Poppins', 'Segoe UI', system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root{
   --bg:#171a15; --surface:#20241d; --ink:#ecebe5; --muted:#a3a698; --line:#343a30;
   --verde:#9db58c; --verde-suave:#2c3627; --terra:#e0925c; --terra-suave:#3a2a1f;
-  --ia:#9b6fd0; --ia-suave:#2f2340; --ia-tinta:#dcc8f2; --sombra:rgba(0,0,0,.4); color-scheme:dark } }
+  --ia:#9b6fd0; --ia-suave:#2f2340; --ia-tinta:#dcc8f2; --sombra:rgba(0,0,0,.4); --azul:#8fb8d4; --azul-suave:#1f2c35; color-scheme:dark } }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.45}
@@ -64,6 +64,7 @@ main .wrap{padding-block:14px 120px}
 .item .ck{position:absolute;right:6px;top:6px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.28);display:none}
 body.sel .item .ck{display:block}
 body.sel .item .top{display:none}
+.item .usada{position:absolute;right:5px;bottom:5px;font-size:.68rem;padding:2px 7px;border-radius:999px;background:var(--azul);color:var(--bg);font-weight:700;font-variant-numeric:tabular-nums}
 .item.marcada{outline:3px solid var(--verde);outline-offset:-3px}
 .item.marcada .ck{background:var(--verde)}
 .item.marcada .ck::after{content:"";position:absolute;left:7px;top:3px;width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
@@ -149,6 +150,22 @@ body.sel .item .top{display:none}
 .papelito .tx b::first-letter{text-transform:uppercase}
 .restaurar{font:inherit;font-size:.8rem;font-weight:600;color:var(--verde);border:1px solid var(--verde);border-radius:999px;padding:6px 12px;background:transparent;cursor:pointer;flex:none}
 /* aviso flotante */
+/* usadas en contenido */
+.caja-uso{background:var(--azul-suave);border-radius:10px;padding:10px 12px;display:grid;gap:8px}
+.caja-uso .tit{font-weight:600;color:var(--azul);font-size:.88rem}
+.uso{display:flex;align-items:center;gap:8px;font-size:.8rem;background:var(--surface);border-radius:8px;padding:7px 9px;flex-wrap:wrap}
+.uso b{font-weight:600}
+.uso a{color:var(--azul);font-size:.78rem}
+.uso .quitar{margin-left:auto;font:inherit;font-size:.75rem;color:var(--muted);background:transparent;border:0;text-decoration:underline;cursor:pointer;padding:2px}
+.btn.baz{background:var(--azul);color:var(--bg)}.btn.baz2{background:var(--surface);color:var(--azul)}
+.hoja-velo{position:fixed;inset:0;z-index:30;background:rgba(10,12,9,.45)}
+.hoja{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--surface);border-radius:18px 18px 0 0;display:grid;gap:12px;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+@media (min-width:900px){.hoja{left:auto;width:520px}}
+.hoja h3{margin:0;font-family:var(--display);font-size:1.1rem}
+.canales{display:flex;flex-wrap:wrap;gap:7px}
+.canales button{font:inherit;font-size:.88rem;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.canales button[aria-pressed="true"]{background:var(--azul);border-color:var(--azul);color:var(--bg);font-weight:600}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:40;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.85rem;box-shadow:0 6px 18px var(--sombra);max-width:calc(100% - 32px);text-align:center}
 body.sel .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 @media (prefers-reduced-motion:no-preference){.item{transition:transform .12s}.item:hover{transform:scale(1.02)}}
@@ -171,6 +188,8 @@ body.sel .toast{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
       <button class="chip" id="f-sinia" aria-pressed="false">Ocultar IA</button>
       <button class="chip" id="f-soloia" aria-pressed="false">Solo IA</button>
       <button class="chip" id="f-sinper" aria-pressed="false">Sin personas</button>
+      <button class="chip" id="f-sinusar" aria-pressed="false">Sin usar</button>
+      <button class="chip" id="f-usadas" aria-pressed="false">Usadas</button>
       <button class="chip" id="f-descartes" aria-pressed="false">Ver descartadas</button>
       <button class="chip papel" id="f-papelera" hidden>Papelera</button>
     </div>
@@ -211,6 +230,12 @@ var EDITABLES = ['producto','madera','uso','calidad','ia','descripcion','etiquet
 var USOS = ['catálogo','anuncio','instalado donde el cliente','proceso taller','detalle de madera','descartar'];
 var PASO = 120, DATA = [], DATA_BY = {}, META = {}, SPR = {}, vista = [], mostrados = 0;
 var ES_ADMIN = false, ED = {}, SEL = {}, MODO_SEL = false, ACTUAL = null, EDITANDO = false;
+/* usadas en contenido (11-11-2026): marcan hola@, Emerge y María José; César solo ve.
+   Lo que protege es fototeca_marcar_uso() (supabase-cotizador/fototeca-usos.sql). */
+var MARCAN_USOS = ['hola@casazaru.cl', 'emerge.smm@gmail.com', 'mariajose.mgrunen@gmail.com'];
+var QUIEN = { 'hola@casazaru.cl': 'Casa Zaru', 'emerge.smm@gmail.com': 'Emerge', 'mariajose.mgrunen@gmail.com': 'María José' };
+var CANALES = [['post','Post'],['reel','Reel'],['historia','Historia'],['anuncio','Anuncio de Meta'],['correo','Correo']];
+var PUEDE_USOS = false, USADAS = {}, MI_MAIL = '';
 function $(s){ return document.querySelector(s); }
 function norm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
 function esc(s){ return (s||'').toString().replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -241,6 +266,21 @@ function aplicar(d){
   d._pap = !!(e && e.en_papelera_at && !e.eliminada_at);
   d._elim = !!(e && e.eliminada_at);
   d._txt = norm([d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre,d.anio].join(' '));
+}
+function nUsos(d){ return (USADAS[d.id] || []).length; }
+async function cargarUsos(){
+  if (LOCAL) return;
+  for (var a = 0; ; a += 1000) {
+    var r = await sb.from('fototeca_usos').select('id,item_id,canal,fecha,link,created_by').is('quitado_at', null).order('id').range(a, a+999);
+    if (r.error) { if (a === 0) console.warn('usos', r.error.message); return; }
+    r.data.forEach(function(x){ (USADAS[x.item_id] = USADAS[x.item_id] || []).push(x); });
+    if (r.data.length < 1000) return;
+  }
+}
+async function recargarUsos(id){
+  if (LOCAL) return;
+  var r = await sb.from('fototeca_usos').select('id,item_id,canal,fecha,link,created_by').is('quitado_at', null).eq('item_id', id);
+  if (!r.error) { if (r.data.length) USADAS[id] = r.data; else delete USADAS[id]; }
 }
 async function cargarEdiciones(){
   if (LOCAL) return;
@@ -292,8 +332,11 @@ function filtrar(mantener){
   var toks = norm($('#q').value).split(/\s+/).filter(Boolean);
   var f = {}; Object.keys(ETQ).forEach(function(c){ f[c] = $('#f-'+c).value; });
   var mejores = on('#f-mejores'), desc = on('#f-descartes'), sinia = on('#f-sinia'), soloia = on('#f-soloia'), sinper = on('#f-sinper');
+  var sinusar = on('#f-sinusar'), usadas = on('#f-usadas');
   vista = DATA.filter(function(d){
     if (d._elim || d._pap) return false;
+    if (sinusar && nUsos(d)) return false;
+    if (usadas && !nUsos(d)) return false;
     if (!desc && d.uso === 'descartar') return false;
     if (mejores && (d.calidad||0) < 4) return false;
     if (sinia && esIA(d)) return false;
@@ -316,7 +359,7 @@ function pintar(n){
     b.innerHTML = (d.tipo==='video' ? '<span class="tag">▶'+(d.dur ? ' '+fmtDur(d.dur) : '')+'</span>' : '') +
       ((d.calidad||0) >= 5 ? '<span class="top">top</span>' : '') +
       (esIA(d) ? '<span class="ia'+(d.ia==='posible'?' posible':'')+'">'+(d.ia==='posible'?'IA?':'IA')+'</span>' : '') +
-      '<span class="ck"></span>';
+      marcaUso(d) + '<span class="ck"></span>';
     b.onclick = function(){ if (MODO_SEL) marcar(d.id, b); else abrir(d); };
     frag.appendChild(b);
   });
@@ -387,6 +430,7 @@ function mostrar(d){
       (d._pap ? '<div class="aviso-pap"><b>Está en la papelera.</b> Nadie más la ve en la Fototeca.</div>' : '')+
       (ES_ADMIN ? segIA : (esIA(d)?'<div class="aviso-ia"><b>'+(d.ia==='sí'?'Imagen hecha con IA.':'Posible imagen hecha con IA.')+'</b> No usarla como foto de un trabajo real'+(d.ia_nota?' ('+esc(d.ia_nota)+')':'')+'.</div>':''))+
       (d.personas?'<div class="aviso-per"><b>Aparecen personas.</b> Pedir permiso antes de publicar.</div>':'')+
+      '<div id="usos"></div>'+
       (ES_ADMIN ? '<div class="fila"><button class="btn" id="editar">Editar datos</button>'+
         (d._pap ? '<button class="btn sec" id="restaurar">Restaurar</button>' : '<button class="btn terra" id="apapelera">A la papelera</button>')+'</div>' : '')+
       '<p class="desc">'+esc(d.descripcion)+'</p>'+(d.que_pasa?'<p class="desc"><b>En el video:</b> '+esc(d.que_pasa)+'</p>':'')+
@@ -396,7 +440,9 @@ function mostrar(d){
       (d.drive ? '<div class="fila"><button class="btn sec" id="copiar">Copiar link de Drive</button><a class="btn sec" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir en Drive</a></div>' : '<p class="nota">El original está en el Drive, en la carpeta de arriba.</p>')+
       '<p class="nota">'+esc(d.nombre)+' · '+esc(d.id)+'</p>'+
     '</div>';
+  cerrarHoja();
   $('#ficha').hidden = false; $('#velo').hidden = false; document.body.classList.add('fija');
+  pintarUsos(d);
   $('#ficha').scrollTop = 0;
   var m = $('#fmedia'); sprite(m, d, m.offsetWidth);
   /* grande: el visor de Drive dentro de la página (usa la sesión de Google del navegador);
@@ -441,7 +487,61 @@ function refrescarItem(d){
   var el = document.querySelector('.item[data-id="'+d.id+'"]'); if (!el) return;
   var ia = el.querySelector('.ia'); if (ia) ia.remove();
   if (esIA(d)) el.insertAdjacentHTML('afterbegin', '<span class="ia'+(d.ia==='posible'?' posible':'')+'">'+(d.ia==='posible'?'IA?':'IA')+'</span>');
+  var u = el.querySelector('.usada'); if (u) u.remove();
+  if (nUsos(d)) el.insertAdjacentHTML('afterbegin', marcaUso(d));
 }
+
+/* ── usadas en contenido ── */
+function marcaUso(d){ var n = nUsos(d); return n ? '<span class="usada">✓'+(n > 1 ? ' '+n : '')+'</span>' : ''; }
+function fmtFecha(f){ var p = (f||'').split('-'); return p.length === 3 ? p[2]+'-'+p[1]+(p[0] !== String(new Date().getFullYear()) ? '-'+p[0] : '') : f; }
+function nomCanal(c){ for (var i = 0; i < CANALES.length; i++) if (CANALES[i][0] === c) return CANALES[i][1]; return c; }
+function pintarUsos(d){
+  var box = $('#usos'); if (!box) return;
+  var L = (USADAS[d.id] || []).slice().sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  if (!L.length && !PUEDE_USOS) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="caja-uso"><div class="tit">Contenido · '+(L.length ? 'usada '+(L.length === 1 ? '1 vez' : L.length+' veces') : 'todavía no se usa')+'</div>'+
+    L.map(function(u){
+      return '<div class="uso"><b>'+esc(nomCanal(u.canal))+'</b> '+esc(fmtFecha(u.fecha))+' · '+esc(QUIEN[(u.created_by||'').toLowerCase()] || u.created_by || '')+
+        (u.link ? ' <a href="'+esc(u.link)+'" target="_blank" rel="noopener">ver</a>' : '')+
+        (PUEDE_USOS ? '<button class="quitar" data-id="'+u.id+'">quitar</button>' : '')+'</div>';
+    }).join('')+
+    (PUEDE_USOS ? '<button class="btn '+(L.length ? 'baz2' : 'baz')+'" id="marcar-uso">'+(L.length ? '+ Usada otra vez' : '✓ Marcar como usada')+'</button>' : '')+'</div>';
+  if (!PUEDE_USOS) return;
+  $('#marcar-uso').onclick = function(){ hojaUso(d); };
+  box.querySelectorAll('.quitar').forEach(function(b){ b.onclick = async function(){
+    var id = +b.dataset.id;
+    if (!LOCAL) { var r = await sb.rpc('fototeca_quitar_uso', { p_id: id }); if (r.error) { aviso('No se quitó: '+r.error.message); return; } }
+    USADAS[d.id] = (USADAS[d.id] || []).filter(function(u){ return u.id !== id; }); if (!USADAS[d.id].length) delete USADAS[d.id];
+    await recargarUsos(d.id); aviso('Uso quitado'); pintarUsos(d); refrescarItem(d);
+  }; });
+}
+function hojaUso(d){
+  cerrarHoja();
+  var hoy = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10), canal = '';
+  document.body.insertAdjacentHTML('beforeend', '<div class="hoja-velo" id="hoja-velo"></div><div class="hoja" id="hoja" role="dialog" aria-label="Marcar como usada">'+
+    '<h3>¿Dónde se usó?</h3><div class="canales" id="h-canal">'+CANALES.map(function(c){ return '<button type="button" data-v="'+c[0]+'" aria-pressed="false">'+c[1]+'</button>'; }).join('')+'</div>'+
+    '<label class="campo"><span class="lbl">Fecha</span><input type="date" id="h-fecha" value="'+hoy+'" max="'+hoy+'" min="2020-01-01"></label>'+
+    '<label class="campo"><span class="lbl">Link (si quieres)</span><input type="url" id="h-link" placeholder="https://www.instagram.com/reel/…" inputmode="url"></label>'+
+    '<div class="fila"><button class="btn sec" id="h-cancelar">Cancelar</button><button class="btn baz" id="h-guardar" disabled>Guardar</button></div></div>');
+  $('#hoja-velo').onclick = cerrarHoja; $('#h-cancelar').onclick = cerrarHoja;
+  $('#h-canal').querySelectorAll('button').forEach(function(b){ b.onclick = function(){
+    canal = b.dataset.v; $('#h-canal').querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); $('#h-guardar').disabled = false;
+  }; });
+  $('#h-guardar').onclick = async function(){
+    var fecha = $('#h-fecha').value || hoy, link = $('#h-link').value.trim();
+    if (link && !/^https:\/\//.test(link)) link = 'https://' + link.replace(/^\/+/, '');
+    $('#h-guardar').disabled = true; $('#h-guardar').textContent = 'Guardando…';
+    if (!LOCAL) {
+      var r = await sb.rpc('fototeca_marcar_uso', { p_ids: [d.id], p_canal: canal, p_fecha: fecha, p_link: link || null });
+      if (r.error) { aviso('No se guardó: '+r.error.message); $('#h-guardar').disabled = false; $('#h-guardar').textContent = 'Guardar'; return; }
+      await recargarUsos(d.id);
+    } else {
+      (USADAS[d.id] = USADAS[d.id] || []).push({ id: Date.now(), item_id: d.id, canal: canal, fecha: fecha, link: link || null, created_by: MI_MAIL });
+    }
+    cerrarHoja(); aviso('Marcada como usada'); if (ACTUAL === d) pintarUsos(d); refrescarItem(d);
+  };
+}
+function cerrarHoja(){ ['#hoja','#hoja-velo'].forEach(function(s){ var e = $(s); if (e) e.remove(); }); }
 function mover(k){
   if (EDITANDO) return;
   var L = lista(), i = L.indexOf(ACTUAL), n = L[i+k];
@@ -454,6 +554,7 @@ function cerrar(){
   ocultar();
 }
 function ocultar(){
+  cerrarHoja();
   $('#ficha').hidden = true; $('#velo').hidden = true; $('#ficha').innerHTML = ''; document.body.classList.remove('fija');
   if (ACTUAL) { var el = document.querySelector('.item[data-id="'+ACTUAL.id+'"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); }
   ACTUAL = null; EDITANDO = false;
@@ -629,6 +730,7 @@ async function cargar(){
     META = j.meta; DATA = j.items;
     sprites().forEach(function(s){ SPR[s] = 'fototeca-local/'+nomSprite(s); });
     ES_ADMIN = /[?&]admin\b/.test(location.search);
+    PUEDE_USOS = ES_ADMIN || /[?&]usos\b/.test(location.search); MI_MAIL = ES_ADMIN ? 'hola@casazaru.cl' : 'emerge.smm@gmail.com';
     arrancar(j); return;
   }
   var r = await sb.auth.getSession();
@@ -636,7 +738,9 @@ async function cargar(){
   if (sess && /type=(recovery|invite)/.test(HASH0)) { formClave(); return; }
   if (!sess) { formLogin(); return; }
   $('#salir').hidden = false;
-  ES_ADMIN = (sess.user && (sess.user.email||'').toLowerCase()) === ADMIN_MAIL;
+  MI_MAIL = ((sess.user && sess.user.email) || '').toLowerCase();
+  ES_ADMIN = MI_MAIL === ADMIN_MAIL;
+  PUEDE_USOS = MARCAN_USOS.indexOf(MI_MAIL) !== -1;
   var a = await sb.storage.from(BUCKET).createSignedUrl('datos.json', FIRMA_SEG);
   if (a.error || !a.data) {
     bloquear('Esta cuenta no tiene acceso a la Fototeca',
@@ -650,23 +754,26 @@ async function cargar(){
   (b.data || []).forEach(function(x){
     var m = /^s(\d+)\.jpg$/.exec(x.path || ''); if (m && x.signedUrl) SPR[+m[1]] = x.signedUrl;
   });
-  await cargarEdiciones();
+  await Promise.all([cargarEdiciones(), cargarUsos()]);
   arrancar(j2);
 }
 
 $('#velo').onclick = cerrar;
 document.addEventListener('keydown', function(e){
+  if ($('#hoja')) { if (e.key === 'Escape') cerrarHoja(); return; }
   if ($('#ficha').hidden || EDITANDO) return;
   if (e.key === 'Escape') cerrar();
   if (e.key === 'ArrowRight') mover(1);
   if (e.key === 'ArrowLeft') mover(-1);
 });
-['#f-mejores','#f-descartes','#f-sinia','#f-soloia','#f-sinper'].forEach(function(s){
+['#f-mejores','#f-descartes','#f-sinia','#f-soloia','#f-sinper','#f-sinusar','#f-usadas'].forEach(function(s){
   $(s).onclick = function(e){
     var b = e.currentTarget, nuevo = b.getAttribute('aria-pressed') !== 'true';
     b.setAttribute('aria-pressed', nuevo ? 'true' : 'false');
     if (nuevo && s === '#f-sinia') $('#f-soloia').setAttribute('aria-pressed','false');
     if (nuevo && s === '#f-soloia') $('#f-sinia').setAttribute('aria-pressed','false');
+    if (nuevo && s === '#f-sinusar') $('#f-usadas').setAttribute('aria-pressed','false');
+    if (nuevo && s === '#f-usadas') $('#f-sinusar').setAttribute('aria-pressed','false');
     filtrar();
   };
 });
