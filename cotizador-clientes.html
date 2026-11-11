@@ -1438,7 +1438,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s1 .pcard[data-prod="mesa"] { order: 3; }
 #s1 .pcard[data-prod="repisa"] { order: 4; }
 #s1 .pcard[data-prod="revestimiento"] { order: 5; }
-#s1 .pcard[data-prod="revlibre"], #s1 .pcard[data-prod="banca"], #s1 .pcard[data-prod="pcocina"] { order: 6; }
+#s1 .pcard[data-prod="revlibre"], #s1 .pcard[data-prod="banca"], #s1 .pcard[data-prod="pcocina"], #s1 .pcard[data-prod="especial"] { order: 6; }
 @media (min-width:720px){ #s1 .pcard .pname { font-size: 16px; } }
 #s1 .prof-banner { display: flex; flex-direction: column; gap: 4px; max-width: 1120px; margin: 16px auto 0; background: #EEF1EA; border-radius: 12px; padding: 12px 14px; text-decoration: none; color: var(--tx); font-size: 13.5px; line-height: 1.45; }
 #s1 .prof-banner strong { font-weight: 600; }
@@ -1714,6 +1714,66 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 .marca .cierre-marca { background: var(--terracota); color: #fff; border-radius: 14px; padding: 16px; text-align: center; margin: 18px 0 8px; }
 .marca .cierre-marca .cm-lema { font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 16px; margin: 0 0 6px; }
 .marca .cierre-marca .cm-red { font-size: 12.5px; margin: 0; opacity: .95; }
+
+/* ── COTIZACIÓN ESPECIAL (11-11-2026) ── formulario del vendedor (es-*) y su documento */
+.es-lbl { display: block; font-family: 'Poppins', sans-serif; font-size: 13px; color: #57524B; margin: 14px 0 4px; }
+.es-lbl span { color: #8A8478; }
+#es-form > .es-lbl:first-child { margin-top: 0; }
+.es-in { display: block; width: 100%; box-sizing: border-box; border: 1px solid #948A7C; border-radius: 4px; background: #fff; min-height: 44px;
+  padding: 9px 10px; font: 16px 'Poppins', sans-serif; color: #1F1D24; }
+textarea.es-in { resize: vertical; line-height: 1.4; }
+.es-num { font-variant-numeric: tabular-nums; }
+.es-hint { font-family: 'Poppins', sans-serif; font-size: 12px; color: #57524B; margin-top: 4px; line-height: 1.4; }
+.es-h { font-variant-numeric: tabular-nums; min-height: 17px; }
+.es-g2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px; }
+.es-g2.uno { grid-template-columns: minmax(0,1fr); }
+.es-tag { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; border-radius: 3px; background: #485B3D; color: #fff;
+  font: 600 11px 'Poppins', sans-serif; text-align: center; margin-right: 6px; vertical-align: 1px; }
+.es-tag.b { background: #A85D2A; }
+.es-seg { margin-bottom: 2px; }
+.es-item { border: 1px solid #E4DDD2; border-radius: 4px; padding: 12px; margin: 6px 0 10px; background: #FBF9F5; }
+.es-item-hd { display: flex; align-items: center; justify-content: space-between; font-family: 'Poppins', sans-serif; font-size: 14px; color: #1F1D24; min-height: 32px; }
+.es-item-hd + .es-lbl { margin-top: 6px; }
+.es-datos { background: #fff; border: 1px solid #E4DDD2; border-radius: 4px; padding: 0 10px 2px; }
+/* fila 1: nombre del dato, ojo y quitar; fila 2: unidad y el valor de cada opción */
+.es-dato { display: grid; grid-template-columns: 72px minmax(0,1fr) 32px 30px; gap: 6px; align-items: center; padding: 10px 0; border-bottom: 1px solid #E4DDD2; }
+.es-dato > .es-in:first-child { grid-column: 1 / 3; }
+.es-dato .es-u { grid-column: 1; grid-row: 2; }
+.es-dato .es-in { min-height: 40px; padding: 7px 9px; font-size: 15px; }
+.es-v { grid-column: 2 / -1; grid-row: 2; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 6px; }
+.es-v.uno { grid-template-columns: minmax(0,1fr); }
+.es-v label { display: flex; align-items: center; min-width: 0; }
+.es-v label .es-in { flex: 1; min-width: 0; }
+.es-ojo, .es-x { width: 32px; height: 36px; border: 0; background: none; padding: 0; display: flex; align-items: center; justify-content: center;
+  color: #485B3D; cursor: pointer; border-radius: 4px; font-size: 14px; }
+.es-x { color: #57524B; }
+.es-ojo svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+.es-ojo.off { color: #B5AEA2; }
+.es-ojo.off svg { stroke-dasharray: 3 2; }
+.es-ojo:hover, .es-x:hover { background: #F3EEE3; }
+/* ficha: el dato y quitar arriba, el valor entero abajo (los valores son largos: «Esmalte al agua blanco, 3 manos…») */
+.es-ficha { display: grid; grid-template-columns: minmax(0,1fr) 30px; gap: 6px; align-items: center; padding: 8px 0; border-bottom: 1px solid #E4DDD2; }
+.es-ficha > .es-in:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+.es-ficha > .es-in:first-child { min-height: 38px; padding: 6px 9px; font-size: 14px; color: #57524B; }
+.es-fila { display: flex; gap: 6px; margin-top: 8px; }
+.es-fila .es-in { flex: 1; min-width: 0; }
+.es-btn { flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid #948A7C; border-radius: 4px; background: #fff; font: 14px 'Poppins', sans-serif; color: #1F1D24; cursor: pointer; }
+.es-copiar { border: 1px dashed #948A7C; border-radius: 4px; padding: 10px; margin-top: 8px; background: #fff; }
+.es-add { margin: 2px 0 4px; }
+.es-ops-ley { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: #1F1D24; margin: 0 0 8px; }
+.es-vtab th { white-space: nowrap; }
+/* el documento */
+.marca .es-op { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--terracota); margin-bottom: 1px; }
+.marca .es-cant { display: block; font-size: 12.5px; font-weight: 500; color: var(--tx); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.marca .es-des { display: block; font-size: 11.5px; color: var(--tm); margin-top: 2px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.marca .es-iva { font-size: 11.5px; color: var(--tm); margin-top: 2px; }
+.ptable.es-tab { margin: 14px 0 18px; font-variant-numeric: tabular-nums; }
+.ptable.es-tab td { vertical-align: top; padding: 8px 5px; font-size: 13.5px; }
+.ptable.es-tab td.es-l { text-align: left; }
+.ptable.es-tab td small { display: block; font-size: 11.5px; font-weight: 400; color: var(--tm); line-height: 1.4; margin-top: 2px; }
+.ptable.es-tab td small.es-obs { font-style: italic; }
+.ptable.es-tab .trow td { font-size: 13.5px; }
+.marca .es-nota { font-size: 12.5px; color: var(--tm); line-height: 1.5; margin: 6px 0 4px; }
 
 /* ── ÚLTIMA PÁGINA, TERCERA VUELTA (pedido del usuario 06-10, por WhatsApp) ──
    1) El botón de WhatsApp con su color y latiendo, separado de los precios
@@ -2170,6 +2230,12 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
         <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas de mueble de cocina</div><div class="psub">Uso interno · 2 cm, valor repisa + fijo por puerta</div></div><span class="parrow">→</span></div>
       </div>
 
+      <!-- Solo vendedores (11-11-2026): trabajos fuera del catálogo, con ítems y precios escritos a mano -->
+      <div class="pcard hidden" id="pcard-especial" data-prod="especial">
+        <div class="pcard-img"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4" stroke-linecap="round"/></svg></div></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Cotización especial</div><div class="psub">Uso interno · ítems, datos y precios a mano</div></div><span class="parrow">→</span></div>
+      </div>
+
     </div>
     <!-- Programa para profesionales (06-10-2026). Los tramos de la Cuenta
          Casa Zaru (2% sobre $1,5M y 5% sobre $3M comprados en el año, más el
@@ -2248,7 +2314,7 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
     <!-- solo vendedores (03-11-2026): los ajustes que cambian el precio, juntos,
          y el precio de cada madera en vivo (vPrecioPintar) -->
     <div class="v-blk v-solo" id="v-ajustes"></div>
-    <div class="v-blk v-solo"><div class="v-h">Precio por madera</div><div id="v-precio"></div></div>
+    <div class="v-blk v-solo"><div class="v-h" id="v-precio-h">Precio por madera</div><div id="v-precio"></div></div>
     <div class="v-blk" id="v-msg"><div class="v-h">Mensaje para WhatsApp<span>se copia junto con el link</span></div><div class="v-wa" id="v-wa"></div></div>
     <div class="msg-err hidden" id="f-err"></div>
     <div class="v-barra-pc">
@@ -2462,7 +2528,7 @@ var PNAME = {
   /* 03-11-2026: «Sin vidrio» en vez de «Madera»/«Maciza», porque todas son macizas */
   granero:'Puerta Granero', maciza:'Puerta sin vidrio', vidrios:'Puerta con vidrio',
   revestimiento:'Revestimiento', mesa:'Mesas de madera', revlibre:'Revestimiento a medida',
-  banca:'Bancas', pcocina:'Puertas de mueble de cocina'
+  banca:'Bancas', pcocina:'Puertas de mueble de cocina', especial:'Cotización especial'
 };
 /* nombre de un producto guardado. Una cotización con varios productos guarda
    sus códigos unidos por "+" (ej. "mesa+banca"), así que se traduce cada uno.
@@ -3582,7 +3648,7 @@ function calcLive() {
   var wrapEl = rangeEl.closest('.live-price-wrap');
   /* revlibre siempre lo valoriza el vendedor a mano. La mesa SÍ muestra precio
      en vivo al público, porque su base se calcula sola (mesaBaseSugerida). */
-  var sinLive = (prod === 'revlibre') || (prod === 'mesa' && vendorMode);
+  var sinLive = (prod === 'revlibre') || (prod === 'especial') || (prod === 'mesa' && vendorMode);
   if (wrapEl) wrapEl.style.display = sinLive ? 'none' : '';
   rbAutoSync();   /* los ml del reborde dependen de las medidas Y de las cantidades */
   tnSync();       /* el teñido por tarifa sigue a los m² de las piezas */
@@ -3805,7 +3871,11 @@ async function b2bBuscar(rut) {
     console.error('b2bBuscar:', e);
   }
 }
-function b2bFijar(emp, pct, msg) { b2bEmp = emp; b2bDcto = pct; b2bMsg = msg || ''; b2bPintar(); calcLive(); }
+function b2bFijar(emp, pct, msg) {
+  b2bEmp = emp; b2bDcto = pct; b2bMsg = msg || '';
+  if (ES) ES.emp = emp && emp.nombre ? String(emp.nombre).slice(0, 80) : '';   /* la especial la nombra bajo el cliente */
+  b2bPintar(); calcLive();
+}
 /* el aviso sale bajo el RUT y, en el formulario del vendedor, en «Ajustes de precio» (#v-b2b-res) */
 function b2bPintar(cargando) {
   ['b2b-res', 'v-b2b-res'].forEach(function(id){ var el = document.getElementById(id); if (el) el.innerHTML = b2bResHtml(cargando); });
@@ -3833,7 +3903,7 @@ function initProd(p, tipoMesa) {
   /* el título invita a hacer, no nombra la categoría (revisión UX 06-10-2026) */
   var TITULO_FORM = { cubierta:'Cotiza tu cubierta', repisa:'Cotiza tu repisa', peldano:'Cotiza tus peldaños',
     puertas:'Cotiza tu puerta', mesa:'Cotiza tu mesa', revestimiento:'Cotiza tu revestimiento',
-    banca:'Cotiza tus bancas', pcocina:'Cotiza tus puertas de cocina' };
+    banca:'Cotiza tus bancas', pcocina:'Cotiza tus puertas de cocina', especial:'Cotización especial' };
   document.getElementById('f-title').textContent = TITULO_FORM[p] || (isPuertas ? 'Puertas de madera' : PNAME[p]);
   document.getElementById('f-err').classList.add('hidden');
   renderForm(p);
@@ -4217,6 +4287,12 @@ function renderForm(p) {
       vExtrasFieldHtml();
     c.addEventListener('click', function(e) { if (e.target.closest('#btn-add-vextra')) addVExtra(); });
     c.addEventListener('input', calcLive);
+  } else if (p === 'especial') {
+    ES = esNuevo();   /* restoreProducto la reemplaza si viene de un link */
+    c.innerHTML = '<div id="es-form"></div>';
+    c.addEventListener('input', esInput);
+    c.addEventListener('change', esInput);
+    esPintar();
   }
 }
 /* datos de la base (fierro o madera) que escribe el vendedor */
@@ -5597,6 +5673,12 @@ function validarProducto(errEl, paraCombo) {
     if (!document.getElementById('rv-madera').value.trim()) return falta('Escribe el tipo de madera.');
     if (rvChk.valorTabla <= 0) return falta('Escribe el valor por tabla.');
   }
+  if (prod === 'especial') {
+    /* primera versión: va sola (sus precios son por opción, no por madera) */
+    if (paraCombo || combo.length) return falta('La cotización especial va sola: no se junta con otros productos. Guárdala aparte.');
+    var esF = esFalta();
+    if (esF) return falta(esF);
+  }
   return true;
 }
 /* para qué espacio es: lo pregunta el formulario de cubierta y repisa; el
@@ -5611,6 +5693,7 @@ function hasValidDims() {
     return !!(rmEl && parseFloat(rmEl.value) > 0);
   }
   if (prod === 'revlibre') return true;   /* se valida aparte: madera + valor por tabla */
+  if (prod === 'especial') return true;   /* se valida aparte: ítems y precios (esFalta) */
   for (var i = 1; i <= nrows; i++) {
     var lgEl = document.getElementById('lg'+i), anEl = document.getElementById('an'+i);
     if (lgEl && anEl && parseFloat(lgEl.value) > 0 && parseFloat(anEl.value) > 0) return true;
@@ -5994,10 +6077,11 @@ async function confirmar() {
     /* el botón de WhatsApp, justo debajo de los precios (en la combinada, del
        total, que es el último bloque de precios del documento) */
     var waB = qOut.querySelector('.wa-block'), bloquesPrecio = qOut.querySelectorAll('.precios');
-    if (waB && bloquesPrecio.length) bloquesPrecio[bloquesPrecio.length - 1].insertAdjacentElement('afterend', waB);
+    /* la especial lo deja al final, después del detalle de los ítems (boceto 11-11) */
+    if (waB && bloquesPrecio.length && prod !== 'especial') bloquesPrecio[bloquesPrecio.length - 1].insertAdjacentElement('afterend', waB);
     /* la validez, justo sobre los precios: ahí ayuda a decidir */
     if (bloquesPrecio.length) bloquesPrecio[bloquesPrecio.length - 1].insertAdjacentHTML('beforebegin',
-      '<p class="elige-madera">Elige tu madera · ' + validezHtml() + '</p>');
+      '<p class="elige-madera">' + eligeTxt() + validezHtml() + '</p>');
     stkMontar(qOut);   /* envío Starken: solo vendedores, se arma solo si hay kilos */
     show('s3');
     embudoTick('cotizacion');
@@ -6024,6 +6108,7 @@ function htmlProducto(cli, fecha) {
   if (prod === 'revestimiento') return htmlRev(cli, fecha);
   if (prod === 'mesa') return htmlMesa(cli, fecha);
   if (prod === 'revlibre') return htmlRevLibre(cli, fecha);
+  if (prod === 'especial') return htmlEspecial(cli, fecha);
   return '';
 }
 
@@ -6163,6 +6248,9 @@ function vPrecioPintar() {
   document.querySelectorAll('.dcto-op').forEach(function(b){
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
   });
+  var ph = document.getElementById('v-precio-h');
+  if (ph) ph.textContent = prod === 'especial' ? 'Resumen' : 'Precio por madera';
+  if (prod === 'especial' && ES) { esResumenPintar(box); return; }   /* precios por opción, no por madera */
   var r = vTotales();
   vActualPintar(r);
   var bpv = document.getElementById('bp-v');
@@ -6256,7 +6344,7 @@ function vActualPintar(r) {
   var it = r && r.items && r.items.length > combo.length ? r.items[r.items.length - 1] : null;
   n.textContent = it ? vNombreCorto(it) : (V_CHIPS[prod] || PNAME[prod] || 'Producto');
   /* «200 × 60 cm · cocina · 2 extras» */
-  var desc = it ? vLineaDesc(it) : 'Completa las medidas';
+  var desc = (prod === 'especial' && ES) ? esLineaDesc() : it ? vLineaDesc(it) : 'Completa las medidas';
   var usoEl = document.getElementById('f-uso');
   var usoTxt = { cocina: 'cocina', bano: 'baño', comedor: 'mesa', escritorio: 'escritorio', quincho: 'quincho', repisa: 'repisa', exterior: 'exterior' }[usoEl ? usoEl.value : ''];
   if (it && usoTxt) desc += ' · ' + usoTxt;
@@ -6304,7 +6392,7 @@ function vActualQuitar() {
 }
 /* «Agregar producto»: la lista de productos sin fotos, sacada del inicio (s1) */
 var V_CHIPS = { cubierta: 'Cubierta', repisa: 'Repisa', peldano: 'Peldaños', puertas: 'Puerta', revestimiento: 'Revestimiento',
-  revlibre: 'Revestimiento a medida', banca: 'Banca', pcocina: 'Puerta de cocina' };
+  revlibre: 'Revestimiento a medida', banca: 'Banca', pcocina: 'Puerta de cocina', especial: 'Cotización especial' };
 function vChipsHtml(fn) {
   var mesas = 0;
   return Array.prototype.map.call(document.querySelectorAll('#s1 .pcard'), function(c, i){
@@ -6354,6 +6442,13 @@ function vMensaje(link) {
   nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
   var cods = combo.map(function(it){ return it.p; });
   if (prod && cods.indexOf(prod) === -1) cods.push(prod);
+  if (prod === 'especial' && ES) {   /* el título del documento dice qué es; sin «precio en cada madera» */
+    var t = ES.tit.trim();
+    t = t ? t.charAt(0).toLowerCase() + t.slice(1) : 'tu proyecto';
+    return (nom ? 'Hola ' + nom : 'Hola') + ', te escribe César de Casa Zaru.\n\n' +
+      'Te dejo la cotización de ' + t + (ES.nOp === 2 ? ', con dos opciones' : '') + ':\n' + link + '\n\n' +
+      'Cualquier duda me avisas.';
+  }
   return (nom ? 'Hola ' + nom : 'Hola') + ', te escribe César de Casa Zaru.\n\n' +
     'Te dejo la cotización de ' + prodTexto(cods.join('+')).suyo + ', con el precio en cada madera:\n' + link + '\n\n' +
     'Cualquier duda, o si quieres fotos para comparar maderas, me avisas y te mando.';
@@ -6506,9 +6601,9 @@ function vVistaPrevia() {
     qOut.innerHTML = '<div class="v-vista-banda">Vista del cliente · todavía no está guardada</div>' + html;
     /* lo mismo que confirmar(): WhatsApp bajo los precios y la validez sobre ellos */
     var waB = qOut.querySelector('.wa-block'), bloques = qOut.querySelectorAll('.precios');
-    if (waB && bloques.length) bloques[bloques.length - 1].insertAdjacentElement('afterend', waB);
+    if (waB && bloques.length && prod !== 'especial') bloques[bloques.length - 1].insertAdjacentElement('afterend', waB);
     if (bloques.length) bloques[bloques.length - 1].insertAdjacentHTML('beforebegin',
-      '<p class="elige-madera">Elige tu madera · ' + validezHtml() + '</p>');
+      '<p class="elige-madera">' + eligeTxt() + validezHtml() + '</p>');
     stkMontar(qOut);
   } finally {
     vVista = false;
@@ -6923,6 +7018,406 @@ function htmlRevLibre(cli, fecha) {
   );
 }
 
+/* ── COTIZACIÓN ESPECIAL (11-11-2026, boceto aprobado ese día) ──
+   Para trabajos fuera del catálogo (guardapolvos, pilastras, revestimientos de
+   obra, muebles): el vendedor escribe los ítems, sus datos y el precio de cada
+   uno; el cotizador solo suma. Hasta dos opciones lado a lado (ej. tabla 1×6 y
+   1×5). Solo vendedores y va sola (no se combina). No lleva «Llega lista»,
+   garantía de 5 años, maderas ni muestrario: hablan de madera noble con
+   protector y no aplican, por ejemplo, a pino pintado.
+   · Todo vive en ES y viaja entero en el link (data.es). Al abrirlo se sanea:
+     quote_links lo puede escribir cualquiera con la llave pública.
+   · Las cantidades son decimales con su unidad al lado (130,11 ml, 45 tablas).
+     El total de cada opción suma por unidad las que tienen TODOS los ítems.
+   · Se guarda como cualquier cotización: producto 'especial', la opción más
+     barata en total_bajo y la más cara en total_alto. Sin cambios en la base. */
+var ES = null;
+var ES_NOINC = ['Instalación', 'Flete', 'Herrajes'];
+var ES_OJO = '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+var esCopiaAbierta = false, esCopiaLista = null;
+function esItemNuevo() {
+  return { nom: '', det: '', obs: '', pr: [0, 0],
+    datos: [{ n: 'Metros a cubrir', u: 'ml', ver: 1, v: [null, null] }, { n: 'Tablas', u: 'tablas', ver: 1, v: [null, null] }] };
+}
+function esNuevo() {
+  return { tit: '', nOp: 1, ops: ['', ''], items: [esItemNuevo()],
+    ficha: [{ n: 'Madera', v: '' }, { n: 'Terminación', v: '' }, { n: 'Plazo', v: 'A coordinar' }],
+    noInc: ['Instalación', 'Flete'], obs: '', tr: 0,
+    emp: (b2bEmp && b2bEmp.nombre) ? String(b2bEmp.nombre).slice(0, 80) : '' };   /* razón social de la cuenta empresa, si la hay */
+}
+function esTxt(s, max) { return String(s == null ? '' : s).slice(0, max || 200); }
+/* cantidad: decimal con 3 decimales, o null si está vacía */
+function esNum(x) {
+  if (x === null || x === undefined || x === '') return null;
+  var n = typeof x === 'number' ? x : parseFloat(String(x).replace(',', '.'));
+  return isFinite(n) && n >= 0 ? Math.round(n * 1000) / 1000 : null;
+}
+/* pesos: entero, IVA incluido */
+function esPeso(x) { var n = Math.round(parseFloat(x)); return isFinite(n) && n > 0 ? Math.min(n, 999999999) : 0; }
+function esSanear(d) {
+  d = (d && typeof d === 'object') ? d : {};
+  var lista = function(a, max){ return Array.isArray(a) ? a.slice(0, max) : []; };
+  var par = function(a, f){ a = Array.isArray(a) ? a : []; return [f(a[0]), f(a[1])]; };
+  var obj = function(x){ return (x && typeof x === 'object') ? x : {}; };
+  var items = lista(d.items, 30).map(function(it){
+    it = obj(it);
+    return { nom: esTxt(it.nom, 120), det: esTxt(it.det, 400), obs: esTxt(it.obs, 400), pr: par(it.pr, esPeso),
+      datos: lista(it.datos, 8).map(function(x){
+        x = obj(x);
+        return { n: esTxt(x.n, 60), u: esTxt(x.u, 20), ver: x.ver ? 1 : 0, v: par(x.v, esNum) };
+      }) };
+  });
+  if (!items.length) items.push(esItemNuevo());
+  return { tit: esTxt(d.tit, 120), nOp: d.nOp === 2 ? 2 : 1, ops: par(d.ops, function(s){ return esTxt(s, 60); }), items: items,
+    ficha: lista(d.ficha, 12).map(function(f){ f = obj(f); return { n: esTxt(f.n, 40), v: esTxt(f.v, 200) }; }),
+    noInc: lista(d.noInc, 8).map(function(s){ return esTxt(s, 40).trim(); }).filter(Boolean),
+    obs: esTxt(d.obs, 1000), tr: d.tr ? 1 : 0, emp: esTxt(d.emp, 80) };
+}
+/* lo que viaja en el link: una copia saneada */
+function esDatos() { return esSanear(ES || esNuevo()); }
+function esOps() { return ES.nOp === 2 ? [0, 1] : [0]; }
+function esLetra(o) { return o ? 'B' : 'A'; }
+function esTotal(o) { return ES.items.reduce(function(a, it){ return a + (it.pr[o] || 0); }, 0); }
+function esCant(x, u) { return x.toLocaleString('es-CL', { maximumFractionDigits: 3 }) + ' ' + u; }
+/* datos visibles de un ítem en una opción: «130,11 ml», «45 tablas» */
+function esDatosOp(it, o) {
+  return it.datos.filter(function(x){ return x.ver && x.v[o] > 0 && x.u.trim(); })
+    .map(function(x){ return esCant(x.v[o], x.u.trim()); });
+}
+/* lo que suman los ítems de una opción, por unidad: solo las que tienen todos
+   (ml y tablas sí; «23 puertas» es de las pilastras y no se suma a nada) */
+function esSumaOp(o) {
+  var porU = {}, orden = [];
+  ES.items.forEach(function(it, i){
+    it.datos.forEach(function(x){
+      var u = x.u.trim();
+      if (!x.ver || !(x.v[o] > 0) || !u) return;
+      var k = u.toLowerCase();
+      if (!porU[k]) { porU[k] = { u: u, tot: 0, en: {} }; orden.push(k); }
+      porU[k].tot += x.v[o];
+      porU[k].en[i] = 1;
+    });
+  });
+  return orden.filter(function(k){ return Object.keys(porU[k].en).length === ES.items.length; })
+    .map(function(k){ return esCant(Math.round(porU[k].tot * 1000) / 1000, porU[k].u); });
+}
+/* «≈ $7.443 por ml»: el precio del ítem sobre su primer dato con valor (solo lo ve el vendedor) */
+function esUnitHint(it, o) {
+  var x = it.datos.filter(function(d){ return d.v[o] > 0 && d.u.trim(); })[0];
+  if (!x || !(it.pr[o] > 0)) return '';
+  var u = x.u.trim();
+  var sing = /des$/i.test(u) ? u.slice(0, -2) : (/[^e]s$/i.test(u) ? u.slice(0, -1) : u);
+  return '≈ ' + fmt(it.pr[o] / x.v[o]) + ' por ' + sing;
+}
+/* lo que falta para poder guardarla, o '' si está lista */
+function esFalta() {
+  if (!ES) return 'Vuelve a elegir «Cotización especial».';
+  var ops = esOps(), msg = '';
+  ES.items.some(function(it, i){
+    if (!it.nom.trim()) { msg = 'Escribe el nombre del ítem' + (ES.items.length > 1 ? ' ' + (i + 1) : '') + '.'; return true; }
+    var sinU = it.datos.filter(function(x){ return (x.v[0] > 0 || x.v[1] > 0) && !x.u.trim(); })[0];
+    if (sinU) { msg = 'Al dato «' + (sinU.n.trim() || 'sin nombre') + '» de ' + it.nom.trim() + ' le falta la unidad (ml, tablas, m²…).'; return true; }
+    var sinP = ops.filter(function(o){ return !(it.pr[o] > 0); });
+    if (sinP.length) { msg = 'Escribe el precio de ' + it.nom.trim() + (ES.nOp === 2 ? ' en la opción ' + esLetra(sinP[0]) : '') + '.'; return true; }
+    return false;
+  });
+  if (msg) return msg;
+  if (ES.nOp === 2 && (!ES.ops[0].trim() || !ES.ops[1].trim())) return 'Ponle nombre a las dos opciones (ej. «Tabla 1×6»).';
+  if (!ES.tit.trim()) return 'Escribe el título del documento.';
+  return '';
+}
+/* el formulario del vendedor, armado entero desde ES */
+function esPintar() {
+  var box = document.getElementById('es-form');
+  if (!box || !ES) return;
+  var ops = esOps(), dos = ES.nOp === 2;
+  var tag = function(o){ return dos ? '<span class="es-tag' + (o ? ' b' : '') + '">' + esLetra(o) + '</span>' : ''; };
+  var inp = function(path, val, ph){ return '<input class="es-in" type="text" data-es="' + path + '" value="' + escA(val) + '" placeholder="' + escA(ph || '') + '">'; };
+  var area = function(path, val, ph, filas){ return '<textarea class="es-in" rows="' + (filas || 2) + '" data-es="' + path + '" placeholder="' + escA(ph || '') + '">' + escA(val) + '</textarea>'; };
+  var num = function(path, val, ph, t){
+    return '<input class="es-in es-num" type="number" inputmode="' + (t === 'peso' ? 'numeric' : 'decimal') + '" step="' + (t === 'peso' ? '1' : '0.001') +
+      '" min="0" data-es="' + path + '" data-t="' + t + '" value="' + (val > 0 ? String(val) : '') + '" placeholder="' + escA(ph || '') + '">';
+  };
+  var seg = function(a, b, onA, onB, enA){
+    return '<div class="v-seg es-seg"><button type="button" class="' + (enA ? 'on' : '') + '" onclick="' + onA + '">' + a + '</button>' +
+      '<button type="button" class="' + (enA ? '' : 'on') + '" onclick="' + onB + '">' + b + '</button></div>';
+  };
+  var h = '<label class="es-lbl">Empezar desde</label>' + seg('En blanco', 'Copiar de otra', 'esCopiaVer(false)', 'esCopiaVer(true)', !esCopiaAbierta);
+  if (esCopiaAbierta) h += '<div class="es-copiar">' +
+      '<select class="es-in" id="es-copiar-sel" onchange="esCopiarDe(this.value)"><option value="">' +
+        (esCopiaLista === null ? 'Buscando las guardadas…' : esCopiaLista.length ? 'Elige una cotización especial…' : 'No encontré especiales guardadas: pega el link') + '</option>' +
+        (esCopiaLista || []).map(function(c){ return '<option value="' + escA(c.tok) + '">' + escA(c.txt) + '</option>'; }).join('') + '</select>' +
+      '<div class="es-fila"><input class="es-in" type="text" id="es-copiar-link" placeholder="o pega su link (…?s=abc123)"><button type="button" class="es-btn" onclick="esCopiarDeLink()">Copiar</button></div>' +
+      '<div class="es-hint">Trae los ítems, sus datos, la ficha y las observaciones. El cliente y la fecha no se copian. Después cambias los números.</div>' +
+    '</div>';
+  h += '<label class="es-lbl">Título del documento</label>' + inp('tit', ES.tit, 'Ej. Guardapolvos y pilastras pintados blancos') +
+    '<div class="es-hint">El cliente lo ve como título grande.</div>';
+  h += '<label class="es-lbl">Opciones de precio</label>' + seg('Una', 'Dos, lado a lado', 'esOpciones(1)', 'esOpciones(2)', !dos);
+  h += dos
+    ? '<div class="es-g2">' + ops.map(function(o){ return '<div><label class="es-lbl">' + tag(o) + 'Nombre</label>' + inp('ops.' + o, ES.ops[o], o ? 'Ej. Tabla 1×5' : 'Ej. Tabla 1×6') + '</div>'; }).join('') + '</div>'
+    : '<label class="es-lbl">Nombre del precio <span>(opcional)</span></label>' + inp('ops.0', ES.ops[0], 'Ej. Pino insigne pintado');
+  h += '<label class="es-lbl">Ítems</label>';
+  ES.items.forEach(function(it, i){
+    var pi = 'items.' + i;
+    h += '<div class="es-item"><div class="es-item-hd"><b>Ítem ' + (i + 1) + '</b>' +
+        (ES.items.length > 1 ? '<button type="button" class="es-x" aria-label="Quitar ítem" title="Quitar ítem" onclick="esAccion(\'quitarItem\',' + i + ')">✕</button>' : '') + '</div>' +
+      '<label class="es-lbl">Nombre</label>' + inp(pi + '.nom', it.nom, 'Ej. Guardapolvos') +
+      '<label class="es-lbl">Detalle</label>' + area(pi + '.det', it.det, 'Ej. Pino insigne, rebajado y pintado blanco') +
+      '<label class="es-lbl">Datos <span>(el ojo decide si el cliente lo ve)</span></label><div class="es-datos">' +
+      it.datos.map(function(x, j){
+        var p = pi + '.datos.' + j;
+        return '<div class="es-dato">' +
+          '<input class="es-in" type="text" data-es="' + p + '.n" value="' + escA(x.n) + '" placeholder="Dato (ej. Puertas)">' +
+          '<input class="es-in es-u" type="text" data-es="' + p + '.u" value="' + escA(x.u) + '" placeholder="unidad">' +
+          '<button type="button" class="es-ojo' + (x.ver ? '' : ' off') + '" aria-label="' + (x.ver ? 'Visible para el cliente' : 'Oculto para el cliente') +
+            '" title="' + (x.ver ? 'El cliente lo ve' : 'Solo lo ves tú') + '" onclick="esAccion(\'ojo\',' + i + ',' + j + ')">' + ES_OJO + '</button>' +
+          '<button type="button" class="es-x" aria-label="Quitar dato" title="Quitar dato" onclick="esAccion(\'quitarDato\',' + i + ',' + j + ')">✕</button>' +
+          '<div class="es-v' + (dos ? '' : ' uno') + '">' + ops.map(function(o){ return '<label>' + tag(o) + num(p + '.v.' + o, x.v[o], 'cantidad', 'num') + '</label>'; }).join('') + '</div>' +
+        '</div>';
+      }).join('') +
+      (it.datos.length < 8 ? '<button type="button" class="v-link" onclick="esAccion(\'agregarDato\',' + i + ')">+ Agregar dato</button>' : '') + '</div>' +
+      '<label class="es-lbl">Observaciones <span>(opcional)</span></label>' + area(pi + '.obs', it.obs, 'Algo que el cliente deba saber de este ítem') +
+      '<div class="es-g2' + (dos ? '' : ' uno') + '">' + ops.map(function(o){
+        return '<div><label class="es-lbl">' + tag(o) + 'Precio total</label>' + num(pi + '.pr.' + o, it.pr[o], 'con IVA', 'peso') +
+          '<div class="es-hint es-h" id="es-h-' + i + '-' + o + '"></div></div>';
+      }).join('') + '</div>' +
+    '</div>';
+  });
+  if (ES.items.length < 30) h += '<button type="button" class="v-add es-add" onclick="esAccion(\'agregarItem\')"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Agregar ítem</button>';
+  h += '<label class="es-lbl">Ficha para el cliente <span>(opcional; las filas sin valor no salen)</span></label>' +
+    ES.ficha.map(function(f, k){
+      return '<div class="es-ficha">' + inp('ficha.' + k + '.n', f.n, 'Dato') + inp('ficha.' + k + '.v', f.v, 'Valor') +
+        '<button type="button" class="es-x" aria-label="Quitar fila" title="Quitar fila" onclick="esAccion(\'quitarFicha\',' + k + ')">✕</button></div>';
+    }).join('') +
+    (ES.ficha.length < 12 ? '<button type="button" class="v-link" onclick="esAccion(\'agregarFicha\')">+ Agregar fila</button>' : '');
+  var chips = ES_NOINC.concat(ES.noInc.filter(function(s){ return ES_NOINC.indexOf(s) === -1; }));
+  h += '<label class="es-lbl">No incluye</label><div class="v-chips-sel">' +
+    chips.map(function(s){
+      return '<button type="button" class="' + (ES.noInc.indexOf(s) !== -1 ? 'on' : '') + '" data-s="' + escA(s) + '" onclick="esNoInc(this.getAttribute(\'data-s\'))">' + escA(s) + '</button>';
+    }).join('') + '</div>' +
+    '<div class="es-fila"><input class="es-in" type="text" id="es-noinc-otro" maxlength="40" placeholder="Otro (ej. retiro de escombros)"><button type="button" class="es-btn" onclick="esNoIncOtro()">Agregar</button></div>';
+  h += '<label class="es-lbl">Observaciones generales <span>(opcional)</span></label>' +
+    area('obs', ES.obs, 'Ej. Cantidades tomadas del plano. Se ajustan con la medida final en obra.', 3);
+  h += '<label class="es-lbl">Precio con transferencia</label>' + seg('No mostrar', 'Mostrar −' + transfPct() + ' %', 'esAccion(\'tr\',0)', 'esAccion(\'tr\',1)', !ES.tr) +
+    '<div class="es-hint">En un trabajo a medida el precio ya es el acordado: por defecto el documento muestra uno solo.</div>';
+  box.innerHTML = h;
+  esHints();
+}
+/* cada campo escribe en su lugar de ES (data-es = la ruta, data-t = el tipo) */
+function esInput(e) {
+  var el = e.target, path = el && el.getAttribute ? el.getAttribute('data-es') : null;
+  if (!path || !ES) return;
+  var t = el.getAttribute('data-t');
+  var val = t === 'num' ? esNum(el.value) : t === 'peso' ? esPeso(el.value) : el.value;
+  var k = path.split('.'), o = ES;
+  for (var i = 0; i < k.length - 1; i++) { o = o[k[i]]; if (o == null || typeof o !== 'object') return; }
+  o[k[k.length - 1]] = val;
+  esHints();
+}
+function esHints() {
+  if (!ES) return;
+  ES.items.forEach(function(it, i){
+    esOps().forEach(function(o){
+      var el = document.getElementById('es-h-' + i + '-' + o);
+      if (!el) return;
+      var u = esUnitHint(it, o);
+      el.textContent = it.pr[o] > 0 ? fmt(it.pr[o]) + (u ? ' · ' + u : '') : '';
+    });
+  });
+}
+function esAccion(a, i, j) {
+  if (!ES) return;
+  if (a === 'agregarItem' && ES.items.length < 30) {
+    /* el ítem nuevo parte con los mismos datos que el anterior, sin números */
+    var nuevo = esItemNuevo(), prev = ES.items[ES.items.length - 1];
+    if (prev && prev.datos.length) nuevo.datos = prev.datos.map(function(x){ return { n: x.n, u: x.u, ver: x.ver, v: [null, null] }; });
+    ES.items.push(nuevo);
+  }
+  else if (a === 'quitarItem' && ES.items.length > 1) ES.items.splice(i, 1);
+  else if (a === 'agregarDato' && ES.items[i] && ES.items[i].datos.length < 8) ES.items[i].datos.push({ n: '', u: '', ver: 1, v: [null, null] });
+  else if (a === 'quitarDato' && ES.items[i]) ES.items[i].datos.splice(j, 1);
+  else if (a === 'ojo' && ES.items[i] && ES.items[i].datos[j]) ES.items[i].datos[j].ver = ES.items[i].datos[j].ver ? 0 : 1;
+  else if (a === 'agregarFicha' && ES.ficha.length < 12) ES.ficha.push({ n: '', v: '' });
+  else if (a === 'quitarFicha') ES.ficha.splice(i, 1);
+  else if (a === 'tr') ES.tr = i ? 1 : 0;
+  esPintar();
+  vCambio();
+}
+function esOpciones(n) {
+  ES.nOp = n === 2 ? 2 : 1;
+  /* la B parte con las cantidades de la A: se cambia solo lo que difiere */
+  if (ES.nOp === 2) ES.items.forEach(function(it){ it.datos.forEach(function(x){ if (x.v[1] == null) x.v[1] = x.v[0]; }); });
+  esPintar();
+  vCambio();
+}
+function esNoInc(s) {
+  var k = ES.noInc.indexOf(s);
+  if (k === -1) { if (ES.noInc.length < 8) ES.noInc.push(s); } else ES.noInc.splice(k, 1);
+  esPintar();
+  vCambio();
+}
+function esNoIncOtro() {
+  var el = document.getElementById('es-noinc-otro');
+  var s = el ? esTxt(el.value, 40).trim() : '';
+  if (!s) return;
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  if (ES.noInc.indexOf(s) === -1 && ES.noInc.length < 8) ES.noInc.push(s);
+  esPintar();
+  vCambio();
+}
+/* «Copiar de otra»: la lista sale de las cotizaciones guardadas que la sesión
+   del vendedor puede leer; si no hay sesión, se pega el link */
+function esCopiaVer(si) {
+  esCopiaAbierta = !!si;
+  esPintar();
+  if (si && esCopiaLista === null) esCopiaCargar();
+}
+async function esCopiaCargar() {
+  try {
+    var r = await sbClient.from('cotizaciones').select('numero,cliente,link,fecha_creacion')
+      .eq('producto', 'especial').is('elim_fecha', null).not('link', 'is', null)
+      .order('fecha_creacion', { ascending: false }).limit(30);
+    if (r.error) throw r.error;
+    esCopiaLista = (r.data || []).map(function(c){
+      var m = /[?&]s=([A-Za-z0-9]+)/.exec(c.link || '');
+      var f = c.fecha_creacion ? new Date(c.fecha_creacion) : null;
+      return m ? { tok: m[1], txt: (c.numero || '') + ' · ' + (c.cliente || 'sin nombre') +
+        (f && !isNaN(f) ? ' · ' + f.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }) : '') } : null;
+    }).filter(Boolean);
+  } catch (e) { console.warn('esCopiaCargar:', e); esCopiaLista = []; }
+  if (esCopiaAbierta) esPintar();
+}
+async function esCopiarDe(tok) {
+  tok = String(tok || '').trim();
+  if (!tok) return;
+  if (!/^[A-Za-z0-9]{4,20}$/.test(tok)) { showToast('Ese link no parece de una cotización', false); return; }
+  var d = null;
+  try { var r = await sbClient.rpc('get_quote_link', { tok: tok }); if (!r.error && r.data) d = r.data; } catch (e) {}
+  if (!d) {
+    try { var r2 = await sbClient.from('quote_links').select('data').eq('token', tok).maybeSingle(); if (!r2.error && r2.data) d = r2.data.data; } catch (e) {}
+  }
+  if (!d || d.p !== 'especial' || !d.es) { showToast('No encontré una cotización especial en ese link', false); return; }
+  var copia = esSanear(d.es);
+  copia.emp = ES ? ES.emp : '';   /* la empresa es la del cliente de ahora, no la de la copiada */
+  ES = copia;
+  esCopiaAbierta = false;
+  esPintar();
+  vCambio();
+  showToast('Copiada la estructura de ' + esTxt(d.qnum || 'la cotización', 30) + ': revisa los números', true);
+}
+function esCopiarDeLink() {
+  var el = document.getElementById('es-copiar-link'), v = el ? el.value.trim() : '';
+  var m = /[?&]s=([A-Za-z0-9]+)/.exec(v);
+  esCopiarDe(m ? m[1] : v);
+}
+/* línea del producto en el formulario del vendedor */
+function esLineaDesc() {
+  var n = ES.items.length;
+  return n + (n === 1 ? ' ítem' : ' ítems') + ' · ' + (ES.nOp === 2 ? '2 opciones de precio' : '1 precio');
+}
+/* «Resumen» a la derecha (en el celular, abajo): ítems × opciones y el total */
+function esResumenPintar(box) {
+  vActualPintar(null);
+  var ops = esOps(), tot = ops.map(esTotal), falta = esFalta();
+  var bpv = document.getElementById('bp-v'), bl = document.querySelector('#barra-precio .bp-l');
+  if (!tot.some(function(t){ return t > 0; })) {
+    box.innerHTML = '<div class="v-vacio">' + escA(falta || 'Escribe el precio de cada ítem para ver el total.') + '</div>';
+    barraPrecio.hay = false; barraPintar(); vMsgPintar();
+    return;
+  }
+  var pct = dctoPct(), dos = ES.nOp === 2;
+  var th = '<th>Ítem</th>' + ops.map(function(o){
+    return '<th>' + (dos ? '<span class="es-tag' + (o ? ' b' : '') + '">' + esLetra(o) + '</span>' : 'Precio') + '</th>';
+  }).join('');
+  var filas = ES.items.map(function(it, i){
+    return '<tr><td>' + escA(it.nom.trim() || 'Ítem ' + (i + 1)) + '</td>' + ops.map(function(o){
+      var d = esDatosOp(it, o);
+      return '<td>' + fmt(it.pr[o]) + (d.length ? '<small>' + d.map(escA).join('<br>') + '</small>' : '') + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  filas += '<tr><td class="v-tr">Total con IVA' + (pct > 0 ? '<small>con ' + pct + ' % de descuento</small>' : '') + '</td>' + ops.map(function(o){
+    var s = esSumaOp(o);
+    return '<td class="v-tr">' + fmt(dctoMonto(tot[o])) + (pct > 0 ? '<small class="lista">' + fmt(tot[o]) + '</small>' : '') +
+      (s.length ? '<small>' + s.map(escA).join('<br>') + '</small>' : '') + '</td>';
+  }).join('') + '</tr>';
+  box.innerHTML = (dos ? '<div class="es-ops-ley">' + ops.map(function(o){
+      return '<span><span class="es-tag' + (o ? ' b' : '') + '">' + esLetra(o) + '</span>' + escA(ES.ops[o].trim() || 'sin nombre') + '</span>';
+    }).join('') + '</div>' : '') +
+    '<table class="v-tab es-vtab"><thead><tr>' + th + '</tr></thead><tbody>' + filas + '</tbody></table>' +
+    '<div class="v-nota">IVA incluido · ' + (ES.tr ? 'el documento muestra también el precio con transferencia' : 'el documento muestra un solo precio') +
+    (falta ? ' · falta: ' + escA(falta) : '') + '</div>';
+  var pos = tot.filter(function(t){ return t > 0; }).map(dctoMonto);
+  if (bl) bl.textContent = dos ? '2 opciones' : 'Total';
+  if (bpv) bpv.innerHTML = (dos ? 'desde ' : '') + fmt(Math.min.apply(null, pos)) + '<small>IVA incluido</small>';
+  barraPrecio.hay = true; barraPintar();
+  vMsgPintar();
+}
+/* sobre los precios del documento: «Elige tu madera · válido hasta…» */
+function eligeTxt() {
+  if (prod === 'especial') return (ES && ES.nOp === 2) ? 'Dos opciones · ' : '';
+  return 'Elige tu madera · ';
+}
+/* el documento del cliente */
+function htmlEspecial(cli, fecha) {
+  if (!ES) ES = esNuevo();
+  var ops = esOps(), tot = ops.map(esTotal);
+  var mn = Math.min.apply(null, tot), mx = Math.max.apply(null, tot);
+  var fila = { numero: qnum, cliente: cli, contacto: conStr || null, producto: 'especial', total_bajo: mn, total_alto: mx };
+  if (ES.nOp === 1) fila.total_medio = mn;   /* con dos opciones no hay «medio», igual que el revestimiento */
+  saveQuote(fila);
+  var hayD = dctoPct() > 0, tf = transferFactor();
+  var lt = transfLabel(), conTransf = 'con ' + lt.charAt(0).toLowerCase() + lt.slice(1);
+  var cards = ops.map(function(o){
+    var cant = esSumaOp(o);
+    var des = ES.items.length > 1 ? ES.items.map(function(it){ return escA(it.nom) + ' ' + fmt(it.pr[o]); }).join(' · ') : '';
+    return '<div class="pz es-pz"><div class="pz-row"><div class="pz-mad">' +
+        (ES.nOp === 2 ? '<div class="es-op">Opción ' + esLetra(o) + '</div>' : '') +
+        '<div class="pz-nom">' + escA(ES.ops[o].trim() || 'Precio total') + '</div>' +
+        (cant.length ? '<span class="es-cant">' + cant.map(escA).join(' · ') + '</span>' : '') +
+        (des ? '<span class="es-des">' + des + '</span>' : '') +
+      '</div><div class="pz-der">' +
+        (hayD ? '<div class="pz-antes">antes ' + fmt(tot[o]) + '</div>' : '') +
+        '<div class="pz-precio">' + fmt(dctoMonto(tot[o])) + '</div>' +
+        (ES.tr ? '<div class="pz-trans">' + fmt(dctoMonto(tot[o]) * tf) + '<small>' + conTransf + '</small></div>'
+               : '<div class="es-iva">IVA incluido</div>') +
+      '</div></div></div>';
+  }).join('');
+  var proNote = b2bAplica()
+    ? '<div class="precios-pro">★ Cuenta empresa' + (b2bEmp && b2bEmp.nombre ? ' ' + escA(b2bEmp.nombre) : '') + ': ' +
+      b2bDcto + ' % sobre lista (' + (transfPct() + b2bDcto) + ' % con transferencia)</div>'
+    : '';
+  var precios = '<div class="precios">' + proNote + cards +
+    '<div class="precios-nota">Precio acordado con tu vendedor · IVA incluido' + (ES.tr ? ' · ' + transfLabel() : '') + '</div></div>';
+  var th = '<th style="text-align:left">Detalle</th>' + ops.map(function(o){ return '<th>' + (ES.nOp === 2 ? 'Opción ' + esLetra(o) : 'Valor') + '</th>'; }).join('');
+  var filas = ES.items.map(function(it){
+    return '<tr><td class="es-l"><b>' + escA(it.nom) + '</b>' + (it.det.trim() ? '<small>' + escA(it.det) + '</small>' : '') +
+      (it.obs.trim() ? '<small class="es-obs">' + escA(it.obs) + '</small>' : '') + '</td>' +
+      ops.map(function(o){
+        var d = esDatosOp(it, o);
+        return '<td>' + fmt(it.pr[o]) + (d.length ? '<small>' + d.map(escA).join('<br>') + '</small>' : '') + '</td>';
+      }).join('') + '</tr>';
+  }).join('');
+  if (hayD) filas += '<tr><td class="es-l">' + (b2bAplica() ? 'Cuenta empresa ' + b2bDcto + ' %' : 'Descuento especial ' + dctoEsp + ' %') + '</td>' +
+    ops.map(function(o){ return '<td>−' + fmt(tot[o] - dctoMonto(tot[o])) + '</td>'; }).join('') + '</tr>';
+  filas += '<tr class="trow"><td class="es-l">Total con IVA</td>' + ops.map(function(o){
+    var s = esSumaOp(o);
+    return '<td>' + fmt(dctoMonto(tot[o])) + (s.length ? '<small>' + s.map(escA).join('<br>') + '</small>' : '') + '</td>';
+  }).join('') + '</tr>';
+  var specs = ES.ficha.filter(function(f){ return f.n.trim() && f.v.trim(); }).map(function(f){
+    return '<div class="spec"' + (f.v.length > 26 ? ' style="grid-column:1/-1"' : '') + '><div class="sl">' + escA(f.n) + '</div><div class="sv">' + escA(f.v) + '</div></div>';
+  }).join('');
+  var no = ES.noInc.map(function(s){ return s.charAt(0).toLowerCase() + s.slice(1); });
+  var noTxt = no.length ? '<div class="ibox-no">No incluye ' + escA(no.length > 1 ? no.slice(0, -1).join(', ') + ' ni ' + no[no.length - 1] : no[0]) + '.</div>' : '';
+  return shell(escA(ES.tit), cli, fecha,
+    precios +
+    '<table class="ptable es-tab"><thead><tr>' + th + '</tr></thead><tbody>' + filas + '</tbody></table>' +
+    (specs ? '<div class="specs">' + specs + '</div>' : '') +
+    noTxt +
+    (ES.obs.trim() ? '<div class="es-nota">' + escA(ES.obs).replace(/\n/g, '<br>') + '</div>' : '') +
+    whatsappCTA(mn, mx, '', ES.tit.trim() || PNAME.especial)
+  );
+}
+
 function htmlRev(cli, fecha) {
   var m2 = parseFloat((document.getElementById('rm')||{}).value||0);
   var vExtrasList = vExtrasDatos();
@@ -6980,7 +7475,8 @@ function shell(nombre, cli, fecha, body) {
   return '<div class="coti-hdr"><div class="coti-logo"><img class="logo-blanco" src="' + LOGO_BLANCO_URL + '" alt="Casa Zaru"></div></div>' +
   dctoBannerHtml(cli) +
   '<div class="coti-title">' + tituloDoc(nombre) + '</div>' +
-  '<div class="coti-para">Para ' + escA(cli) + '</div>' +
+  '<div class="coti-para">Para ' + escA(cli) +
+    (prod === 'especial' && ES && ES.emp ? ' · ' + escA(ES.emp) : '') + '</div>' +
   llegaListaHtml() +
   /* El cuadro verde de "César te escribe por WhatsApp" se sacó el 21-08-2026:
      el botón de WhatsApp del final ya dice lo mismo y el aviso empujaba el
@@ -6995,7 +7491,7 @@ function shell(nombre, cli, fecha, body) {
    terminación, así que a él no se le promete "terminada". */
 function llegaListaHtml() {
   var ps = prodsDoc();
-  if (ps.every(function(p){ return p === 'revestimiento' || p === 'revlibre'; })) return '';
+  if (ps.every(function(p){ return p === 'revestimiento' || p === 'revlibre' || p === 'especial'; })) return '';
   var plural = ps.length > 1 || ['peldano','banca','pcocina'].indexOf(ps[0]) !== -1;
   /* el protector va destacado (lo pidió el usuario: "que se note más"); lo
      demás en sellos cortos. Todo sigue completo en "Tu pedido incluye". */
@@ -7012,6 +7508,7 @@ var NOMBRE_PIEZA = { cubierta:['cubierta','cubiertas'], repisa:['repisa','repisa
 function tituloDoc(nombre) {
   if (comboDoc) return 'Tu cotización · ' + comboDoc.length + ' productos';
   if (prod === 'revlibre') return 'Tu revestimiento a medida';
+  if (prod === 'especial') return escA((ES && ES.tit.trim()) || 'Tu cotización');   /* lo escribe el vendedor */
   if (prod === 'revestimiento') {
     var m2 = parseFloat((document.getElementById('rm') || {}).value) || 0;
     return 'Tu revestimiento' + (m2 > 0 ? ' de ' + String(m2).replace('.', ',') + ' m²' : '');
@@ -7219,7 +7716,7 @@ function quieroTxt() {
   return { cubierta:'Quiero mi cubierta', repisa:'Quiero mi repisa', peldano:'Quiero mis peldaños',
            granero:'Quiero mi puerta', maciza:'Quiero mi puerta', vidrios:'Quiero mi puerta',
            mesa:'Quiero mi mesa', revestimiento:'Quiero mi revestimiento', revlibre:'Quiero mi revestimiento',
-           banca:'Quiero mis bancas', pcocina:'Quiero mis puertas' }[ps[0]] || 'Quiero avanzar';
+           banca:'Quiero mis bancas', pcocina:'Quiero mis puertas', especial:'Quiero esta cotización' }[ps[0]] || 'Quiero avanzar';
 }
 var WA_ICONO = '<svg class="wa-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.9-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
 /* ── A QUÉ WHATSAPP VA EL CLIENTE (06-10-2026) ──
@@ -7254,7 +7751,7 @@ function waNumero() {
 function whatsappCTA(bajo, alto, det, nombreProd) {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
   if (dctoPct() > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
-  var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + ' – ' + fmt(alto) + ' con IVA' +
+  var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + (Math.round(alto) !== Math.round(bajo) ? ' – ' + fmt(alto) : '') + ' con IVA' +
     (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
   var link = '\n\nVer detalle: ' + (linkLimpio() || buildShareUrl(SHARE_URL));
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
@@ -7270,12 +7767,16 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
   return '<div class="wa-block">' +
     '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + (dctoPct() > 0 ? ' con descuento' : '') + '</a>' +
-    '<div class="wa-cap">Se abre WhatsApp con tu cotización y te respondemos.</div>' +
+    '<div class="wa-cap">' + (prod === 'especial' && ES && ES.nOp === 2
+      ? 'Se abre WhatsApp con tu cotización: dinos qué opción eliges.'
+      : 'Se abre WhatsApp con tu cotización y te respondemos.') + '</div>' +
     '<div class="wa-otras">' +
       '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'duda\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
         '<span>Te respondemos por WhatsApp, sin compromiso.</span></a>' +
+      /* la cotización especial no ofrece muestrario: suele ser otra madera y otra terminación */
+      (prod === 'especial' ? '' :
       '<a href="' + urlMuest + '" target="_blank" onclick="embudoTick(\'muestrario\')"><strong>¿Quieres ver la madera antes? →</strong>' +
-        '<span>Te enviamos un muestrario a $20.000 con envío. Se descuenta de tu compra.</span></a>' +
+        '<span>Te enviamos un muestrario a $20.000 con envío. Se descuenta de tu compra.</span></a>') +
     '</div>' +
   '</div>' +
   '<div class="doc-acciones">' +
@@ -7286,7 +7787,8 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     '<button class="btn-pdf" onclick="descargarPDF()">📄 Descargar en PDF</button>' +
   '</div>' +
   /* cierre de marca, como la tarjeta: también sale en el PDF (último bloque) */
-  '<div class="cierre-marca"><p class="cm-lema">Madera noble del sur de Chile, hecha para durar años</p>' +
+  /* la especial no lleva el lema: puede ser pino u otra madera que no es noble */
+  '<div class="cierre-marca">' + (prod === 'especial' ? '' : '<p class="cm-lema">Madera noble del sur de Chile, hecha para durar años</p>') +
     '<p class="cm-red">@casazaru · hola@casazaru.cl · casazaru.cl</p></div>' +
   /* número y fecha: al final y chicos (sirven para ubicar la cotización, no para decidir) */
   '<p class="coti-fin">' + escA(qnum) + ' · ' + fechaDocTexto() + '</p>';
@@ -7536,7 +8038,7 @@ function getShareDataProducto(conValores) {
   if (waNumero() === WA_ANUNCIOS) data.wa = WA_ANUNCIOS;   /* el link vuelve al mismo WhatsApp */
   if (prod === 'cubierta' && getCubiertaEspesor() === '8') data.esp8 = 1;   /* espesor 8 cm macizo (mult. por tier) */
   if (prod === 'mesa') data.mesa = mesaDatos();             /* base de fierro: nombre, valor, altura, perfil, color */
-  if (prod !== 'revlibre') {   /* revlibre ya guarda sus extras dentro de data.rv */
+  if (prod !== 'revlibre' && prod !== 'especial') {   /* revlibre ya guarda sus extras dentro de data.rv; la especial no tiene */
     var vExtrasNow = vExtrasDatos(); if (vExtrasNow.length) data.vExtras = vExtrasNow;
     /* reborde: se guardan los ml totales y los cantos DE CADA PIEZA (por su
        índice interno, que es el mismo que usa data.rows). El precio se recalcula
@@ -7580,6 +8082,8 @@ function getShareDataProducto(conValores) {
     data.m2 = parseFloat((rmEl&&rmEl.value)||0)||0;
   } else if (prod === 'revlibre') {
     data.rv = rvDatos();
+  } else if (prod === 'especial') {
+    data.es = esDatos();
   }
   return data;
 }
@@ -7715,13 +8219,17 @@ function restoreProducto(d) {
       if (nom) nom.value = ex.nombre; if (val) val.value = ex.valor;
     });
   }
+  if (d.p === 'especial') {   /* ítems, datos, ficha y observaciones tal como se guardaron */
+    ES = esSanear(d.es);
+    esPintar();
+  }
   if (isPuerta) {
     prod = d.p;
     nrows = 1;
     renderDoorSub(prod);
     document.getElementById('door-sub').classList.remove('hidden');
   }
-  if (d.p !== 'revlibre') {   /* revlibre ya restauró sus extras arriba, dentro de d.rv */
+  if (d.p !== 'revlibre' && d.p !== 'especial') {   /* revlibre ya restauró sus extras arriba, dentro de d.rv */
     if (d.espFinal) { var efEl=document.getElementById('f-espesor-final'); if (efEl) efEl.value = d.espFinal; }
     (d.vExtras||[]).forEach(function(ex){
       addVExtra();
@@ -8601,7 +9109,8 @@ function prodTexto(p){
     case 'mesa':          return { suyo:'tu mesa',           fotos:'mesas',          gen:'entregadas', dudas:'las medidas, la madera o el tipo de base' };
     case 'banca':         return { suyo:'tus bancas',        fotos:'bancas',         gen:'entregadas', dudas:'las medidas o el tipo de madera' };
     case 'pcocina':       return { suyo:'tus puertas de cocina', fotos:'muebles de cocina', gen:'instalados', dudas:'las medidas o el tipo de madera' };
-    default:              return { suyo:'tu proyecto',       fotos:'proyectos',      gen:'instalados', dudas:'las medidas o el tipo de madera' };
+    case 'especial':      return { suyo:'tu proyecto',       fotos:'trabajos',       gen:'terminados', dudas:'las cantidades o la terminación' };
+    default:             return { suyo:'tu proyecto',       fotos:'proyectos',      gen:'instalados', dudas:'las medidas o el tipo de madera' };
   }
 }
 /* ── MENSAJES DE SEGUIMIENTO (12-10-2026) ──
@@ -8636,7 +9145,8 @@ var WA_PROD = {
   revlibre:      { un:'un revestimiento',        preg:'¿Es para un muro interior o exterior?' },
   mesa:          { un:'una mesa',                preg:'¿Es para comedor o para terraza?' },
   banca:         { un:'unas bancas',             preg:'¿Van con una mesa o solas?', pl:true },
-  pcocina:       { un:'unas puertas de cocina',  preg:'¿Los muebles ya están armados o todavía están en proyecto?', pl:true }
+  pcocina:       { un:'unas puertas de cocina',  preg:'¿Los muebles ya están armados o todavía están en proyecto?', pl:true },
+  especial:      { un:'un trabajo a medida',     preg:'¿Quieres que ajustemos algo del presupuesto?' }
 };
 /* nombre de pila en formato normal ("MARIA JOSE" → "Maria"); si en el campo
    vino un teléfono o nada, se saluda sin nombre */
@@ -11778,7 +12288,7 @@ async function ventaGuardar(){
 var FV = null, FV_ID = null, FV_VISTA = 'ficha';
 var FV_SING = { cubierta:'Cubierta', repisa:'Repisa', peldano:'Peldaño', granero:'Puerta granero',
   maciza:'Puerta sin vidrio', vidrios:'Puerta con vidrio', revestimiento:'Revestimiento',
-  revlibre:'Revestimiento a medida', mesa:'Mesa', banca:'Banca', pcocina:'Puerta de mueble de cocina' };
+  revlibre:'Revestimiento a medida', mesa:'Mesa', banca:'Banca', pcocina:'Puerta de mueble de cocina', especial:'Cotización especial' };
 function fvPctTransf(){
   var g = (typeof VALORES !== 'undefined' && VALORES && VALORES.generales) || {};
   return (g.transferencia > 0 && g.transferencia < 0.5) ? g.transferencia : 0.05;
@@ -13463,7 +13973,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var pr = document.getElementById('pcard-revlibre');
     if (pr) pr.classList.remove('hidden');
     /* bancas, puertas de cocina y juntar varios productos: solo vendedores por ahora */
-    ['pcard-banca', 'pcard-pcocina', 'btn-combo'].forEach(function(id){
+    ['pcard-banca', 'pcard-pcocina', 'pcard-especial', 'btn-combo'].forEach(function(id){
       var el = document.getElementById(id); if (el) el.classList.remove('hidden');
     });
     vMontar();   /* el formulario del vendedor: cliente arriba, precio por madera, guardar y copiar */
