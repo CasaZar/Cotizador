@@ -571,6 +571,9 @@ function arrancar(j){
   $('#sugerencias').innerHTML = (META.sugerencias||[]).map(function(s){ return '<button class="sug">'+esc(s)+'</button>'; }).join('');
   $('#sugerencias').querySelectorAll('.sug').forEach(function(b){ b.onclick = function(){ $('#q').value = b.textContent; filtrar(); }; });
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  /* ?q=… abre con esa búsqueda (la usan las fichas de Marketing del panel, 11-11-2026) */
+  var q0 = new URLSearchParams(location.search).get('q');
+  if (q0) $('#q').value = q0;
   filtrar();
 }
 function sprites(){

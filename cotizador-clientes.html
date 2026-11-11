@@ -1863,6 +1863,58 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 /* sección propia de WhatsApp al día: una columna cómoda de leer, sin borde abajo */
 #s-dash.pz .pz-wa-vista { max-width:760px; padding-top:4px; border-bottom:0; }
 #s-dash.pz .pz-wa-nota { font-size:13px; color:var(--pz-sec); margin-top:6px; max-width:620px; line-height:1.45; }
+/* ── Marketing (11-11-2026): fichas de campaña sacadas del WhatsApp ── */
+#s-dash.pz .dash-filters:empty { margin:0; }   /* vacíos (WhatsApp, Marketing) no dejan hueco */
+#s-dash.pz .mk { max-width:760px; padding:0 0 24px; overflow-wrap:anywhere; }   /* los utm largos no tienen espacios */
+#s-dash.pz .mk-chips { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin:0 0 14px; padding-bottom:2px; }
+#s-dash.pz .mk-chips::-webkit-scrollbar { display:none; }
+#s-dash.pz .mk-chips button { flex:none; border:1px solid var(--pz-linea); background:#fff; border-radius:999px; padding:0 13px; height:36px; font:inherit; font-size:13.5px; color:var(--pz-sec); cursor:pointer; white-space:nowrap; }
+#s-dash.pz .mk-chips button.on { background:var(--pz-tinta); border-color:var(--pz-tinta); color:#fff; font-weight:600; }
+#s-dash.pz .mk-lista { display:grid; gap:10px; }
+#s-dash.pz .mk-card { display:block; width:100%; text-align:left; background:#fff; border:1px solid var(--pz-linea); border-radius:6px; padding:12px 14px; font:inherit; color:inherit; cursor:pointer; }
+#s-dash.pz button.mk-card:hover { border-color:var(--pz-borde); }
+#s-dash.pz .mk-t { font-size:15.5px; font-weight:600; line-height:1.3; margin-bottom:6px; }
+#s-dash.pz .mk-meta { font-size:12.5px; color:var(--pz-sec); display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+#s-dash.pz .mk-est { display:inline-block; font-size:11px; font-weight:600; letter-spacing:.3px; padding:2px 8px; border-radius:3px; background:#EFE9DF; color:var(--pz-sec); }
+#s-dash.pz .mk-est.e-boceto, #s-dash.pz .mk-est.e-aprobado { background:#F4E6D6; color:var(--pz-terra); }
+#s-dash.pz .mk-est.e-publicado, #s-dash.pz .mk-est.e-medido { background:#E3EADF; color:var(--pz-verde); }
+#s-dash.pz .mk-can { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; font-size:12.5px; color:var(--pz-sec); }
+#s-dash.pz .mk-can span, #s-dash.pz .mk-falta, #s-dash.pz .mk-blq .mk-bt, #s-dash.pz .mk-volver, #s-dash.pz .mk-ver { display:flex; align-items:center; gap:6px; }
+#s-dash.pz .mk-i { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+#s-dash.pz .mk-falta { margin-top:8px; font-size:12.5px; color:var(--pz-ambar); align-items:flex-start; }
+#s-dash.pz .mk-falta .mk-i { margin-top:2px; }
+#s-dash.pz .mk-sub { font-size:12px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--pz-sec); margin:20px 0 8px; }
+#s-dash.pz .mk-cand { margin:0; padding-left:18px; font-size:13.5px; color:var(--pz-sec); }
+#s-dash.pz .mk-cand li { margin:6px 0; }
+#s-dash.pz .mk-volver { border:0; background:none; font:inherit; font-size:13.5px; color:var(--pz-sec); padding:0; min-height:36px; cursor:pointer; }
+#s-dash.pz .mk-h { font-weight:600; font-size:21px; line-height:1.25; margin:2px 0 0; }   /* Nanum no trae «¿»: queda un hueco */
+#s-dash.pz .mk-pasos { display:flex; gap:3px; margin:10px 0 14px; }
+#s-dash.pz .mk-pasos div { flex:1; font-size:11px; text-align:center; padding-top:5px; border-top:3px solid var(--pz-linea); color:var(--pz-borde); }
+#s-dash.pz .mk-pasos div.h { border-color:var(--pz-verde); color:var(--pz-verde); font-weight:600; }
+#s-dash.pz .mk-blq { background:#fff; border:1px solid var(--pz-linea); border-radius:6px; padding:12px 14px; margin-bottom:10px; }
+#s-dash.pz .mk-bt { font-size:12px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--pz-verde); margin-bottom:6px; }
+#s-dash.pz .mk-blq p { margin:0; font-size:14px; line-height:1.5; }
+#s-dash.pz .mk-cita { font-size:13.5px; color:var(--pz-sec); font-style:italic; border-left:2px solid var(--pz-terra); padding-left:9px; margin:8px 0 0; }
+#s-dash.pz .mk-fotos { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; margin-top:6px; }
+#s-dash.pz .mk-foto { aspect-ratio:1; border-radius:4px; background-color:var(--pz-linea); background-repeat:no-repeat; border:0; padding:0; cursor:pointer; }
+#s-dash.pz .mk-ver { margin-top:10px; font-size:13.5px; color:var(--pz-verde); font-weight:500; text-decoration:none; min-height:32px; }
+#s-dash.pz .mk-copiar { position:sticky; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:5; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:14px; border:0; border-radius:5px; background:var(--pz-terra); color:#fff; font:inherit; padding:11px 14px; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.15); text-align:left; }
+#s-dash.pz .mk-copiar b { display:block; font-size:14.5px; }
+#s-dash.pz .mk-copiar small { display:block; font-size:12px; opacity:.92; }
+#s-dash.pz .mk-copiar .mk-i { width:20px; height:20px; }
+#s-dash.pz .mk-mini { border:0; background:none; font:inherit; font-size:13px; color:var(--pz-terra); padding:0; margin-top:8px; min-height:32px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+#s-dash.pz .mk-preg { list-style:none; margin:0; padding:0; }
+#s-dash.pz .mk-preg li { display:flex; gap:10px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--pz-linea); font-size:14px; }
+#s-dash.pz .mk-preg .n { flex:none; width:24px; color:var(--pz-borde); font-variant-numeric:tabular-nums; }
+#s-dash.pz .mk-preg .tag { display:inline-block; margin-top:4px; font-size:11.5px; color:var(--pz-verde); }
+#s-dash.pz .mk-preg .tag.hueco { color:var(--pz-ambar); }
+#s-dash.pz .mk-reg h3 { font-size:13px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--pz-verde); margin:18px 0 6px; }
+#s-dash.pz .mk-reg ul { margin:0; padding-left:18px; font-size:14px; line-height:1.5; }
+#s-dash.pz .mk-reg li { margin:5px 0; }
+@media (min-width:990px){
+  #s-dash.pz .mk-lista.dos { grid-template-columns:1fr 1fr; }
+  #s-dash.pz .mk-copiar { bottom:16px; max-width:420px; }
+}
 #s-dash.pz .pz-n.wa, #s-dash.pz .pz-pt.wa { background:var(--pz-wa); }
 /* en su propia página el título ya está arriba: el recuadro no lo repite */
 #s-dash.pz .pz-wa-vista .wa-tit, #s-dash.pz .pz-wa-vista .wa-logo { display:none; }
@@ -3156,8 +3208,11 @@ var embudoListo = false, embudoCola = [], embudoCanal = 'web';
    (06-10-2026). Así no inflan las visitas ni las cotizaciones de la web. */
 var embudoSoloClics = false;
 var PASOS_CLIC = ['whatsapp', 'duda', 'muestrario'];
+/* una prueba local (localhost o file://) no cuenta como visita (11-11-2026: la
+   revisión del panel en el celular dejó una visita falsa, id 6280) */
+var EMBUDO_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\]|)$/.test(location.hostname);
 function embudoTick(paso) {
-  if (vendorMode) return;
+  if (vendorMode || EMBUDO_LOCAL) return;
   if (embudoSoloClics && PASOS_CLIC.indexOf(paso) === -1) return;
   if (!embudoListo) { embudoCola.push(paso); return; }
   try {
@@ -7942,6 +7997,18 @@ function verForzarRecarga(){
    'legacy' = correos antiguos con que ya quedaron guardadas sus cotizaciones. */
 var PANEL_ADMIN = 'zr25';
 var ADMIN_EMAIL = 'hola@casazaru.cl';   /* la cuenta admin puede entrar a cualquier panel */
+/* Equipo que ve TODO el panel (la vista del admin) sin ser vendedor ni dueño
+   (11-11-2026, María José de marketing). Entra con ?panel=zr25. No ve el
+   Manual, las Eliminadas ni «Ver como». La base la deja leer y editar
+   cotizaciones: supabase-cotizador/acceso-maria-jose-marketing.sql. */
+var EQUIPO_VE_TODO = [{ email:'mariajose.mgrunen@gmail.com', nombre:'María José', cargo:'marketing' }];
+var panelEmail = '';                    /* correo de la sesión del panel, en minúsculas */
+function equipoVeTodo(email){
+  email = String(email || '').toLowerCase();
+  for (var i = 0; i < EQUIPO_VE_TODO.length; i++) if (EQUIPO_VE_TODO[i].email === email) return EQUIPO_VE_TODO[i];
+  return null;
+}
+function esDueno(){ return panelEmail === ADMIN_EMAIL; }
 var panelPcode = null;                  /* código de panel pedido (?panel=...), para tras el login */
 /* 'src' = código opaco para el link público (no expone el nombre del vendedor al cliente).
    'code' sigue sirviendo por compatibilidad con los links ya compartidos. */
@@ -8274,7 +8341,7 @@ function verPintaAviso(){
 }
 /* selector en el rail, solo para el admin */
 function verSelectorHtml(){
-  if (!panelEsAdminReal) return '';
+  if (!panelEsAdminReal || !esDueno()) return '';
   var opts = VENDEDORES.map(function(v){
     return '<option value="' + v.code + '"' + (vistaComo === v.code ? ' selected' : '') + '>Ver como ' + escA(v.nombre) + '</option>';
   }).join('');
@@ -8729,7 +8796,8 @@ var PZ_ICO = {
   nueva:'<path d="M12 5v14M5 12h14"/>',
   venta:'<rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="12" cy="12" r="2.5"/>',
   wa:'<path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/>',
-  foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>'
+  foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+  mkt:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>'
 };
 /* Fototeca: buscador de fotos y videos del Drive (09-11-2026). Es fototeca.html, en este
    mismo sitio: usa la sesión del panel y lee sus datos del bucket privado «fototeca».
@@ -8757,8 +8825,9 @@ function pzTabs(){
   t.push({id:'reactivar', label:'Reactivar', ico:'reactivar', g:2});
   t.push({id:'backlog', label:'Nunca contactados', ico:'backlog', g:2});
   t.push({id:'actividad', label:isPanelAdmin() ? 'Actividad' : 'Mi actividad', ico:'actividad', g:3});
+  if (MKT) t.push({id:'mkt', label:'Marketing', ico:'mkt', g:3});
   t.push({id:'fototeca', label:'Fototeca', ico:'foto', g:3, url:FOTOTECA_URL});
-  if (isPanelAdmin()){
+  if (isPanelAdmin() && esDueno()){
     t.push({id:'manual', label:'Manual', ico:'manual', g:3});
     t.push({id:'elim', label:'Eliminadas', ico:'elim', g:3});
   }
@@ -8804,11 +8873,14 @@ function renderTabs(){
   var q = document.getElementById('pz-quien'); if (q) q.textContent = pzQuien();
 }
 function pzQuien(){
+  var e = equipoVeTodo(panelEmail);
+  if (!panelSeller && e) return e.nombre + ' · ' + e.cargo;
   return panelSeller ? panelSeller.nombre + ' · vendedor' : 'Sesión de administrador';
 }
 function pzIr(id){
   pzMas(false);
   if (id === 'prox') { pzProximos(); return; }
+  if (id === 'mkt') mktFichaN = null;   /* Marketing abre siempre en la lista */
   setDashView(id);
   window.scrollTo(0, 0);
 }
@@ -8834,7 +8906,7 @@ function setDashView(v){
   dashView=v; renderTabs();
   /* el buscador va en TODAS las vistas menos el Manual, que no es una lista.
      Seguimiento además tiene sus chips de bloque, que van en la fila de abajo. */
-  if (v !== 'manual' && v !== 'wa') renderDashFilters();
+  if (v !== 'manual' && v !== 'wa' && v !== 'mkt') renderDashFilters();
   if (v === 'seg') renderSegFilters();
   renderVistaActual();
 }
@@ -8859,6 +8931,7 @@ function renderVistaActual(){
   pzSlotWA('');
   if (v==='seg')            renderSeguimiento();
   else if (v==='wa')        renderWA();
+  else if (v==='mkt')       renderMKT();
   else if (v==='elim')      renderEliminadas();
   else if (v==='dormidos')  renderDormidos();
   else if (v==='reactivar') renderReactivar();
@@ -9444,7 +9517,7 @@ function sortDashData(data) {
 /* ── ACCESO AL PANEL (login) ── */
 function panelAccessOK(email, pcode){
   if (email === ADMIN_EMAIL) return true;          /* admin entra a cualquier panel */
-  if (pcode === PANEL_ADMIN) return false;         /* solo admin al panel admin */
+  if (pcode === PANEL_ADMIN) return !!equipoVeTodo(email);   /* al panel admin: admin y quien ve todo */
   var sv = sellerByCode(pcode);
   return !!(sv && sv.email === email);             /* vendedor: solo su propio panel */
 }
@@ -9469,6 +9542,7 @@ async function doPanelLogin(){
       showLoginErr('Esta cuenta no tiene acceso a este panel.');
       reset(); return;
     }
+    panelEmail = String(em || '').toLowerCase();
     show('s-dash'); verPinta(); loadDash();
   } catch(e){ showLoginErr('Error de conexión. Intenta de nuevo.'); reset(); }
 }
@@ -9539,6 +9613,7 @@ async function loadDash() {
   dashRows.forEach(function(x){ COTIS[x.id]=x; });
   await cargarConfigSeg();   /* corte y metas del día antes de armar la cola */
   await waCargar();          /* «WhatsApp al día»: si falla, la sección no aparece */
+  await mktCargar();         /* «Marketing»: solo para quien lee el bucket marketing */
   computeSegPend();
   setDashView(dashView);
   /* jobs diarios (fases 7 y 8), después de pintar: no bloquean la carga y
@@ -9903,6 +9978,196 @@ function renderSeguimiento(){
    Página aparte del seguimiento de cotizaciones, a pedido del usuario: lo que
    hay que responder en el 5558 no se mezcla con la meta del día. Sin buscador
    ni cifras de cotizaciones arriba: solo su encabezado y la lista. */
+/* ── MARKETING (11-11-2026) ──
+   Lo que se aprende en el WhatsApp 5558, convertido en fichas de campaña para
+   correos (Klaviyo), Instagram y anuncios (Meta). Lo arma la revisión de los
+   lunes (.claude/scripts/marketing-json.ps1 del repo de Gestión) desde Drive y
+   lo sube a marketing.json en el bucket PRIVADO «marketing»: lo leen solo el
+   admin y María José (acceso-maria-jose-marketing.sql). Si no se puede leer,
+   la pestaña no aparece. Solo lectura: los estados se cambian en Drive.
+   «Copiar para Claude» lleva la ficha + las reglas de la marca, SIN nombres
+   de clientes, para pegarlo en Claude Code. */
+var MKT = null, mktVista = 'fichas', mktFichaN = null, MKT_SPR = {};
+var MKT_EST = ['propuesto', 'boceto', 'aprobado', 'publicado', 'medido'];
+var MKT_ICO = {
+  mail:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 7l9 6 9-6"/>',
+  cam:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r=".6"/>',
+  meg:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+  alerta:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.3v.2"/>',
+  copiar:'<rect x="8" y="8" width="12" height="12" rx="1.5"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
+  foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+  atras:'<path d="M15 6l-6 6 6 6"/>',
+  ir:'<path d="M9 6l6 6-6 6"/>',
+  por:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4v.3M12 16.6v.2"/>'
+};
+function mkI(k){ return '<svg class="mk-i" viewBox="0 0 24 24">' + (MKT_ICO[k] || '') + '</svg>'; }
+async function mktCargar(){
+  MKT = null;
+  try {
+    var r = await sbClient.storage.from('marketing').download('marketing.json');
+    if (r.error || !r.data) return;
+    var j = JSON.parse(await r.data.text());
+    if (j && j.fichas) MKT = j;
+  } catch (e) { MKT = null; }
+}
+/* texto de las fichas: sin los `código` del markdown y con mayúscula inicial */
+function mkTxt(s){
+  s = String(s || '').replace(/`/g, '').trim();
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+function mkEst(e){ e = String(e || 'propuesto'); return e.charAt(0).toUpperCase() + e.slice(1); }
+function mkFicha(n){
+  for (var i = 0; i < (MKT ? MKT.fichas.length : 0); i++) if (MKT.fichas[i].n === n) return MKT.fichas[i];
+  return null;
+}
+function mkFototecaUrl(q){ return FOTOTECA_URL + '?q=' + encodeURIComponent(q || ''); }
+function mktVer(v){ mktVista = v; mktFichaN = null; renderMKT(); window.scrollTo(0, 0); }
+function mktAbrir(n){ mktFichaN = n; renderMKT(); window.scrollTo(0, 0); }
+function renderMKT(){
+  document.getElementById('dash-filters').innerHTML = '';
+  subFiltros('');
+  var st = document.getElementById('dash-stats'); st.style.display = 'block';
+  var tbl = document.getElementById('dash-tbl');
+  if (!MKT) { st.innerHTML = ''; tbl.innerHTML = '<div class="seg-empty" style="padding:24px;text-align:center">No se pudo cargar Marketing.</div>'; return; }
+  if (mktFichaN !== null && mkFicha(mktFichaN)) { st.innerHTML = ''; tbl.innerHTML = mktFichaHtml(mkFicha(mktFichaN)); mktFotos(); return; }
+  var a = String(MKT.analisis || '');
+  var cuando = a ? 'Actualizado con la revisión del lunes ' + a.slice(8, 10) + '-' + a.slice(5, 7) : 'Actualizado el ' + String(MKT.generado || '').slice(0, 10);
+  st.innerHTML = '<div class="pz-cab"><div class="k">' + escA(cuando) + '</div><h1>Marketing</h1>' +
+    '<div class="pz-wa-nota">Lo que se aprende en el WhatsApp, convertido en correos, contenido y anuncios. Nada se envía ni se activa sin el sí de Tomás.</div></div>';
+  var vistas = [['fichas', 'Fichas · ' + MKT.fichas.length], ['ideas', 'Ideas para redes · ' + (MKT.ideas || []).length],
+                ['preguntas', 'Lo que preguntan'], ['reglas', 'Reglas']];
+  var chips = '<div class="mk-chips">' + vistas.map(function(v){
+    return '<button class="' + (mktVista === v[0] ? 'on' : '') + '" onclick="mktVer(\'' + v[0] + '\')">' + escA(v[1]) + '</button>';
+  }).join('') + '</div>';
+  var html = mktVista === 'ideas' ? mktIdeasHtml() : mktVista === 'preguntas' ? mktPregHtml() : mktVista === 'reglas' ? mktReglasHtml() : mktFichasHtml();
+  tbl.innerHTML = '<section class="mk">' + chips + html + '</section>';
+}
+function mktFichasHtml(){
+  var h = '<div class="mk-lista dos">' + MKT.fichas.map(function(f){
+    var can = '';
+    if (f.correo) can += '<span>' + mkI('mail') + 'Correo</span>';
+    if (f.redes) can += '<span>' + mkI('cam') + 'Instagram</span>';
+    if (f.anuncio) can += '<span>' + mkI('meg') + 'Anuncio</span>';
+    return '<button class="mk-card" onclick="mktAbrir(' + Number(f.n) + ')">' +
+      '<div class="mk-t">' + escA(f.titulo) + '</div>' +
+      '<div class="mk-meta"><span class="mk-est e-' + escA(f.estado) + '">' + escA(mkEst(f.estado)) + '</span>' +
+        (f.fecha ? '<span>desde el ' + escA(f.fecha) + '</span>' : '') + '</div>' +
+      (can ? '<div class="mk-can">' + can + '</div>' : '') +
+      (f.falta ? '<div class="mk-falta">' + mkI('alerta') + '<span>Falta: ' + escA(f.falta) + '</span></div>' : '') +
+      '</button>';
+  }).join('') + '</div>';
+  if ((MKT.candidatos || []).length) {
+    h += '<div class="mk-sub">Candidatos (se deciden el lunes)</div><ul class="mk-cand">' +
+      MKT.candidatos.map(function(c){ return '<li>' + escA(c.texto) + '</li>'; }).join('') + '</ul>';
+  }
+  return h;
+}
+function mktFichaHtml(f){
+  var ix = MKT_EST.indexOf(f.estado);
+  var pasos = MKT_EST.map(function(e, i){ return '<div class="' + (i <= ix ? 'h' : '') + '">' + escA(mkEst(e)) + '</div>'; }).join('');
+  function blq(ico, t, cuerpo){ return '<div class="mk-blq"><div class="mk-bt">' + mkI(ico) + escA(t) + '</div>' + cuerpo + '</div>'; }
+  var h = '<section class="mk"><button class="mk-volver" onclick="mktVer(\'fichas\')">' + mkI('atras') + 'Marketing</button>' +
+    '<h1 class="mk-h">' + escA(f.titulo) + '</h1><div class="mk-pasos">' + pasos + '</div>';
+  h += blq('por', 'Por qué', '<p>' + escA(mkTxt(f.evidencia)) + '</p>' + (f.cita ? '<p class="mk-cita">«' + escA(f.cita) + '»</p>' : ''));
+  if (f.falta) h += '<div class="mk-blq"><div class="mk-falta" style="margin:0">' + mkI('alerta') + '<span>Falta: ' + escA(f.falta) + '</span></div></div>';
+  if (f.correo) h += blq('mail', 'Correo · Klaviyo', '<p>' + escA(mkTxt(f.correo)) + '</p>');
+  if (f.redes) h += blq('cam', 'Instagram', '<p>' + escA(mkTxt(f.redes)) + '</p>');
+  if (f.anuncio) h += blq('meg', 'Anuncio · Meta', '<p>' + escA(mkTxt(f.anuncio)) + '</p>');
+  var ft = f.fototeca;
+  if (ft && ft.q) {
+    var fotos = (ft.fotos || []).map(function(p){
+      return '<button class="mk-foto" data-s="' + Number(p.s) + '" data-x="' + Number(p.x) + '" data-y="' + Number(p.y) + '" title="' + escA(p.d) + '" aria-label="' + escA(p.d) + '" ' +
+        'onclick="window.open(\'' + escA(mkFototecaUrl(ft.q)) + '\',\'_blank\')"></button>';
+    }).join('');
+    h += blq('foto', 'Fotos en la Fototeca', (fotos ? '<div class="mk-fotos">' + fotos + '</div>' : '') +
+      '<a class="mk-ver" href="' + escA(mkFototecaUrl(ft.q)) + '" target="_blank" rel="noopener">Ver las ' + Number(ft.total || 0).toLocaleString('es-CL') +
+      ' de «' + escA(ft.q) + '» en la Fototeca' + mkI('ir') + '</a>');
+  }
+  h += '<button class="mk-copiar" onclick="mktCopiar(' + Number(f.n) + ')">' + mkI('copiar') +
+    '<span><b>Copiar para Claude</b><small>La ficha y las reglas de la marca, para pegar en Claude Code</small></span></button></section>';
+  return h;
+}
+/* miniaturas: las mismas hojas (sprites) de la Fototeca, con URL firmada */
+async function mktFotos(){
+  var els = Array.prototype.slice.call(document.querySelectorAll('#dash-tbl .mk-foto'));
+  if (!els.length || !MKT.fototeca) return;
+  var falta = {};
+  els.forEach(function(el){ var s = +el.dataset.s; if (!MKT_SPR[s]) falta['s' + String(s).padStart(2, '0') + '.jpg'] = s; });
+  var nombres = Object.keys(falta);
+  if (nombres.length) {
+    try {
+      var r = await sbClient.storage.from('fototeca').createSignedUrls(nombres, 3600);
+      (r.data || []).forEach(function(x){ if (x.signedUrl && falta[x.path] !== undefined) MKT_SPR[falta[x.path]] = x.signedUrl; });
+    } catch (e) {}
+  }
+  var m = MKT.fototeca;
+  els.forEach(function(el){
+    var u = MKT_SPR[+el.dataset.s]; if (!u) return;
+    var k = el.offsetWidth / m.celda;
+    el.style.backgroundImage = 'url("' + u + '")';
+    el.style.backgroundSize = (m.cols * m.celda * k) + 'px ' + (m.filas * m.celda * k) + 'px';
+    el.style.backgroundPosition = (-el.dataset.x * m.celda * k) + 'px ' + (-el.dataset.y * m.celda * k) + 'px';
+  });
+}
+function mktIdeasHtml(){
+  return '<div class="mk-lista dos">' + (MKT.ideas || []).map(function(d, i){
+    return '<div class="mk-card" style="cursor:default"><div class="mk-t">' + escA(d.idea) + '</div>' +
+      '<p class="mk-cita" style="margin-top:0">«' + escA(d.gancho) + '»</p>' +
+      '<div class="mk-meta" style="margin-top:8px"><span class="mk-est">' + escA(d.formato) + '</span><span>Permiso: ' + escA(d.permiso) + '</span></div>' +
+      '<div class="mk-meta" style="margin-top:4px">Sale de: ' + escA(d.fuente) + '</div>' +
+      '<button class="mk-mini" onclick="mktCopiarIdea(' + i + ')">' + mkI('copiar') + 'Copiar para Claude</button></div>';
+  }).join('') + '</div>';
+}
+function mktPregHtml(){
+  return '<div class="pz-wa-nota" style="margin:0 0 6px">Las 10 preguntas que más se repitieron en el WhatsApp la semana pasada. Las que no tienen respuesta modelo son buen material para contenido.</div>' +
+    '<ol class="mk-preg">' + (MKT.preguntas || []).map(function(p){
+      return '<li><span class="n">' + Number(p.n) + '</span><span>' + escA(p.pregunta) + '<br><span class="tag' + (p.modelo ? '' : ' hueco') + '">' +
+        (p.modelo ? 'Tiene respuesta modelo' : 'Todavía sin respuesta modelo') + '</span></span></li>';
+    }).join('') + '</ol>';
+}
+function mktReglasHtml(){
+  return '<div class="mk-reg">' + (MKT.reglas || []).map(function(g){
+    return '<h3>' + escA(g.titulo) + '</h3><ul>' + (g.items || []).map(function(r){ return '<li>' + escA(r) + '</li>'; }).join('') + '</ul>';
+  }).join('') + '</div><button class="mk-copiar" onclick="mktCopiarReglas()">' + mkI('copiar') +
+    '<span><b>Copiar las reglas para Claude</b><small>Para empezar cualquier trabajo de marketing en Claude Code</small></span></button>';
+}
+function mktReglasTxt(){
+  return (MKT.reglas || []).map(function(g){
+    return '## ' + g.titulo + '\n' + (g.items || []).map(function(r){ return '- ' + r; }).join('\n');
+  }).join('\n\n');
+}
+var MKT_INTRO = 'Trabajas en el marketing de Casa Zaru: muebles, cubiertas, mesas, puertas y peldaños de madera noble a medida, hechos en nuestro taller de Villarrica y enviados a todo Chile.';
+function mktTextoFicha(f){
+  var l = [MKT_INTRO, '', '# Ficha: ' + f.titulo + ' (estado: ' + f.estado + ')', 'Por qué: ' + mkTxt(f.evidencia)];
+  if (f.cita) l.push('Lo que dijo un cliente: «' + f.cita + '»');
+  if (f.correo) l.push('Correo (Klaviyo): ' + mkTxt(f.correo));
+  if (f.redes) l.push('Instagram: ' + mkTxt(f.redes));
+  if (f.anuncio) l.push('Anuncio (Meta): ' + mkTxt(f.anuncio));
+  if (f.falta) l.push('Falta: ' + f.falta);
+  if (f.fototeca && f.fototeca.q) l.push('Fotos: Fototeca del panel, búsqueda «' + f.fototeca.q + '» (' + BASE_URL + '/' + mkFototecaUrl(f.fototeca.q) + ')');
+  l.push('', '# Reglas', mktReglasTxt(), '', '# Qué te pido',
+    'Propón primero un boceto en formato celular (texto e imagen sugerida) para el canal que te indique. No armes, programes, envíes ni actives nada en Klaviyo ni en Meta sin el sí de Tomás.');
+  return l.join('\n');
+}
+function mktCopiarTexto(t){
+  function ok(){ showToast('Copiado. Pégalo en Claude Code.', true); }
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(t).then(ok, function(){ mktCopiarViejo(t); ok(); }); }
+  else { mktCopiarViejo(t); ok(); }
+}
+function mktCopiarViejo(t){
+  var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  ta.remove();
+}
+function mktCopiar(n){ var f = mkFicha(n); if (f) mktCopiarTexto(mktTextoFicha(f)); }
+function mktCopiarIdea(i){
+  var d = (MKT.ideas || [])[i]; if (!d) return;
+  mktCopiarTexto([MKT_INTRO, '', '# Idea para redes', 'Idea: ' + d.idea, 'Gancho (primera línea): «' + d.gancho + '»', 'Formato: ' + d.formato,
+    'Permiso del cliente: ' + d.permiso, '', '# Reglas', mktReglasTxt(), '', '# Qué te pido',
+    'Escribe el guion o el texto de la publicación y di qué hay que filmar o fotografiar. Primero el boceto; nada se publica sin el sí de Tomás.'].join('\n'));
+}
+function mktCopiarReglas(){ mktCopiarTexto(MKT_INTRO + '\n\n# Reglas\n' + mktReglasTxt()); }
 function renderWA(){
   document.getElementById('dash-filters').innerHTML = '';
   subFiltros('');
@@ -13052,7 +13317,7 @@ document.addEventListener('DOMContentLoaded', function() {
     /* el panel requiere sesión iniciada; el cotizador público NO cambia */
     sbClient.auth.getSession().then(function(res){
       var sess = res.data && res.data.session;
-      if (sess && panelAccessOK(sess.user.email, pcode)) { show('s-dash'); verPinta(); loadDash(); }
+      if (sess && panelAccessOK(sess.user.email, pcode)) { panelEmail = String(sess.user.email || '').toLowerCase(); show('s-dash'); verPinta(); loadDash(); }
       else {
         if (sess) { sbClient.auth.signOut(); showLoginErr('Esta cuenta no tiene acceso a este panel.'); }
         var le = document.getElementById('lg-email'); if (le && sess) le.value = sess.user.email;
