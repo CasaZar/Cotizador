@@ -579,6 +579,8 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .tbl-scroll { overflow-x:auto;-webkit-overflow-scrolling:touch; }
 .dash-estado { padding:4px 6px;border:1px solid var(--bd);border-radius:6px;font-size:12px;font-family:'Jost',sans-serif;background:white;color:var(--tx); }
 .dash-estado.ganado { background:#D1FAE5;color:#065F46;border-color:#A7F3D0; }
+.pedido-chip { display:inline-block; margin-top:3px; font-size:10.5px; font-weight:600; padding:1px 7px; border-radius:9px; background:#D1FAE5; color:#065F46; white-space:nowrap; }
+.pedido-chip.esp { background:#FEF3C7; color:#92400E; }
 .dash-estado.perdida { background:#FEE2E2;color:#991B1B;border-color:#FECACA; }
 .dash-del { background:none;border:1px solid var(--bd);border-radius:6px;color:#991B1B;font-size:13px;padding:3px 8px;cursor:pointer; }
 .dash-del:hover { background:#FEE2E2;border-color:#FECACA; }
@@ -9635,6 +9637,7 @@ async function loadDash() {
   await correrCierreAutomatico();
   await autoAjustarCorte();
   renderVistaActual();   /* los jobs pueden haber cerrado cotizaciones: repinta donde esté */
+  fvReintentarGestion();  /* fichas confirmadas que no llegaron a la Gestión (sin await: no frena) */
 }
 
 /* Clasifica la cola del día. Salió de renderSeguimiento el 06-10-2026 para
@@ -11116,6 +11119,7 @@ function hoyRazon(g, cls){
   if (cls === 'donehoy') return 'contactado hoy';
   if (cls === 'venta'){
     var fv = fvActiva(g).ficha_venta;
+    if (fv.descartada && fv.estado === 'borrador') return 'la Gestión la devolvió: ' + (fv.descartada.motivo || 'sin motivo');
     return fv.estado === 'enviada'
       ? 'ficha enviada ' + fmtFechaCorta(fv.enviada || '') + ' · falta su sí'
       : 'ficha sin mandar';
@@ -11782,7 +11786,9 @@ function fvNueva(x){
 function fvCalc(f){
   var lista = fvPesos(f.lista);
   var pct = fvPctTransf();
-  var productos = f.pago === 'transferencia' ? Math.round(lista * (1 - pct)) : lista;
+  /* mismo redondeo que calcularVenta() de la Gestión (precio − redondeo del
+     descuento): así el total de la ficha y el del pedido no difieren en $1 */
+  var productos = f.pago === 'transferencia' ? lista - Math.round(lista * pct) : lista;
   var envio = f.envio.tipo === 'retiro' ? 0 : fvPesos(f.envio.monto);
   var total = productos + envio;
   var abono = f.abono_pct === 100 ? total : Math.round(total * f.abono_pct / 100);
@@ -11803,6 +11809,27 @@ function fvItemsDesde(d, x){
     lin.push('Base de ' + (d.mesa.baseTipo === 'madera' ? 'madera' : 'fierro') + (d.mesa.color ? ', ' + String(d.mesa.color).toLowerCase() : ''));
   }
   return lin.join('\n');
+}
+/* Las mismas filas, separadas, para Producción de la Gestión (etapa 2): una
+   línea por medida con producto, cantidad, largo, ancho y espesor. La madera
+   se pone al mandarla (sale de la ficha, no de la cotización). null si la
+   cotización no es de las simples: la Gestión usa entonces el texto de items. */
+function fvLineasDesde(d, x){
+  var p = String((d && d.p) || x.producto || '');
+  if (!d || !Array.isArray(d.rows) || !d.rows.length || p.indexOf('+') !== -1 || d.combo) return null;
+  var nom = FV_SING[p] || prodNombre(p);
+  if (p === 'mesa' && d.mesa && (d.mesa.nombre || d.mesa.modelo)) nom = d.mesa.nombre || d.mesa.modelo;
+  var lin = d.rows.filter(function(r){ return r && r.lg; }).map(function(r, i){
+    var mod = (Array.isArray(d.mods) && d.mods[i]) ? ' ' + d.mods[i] : '';
+    return { producto: nom + mod, cantidad: Number(r.ca) || 1, largo: Number(r.lg) || 0,
+             ancho: Number(r.an) || 0, espesor: Number(d.esp) || 0 };
+  });
+  if (p === 'mesa' && d.mesa && d.mesa.baseTipo){
+    var n = d.rows.reduce(function(a, r){ return a + (Number(r.ca) || 1); }, 0) || 1;
+    lin.push({ producto: 'Base de ' + (d.mesa.baseTipo === 'madera' ? 'madera' : 'fierro') + (d.mesa.color ? ', ' + String(d.mesa.color).toLowerCase() : ''),
+               cantidad: n, largo: 0, ancho: 0, espesor: 0 });
+  }
+  return lin.length ? lin : null;
 }
 /* kilos para Starken, con las mismas reglas que la cotización (stkKgActual);
    0 si el producto no es de los simples: entonces el envío se escribe a mano */
@@ -11860,6 +11887,7 @@ async function fvCargarCotizacion(id){
   }
   if (FV_ID !== id || !FV) return;          /* cerró o abrió otra mientras cargaba */
   if (!FV.items) FV.items = fvItemsDesde(d, x);
+  if (!FV.lineas) FV.lineas = fvLineasDesde(d, x);
   if (d && d.com && d.com.cod && !FV.envio.comuna){
     FV.envio.comuna = stkTitulo(d.com.c); FV.envio.cod = Number(d.com.cod);
   }
@@ -12094,7 +12122,111 @@ async function fvConfirmar(){
   var id = FV_ID;
   fvCerrar();
   var ok = await cerrarGanada(id, c.productos, { ficha_venta:f }, '¡Venta confirmada! 🎉');
-  if (!ok) showToast('No se guardó. ¿Ya se corrió supabase-cotizador/ficha-venta.sql?', false);
+  if (!ok){ showToast('No se guardó. ¿Ya se corrió supabase-cotizador/ficha-venta.sql?', false); return; }
+  await fvAGestion(id, true);
+}
+
+/* ── ETAPA 2 (11-11-2026): LA FICHA CONFIRMADA VIAJA A LA GESTIÓN ──
+   La Gestión es otro proyecto Supabase y el panel no tiene sesión allá: entra
+   como anon y lo ÚNICO que puede hacer es llamar a recibir_venta_cotizador()
+   (migración 0029 de la Gestión), que valida e inserta en ventas_por_cargar.
+   No lee ni cambia nada de la Gestión. Es idempotente por cotización: si se
+   llama dos veces (reintento, dos pestañas) no duplica.
+   Cuando llega, la ficha queda marcada con a_gestion; si falla (sin red), se
+   reintenta sola la próxima vez que se abre el panel (fvReintentarGestion).
+   La llave es la pública (anon) de la Gestión, la misma que ya va en su HTML. */
+var GESTION_URL = 'https://padnttpgzuotxeipjrry.supabase.co';
+var GESTION_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
+var FV_ENVIANDO = {};
+/* las fichas de antes de la etapa 2 no traen las líneas separadas: se leen
+   del link al mandarlas */
+async function fvAsegurarLineas(x, f){
+  if (f.lineas !== undefined) return;
+  var tok = fvToken(x), d = null;
+  if (tok){
+    try {
+      var r = await sbClient.from('quote_links').select('data').eq('token', tok).maybeSingle();
+      if (!r.error && r.data) d = r.data.data;
+    } catch(e){}
+  }
+  f.lineas = fvLineasDesde(d, x);
+}
+async function fvAGestion(id, avisar){
+  var x = COTIS[id];
+  var f0 = x && x.ficha_venta;
+  if (!f0 || f0.estado !== 'confirmada' || f0.a_gestion || FV_ENVIANDO[id]) return;
+  FV_ENVIANDO[id] = true;
+  try {
+    var f = JSON.parse(JSON.stringify(f0));
+    await fvAsegurarLineas(x, f);
+    var r = await fetch(GESTION_URL + '/rest/v1/rpc/recibir_venta_cotizador', {
+      method:'POST',
+      headers:{ 'apikey':GESTION_ANON, 'Authorization':'Bearer ' + GESTION_ANON, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p: { cotizacion_id:id, cotizacion_num:x.numero || null,
+        cliente:(x.cliente || '').trim(), contacto:x.contacto || '',
+        vendedor: (f.hist || []).filter(function(h){ return h.que === 'confirmada'; }).map(function(h){ return h.por; }).pop() || quienMarca(),
+        ficha:f } })
+    });
+    var txt = await r.text();
+    if (!r.ok) throw new Error(txt.slice(0, 160));
+    var res = JSON.parse(txt);
+    f.a_gestion = { t:new Date().toISOString(), r:res };
+    await segSave(id, { ficha_venta:f }, avisar ? 'Quedó en la Gestión para cargar como pedido' : '');
+  } catch(e){
+    console.warn('ficha → Gestión', e);
+    if (avisar) showToast('La venta quedó ganada, pero no llegó a la Gestión. Se reintenta sola al abrir el panel.', false);
+  } finally {
+    FV_ENVIANDO[id] = false;
+  }
+}
+/* al abrir el panel: las confirmadas que no alcanzaron a llegar, y después
+   la vuelta (etapa 3): qué hizo la Gestión con las que sí llegaron */
+async function fvReintentarGestion(){
+  var pend = dashRows.filter(function(x){
+    return x.estado === 'ganado' && x.ficha_venta && x.ficha_venta.estado === 'confirmada' && !x.ficha_venta.a_gestion;
+  });
+  for (var i = 0; i < pend.length; i++) await fvAGestion(pend[i].id, false);
+  await fvVueltaGestion();
+}
+/* Pregunta por las fichas que llegaron y todavía no tienen pedido:
+   - cargada   → la cotización guarda el N° de pedido (ficha_venta.pedido)
+   - descartada → la venta se deshace: la cotización vuelve a quedar abierta,
+                  con la ficha a medias en «Ventas por cerrar» y el motivo a la
+                  vista. Si el cliente igual compra, se vuelve a confirmar y la
+                  Gestión la reabre (la misma fila, no una nueva). */
+async function fvVueltaGestion(){
+  var esperan = dashRows.filter(function(x){
+    var f = x.ficha_venta;
+    return x.estado === 'ganado' && f && f.estado === 'confirmada' && f.a_gestion && !f.pedido;
+  }).slice(0, 200);
+  if (!esperan.length) return;
+  var filas;
+  try {
+    var r = await fetch(GESTION_URL + '/rest/v1/rpc/estado_ventas_cotizador', {
+      method:'POST',
+      headers:{ 'apikey':GESTION_ANON, 'Authorization':'Bearer ' + GESTION_ANON, 'Content-Type':'application/json' },
+      body: JSON.stringify({ ids: esperan.map(function(x){ return x.id; }) })
+    });
+    if (!r.ok) return;
+    filas = await r.json();
+  } catch(e){ console.warn('estado en la Gestión', e); return; }
+  for (var i = 0; i < (filas || []).length; i++){
+    var v = filas[i], x = COTIS[v.cotizacion_id];
+    if (!x || !x.ficha_venta) continue;
+    var f = JSON.parse(JSON.stringify(x.ficha_venta));
+    if (v.estado === 'cargada' && v.pedido_num){
+      f.pedido = String(v.pedido_num);
+      await segSave(x.id, { ficha_venta:f }, '');
+    } else if (v.estado === 'descartada'){
+      f.estado = 'borrador';
+      f.descartada = { t:new Date().toISOString(), motivo:v.motivo || '' };
+      delete f.a_gestion; delete f.confirmada;
+      f.hist = Array.isArray(f.hist) ? f.hist : [];
+      f.hist.push({ t:new Date().toISOString(), que:'descartada_gestion', por:'Gestión' });
+      if (await segSave(x.id, { estado:'enviada', monto_cierre:null, fecha_concretada:null, ficha_venta:f }, ''))
+        showToast((x.cliente || 'Una venta') + ': la Gestión la devolvió («' + (v.motivo || 'sin motivo') + '»). Quedó en Ventas por cerrar.', false);
+    }
+  }
 }
 function fvCerrar(){ FV = null; FV_ID = null; FV_VISTA = 'ficha'; pClose(); }
 /* meses con al menos una cotización, más reciente primero (para el selector) */
@@ -13147,6 +13279,10 @@ function renderDash() {
     /* lead creado a mano: se ve en la tabla, pero no suma a las fichas de arriba */
     if (esLeadManual(x)) numHtml = '<span class="lead-badge manual" title="Lead creado por '+escA(x.lead_manual)+', sin cotización: no suma al total cotizado ni a los conteos">Sin cotización</span>';
     var montoTxt = est==='ganado' && x.monto_cierre ? '$'+Math.round(x.monto_cierre).toLocaleString('es-CL') : '$'+Math.round(x.total_alto||0).toLocaleString('es-CL');
+    /* etapa 3: el N° de pedido que le puso la Gestión al cargarla */
+    var fvx = x.ficha_venta;
+    if (est==='ganado' && fvx && fvx.pedido) montoTxt += '<br><span class="pedido-chip">Pedido '+escA(fvx.pedido)+'</span>';
+    else if (est==='ganado' && fvx && fvx.estado==='confirmada') montoTxt += '<br><span class="pedido-chip esp">'+(fvx.a_gestion ? 'por cargar en Gestión' : 'no llegó a Gestión')+'</span>';
     return '<tr><td>'+numHtml+'</td><td>'+escA(x.cliente||'—')+'</td><td style="font-size:11.5px">'+escA(x.contacto||'—')+'</td><td>'+(prodNombre(x.producto)||'—')+'</td><td>'+montoTxt+'</td><td style="font-size:11.5px">'+f+'</td>' +
       '<td>'+tqBadge(tqDe(x))+'</td>' +
       '<td><select class="dash-estado '+est+'" onchange="updateEstado(\''+x.id+'\',this.value)">' +
