@@ -1132,6 +1132,16 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-marca { font-size:12px; font-weight:500; padding:1px 8px; border-radius:999px; background:var(--bg3); color:var(--acd); margin-left:8px; vertical-align:1px; }
 .hz-marca.int { background:#FCE7F3; color:#9D174D; }
 .hz-marca.rec { background:#FEF3C7; color:#92400E; }
+/* 12-11-2026: nunca le escribimos — franja y etiqueta rojas */
+.hz-fila.hz-nunca { background:#FFFBFA; box-shadow:inset 4px 0 0 #9B2C2C; }
+.hz-fila.hz-nunca.abierta { background:#FBF1EF; }
+.hz-fila.hz-nunca .hz-ini { background:#F6DEDA; color:#9B2C2C; }
+.hz-nuncal { display:block; margin-top:3px; }
+.hz-marca.nunca { background:#9B2C2C; color:#fff; font-weight:600; margin-left:0; display:inline-block; white-space:nowrap; }
+.tq-badge.tq-ir { background:#F6DEDA; color:#9B2C2C; border:1px solid #E8B7AF; cursor:pointer; font-family:inherit; }
+.tq-badge.tq-ir:hover { background:#9B2C2C; color:#fff; }
+.hz-lista + .hz-sec-main { margin-top:18px; }
+.hz-sec-nota { font-size:13px; color:var(--tm); margin:-4px 2px 8px; }
 .hz-marca.mue { background:#F6E7D9; color:#B5652E; border:1px solid #E6C4A4; }
 /* ★ con quién y cuándo (28-10-2026): la fila se pinta rosa y lleva su línea */
 .hz-fila.hz-int { background:#FFF7FB; box-shadow:inset 3px 0 0 var(--mrk-inter); }
@@ -1216,6 +1226,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
   .hz-act { margin-left:62px; }
   .hz-mas { padding-left:14px; }
   .hz-nom { white-space:normal; }
+  .hz-marca.nunca { white-space:normal; }   /* en una columna angosta baja de línea en vez de tapar el botón */
   .hz-camp .hz-main { flex-basis:100%; }   /* el botón va abajo y el nombre se lee entero */
 }
 /* el área abrible: ocupa toda su columna y lleva nombre + línea de datos.
@@ -9022,7 +9033,7 @@ function toqueHoy(x){
   if (!Array.isArray(h)) return false;
   var hoy = hoyISO();
   /* «Me contestó» no es un contacto nuestro: no lo manda a «Hechos hoy» */
-  return h.some(function(e){ return e && e.nota !== NOTA_RESPONDIO && String(e.fecha).slice(0,10)===hoy; });
+  return h.some(function(e){ return e && e.nota !== NOTA_RESPONDIO && !esNotaNoToque(e) && String(e.fecha).slice(0,10)===hoy; });
 }
 function buildSegGroups(){
   var map = {};
@@ -9082,6 +9093,7 @@ function computeSegPend(){
     if (grupoManual(g)) return;   /* lead creado a mano: se ve en la lista, no suma al contador */
     if (topeLleno(g)) return;     /* 2 sin respuesta: no se le escribe (ver TOPE_SIN_RESP) */
     if (fvActiva(g)) return;      /* venta por cerrar: no es seguimiento (11-11-2026) */
+    if (compraSilencio(g)) return;   /* parte de una compra reciente: no sale en la lista */
     var d=dueDate(g.lead); if(d && d<=hoy) segPend++;
   });
 }
@@ -9428,6 +9440,7 @@ function pzQuien(){
 }
 function pzIr(id){
   pzMas(false);
+  segFoco = null;   /* entrar desde el menú muestra siempre la lista completa */
   if (id === 'prox') { pzProximos(); return; }
   if (id === 'mkt') mktFichaN = null;   /* Marketing abre siempre en la lista */
   setDashView(id);
@@ -9895,7 +9908,7 @@ function esBallena(g){
 }
 /* horas desde el último toque registrado (o desde que se creó, si nunca hubo) */
 function horasSinToque(g){
-  var hist = (Array.isArray(g.lead.seg_historial) ? g.lead.seg_historial : []).filter(function(h){ return h && h.nota !== NOTA_RESPONDIO; });
+  var hist = (Array.isArray(g.lead.seg_historial) ? g.lead.seg_historial : []).filter(function(h){ return h && h.nota !== NOTA_RESPONDIO && !esNotaNoToque(h); });
   var fechas = hist.map(function(h){ return String(h.fecha).slice(0,10); }).filter(Boolean).sort();
   var ref = fechas.length ? fechas[fechas.length-1] : (g.lead.fecha_creacion ? fechaBaseISO(g.lead.fecha_creacion) : null);
   if (!ref) return 0;
@@ -10183,6 +10196,76 @@ async function loadDash() {
    son parte de esa compra: sale de la lista. El que vuelve meses después sí
    se sigue (es el «ya compró» que sube arriba). */
 var COMPRA_RECIENTE_DIAS = 30;
+/* ── COMPRÓ HACE POCO Y COTIZÓ ALGO NUEVO (12-11-2026, pedido del usuario) ──
+   La regla de arriba escondía también al que, después de comprar, cotiza otra
+   cosa: Patricio Cárdenas compró una puerta el 16-10 y el 11-11 pidió una
+   cotización especial de $3,06 M que no le aparecía a nadie. Ahora, si tiene
+   una cotización ABIERTA creada DESPUÉS de su última compra, sale en la lista
+   con la pregunta «¿es otro proyecto?». La respuesta queda como nota del
+   historial (etapa 0: no es un toque) y no se vuelve a preguntar.
+   Las cotizaciones abiertas anteriores a la compra («cotizó 5 medidas y compró
+   una») siguen escondidas como siempre. */
+var NOTA_OTRO_PROY = 'Compró antes: es otro proyecto';
+var NOTA_MISMA_COMPRA = 'Compró antes: es parte de esa compra';
+function esNotaCompra(h){ return !!h && (h.nota === NOTA_OTRO_PROY || h.nota === NOTA_MISMA_COMPRA); }
+/* notas del historial que NO son un contacto con el cliente: no cuentan como «hecho hoy» ni reinician los días sin toque */
+function esNotaNoToque(h){ return esNotaCompra(h) || (!!h && String(h.nota||'').indexOf(NOTA_REABIERTA) === 0); }
+function ultimaCompra(quotes){
+  var uc = '';
+  (quotes||[]).forEach(function(q){
+    if (q && !q.eliminada && q.estado === 'ganado' && q.fecha_concretada){ var f = fechaBaseISO(q.fecha_concretada); if (f > uc) uc = f; }
+  });
+  return uc;
+}
+function compraNueva(g){
+  var uc = ultimaCompra(g.quotes);
+  return !!uc && g.quotes.some(function(q){ return (q.estado||'enviada') === 'enviada' && q.fecha_creacion && fechaBaseISO(q.fecha_creacion) > uc; });
+}
+/* 'otro' | 'misma' | '' — la respuesta más reciente, dada después de la última compra */
+function compraRespuesta(g){
+  var uc = ultimaCompra(g.quotes), r = '', rf = '';
+  g.quotes.forEach(function(q){
+    (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){
+      if (!esNotaCompra(h)) return;
+      var f = String(h.fecha||'').slice(0,10);
+      if (f >= uc && f >= rf){ rf = f; r = (h.nota === NOTA_OTRO_PROY) ? 'otro' : 'misma'; }
+    });
+  });
+  return r;
+}
+/* se esconde: compró hace poco y lo abierto es de esa misma compra */
+function compraSilencio(g){
+  if (!compraReciente(g.quotes, g.lead)) return false;
+  return !compraNueva(g) || compraRespuesta(g) === 'misma';
+}
+/* sale con la pregunta: compró hace poco, cotizó algo después y nadie respondió */
+function compraPregunta(g){
+  return compraReciente(g.quotes, g.lead) && compraNueva(g) && compraRespuesta(g) === '';
+}
+async function segCompraResp(id, t){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:(t === 'otro' ? NOTA_OTRO_PROY : NOTA_MISMA_COMPRA) });
+  hoyAbierto = (t === 'otro') ? id : null;
+  segSave(id, { seg_historial:hist }, t === 'otro' ? 'Anotado: es otro proyecto, sigue en la lista' : 'Anotado: es parte de su compra, sale de la lista');
+}
+/* ── NUNCA LE ESCRIBIMOS (12-11-2026) ──
+   Ningún toque desde que nació su cotización abierta más vieja, en ninguna de
+   sus cotizaciones. Es la misma vara que la etiqueta «sin seguim.» de la
+   tabla: un toque a una compra anterior no cuenta para lo nuevo. */
+function nuncaEscrito(g){
+  var x = g.lead;
+  if (x.fecha_primer_contacto || (x.seg_etapa||0) > 0) return false;
+  if (g.quotes.some(function(q){ return q.respondio; })) return false;
+  var abiertas = g.quotes.filter(function(q){ return (q.estado||'enviada') === 'enviada'; });
+  var nace = '';
+  (abiertas.length ? abiertas : [x]).forEach(function(q){ var f = q.fecha_creacion ? fechaBaseISO(q.fecha_creacion) : ''; if (f && (!nace || f < nace)) nace = f; });
+  return !g.quotes.some(function(q){
+    return (Array.isArray(q.seg_historial) ? q.seg_historial : []).some(function(h){
+      return h && ((h.etapa||0) > 0 || h.via) && String(h.fecha||'').slice(0,10) >= nace;
+    });
+  });
+}
 function compraReciente(quotes, lead){
   if (!lead || !lead.fecha_creacion) return false;
   var desde = addDias(fechaBaseISO(lead.fecha_creacion), -COMPRA_RECIENTE_DIAS);
@@ -10219,7 +10302,7 @@ function clasificarHoy(groups, owners, cmp){
        la lista como si hubiera que volver a escribirle (caso César, 10-11). */
     if (fvActiva(g)){ ventas.push(g); return; }
     if (toqueHoy(g.lead)){ hoyDone.push(g); return; }   /* ya contactado hoy: queda a la vista para anotar/deshacer */
-    if (compraReciente(g.quotes, g.lead)) return;       /* compró hace poco: no es seguimiento */
+    if (compraSilencio(g)) return;                      /* compró hace poco y es de esa compra: no es seguimiento */
     if (topeLleno(g)) return;                           /* 2 sin respuesta: va a Dormidos (TOPE_SIN_RESP) */
     /* Flujo 0141 (ver CAD_0141): mientras no conteste, va en su propia
        sección y solo el día que le toca. Entre toques y después del último
@@ -10313,10 +10396,11 @@ function renderSeguimiento(){
      "Buscar cliente" que vivía acá: filtra igual, y además por producto,
      estado, mes y monto */
   var groups = buildSegGroups().filter(grupoPasaOmni);
+  if (segFoco) groups = groups.filter(function(g){ return g.key === segFoco; });
   if (segSoloInteresados) groups = groups.filter(function(g){ return !!g.lead.interesado; });
   var cmp = segComparator();
   var bloques = segBloquesDef();
-  if (segBloque) bloques = bloques.filter(function(b){ return b.o===segBloque; });
+  if (segBloque && !segFoco) bloques = bloques.filter(function(b){ return b.o===segBloque; });
   var owners = {}; bloques.forEach(function(b){ owners[b.o] = true; });
   var hoy=hoyISO(), lim=addDias(hoy,7);
   var C = clasificarHoy(groups, owners, cmp);
@@ -10382,6 +10466,7 @@ function renderSeguimiento(){
      partir. Ahora es una fila tras otra, de arriba hacia abajo, con un botón
      para escribir y —al abrirla— los botones de qué contestó el cliente. */
   var lista = [];
+  var periodo = segPeriodoActivo();
   ballenas.forEach(function(g){ lista.push([g,'ballena']); });
   b1.forEach(function(g){ lista.push([g,'nuevo']); });
   conv.forEach(function(g){ lista.push([g,'conv']); });
@@ -10395,6 +10480,12 @@ function renderSeguimiento(){
      cuánto se hizo; no decide quién aparece. */
   b3.forEach(function(g){ lista.push([g,'today']); });
   b1Viejos.forEach(function(g){ lista.push([g,'nuevo']); });
+  /* ── NUNCA LE ESCRIBIMOS, PRIMERO (12-11-2026, pedido del usuario) ──
+     Los que no han recibido ningún mensaje van arriba con su propio título,
+     antes que los seguimientos. Mismo orden de siempre dentro de cada parte. */
+  var listaNunca = lista.filter(function(p){ return p[1] !== 'conv' && !grupoManual(p[0]) && nuncaEscrito(p[0]); });
+  var listaSeg = lista.filter(function(p){ return listaNunca.indexOf(p) === -1; });
+  lista = listaNunca.concat(listaSeg);
   var enJuegoHoy = lista.concat(b0141.map(function(g){ return [g]; }))
                         .reduce(function(a,p){ return a + (grupoManual(p[0]) ? 0 : (p[0].valor||0)); }, 0);
   function filaReg(g, cls){ pares.push({ g:g, cls:cls }); return hoyFila(g, cls); }
@@ -10414,7 +10505,7 @@ function renderSeguimiento(){
     : '';
   /* con un filtro puesto (chips o buscador) se dice: una lista corta o vacía
      no significa que no quede nadie, sino que nadie calza con el filtro */
-  var filtrado = rapActivo() || !!omniRaw;
+  var filtrado = rapActivo() || !!omniRaw || !!dashMonth || !!segFoco;
   /* con el filtro puesto, el del 0141 que duerme entre mensajes también sale:
      si no, buscar a un cliente que existe decía «Nadie calza con el filtro»
      (29-10-2026, caso Andrea). Sin filtro la lista no cambia. */
@@ -10423,15 +10514,12 @@ function renderSeguimiento(){
     a.forEach(function(g){ vistos[g.key] = true; });
   });
   var espera0141 = !filtrado ? [] : groups.filter(function(g){
-    return owners[g.owner] && g.es0141 && !vistos[g.key] && dueDate(g.lead) && !compraReciente(g.quotes, g.lead);
+    return owners[g.owner] && g.es0141 && !vistos[g.key] && dueDate(g.lead) && !compraSilencio(g);
   }).sort(cmp);
   if (espera0141.length) html0141 +=
     '<div class="hz-bloque0141"><div class="hz-sec0141">📱 0141 · esperan su próximo mensaje<span>'+espera0141.length+'</span></div>'+
     '<div class="hz-lista">'+espera0141.map(function(g){ return filaReg(g, 'future'); }).join('')+'</div></div>';
-  var html = '<div class="hz-lista">'+
-    (lista.length ? lista.map(function(p){ return filaReg(p[0], p[1]); }).join('')
-                  : (b0141.length || espera0141.length ? '' : '<div class="hz-vacio">'+(filtrado ? 'Nadie calza con el filtro. Tócalo de nuevo para quitarlo.' : 'No te queda nadie por escribir hoy.')+'</div>'))+
-    '</div>';
+  espera0141.forEach(function(g){ vistos[g.key] = true; });
   /* con la campaña o el 0141 arriba, la lista de siempre lleva su título para
      que se sepa dónde empieza */
   var campHtml = campanaHtml();
@@ -10440,11 +10528,61 @@ function renderSeguimiento(){
     ? '<div class="hz-bloqueventa"><div class="hz-secventa">Ventas por cerrar<span>'+ventas.length+'</span></div>'+
       '<div class="hz-lista">'+ventas.map(function(g){ return filaReg(g, 'venta'); }).join('')+'</div></div>'
     : '';
-  if ((campHtml || html0141 || htmlVentas || filtrado) && lista.length) html = '<div class="hz-sec-main">'+(filtrado ? 'Con el filtro · ' : 'Seguimiento de hoy · ')+lista.length+'</div>' + html;
+  var pre = filtrado ? 'Con el filtro · ' : '';
+  function secMain(t, n){ return '<div class="hz-sec-main">'+t+' · '+n+'</div>'; }
+  function listaHtml(arr){ return '<div class="hz-lista">'+arr.map(function(p){ return filaReg(p[0], p[1]); }).join('')+'</div>'; }
+  var html = '';
+  if (!lista.length){
+    if (!(b0141.length || espera0141.length || periodo))
+      html = '<div class="hz-lista"><div class="hz-vacio">'+(filtrado ? 'Nadie calza con el filtro. Tócalo de nuevo para quitarlo.' : 'No te queda nadie por escribir hoy.')+'</div></div>';
+  } else {
+    if (listaNunca.length) html += secMain(pre+'Nunca le escribimos', listaNunca.length) + listaHtml(listaNunca);
+    if (listaSeg.length){
+      var conTitulo = listaNunca.length || campHtml || html0141 || htmlVentas || filtrado;
+      html += (conTitulo ? secMain((listaNunca.length ? '' : pre)+(filtrado || listaNunca.length ? 'Seguimientos' : 'Seguimiento de hoy'), listaSeg.length) : '') + listaHtml(listaSeg);
+    }
+  }
+  /* ── TODOS LOS DEL PERÍODO (12-11-2026, pedido del usuario) ──
+     Con un filtro de fecha (este mes, esta semana, un mes, últimos N días) la
+     lista de hoy no alcanza: hay que ver a TODOS los que cotizaron en ese
+     período para encontrar al que se quedó sin contacto, como en la tabla de
+     cotizaciones. Debajo de lo de hoy van los que no tocan hoy —agendados,
+     dormidos, con 2 sin respuesta, parte de una compra— y los ya cerrados
+     (con «Reabrir» si se perdieron). Los nunca contactados, primero. */
+  var resto = [];
+  if (periodo || segFoco){
+    groups.forEach(function(g){ if (owners[g.owner] && (!vistos[g.key] || futuro.indexOf(g) !== -1)) resto.push(g); });
+    var abiertasK = {}; buildSegGroups().forEach(function(g){ abiertasK[g.key] = true; });
+    var porK = {};
+    dashRows.forEach(function(x){ if (!x.eliminada && !esLeadManual(x)) { var k = clientKey(x); if (!abiertasK[k]) (porK[k] = porK[k] || []).push(x); } });
+    Object.keys(porK).forEach(function(k){
+      if (segFoco && k !== segFoco) return;
+      var qs = porK[k];
+      if (!segFoco && !applyDashFilters(qs).length) return;
+      var g = segGrupoSuelto(qs);
+      if (owners[g.owner]) resto.push(g);
+    });
+    resto.sort(function(a,b){
+      var na = nuncaEscrito(a) ? 1 : 0, nb = nuncaEscrito(b) ? 1 : 0;
+      if (na !== nb) return nb - na;
+      return String(b.lead.fecha_creacion||'').localeCompare(String(a.lead.fecha_creacion||''));
+    });
+    var nNunca = resto.filter(nuncaEscrito).length;
+    if (resto.length) html += secMain(segFoco ? 'No le toca hoy' : 'El resto del período · no les toca hoy', resto.length) +
+      (!segFoco && nNunca ? '<div class="hz-sec-nota">'+nNunca+(nNunca === 1 ? ' nunca recibió un mensaje: va primero.' : ' nunca recibieron un mensaje: van primero.')+'</div>' : '') +
+      '<div class="hz-lista">'+resto.map(function(g){ return filaReg(g, 'resto'); }).join('')+'</div>';
+    else if (!lista.length && !b0141.length && !espera0141.length)
+      html = '<div class="hz-lista"><div class="hz-vacio">Nadie calza con el filtro. Tócalo de nuevo para quitarlo.</div></div>';
+  }
+  if (segFoco){
+    var gF = groups[0] || resto[0];
+    html = '<div class="hz-aviso" style="cursor:default">Mostrando solo a <strong>'+escA(gF ? (gF.lead.cliente||'este cliente') : 'este cliente')+'</strong> · '+
+      '<a href="#" onclick="segFocoQuitar();return false">Ver todos</a></div>' + html;
+  }
   html = htmlVentas + campHtml + html0141 + html;
   html += plegado('hoy', 'Cotizaron hoy · les escribes mañana', b1Hoy, 'nuevo',
     'Acaban de ver su cotización: escribirles el mismo día se lee como insistencia. Si igual lo necesitas, el botón está.');
-  html += plegado('semana', 'Próximos días', futuro, 'future', '');
+  if (!(periodo || segFoco)) html += plegado('semana', 'Próximos días', futuro, 'future', '');
   html += plegado('hechos', 'Hechos hoy', hoyDone, 'donehoy', 'Si marcaste alguno por error, ábrelo y deshaz el contacto.');
   /* Encabezado: el día y la plata en juego, y debajo una línea por meta con
      su barra. Tocar una línea filtra la lista a ese grupo (y otra vez, la
@@ -11658,6 +11796,21 @@ function hoyRazon(g, cls){
       : 'ficha sin mandar';
   }
   if (cls === 'future') return 'le toca el '+fmtFechaCorta(dueDate(x));
+  /* los del período que no tocan hoy: por qué no están en la lista */
+  if (cls === 'resto'){
+    var cot = 'cotizó el '+fmtFechaCorta(fechaBaseISO(x.fecha_creacion));
+    if (x.estado === 'ganado') return cot+' · compró'+(x.fecha_concretada ? ' el '+fmtFechaCorta(fechaBaseISO(x.fecha_concretada)) : '');
+    if (x.estado === 'perdida'){
+      var motR = String(x.motivo_perdida || '').replace(/\s*\(.*\)\s*$/, '');
+      return cot+' · cerrada'+(motR ? ': '+motR.toLowerCase() : '');
+    }
+    if (compraSilencio(g)) return cot+' · parte de su compra del '+fmtFechaCorta(ultimaCompra(g.quotes));
+    if (topeLleno(g)) return cot+' · 2 mensajes sin respuesta: no se insiste';
+    var dR = dueDate(x);
+    if (!dR) return cot+' · seguimientos terminados';
+    if (dR > hoyISO()) return cot+' · le toca el '+fmtFechaCorta(dR);
+    return cot;
+  }
   if (cls === 'camp') return 'cotizó el '+fmtFechaCorta(fechaBaseISO(x.fecha_creacion))+' · '+campanaEstado(g.camp);
   if (cls === 'c0141'){
     var n0 = Math.min(etapa+1, CAD_0141.length), dd = diasDe(g);
@@ -11709,6 +11862,7 @@ function hoyFila(g, cls){
   if (g.camp && campanaMarca(g.camp)) marca = campanaMarca(g.camp);
   else if (esLeadManual(x)) marca = '';   /* va en su propia línea (leadLinea): entera no cabe junto al nombre */
   else if (x.interesado) marca = '';   /* va en su propia línea, con quién y cuándo (intLinea) */
+  else if (compraPregunta(g)) marca = '<span class="hz-marca rec">compró el '+fmtFechaCorta(ultimaCompra(g.quotes))+'</span>';
   else if (esRecurrente(g)) marca = '<span class="hz-marca rec">ya compró</span>';
   else if (x.motivo_pausa) marca = '<span class="hz-marca">'+escA(pausaLabel(x.motivo_pausa))+'</span>';
   else if (ofreceMuestra(g)) marca = '<span class="hz-marca mue" title="Cotizó $700 mil o más: ofrécele el muestrario">muestrario</span>';
@@ -11716,16 +11870,27 @@ function hoyFila(g, cls){
   var anuncio = (g.es0141 || (g.quotes||[]).some(function(q){ return vieneDeAnuncio(q.origen); }))
     ? '<span class="hz-anuncio">escríbele desde el 0141</span>' : '';
   /* una venta por cerrar no se persigue: su botón es la ficha (11-11-2026) */
+  /* 12-11-2026: «nunca le escribimos» se ve en rojo (también entre los que no tocan hoy) */
+  var nunca = (cls !== 'donehoy' && cls !== 'venta' && cls !== 'conv' && !grupoManual(g) && nuncaEscrito(g));
+  var cerrado = (cls === 'resto' && (x.estado||'enviada') !== 'enviada');
   var boton = (cls === 'venta')
     ? '<button class="hz-btn" onclick="fichaUI(\''+fvCoti(g).id+'\')">'+(fvActiva(g).ficha_venta.estado === 'enviada' ? '¿Confirmó?' : 'Terminar ficha')+'</button>'
+    : cerrado
+    ? (x.estado === 'perdida' ? '<button class="hz-btn sec" onclick="segReabrir(\''+x.id+'\')" title="Vuelve a la lista de hoy para escribirle">Reabrir</button>' : '')
     : (cls === 'donehoy')
     ? '<button class="hz-btn sec" onclick="segDeshacer(\''+x.id+'\')">Deshacer</button>'
     : segBotonContacto(g, x, 'hz-btn');
   var mas = '';
   if (abierta){
     var resp = '';
+    /* compró hace poco y cotizó algo después: primero se pregunta si es otro proyecto */
+    if (compraPregunta(g) && !cerrado){
+      resp = '<div class="hz-preg">¿Esta cotización es otro proyecto? <span>Compró el '+fmtFechaCorta(ultimaCompra(g.quotes))+'. Si es parte de esa compra, no hay que perseguirlo.</span></div>'+
+        '<div class="hz-resps"><button class="hz-r" onclick="segCompraResp(\''+x.id+'\',\'otro\')">Sí, es otro: seguirlo</button>'+
+        '<button class="hz-r" onclick="segCompraResp(\''+x.id+'\',\'misma\')">Es de la misma compra: sacarlo</button></div>';
+    }
     /* en la campaña aparecen también cerrados: a esos no se les anota toque */
-    if (cls !== 'donehoy' && cls !== 'venta' && !cadenciaAgotada(x)&& (x.estado||'enviada') === 'enviada'){
+    else if (cls !== 'donehoy' && cls !== 'venta' && cls !== 'resto' && !cadenciaAgotada(x)&& (x.estado||'enviada') === 'enviada'){
       if (etapa === 0){
         resp = '<div class="hz-preg">¿Ya le escribiste por otro lado?</div>'+
           '<div class="hz-resps"><button class="hz-r" onclick="hoyAbierto=null;segYaEscribi(\''+x.id+'\')">Sí, anotar el primer contacto</button></div>';
@@ -11758,14 +11923,15 @@ function hoyFila(g, cls){
   var fuera = (g.camp && campanaTipo(g.camp) === 'fuera') ? ' camp-fuera' : '';
   var intLinea = x.interesado ? '<span class="hz-intl">'+interesadoTxt(x)+'</span>' : '';
   var leadLinea = esLeadManual(x) ? '<span class="hz-leadl">'+leadManualChip(x, 'hz-marca')+'</span>' : '';
-  return '<div class="hz-fila hz-'+cls+fuera+(x.interesado?' hz-int':'')+(esLeadManual(x)?' hz-manual':'')+(abierta?' abierta':'')+'">'+
+  var nuncaLinea = nunca ? '<span class="hz-nuncal"><span class="hz-marca nunca">nunca le escribimos</span></span>' : '';
+  return '<div class="hz-fila hz-'+cls+fuera+(nunca?' hz-nunca':'')+(x.interesado?' hz-int':'')+(esLeadManual(x)?' hz-manual':'')+(abierta?' abierta':'')+'">'+
     '<div class="hz-linea">'+
       '<button class="hz-main" onclick="hoyToggle(\''+x.id+'\')">'+
         '<span class="hz-ini">'+escA(hoyIniciales(x.cliente))+'</span>'+
         '<span class="hz-txt">'+
           '<span class="hz-nom">'+escA(x.cliente||'—')+' <span class="hz-monto">'+fmt(g.valor)+'</span>'+marca+'</span>'+
           '<span class="hz-det">'+escA(prods.join(', '))+(prods.length?' · ':'')+hoyRazon(g, cls)+anuncio+'</span>'+
-          leadLinea+intLinea+
+          nuncaLinea+leadLinea+intLinea+
         '</span>'+
       '</button>'+
       '<span class="hz-act">'+boton+'</span>'+
@@ -11773,6 +11939,36 @@ function hoyFila(g, cls){
     mas+
   '</div>';
 }
+/* ¿hay un filtro de fecha puesto? (chip Este mes / Esta semana, un mes, últimos N días) */
+function segPeriodoActivo(){
+  var dd = (document.getElementById('f-dash-dias')||{}).value || '';
+  return !!(RAPIDO.cuando || dashMonth || OMNI.mes || OMNI.dias || dd);
+}
+/* un cliente sin cotización abierta, con la forma de un grupo del seguimiento */
+function segGrupoSuelto(qs){
+  qs = qs.slice().sort(function(a,b){ return new Date(b.fecha_creacion||0) - new Date(a.fecha_creacion||0); });
+  var owner = 'web';
+  for (var i = 0; i < qs.length; i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
+  var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
+  return { key:clientKey(qs[0]), quotes:qs, lead:qs[0], owner:owner,
+           hasVendor:qs.some(function(q){ return ownerCode(q); }), hasWeb:qs.some(isWeb),
+           valor:valor, promedio:valor, es0141:false };
+}
+/* ── «sin seguim.» DE LA TABLA → EL CLIENTE EN SEGUIMIENTO (12-11-2026) ──
+   Abre Seguimiento mostrando solo a ese cliente, desplegado, esté o no en la
+   lista de hoy. Desde ahí se le escribe y el toque queda anotado. */
+var segFoco = null;
+function segIrA(id){
+  var x = COTIS[id] || (allRows || []).find(function(r){ return r.id === id; });
+  if (!x) return;
+  pzIr('seg');
+  segFoco = clientKey(x);
+  var g = buildSegGroups().filter(function(gr){ return gr.key === segFoco; })[0];
+  hoyAbierto = g ? g.lead.id : id; hoyFicha = false;
+  renderSeguimiento();
+  window.scrollTo(0, 0);
+}
+function segFocoQuitar(){ segFoco = null; hoyAbierto = null; renderSeguimiento(); }
 function segAbrir(id){
   segSel = id;
   renderSeguimiento();
@@ -12054,6 +12250,19 @@ async function segReactivar(id){
   /* en la bitácora va como 'cadencia': el check de la tabla `toques` no
      conoce otro tipo. Lo que la distingue es la nota del historial. */
   if (ok) registrarToque(x, 0, 'cadencia');
+}
+/* ── REABRIR DESDE SEGUIMIENTO (12-11-2026) ──
+   Con el filtro de un período, Seguimiento muestra también a los cerrados.
+   «Reabrir» la deja en curso y para escribirle hoy (seg_proxima = hoy, que
+   además la protege del cierre automático por hoy). Si no se le escribe, el
+   cierre automático la vuelve a cerrar mañana con su regla de siempre. */
+var NOTA_REABIERTA = 'Reabierta desde Seguimiento';
+async function segReabrir(id){
+  var x = COTIS[id]; if (!x) return;
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), nota:NOTA_REABIERTA + (x.motivo_perdida ? ' (estaba: ' + x.motivo_perdida + ')' : '') });
+  hoyAbierto = id;
+  segSave(id, { estado:'enviada', motivo_perdida:null, seg_proxima:hoyISO(), seg_historial:hist }, 'Reabierta: ya está en la lista de hoy');
 }
 /* marcar/desmarcar una de las casillas de toque */
 async function segMarcar(id, n, checked, resp, tipoFijo){
@@ -12967,8 +13176,12 @@ function subFiltros(html){
    grupo pasa el filtro si alguna de sus cotizaciones lo pasa. Así "mesa" o
    ">1m" funcionan igual en esas vistas que en la tabla. */
 function grupoPasaOmni(g){
-  if (!omniRaw && !OMNI.texto && !OMNI.estado && !OMNI.producto && !OMNI.mes &&
-      isNaN(OMNI.min) && isNaN(OMNI.max) && !OMNI.dias && !rapActivo()) return true;
+  /* 12-11-2026: también los selectores de «Más filtros» (el mes elegido ahí no
+     filtraba Seguimiento: solo miraba lo escrito en la caja) */
+  var selV = function(id){ return (document.getElementById(id)||{}).value || ''; };
+  if (!omniRaw && !OMNI.texto && !OMNI.estado && !OMNI.producto && !OMNI.mes && !dashMonth &&
+      isNaN(OMNI.min) && isNaN(OMNI.max) && !OMNI.dias && !rapActivo() &&
+      !selV('f-dash-estado') && !selV('f-dash-prod') && !selV('f-dash-min') && !selV('f-dash-max') && !selV('f-dash-dias')) return true;
   return applyDashFilters(g.quotes).length > 0;
 }
 function renderDashFilters(forzar) {
@@ -13279,7 +13492,7 @@ function renderActividad(){
        aparecieron en su lista ese día. Un toque que NO está hecho cuenta solo
        si el cliente sigue abierto y es el siguiente que le toca, en la fecha
        en que la lista se lo mostró (seg_proxima si se movió). */
-    var abierto = (lead.estado || 'enviada') === 'enviada' && !compraReciente(qs, lead);
+    var abierto = (lead.estado || 'enviada') === 'enviada' && !compraSilencio({ quotes:qs, lead:lead });
     var etapaAct = lead.seg_etapa || 0;
     var cadL = cadDe(lead);
     for (var n=1; n<=cadL.length; n++){
@@ -13755,8 +13968,12 @@ function renderDash() {
     for (var i = 0; i < f.length; i++) if (f[i] >= nace) n++;
     return n;
   }
-  function tqBadge(n) {
-    if (n <= 0) return '<span class="tq-badge tq-0">sin seguim.</span>';
+  function tqBadge(n, x) {
+    /* 12-11-2026: se toca y lleva al cliente en Seguimiento (no hay botón de
+       WhatsApp en la tabla: desde Seguimiento el toque queda anotado) */
+    if (n <= 0) return (x && !esLeadManual(x))
+      ? '<button class="tq-badge tq-0 tq-ir" onclick="segIrA(\''+x.id+'\')" title="Ver a este cliente en Seguimiento">sin seguim. →</button>'
+      : '<span class="tq-badge tq-0">sin seguim.</span>';
     if (n === 1) return '<span class="tq-badge tq-1">1er toque</span>';
     return '<span class="tq-badge tq-n">' + n + ' toques</span>';
   }
@@ -13817,7 +14034,7 @@ function renderDash() {
     if (est==='ganado' && fvx && fvx.pedido) montoTxt += '<br><span class="pedido-chip">Pedido '+escA(fvx.pedido)+'</span>';
     else if (est==='ganado' && fvx && fvx.estado==='confirmada') montoTxt += '<br><span class="pedido-chip esp">'+(fvx.a_gestion ? 'por cargar en Gestión' : 'no llegó a Gestión')+'</span>';
     return '<tr><td>'+numHtml+'</td><td>'+escA(x.cliente||'—')+'</td><td style="font-size:11.5px">'+escA(x.contacto||'—')+'</td><td>'+(prodNombre(x.producto)||'—')+'</td><td>'+montoTxt+'</td><td style="font-size:11.5px">'+f+'</td>' +
-      '<td>'+tqBadge(tqDe(x))+'</td>' +
+      '<td>'+tqBadge(tqDe(x), x)+'</td>' +
       '<td><select class="dash-estado '+est+'" onchange="updateEstado(\''+x.id+'\',this.value)">' +
         '<option value="enviada"'+(est==='enviada'?' selected':'')+'>Enviada</option>' +
         '<option value="ganado"'+(est==='ganado'?' selected':'')+'>Ganado</option>' +
