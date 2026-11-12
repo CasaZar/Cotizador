@@ -9051,10 +9051,16 @@ function buildSegGroups(){
     for (var i=0;i<qs.length;i++){ var oc = ownerCode(qs[i]); if (oc){ owner = oc; break; } }
     var hasVendor = qs.some(function(q){ return ownerCode(q); });
     var hasWeb = qs.some(isWeb);
-    /* una cotización con medidas imposibles no pesa en el monto (ver medidaRara) */
-    var valor = qs.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
-    var suma = qs.reduce(function(a,q){ return a+(medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
-    var promedio = qs.length ? Math.round(suma/qs.length) : 0;
+    /* una cotización con medidas imposibles no pesa en el monto (ver medidaRara).
+       12-11-2026: el monto sale SOLO de las abiertas. Un cliente que vuelve a cotizar
+       después de comprar o de perder una cotización mostraba el monto de la vieja
+       (Patricio: $1,24 M de una mesa perdida en julio, cuando lo abierto eran bancas
+       de $1,14 M) e inflaba «En juego». Sin ninguna abierta, se usan todas. */
+    var qsMonto = qs.filter(function(q){ return (q.estado||'enviada') === 'enviada'; });
+    if (!qsMonto.length) qsMonto = qs;
+    var valor = qsMonto.reduce(function(a,q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
+    var suma = qsMonto.reduce(function(a,q){ return a+(medidaRara(q) ? 0 : (q.total_alto||0)); }, 0);
+    var promedio = qsMonto.length ? Math.round(suma/qsMonto.length) : 0;
     /* flujo 0141: TODAS sus cotizaciones son de la web, desde el arranque y
        sin clic a WhatsApp. Uno que ya cotizó antes o que tocó el botón en
        alguna va por el camino de siempre. */
