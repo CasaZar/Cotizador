@@ -8400,6 +8400,16 @@ function showToast(msg, ok) {
    cuenta que no es de vendedor, con el del primero de la lista (César), que es
    quien usa ?pro=zr. Un cliente nunca entra en vendorMode: sigue en null. */
 var sesionEmail = null;
+/* 12-11-2026: lo que un vendedor cotiza con SU sesión se guarda con SU correo de
+   login (crodriguez…), no con el canal hola@ de su link. Así se distingue lo que
+   cotizó él de lo que el cliente cotizó solo con el link. El panel, la RLS y los
+   scripts del Pulso ya cuentan los dos correos como de César. */
+function correoPropio() {
+  if (!vendorMode || !sesionEmail) return null;
+  var m = String(sesionEmail).toLowerCase();
+  var v = VENDEDORES.find(function(s){ return !s.baja && String(s.email||'').toLowerCase() === m; });
+  return v ? v.email : null;
+}
 function correoEquipo() {
   if (!vendorMode) return null;
   var v = VENDEDORES.find(function(s){ return sesionEmail && (s.email === sesionEmail || s.srcEmail === sesionEmail); }) || VENDEDORES[0];
@@ -8446,7 +8456,7 @@ async function saveQuote(data, lineas) {
   try {
     /* el link ya se construyó en confirmar() (shareShortUrl); lo guardamos en el mismo insert
        para no necesitar permiso público de "update" en la tabla. */
-    var payload = Object.assign({}, data, { user_email: srcEmail || correoEquipo(), link: shareShortUrl || null });
+    var payload = Object.assign({}, data, { user_email: correoPropio() || srcEmail || correoEquipo(), link: shareShortUrl || null });
     if (b2bAplica()) payload.b2b_dcto = b2bDcto;   /* tramo de la cuenta empresa que se aplicó */
     if (origenVisita && !vendorMode) payload.origen = origenVisita;
     /* 23-10-2026: la sesión del embudo, para saber después si este cliente tocó
