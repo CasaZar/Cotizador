@@ -9359,7 +9359,7 @@ function waPorResponder(){
 }
 function pzSvg(k){ return '<svg class="pz-i" viewBox="0 0 24 24">'+(PZ_ICO[k]||PZ_ICO.cot)+'</svg>'; }
 function pzTabs(){
-  var t = [{id:'seg', label:'Hoy', ico:'seg', g:1}];
+  var t = [{id:'seg', label:'Seguimiento', ico:'seg', g:1}];   /* antes «Hoy» (12-11-2026, pedido del usuario) */
   /* WhatsApp al día: su propia sección, separada del seguimiento (pedido del 08-11) */
   if (WA) t.push({id:'wa', label:'WhatsApp al día', ico:'wa', g:1});
   if (isPanelAdmin()){
@@ -9408,7 +9408,7 @@ function renderTabs(){
     return '<a href="#" class="'+(dashView===id ? 'on' : '')+'" onclick="pzIr(\''+id+'\');return false">'+pzSvg(ico)+label+badge+'</a>';
   }
   var ab = document.getElementById('pz-abajo');
-  if (ab) ab.innerHTML = boton('seg','Hoy','seg') + boton(cotId,'Cotizaciones','cot') +
+  if (ab) ab.innerHTML = boton('seg','Seguimiento','seg') + boton(cotId,'Cotizaciones','cot') +
     '<a href="#" class="pz-cot" onclick="pzCotizar();return false">'+pzSvg('nueva')+'Cotizar</a>' +
     (WA ? boton('wa','WhatsApp','wa') : boton('actividad','Actividad','actividad')) +
     '<a href="#" class="'+(abajo.indexOf(dashView)===-1 ? 'on' : '')+'" onclick="pzMas(true);return false">'+pzSvg('mas')+'Más</a>';
