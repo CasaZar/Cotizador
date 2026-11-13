@@ -8611,7 +8611,14 @@ function vendedorPorSrc(code){
    contesta, sale de la cadencia y sigue la conversación.
    Los toques 4 a 6 ya registrados en clientes antiguos quedan en su
    historial; esos clientes están con la cadencia agotada (Dormidos). */
-var CADENCIA = [1, 3, 13];   /* días desde la cotización para los 3 toques */
+/* ── PRIMER MENSAJE EL MISMO DÍA (13-11-2026, regla del usuario) ──
+   Era día 1. En los 30 días al 13-11: mediana de 26,6 h hasta el primer
+   toque, ~0 % contactadas en menos de 2 h y 139 de 405 cotizaciones sin
+   ningún contacto. La mitad de los que compran lo hace en 2 días. Ahora el
+   primer toque al que cotizó solo en la web sale el mismo día (día 0); los
+   que cotizan desde HORA_CORTE_DIA0 en adelante quedan para el día
+   siguiente, y las cotizaciones de vendedor siguen en día 1 (ver diaToque). */
+var CADENCIA = [0, 3, 13];   /* días desde la cotización para los 3 toques */
 /* pasada la cadencia + este margen sin toque agendado, el cliente sale de la
    lista diaria (Dormidos): los que venían de la cadencia vieja con 20 o 30
    días no se le cargan de golpe al vendedor */
@@ -8668,7 +8675,7 @@ function topeLleno(g){
    del embudo (origen.ses) y el clic queda en embudo_eventos con esa sesión.
    Si los clics no se pudieron leer (CLICS_WA null), nadie entra al flujo:
    ante la duda, el seguimiento normal. */
-var CAD_0141 = [1, 3, 13];
+var CAD_0141 = [0, 3, 13];   /* día 0 desde el 13-11-2026 (era 1) */
 var DESDE_0141 = '2026-10-23';
 var PASOS_CLIC_WA = ['whatsapp', 'duda', 'muestrario'];
 var CLICS_WA = null;   /* sesión → true si tocó algún botón de WhatsApp */
@@ -8716,7 +8723,20 @@ function cadDe(x){ return (x && LEAD0141[x.id]) ? CAD_0141 : CADENCIA; }
    0141, el día que se pasó (menos 1, así el mensaje que toca sale ese día) */
 function baseCad(x){
   var m = cadDe(x) === CAD_0141 && x.origen && x.origen.no_escribio;
-  return m ? addDias(String(m).slice(0,10), -1) : fechaBaseISO(x.fecha_creacion);
+  /* pasado al 0141: el 1.er toque cae el día en que se pasó */
+  return m ? String(m).slice(0,10) : fechaBaseISO(x.fecha_creacion);
+}
+/* día del toque «etapa» (0 = el primero) contado desde baseCad. El día 0 vale
+   solo para quien cotizó solo en la web y antes de HORA_CORTE_DIA0 (hora del
+   navegador, la de Chile); si no, el primero cae al día siguiente. */
+var HORA_CORTE_DIA0 = 17;
+function diaToque(x, etapa){
+  var d = cadDe(x)[etapa];
+  if (etapa !== 0 || d !== 0) return d;
+  if (cadDe(x) === CAD_0141 && x.origen && x.origen.no_escribio) return 0;
+  if (!isWeb(x)) return 1;
+  var t = new Date(x.fecha_creacion);
+  return (!isNaN(t) && t.getHours() >= HORA_CORTE_DIA0) ? 1 : 0;
 }
 /* Horas que descansa una ballena después de un toque antes de volver a la
    lista. 48 h deja un día de margen antes del acuerdo de las 72 h, y evita
@@ -9024,7 +9044,7 @@ function dueDate(x){
     var base = baseCad(x);
     /* sin fecha agendada y ya fuera de la ventana de la cadencia: Dormidos */
     if (base < addDias(hoyISO(), -(cad[cad.length-1] + CADENCIA_GRACIA))) return null;
-    due = addDias(base, cad[etapa]);
+    due = addDias(base, diaToque(x, etapa));
   }
   /* cadencia vencida: más de 30 días sin gestión → fuera de la cola diaria (sigue en las tablas) */
   if (due < addDias(hoyISO(),-30)) return null;
@@ -13521,7 +13541,7 @@ function renderActividad(){
       var hHecho = null;
       hist.some(function(h){ if (h && h.etapa===n){ hHecho = h; return true; } return false; });
       var hecho = !!hHecho;
-      var due = addDias(base, cadL[n-1]);
+      var due = addDias(base, diaToque(lead, n-1));
       /* 23-10-2026: un toque hecho ANTES de su fecha se cuenta el día en que se
          hizo. Si no, a las 7 AM el día ya salía con «atendidos» que eran toques
          adelantados ayer, y esos clientes ni siquiera estaban en la lista de hoy. */
