@@ -14276,7 +14276,12 @@ document.addEventListener('DOMContentLoaded', function() {
     /* entrada pública: la única puerta que arma el embudo. El tick de
        'producto' de initProd queda en cola y sale cuando el chequeo de
        sesión confirma que no es alguien del equipo. */
-    embudoCanal = String(params.get('src') || params.get('utm_source') || 'web').slice(0, 40);
+    /* 12-11-2026: el canal es «web» salvo un ?src= propio (link de vendedor).
+       Antes tomaba también utm_source, y desde el 28-10 la tienda (cz-origen)
+       le agrega el utm del anuncio a todo link al cotizador: un tercio de las
+       visitas web quedó como «facebook», «ig», etc. y el embudo «web» pareció
+       caer a la mitad. El anuncio de origen ya se guarda en origen (origenCapturar). */
+    embudoCanal = String(params.get('src') || 'web').slice(0, 40);
     origenCapturar(params);
     embudoArrancar();
     /* anuncio de cubiertas: primero la presentacion (s-intro), despues el formulario */
