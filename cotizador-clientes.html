@@ -3309,10 +3309,32 @@ function embudoTick(paso) {
       ses = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
       sessionStorage.setItem('zaru_embudo_ses', ses);
     }
+    var ev = { sesion: ses, paso: paso, producto: prod || null, canal: embudoCanal };
+    var og = embudoOrigen();
+    if (og) { ev.fuente = og.fuente; ev.campana = og.campana; ev.anuncio = og.anuncio; ev.medio = og.medio; }
     sbClient.from('embudo_eventos')
-      .insert({ sesion: ses, paso: paso, producto: prod || null, canal: embudoCanal })
+      .insert(ev)
       .then(function(){}, function(){});
   } catch (e) {}
+}
+/* ── DE QUÉ ANUNCIO VIENE LA VISITA (12-11-2026) ──
+   canal dice por dónde entró (web / link / vendedor); esto dice qué anuncio la
+   trajo, en columnas aparte (supabase-cotizador/embudo-fuente.sql). Sale del
+   link (origenCapturar) o, si el link no traía nada, de la cookie de la tienda
+   (origen.tienda). Sin utm: gclid → 'google_ads', solo fbclid → 'meta'.
+   null = visita sin anuncio (directa u orgánica). */
+function embudoOrigen() {
+  var o = origenVisita;
+  if (!o) return null;
+  var g = (o.utm_source || o.gclid || o.gbraid || o.wbraid || o.fbclid) ? o : o.tienda;
+  if (!g) return null;
+  var corta = function(v, n){ return v ? String(v).slice(0, n) : null; };
+  var fuente = g.utm_source ? String(g.utm_source).toLowerCase()
+    : (g.gclid || g.gbraid || g.wbraid) ? 'google_ads'
+    : g.fbclid ? 'meta' : null;
+  if (!fuente) return null;
+  return { fuente: corta(fuente, 100), campana: corta(g.utm_campaign, 300),
+           anuncio: corta(g.utm_content, 300), medio: corta(g.utm_medium, 100) };
 }
 function embudoArrancar() {
   /* espera el chequeo de sesión: si en este dispositivo hay equipo logueado,
