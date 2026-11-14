@@ -836,6 +836,7 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .proy-resc { display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px dashed #E4DDD3;font-size:13px; }
 .proy-resc small { display:block;color:#7A746C;font-size:12px; }
 .sf-dias.tarde { color:#B91C1C;font-weight:700; }
+.med-ant { font-size:11px;color:var(--tm);margin-top:4px; }
 .seg-backlog, .seg-b3 { margin:8px 0 4px;border:1px dashed var(--bd2);border-radius:10px;padding:8px 10px;background:var(--crt); }
 .seg-backlog summary, .seg-b3 summary { cursor:pointer;font-size:14px;font-weight:600;color:var(--tm);list-style:revert; }
 .seg-backlog summary::marker, .seg-b3 summary::marker { color:var(--ac); }
@@ -7835,7 +7836,7 @@ var ASIS_URL = SB_URL + '/functions/v1/asistente';
 var ASIS_CFG = null;       /* { estado, tope_sesion, tope_dia }, desde cotizador_valores */
 var ASIS_PRUEBA = false;   /* el link trajo ?asistente=1 (se recuerda mientras dure la pestaña) */
 var ASIS = { cot: null, waDuda: '', msgs: [], enviando: false, fin: false };
-var ASIS_HOLA = 'Hola, soy el asistente virtual de Casa Zaru. Puedo resolver dudas sobre tu cotización: maderas, plazos, envío, pago o cuidados. ¿Qué te gustaría saber?';
+var ASIS_HOLA = 'Hola, ¿cómo estás? Cuéntame qué duda tienes de tu cotización y la vemos de inmediato.';
 var ASIS_NO_PUEDO = 'Ahora no puedo responderte por aquí. Escríbenos por WhatsApp y te contestamos apenas abramos.';
 try {
   if (/[?&]asistente=1(&|$)/.test(location.search)) sessionStorage.setItem('zaru_asis_prueba', '1');
@@ -7851,7 +7852,7 @@ function asisRefrescar() {
 }
 function asisCard() {
   return '<a href="#" class="asis-card" style="display:none" onclick="asisAbrir();return false"><strong>¿Una duda rápida? Respuesta al instante →</strong>' +
-    '<span>Nuestro asistente virtual te responde ahora, a cualquier hora.</span></a>';
+    '<span>Nuestro asistente te responde ahora mismo, a cualquier hora.</span></a>';
 }
 /* la sesión anónima del navegador: la misma del embudo si existe, para poder
    cruzar la conversación con la visita; nunca identifica a la persona */
@@ -7870,14 +7871,14 @@ function asisAbrir() {
     bg = document.createElement('div');
     bg.id = 'asis-bg';
     bg.innerHTML = '<div id="asis" role="dialog" aria-label="Asistente de Casa Zaru">' +
-      '<div class="asis-h"><div><b>Asistente de Casa Zaru</b><span>Asistente virtual · responde al instante</span></div>' +
+      '<div class="asis-h"><div><b>Asistente de Casa Zaru</b><span>Responde al instante, a cualquier hora</span></div>' +
         '<button type="button" onclick="asisCerrar()" aria-label="Cerrar">×</button></div>' +
       '<div class="asis-m" id="asis-m"></div>' +
       '<div class="asis-chips" id="asis-chips"></div>' +
       '<form class="asis-f" onsubmit="asisEnviar();return false">' +
         '<input type="text" id="asis-in" maxlength="600" autocomplete="off" placeholder="Escribe tu duda…">' +
         '<button type="submit" id="asis-btn">Enviar</button></form>' +
-      '<p class="asis-pie">Es un asistente automático. Fechas exactas, descuentos y pedidos en curso los confirma nuestro equipo por WhatsApp.</p>' +
+      '<p class="asis-pie">Asistente automático de Casa Zaru. Fechas exactas, descuentos y pedidos en curso los confirma César por WhatsApp.</p>' +
     '</div>';
     bg.addEventListener('click', function(e){ if (e.target === bg) asisCerrar(); });
     document.body.appendChild(bg);
@@ -13850,6 +13851,121 @@ function nombreDia(iso){
   var d = new Date(+p[0], +p[1]-1, +p[2]);
   return DIAS_ES[d.getDay()] || '';
 }
+/* ── MEDIDOR DE LA SEMANA (14-11-2026) ──
+   Dos de los números del plan comercial, con lo que el panel ya registra:
+   1) Primer contacto: de las personas que cotizaron SOLAS en la web por primera
+      vez en la semana, a cuántas se les escribió en menos de 1 hora HÁBIL (dentro
+      del turno) y cuánto esperaron. Una cotización de las 23:00 contestada a las
+      9:20 del día siguiente esperó 20 minutos hábiles. Quien cotizó hace menos de
+      una hora hábil y todavía no recibe mensaje no cuenta en contra.
+   2) Proyectos (clientes con PROY_MIN o más en alguna cotización): nuevos,
+      llamadas, propuestas formales y ganados de la semana.
+   Va comparado con la semana anterior. No mira el filtro de vendedor: es del equipo. */
+var TURNO = { 1:[9, 17.5], 2:[9, 17.5], 3:[9, 17.5], 4:[9, 17.5], 5:[9, 17.5], 6:[10, 14] };   /* día (0 = domingo) → [abre, cierra] */
+function enTurno(d){
+  var t = TURNO[d.getDay()];
+  if (!t) return false;
+  var h = d.getHours() + d.getMinutes() / 60;
+  return h >= t[0] && h < t[1];
+}
+function minutosHabiles(desde, hasta){
+  var a = new Date(desde), b = new Date(hasta);
+  if (isNaN(a.getTime()) || isNaN(b.getTime()) || b <= a) return 0;
+  var total = 0, dia = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  for (var i = 0; i < 90 && dia <= b; i++){
+    var t = TURNO[dia.getDay()];
+    if (t){
+      var x0 = Math.max(dia.getTime() + t[0] * 3600000, a.getTime());
+      var x1 = Math.min(dia.getTime() + t[1] * 3600000, b.getTime());
+      if (x1 > x0) total += (x1 - x0) / 60000;
+    }
+    dia = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1);
+  }
+  return Math.round(total);
+}
+function medidorSemana(lunes){
+  var fin = addDias(lunes, 7), ahora = new Date();
+  var m = { nuevos:0, fuera:0, contactados:0, enHora:0, esperas:[], sinContacto:0, tarde:0,
+            proyNuevos:0, proyMonto:0, llamadas:0, propuestas:0, ganados:0, ganadosMonto:0 };
+  var porCli = {};
+  allRows.forEach(function(x){
+    if (x.eliminada || !x.fecha_creacion || /^Prueba/.test(x.motivo_perdida || '')) return;
+    var k = clientKey(x);
+    (porCli[k] = porCli[k] || []).push(x);
+  });
+  var enSemana = function(f){ return !!f && f >= lunes && f < fin; };
+  Object.keys(porCli).forEach(function(k){
+    var qs = porCli[k].slice().sort(function(a, b){ return new Date(a.fecha_creacion) - new Date(b.fecha_creacion); });
+    var primera = qs[0];
+    /* 1 · primer contacto. «Cotizó sola» = la cotización no la hizo un vendedor
+       (user_email vacío). No se usa isWeb(): deja de ser web apenas se le asigna. */
+    if (enSemana(fechaBaseISO(primera.fecha_creacion)) && !primera.user_email && !esLeadManual(primera)){
+      m.nuevos++;
+      var t0 = new Date(primera.fecha_creacion), t1 = null;
+      if (!enTurno(t0)) m.fuera++;
+      qs.forEach(function(q){
+        if (!q.fecha_primer_contacto) return;
+        var d = new Date(q.fecha_primer_contacto);
+        if (!t1 || d < t1) t1 = d;
+      });
+      if (t1){
+        var esp = minutosHabiles(t0, t1);
+        m.contactados++; m.esperas.push(esp);
+        if (esp <= 60) m.enHora++;
+      } else {
+        m.sinContacto++;
+        if (minutosHabiles(t0, ahora) > 60) m.tarde++;
+      }
+    }
+    /* 2 · proyectos */
+    var grandes = qs.filter(function(q){ return (q.total_alto || 0) >= PROY_MIN && !medidaRara(q); });
+    if (!grandes.length) return;
+    if (enSemana(fechaBaseISO(grandes[0].fecha_creacion))){
+      m.proyNuevos++;
+      m.proyMonto += grandes.reduce(function(a, q){ return Math.max(a, q.total_alto || 0); }, 0);
+    }
+    qs.forEach(function(q){
+      (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){
+        if (!h || !enSemana(String(h.fecha || '').slice(0, 10))) return;
+        if (h.nota === NOTA_PROPUESTA) m.propuestas++;
+        if (h.via === 'llamada') m.llamadas++;
+      });
+      if (q.estado === 'ganado' && q.fecha_concretada && enSemana(fechaBaseISO(q.fecha_concretada))){
+        var mg = q.monto_cierre || q.total_alto || 0;
+        if (mg >= PROY_MIN){ m.ganados++; m.ganadosMonto += mg; }
+      }
+    });
+  });
+  return m;
+}
+function medidorHtml(){
+  var l0 = lunesISO(), a = medidorSemana(l0), b = medidorSemana(addDias(l0, -7));
+  function pct(m){ var den = m.contactados + m.tarde; return den ? Math.round(m.enHora / den * 100) + ' %' : '—'; }
+  function med(m){
+    if (!m.esperas.length) return '—';
+    var s = m.esperas.slice().sort(function(x, y){ return x - y; }), n = s.length;
+    var v = n % 2 ? s[(n - 1) / 2] : Math.round((s[n / 2 - 1] + s[n / 2]) / 2);
+    return v < 60 ? v + ' min' : Math.floor(v / 60) + ' h ' + (v % 60) + ' min';
+  }
+  function conMonto(n, monto){ return n ? n + ' · ' + fmtM(monto) : '0'; }
+  function card(v, l, ant, cls){
+    return '<div class="stat-card' + (cls || '') + '"><div class="stat-v' + (String(v).length > 6 ? ' money' : '') + '">' + v + '</div>' +
+      '<div class="stat-l">' + l + '</div><div class="med-ant">semana anterior: ' + ant + '</div></div>';
+  }
+  return '<div class="med-sem"><div class="seg-sec today">Medidor de la semana<span class="seg-cnt">desde el lunes ' + fmtFechaCorta(l0) + '</span></div>' +
+    '<div class="day-bar">' +
+      card(pct(a), 'Contactados en menos de 1 hora hábil', pct(b)) +
+      card(med(a), 'Mediana de espera hábil', med(b)) +
+      card(a.tarde, 'Sin contacto y ya pasó la hora', b.tarde, a.tarde > 0 ? ' seg-latef' : '') +
+      card(conMonto(a.proyNuevos, a.proyMonto), 'Proyectos nuevos', conMonto(b.proyNuevos, b.proyMonto)) +
+      card(a.llamadas + ' / ' + a.propuestas, 'Proyectos: llamadas / propuestas', b.llamadas + ' / ' + b.propuestas) +
+      card(conMonto(a.ganados, a.ganadosMonto), 'Proyectos ganados', conMonto(b.ganados, b.ganadosMonto), a.ganados > 0 ? ' seg-donehoyf' : '') +
+    '</div>' +
+    '<div class="ptier-note" style="border-radius:7px;margin:6px 0 16px"><strong>Primer contacto:</strong> esta semana ' + a.nuevos +
+      (a.nuevos === 1 ? ' persona cotizó sola' : ' personas cotizaron solas') + ' en la web por primera vez (' + a.fuera + ' fuera del turno); ' +
+      a.contactados + ' ya recibieron su primer mensaje y ' + a.sinContacto + ' todavía no. La espera se cuenta en minutos hábiles: lunes a viernes de 9:00 a 17:30 y sábado de 10:00 a 14:00. ' +
+      '<strong>Proyectos:</strong> clientes con ' + fmt(PROY_MIN) + ' o más en alguna cotización. Las llamadas son los toques marcados como llamada; las propuestas, las marcadas como enviadas.</div></div>';
+}
 function renderActividad(){
   var esAdmin  = isPanelAdmin();
   /* el admin puede filtrar por vendedor; un vendedor ya ve solo lo suyo */
@@ -13996,8 +14112,11 @@ function renderActividad(){
     '<div class="stat-card"><div class="stat-v">'+hoyTot.correspondian+'</div><div class="stat-l">Tocaban hoy</div></div>'+
     '<div class="stat-card seg-donehoyf"><div class="stat-v">'+hoyTot.delDia+'</div><div class="stat-l">Toques hechos hoy</div></div>'+
     '<div class="stat-card'+(noHoy>0?' seg-latef':'')+'"><div class="stat-v">'+noHoy+'</div><div class="stat-l">De hoy, sin hacer</div></div>';
+  /* el medidor de la semana va arriba de la tabla; si fallara, la tabla sale igual */
+  var medidor = '';
+  try { medidor = medidorHtml(); } catch(e){ console.error('medidor de la semana:', e); }
   if (!keys.length){
-    document.getElementById('dash-tbl').innerHTML='<div class="seg-empty" style="padding:24px;text-align:center">Sin seguimientos registrados en los últimos '+ACTIVIDAD_DIAS+' días</div>';
+    document.getElementById('dash-tbl').innerHTML=medidor+'<div class="seg-empty" style="padding:24px;text-align:center">Sin seguimientos registrados en los últimos '+ACTIVIDAD_DIAS+' días</div>';
     return;
   }
   var rows = keys.map(function(k){
@@ -14018,7 +14137,7 @@ function renderActividad(){
       '<td style="font-weight:700">'+r.delDia+'</td></tr>';
   }).join('');
   var thVend = muestraVend ? '<th>Vendedor</th>' : '';
-  document.getElementById('dash-tbl').innerHTML = '<div class="tbl-scroll"><table class="ptable"><thead><tr>'+
+  document.getElementById('dash-tbl').innerHTML = medidor+'<div class="tbl-scroll"><table class="ptable"><thead><tr>'+
     '<th>Fecha</th>'+thVend+'<th>Tocaban</th><th>Atendidos</th><th>Pendientes</th><th>% cumplido</th>'+
     '<th>Toques hechos ese día</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table></div>'+
