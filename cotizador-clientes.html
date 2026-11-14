@@ -9647,10 +9647,16 @@ function renderProyectos(){
   subFiltros('');
   var grupos = proyGrupos().filter(grupoPasaOmni);
   grupos.sort(function(a, b){ return b.valor - a.valor; });
+  /* Con los datos reales (14-11-2026) había 76 abiertos y 54 llevaban más de
+     30 días: los antiguos van plegados para que arriba quede lo que se mueve. */
+  var PROY_VIVO_DIAS = 30;
   var nuevos = grupos.filter(proySinContacto);
-  var conv = grupos.filter(function(g){ return !proySinContacto(g) && (g.quotes.some(function(q){ return q.respondio; }) || esInteresado(g)); });
-  var espera = grupos.filter(function(g){ return nuevos.indexOf(g) === -1 && conv.indexOf(g) === -1; });
-  var enJuego = grupos.reduce(function(a, g){ return a + (g.valor||0); }, 0);
+  var resto = grupos.filter(function(g){ return nuevos.indexOf(g) === -1; });
+  var antiguos = resto.filter(function(g){ return diasDe(g) > PROY_VIVO_DIAS; });
+  var vivos = resto.filter(function(g){ return antiguos.indexOf(g) === -1; });
+  var conv = vivos.filter(function(g){ return g.quotes.some(function(q){ return q.respondio; }) || esInteresado(g); });
+  var espera = vivos.filter(function(g){ return conv.indexOf(g) === -1; });
+  var suma = function(l){ return l.reduce(function(a, g){ return a + (g.valor||0); }, 0); };
   var d90 = addDias(hoyISO(), -90), nGan = 0, mGan = 0;
   dashRows.forEach(function(x){
     if (x.eliminada || x.estado !== 'ganado' || !x.fecha_creacion || fechaBaseISO(x.fecha_creacion) < d90) return;
@@ -9664,8 +9670,8 @@ function renderProyectos(){
     '<div class="dia-verde pend"><strong>Proyectos: clientes con $1,5 millones o más en cotizaciones abiertas.</strong> ' +
       'Son pocos y pesan mucho: se llaman el mismo día, reciben propuesta formal y no se dejan enfriar.</div>' +
     '<div class="day-bar">' +
-      '<div class="stat-card"><div class="stat-v">' + grupos.length + '</div><div class="stat-l">Abiertos</div></div>' +
-      '<div class="stat-card"><div class="stat-v money">' + fmtM(enJuego) + '</div><div class="stat-l">En juego</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + (nuevos.length + vivos.length) + '</div><div class="stat-l">De los últimos ' + PROY_VIVO_DIAS + ' días · ' + fmtM(suma(nuevos) + suma(vivos)) + '</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + antiguos.length + '</div><div class="stat-l">Antiguos · ' + fmtM(suma(antiguos)) + '</div></div>' +
       '<div class="stat-card"><div class="stat-v">' + nuevos.length + '</div><div class="stat-l">Sin primer contacto</div></div>' +
       '<div class="stat-card"><div class="stat-v">' + nGan + '</div><div class="stat-l">Ganados en 90 días · ' + fmtM(mGan) + '</div></div>' +
     '</div>';
@@ -9677,6 +9683,11 @@ function renderProyectos(){
   if (espera.length) html += '<div class="seg-sec today">Contactados, sin respuesta todavía<span class="seg-cnt">' + espera.length + '</span></div>' +
     espera.map(function(g){ return proyItem(g, 'today'); }).join('');
   if (!grupos.length) html += '<div class="seg-empty" style="padding:24px;text-align:center">No hay proyectos abiertos en este momento.</div>';
+  if (antiguos.length){
+    html += '<details class="seg-b3"' + detAttrs('proy-ant') + '><summary>Antiguos · ' + antiguos.length +
+      ' <span class="seg-bloque-sub">más de ' + PROY_VIVO_DIAS + ' días abiertos, de mayor a menor: una llamada los define, o se cierran</span></summary>' +
+      antiguos.map(function(g){ return proyItem(g, 'today'); }).join('') + '</details>';
+  }
   if (perd.length){
     html += '<details class="seg-b3"' + detAttrs('proy-perd') + '><summary>Para rescatar · ' + perd.length +
       ' <span class="seg-bloque-sub">perdidos en los últimos 60 días: una llamada puede reabrirlos</span></summary>' +
