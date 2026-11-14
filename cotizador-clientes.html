@@ -822,6 +822,20 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .seg-sec.ballena { background:#FDF2F8;color:#9D174D;border-left:5px solid #DB2777; }
 .seg-sec.ballena .seg-cnt { background:rgba(157,23,77,.14);color:#9D174D; }
 .ballena-alerta { background:#FEF2F2;border:1px solid #FCA5A5;color:#991B1B;font-size:13px;font-weight:700;border-radius:8px;padding:6px 10px;margin-bottom:-4px; }
+/* Línea Proyectos (14-11-2026): la franja que va sobre cada ficha */
+.proy-item { margin:0 0 12px; }
+.proy-barra { display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;background:#F4F1EC;border:1px solid #E4DDD3;border-left:5px solid #485B3D;border-radius:10px 10px 0 0;padding:8px 10px;margin-bottom:-2px; }
+.proy-chips { display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px; }
+.proy-chips b { font-size:16px;color:#485B3D; }
+.proy-chip { font-size:12px;font-weight:600;border-radius:20px;padding:2px 9px;background:#E9E6E1;color:#5d574f;white-space:nowrap; }
+.proy-chip.rojo { background:#FEE2E2;color:#991B1B; }
+.proy-chip.verde { background:#E5EEDF;color:#3c5a2c; }
+.proy-btns { display:flex;flex-wrap:wrap;gap:6px; }
+.proy-b { font:inherit;font-size:13px;font-weight:600;border-radius:8px;padding:7px 11px;border:1.5px solid #D9D1C5;background:#fff;color:#2B2B2B;text-decoration:none;cursor:pointer;white-space:nowrap; }
+.proy-b.pri { background:#B5652E;border-color:#B5652E;color:#fff; }
+.proy-resc { display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px dashed #E4DDD3;font-size:13px; }
+.proy-resc small { display:block;color:#7A746C;font-size:12px; }
+.sf-dias.tarde { color:#B91C1C;font-weight:700; }
 .seg-backlog, .seg-b3 { margin:8px 0 4px;border:1px dashed var(--bd2);border-radius:10px;padding:8px 10px;background:var(--crt); }
 .seg-backlog summary, .seg-b3 summary { cursor:pointer;font-size:14px;font-weight:600;color:var(--tm);list-style:revert; }
 .seg-backlog summary::marker, .seg-b3 summary::marker { color:var(--ac); }
@@ -9400,7 +9414,8 @@ var PZ_ICO = {
   venta:'<rect x="3" y="6" width="18" height="12" rx="1"/><circle cx="12" cy="12" r="2.5"/>',
   wa:'<path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/>',
   foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
-  mkt:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>'
+  mkt:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+  proy:'<path d="M4 20V9l8-5 8 5v11M4 20h16M9 20v-6h6v6"/>'
 };
 /* Fototeca: buscador de fotos y videos del Drive (09-11-2026). Es fototeca.html, en este
    mismo sitio: usa la sesión del panel y lee sus datos del bucket privado «fototeca».
@@ -9416,6 +9431,8 @@ function pzTabs(){
   var t = [{id:'seg', label:'Seguimiento', ico:'seg', g:1}];   /* antes «Hoy» (12-11-2026, pedido del usuario) */
   /* WhatsApp al día: su propia sección, separada del seguimiento (pedido del 08-11) */
   if (WA) t.push({id:'wa', label:'WhatsApp al día', ico:'wa', g:1});
+  /* Línea Proyectos (14-11-2026): las cotizaciones grandes, en su propia vista */
+  t.push({id:'proy', label:'Proyectos', ico:'proy', g:1});
   if (isPanelAdmin()){
     t.push({id:'web', label:'Clientes web', ico:'web', g:1});
     vendedoresActivos().forEach(function(v){ t.push({id:v.code, label:'Cotizaciones de '+v.nombre, ico:'cot', g:1}); });
@@ -9439,7 +9456,7 @@ function pzTabs(){
 function pzLink(t){
   if (t.url) return '<a href="'+escA(t.url)+'" target="_blank" rel="noopener" onclick="pzMas(false)">'+
          pzSvg(t.ico)+'<span>'+escA(t.label)+'</span></a>';
-  var n = t.id==='seg' ? segPend : (t.id==='wa' ? waPorResponder() : 0);
+  var n = t.id==='seg' ? segPend : (t.id==='wa' ? waPorResponder() : (t.id==='proy' ? proyNuevos() : 0));
   var badge = n > 0 ? '<b class="pz-n'+(t.id==='wa' ? ' wa' : '')+'">'+n+'</b>' : '';
   return '<a href="#" class="'+(dashView===t.id ? 'on' : '')+'" onclick="pzIr(\''+t.id+'\');return false">'+
          pzSvg(t.ico)+'<span>'+escA(t.label)+'</span>'+badge+'</a>';
@@ -9541,8 +9558,168 @@ function renderVistaActual(){
   else if (v==='reactivar') renderReactivar();
   else if (v==='actividad') renderActividad();
   else if (v==='backlog')   renderBacklog();
+  else if (v==='proy')      renderProyectos();
   else if (v==='manual')    renderManual();
   else                      renderDash();
+}
+/* ── LÍNEA PROYECTOS (14-11-2026) ──
+   Entre el 17-08 y el 31-10 cotizaron $3 M o más 18 personas ($407 M) y se
+   ganó una: se atendían igual que una repisa. Esta vista junta a todo cliente
+   con $1,5 M o más en cotizaciones abiertas, ordenado por lo que hay que
+   hacer, con tres cosas que la ficha normal no tiene: la propuesta formal
+   (propuesta.html), el piso de precio (se calcula en la Gestión, que es donde
+   viven los costos) y el aviso al dueño. No hay estado nuevo en la base: las
+   secciones se DERIVAN de lo que ya se registra (contacto, respuesta, toques).
+   El cierre automático no toca a las de $2 M o más (regla ballena); las de
+   $1,5 a $2 M siguen la regla de siempre. */
+var PROY_MIN = 1500000;
+var NOTA_PROPUESTA = 'Propuesta formal enviada';
+var GESTION_URL = 'https://casazar.github.io/Casa-Zaru/';
+function esperaMin(x){
+  return x && x.fecha_creacion ? Math.max(0, Math.round((Date.now() - new Date(x.fecha_creacion).getTime()) / 60000)) : 0;
+}
+function esperaTxt(x){
+  var m = esperaMin(x);
+  if (m < 60) return 'hace ' + m + ' min';
+  if (m < 2880) return 'hace ' + Math.round(m / 60) + ' h';
+  return 'hace ' + Math.round(m / 1440) + ' d';
+}
+function proyVe(g){
+  return isPanelAdmin() || g.owner === panelSeller.code || (isWeb(g.lead) && !panelSeller.b2b);
+}
+function proyGrupos(){
+  return buildSegGroups().filter(function(g){ return proyVe(g) && g.valor >= PROY_MIN; });
+}
+function proySinContacto(g){ return !g.quotes.some(cotizContactada); }
+function proyNuevos(){
+  try { return proyGrupos().filter(proySinContacto).length; } catch(e){ return 0; }
+}
+function proyPropuestaEl(g){
+  var f = null;
+  g.quotes.forEach(function(q){
+    (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){
+      if (h && h.nota === NOTA_PROPUESTA && String(h.fecha) > (f || '')) f = String(h.fecha).slice(0, 10);
+    });
+  });
+  return f;
+}
+/* la cotización abierta de mayor monto: de ella salen la propuesta y el piso */
+function proyPrincipal(g){
+  var ab = g.quotes.filter(function(q){ return (q.estado||'enviada') === 'enviada' && !medidaRara(q) && !esLeadManual(q); });
+  if (!ab.length) return g.lead;
+  return ab.reduce(function(a, q){ return (q.total_alto||0) > (a.total_alto||0) ? q : a; }, ab[0]);
+}
+function proyBarra(g){
+  var x = proyPrincipal(g), tel = waPhone(g.lead.contacto), chips = '';
+  var prop = proyPropuestaEl(g);
+  if (proySinContacto(g)) chips += '<span class="proy-chip rojo">Sin contacto · ' + esperaTxt(g.lead) + '</span>';
+  else {
+    if (g.quotes.some(function(q){ return q.respondio; })) chips += '<span class="proy-chip verde">Respondió</span>';
+    var h = horasSinToque(g);
+    if (h >= 72) chips += '<span class="proy-chip rojo">' + Math.round(h / 24) + ' días sin toque</span>';
+  }
+  if (prop) chips += '<span class="proy-chip verde">Propuesta enviada ' + fmtFechaCorta(prop) + '</span>';
+  var btn =
+    '<a class="proy-b pri" href="propuesta.html?id=' + encodeURIComponent(x.id) + '" target="_blank" rel="noopener">Propuesta formal</a>' +
+    (tel ? '<a class="proy-b" href="tel:+' + tel + '">Llamar</a>' : '') +
+    (esDueno() ? '<button type="button" class="proy-b" onclick="proyPiso(\'' + x.id + '\')">Piso de precio</button>'
+               : '<button type="button" class="proy-b" onclick="proyAvisar(\'' + x.id + '\')">Avisar a Tomás</button>');
+  return '<div class="proy-barra"><div class="proy-chips"><b>' + fmt(g.valor) + '</b>' + chips + '</div><div class="proy-btns">' + btn + '</div></div>';
+}
+function proyItem(g, cls){ return '<div class="proy-item">' + proyBarra(g) + segClientCard(g, cls) + '</div>'; }
+/* Perdidas grandes de los últimos 60 días cuyo cliente no tiene nada abierto
+   ni compró: candidatas a una llamada de rescate. */
+function proyPerdidos(abiertos){
+  var desde = addDias(hoyISO(), -60), gano = {}, mejor = {};
+  dashRows.forEach(function(x){ if (!x.eliminada && x.estado === 'ganado') gano[clientKey(x)] = true; });
+  dashRows.forEach(function(x){
+    if (x.eliminada || x.estado !== 'perdida' || medidaRara(x) || esLeadManual(x)) return;
+    if ((x.total_alto||0) < PROY_MIN || !x.fecha_creacion || fechaBaseISO(x.fecha_creacion) < desde) return;
+    if (/^Prueba/.test(x.motivo_perdida || '')) return;
+    var k = clientKey(x);
+    if (abiertos[k] || gano[k]) return;
+    if (!mejor[k] || (x.total_alto||0) > (mejor[k].total_alto||0)) mejor[k] = x;
+  });
+  return Object.keys(mejor).map(function(k){ return mejor[k]; })
+    .sort(function(a, b){ return (b.total_alto||0) - (a.total_alto||0); });
+}
+function renderProyectos(){
+  subFiltros('');
+  var grupos = proyGrupos().filter(grupoPasaOmni);
+  grupos.sort(function(a, b){ return b.valor - a.valor; });
+  var nuevos = grupos.filter(proySinContacto);
+  var conv = grupos.filter(function(g){ return !proySinContacto(g) && (g.quotes.some(function(q){ return q.respondio; }) || esInteresado(g)); });
+  var espera = grupos.filter(function(g){ return nuevos.indexOf(g) === -1 && conv.indexOf(g) === -1; });
+  var enJuego = grupos.reduce(function(a, g){ return a + (g.valor||0); }, 0);
+  var d90 = addDias(hoyISO(), -90), nGan = 0, mGan = 0;
+  dashRows.forEach(function(x){
+    if (x.eliminada || x.estado !== 'ganado' || !x.fecha_creacion || fechaBaseISO(x.fecha_creacion) < d90) return;
+    var m = x.monto_cierre || x.total_alto || 0;
+    if (m >= PROY_MIN){ nGan++; mGan += m; }
+  });
+  var abiertos = {}; grupos.forEach(function(g){ abiertos[g.key] = true; });
+  var perd = proyPerdidos(abiertos);
+  var st = document.getElementById('dash-stats'); st.style.display = 'block';
+  st.innerHTML =
+    '<div class="dia-verde pend"><strong>Proyectos: clientes con $1,5 millones o más en cotizaciones abiertas.</strong> ' +
+      'Son pocos y pesan mucho: se llaman el mismo día, reciben propuesta formal y no se dejan enfriar.</div>' +
+    '<div class="day-bar">' +
+      '<div class="stat-card"><div class="stat-v">' + grupos.length + '</div><div class="stat-l">Abiertos</div></div>' +
+      '<div class="stat-card"><div class="stat-v money">' + fmtM(enJuego) + '</div><div class="stat-l">En juego</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + nuevos.length + '</div><div class="stat-l">Sin primer contacto</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + nGan + '</div><div class="stat-l">Ganados en 90 días · ' + fmtM(mGan) + '</div></div>' +
+    '</div>';
+  var html = '';
+  if (nuevos.length) html += '<div class="seg-sec late">Llamar hoy: sin primer contacto<span class="seg-cnt">' + nuevos.length + '</span></div>' +
+    nuevos.map(function(g){ return proyItem(g, 'late'); }).join('');
+  if (conv.length) html += '<div class="seg-sec conv">En conversación<span class="seg-cnt">' + conv.length + '</span></div>' +
+    conv.map(function(g){ return proyItem(g, 'today'); }).join('');
+  if (espera.length) html += '<div class="seg-sec today">Contactados, sin respuesta todavía<span class="seg-cnt">' + espera.length + '</span></div>' +
+    espera.map(function(g){ return proyItem(g, 'today'); }).join('');
+  if (!grupos.length) html += '<div class="seg-empty" style="padding:24px;text-align:center">No hay proyectos abiertos en este momento.</div>';
+  if (perd.length){
+    html += '<details class="seg-b3"' + detAttrs('proy-perd') + '><summary>Para rescatar · ' + perd.length +
+      ' <span class="seg-bloque-sub">perdidos en los últimos 60 días: una llamada puede reabrirlos</span></summary>' +
+      perd.map(function(x){
+        var f = x.fecha_creacion ? new Date(x.fecha_creacion).toLocaleDateString('es-CL') : '';
+        return '<div class="proy-resc"><div><strong>' + escA(x.cliente || '—') + '</strong> · ' + escA(prodNombre(x.producto)) + ' · ' + fmt(x.total_alto||0) +
+          '<small>' + escA(f) + ' · ' + escA(x.motivo_perdida || 'sin motivo') + (x.contacto ? ' · ' + escA(x.contacto) : '') + '</small></div>' +
+          '<div class="proy-btns">' + (x.link ? '<a class="proy-b" href="' + escA(x.link) + '" target="_blank" rel="noopener">Ver cotización</a>' : '') +
+          '<button type="button" class="proy-b" onclick="segReabrir(\'' + x.id + '\')">Reabrir</button></div></div>';
+      }).join('') + '</details>';
+  }
+  document.getElementById('dash-tbl').innerHTML = html;
+}
+/* El piso se calcula en la Gestión (ahí están los costos, solo para el admin):
+   se le pasan los m² y los precios de la cotización, nada del cliente. La
+   ventana se abre antes de consultar para que el navegador no la bloquee. */
+async function proyPiso(id){
+  var x = COTIS[id]; if (!x) return;
+  var w = window.open('about:blank', '_blank');
+  var m2 = 0;
+  try {
+    var r = await sbClient.from('cotizacion_lineas').select('m2,cantidad').eq('cotizacion_id', id);
+    if (!r.error && r.data) m2 = r.data.reduce(function(a, l){ return a + (Number(l.m2) || 0); }, 0);
+  } catch(e){}
+  var url = GESTION_URL + '#piso/' + (Math.round(m2 * 1000) / 1000) + '/' + Math.round(x.total_bajo || 0) + '/' + Math.round(x.total_alto || 0);
+  if (w) w.location.href = url; else window.open(url, '_blank');
+}
+/* Un vendedor avisa al dueño por WhatsApp. El número se pide una vez y queda
+   solo en ese equipo: no va en el código, que es público. */
+function proyAvisar(id){
+  var x = COTIS[id]; if (!x) return;
+  var num = ''; try { num = localStorage.getItem('cz-cel-dueno') || ''; } catch(e){}
+  if (!num){
+    var p = prompt('Celular de Tomás (queda guardado solo en este equipo):', '+569');
+    if (p === null) return;
+    num = String(p).replace(/\D/g, '');
+    if (num.length === 9) num = '56' + num;
+    if (num.length !== 11){ showToast('Ese número no parece un celular chileno', false); return; }
+    try { localStorage.setItem('cz-cel-dueno', num); } catch(e){}
+  }
+  var txt = 'Proyecto nuevo: ' + (x.cliente || 'sin nombre') + ' · ' + prodNombre(x.producto) + ' · ' + fmt(x.total_alto || 0) +
+    (x.numero ? ' (cotización ' + x.numero + ')' : '') + '.\n\nEstá en el panel, pestaña Proyectos. ¿Lo llamas tú?';
+  window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(txt), '_blank');
 }
 /* FASE 6: vista Backlog — las que nunca se contactaron, más reciente primero */
 function renderBacklog(){
@@ -11788,7 +11965,9 @@ function segFila(g, cls){
        cada tarjeta quedaba armada distinto. */
     '<span class="sf-rt">'+
       '<span class="sf-plata">'+fmt(g.valor)+'</span>'+
-      '<span class="sf-dias">hace '+dias+' d</span>'+
+      /* sin contactar: el reloj va en minutos y horas, en rojo pasada la hora (14-11-2026) */
+      (cotizContactada(x) ? '<span class="sf-dias">hace '+dias+' d</span>'
+                          : '<span class="sf-dias'+(esperaMin(x) > 60 ? ' tarde' : '')+'">'+esperaTxt(x)+'</span>')+
     '</span>'+
     '<span class="sf-act">'+segBotonContacto(g, x, 'sbtn')+'</span>'+
   '</div>';

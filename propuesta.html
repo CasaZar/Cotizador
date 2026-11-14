@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Propuesta · Casa Zaru</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Propuesta formal de la Línea Proyectos (14-11-2026). Se abre desde el panel
+   (pestaña Proyectos) con ?id=<cotización>. Usa la sesión del panel: sin sesión
+   no lee nada. Todo el texto se puede corregir en pantalla antes de imprimir;
+   nada de lo que se escribe acá se guarda, salvo la marca «propuesta enviada». */
+:root{--verde:#485B3D;--terra:#B5652E;--papel:#F6F3EE;--linea:#E4DDD3;--tinta:#2B2B2B;--sec:#7A746C}
+*{box-sizing:border-box}
+body{margin:0;background:#D9D4CC;font-family:Poppins,'Segoe UI',Arial,sans-serif;color:var(--tinta);font-size:14px;line-height:1.55}
+.barra{position:sticky;top:0;z-index:5;background:var(--verde);color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.barra b{font-weight:600;margin-right:auto}
+.barra button,.barra label{font:inherit;font-size:13px;font-weight:600;border:1.5px solid rgba(255,255,255,.55);background:transparent;color:#fff;border-radius:8px;padding:7px 11px;cursor:pointer}
+.barra button.pri{background:#fff;color:var(--verde);border-color:#fff}
+.barra input{display:none}
+.ayuda{max-width:820px;margin:10px auto 0;padding:0 14px;font-size:12.5px;color:#4a463f}
+.hoja{background:#fff;max-width:820px;margin:12px auto 40px;padding:44px 48px;box-shadow:0 6px 22px rgba(0,0,0,.16)}
+.cab{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid var(--verde);padding-bottom:16px}
+.cab img{height:54px}
+.cab .d{text-align:right;font-size:12.5px;color:var(--sec)}
+.cab .d b{display:block;font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--verde);font-weight:600;line-height:1.2}
+h2{font-family:'Playfair Display',Georgia,serif;color:var(--terra);font-size:17px;font-weight:600;margin:26px 0 8px}
+.para{font-size:19px;font-family:'Playfair Display',Georgia,serif;margin:22px 0 4px}
+.para small{display:block;font-family:Poppins,sans-serif;font-size:12px;color:var(--sec);text-transform:uppercase;letter-spacing:.6px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--sec);text-align:left;font-weight:600;border-bottom:1px solid var(--linea);padding:6px 8px}
+td{padding:8px;border-bottom:1px solid var(--linea);vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+.inv td{font-size:15px}.inv td.n{font-weight:600;color:var(--verde)}
+.nota{font-size:12.5px;color:var(--sec);margin-top:8px}
+ul{margin:6px 0 0 18px;padding:0}li{margin-bottom:4px}
+.fotos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.fotos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;cursor:pointer}
+.pie{margin-top:30px;border-top:1px solid var(--linea);padding-top:12px;font-size:12.5px;color:var(--sec);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+[contenteditable]{outline:none;border-radius:4px}
+[contenteditable]:hover{background:#FBF6EE}
+[contenteditable]:focus{background:#FBF1DF}
+.aviso{max-width:820px;margin:60px auto;background:#fff;padding:28px;border-radius:12px;text-align:center}
+.aviso a{color:var(--terra);font-weight:600}
+@media (max-width:640px){.hoja{padding:24px 18px}.cab{flex-direction:column}.cab .d{text-align:left}.fotos{grid-template-columns:repeat(2,1fr)}}
+@page{size:A4;margin:14mm}
+@media print{
+  body{background:#fff}.barra,.ayuda{display:none}
+  .hoja{box-shadow:none;margin:0;max-width:none;padding:0}
+  h2{break-after:avoid}tr,li,.fotos img{break-inside:avoid}
+  [contenteditable]:hover,[contenteditable]:focus{background:transparent}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="aviso">Cargando la cotización…</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
+var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
+var NOTA_PROPUESTA = 'Propuesta formal enviada';   /* la misma que lee el panel */
+var sb = supabase.createClient(SB_URL, SB_KEY);
+var COT = null, HITOS = false;
+var PAGO_NORMAL = '70 % para iniciar la fabricación y 30 % antes del despacho.';
+var PAGO_HITOS = '50 % al confirmar el proyecto, 30 % a mitad de la fabricación (te mandamos fotos del avance) y 20 % antes del despacho.';
+var PROD = { cubierta:'Cubierta', 'cubierta-mesa':'Cubierta de mesa', mesa:'Mesa', puerta:'Puerta', puertas:'Puertas', peldano:'Peldaños',
+             repisa:'Repisa', revestimiento:'Revestimiento', banca:'Banca', especial:'Proyecto a medida' };
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function plata(n){ return '$' + Math.round(Number(n) || 0).toLocaleString('es-CL'); }
+function num3(n){ return (Math.round((Number(n) || 0) * 1000) / 1000).toLocaleString('es-CL', { maximumFractionDigits: 3 }); }
+function prodNombre(p){
+  p = String(p || '');
+  if (PROD[p]) return PROD[p];
+  return p ? p.charAt(0).toUpperCase() + p.slice(1).replace(/[-_]/g, ' ') : 'Proyecto a medida';
+}
+function hoyISO(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function aviso(html){ document.getElementById('app').innerHTML = '<div class="aviso">' + html + '</div>'; }
+
+function filasInversion(c){
+  var b = Number(c.total_bajo) || 0, m = Number(c.total_medio) || 0, a = Number(c.total_alto) || 0;
+  var filas = [];
+  if (c.producto === 'especial' || !m){
+    if (b && a && b !== a){ filas.push(['Opción base', b]); filas.push(['Opción superior', a]); }
+    else filas.push(['Valor del proyecto', a || b || m]);
+  } else if (b === m && m === a){
+    filas.push(['Valor del proyecto', a]);
+  } else {
+    filas.push(['En Pino Oregón', b]);
+    filas.push(['En Castaño, Ciprés o Mañío', m]);
+    filas.push(['En Coihue, Raulí o Lenga', a]);
+  }
+  if (Number(c.vidrio_monto) > 0) filas.push(['Vidrio' + (c.vidrio_tipo ? ' (' + c.vidrio_tipo + ')' : '') + ', ya incluido en los valores', Number(c.vidrio_monto)]);
+  return filas;
+}
+function pintar(c, lineas){
+  var esPuerta = /puerta/i.test(String(c.producto || '')) || lineas.some(function(l){ return /puerta/i.test(String(l.modelo || '')); });
+  var m2 = lineas.reduce(function(s, l){ return s + (Number(l.m2) || 0); }, 0);
+  var fecha = new Date().toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
+  var tabla = lineas.length
+    ? '<table><thead><tr><th>Pieza</th><th>Medidas</th><th class="n">Cantidad</th><th class="n">Superficie</th></tr></thead><tbody>' +
+      lineas.map(function(l){
+        var med = (l.largo_cm && l.ancho_cm) ? esc(l.largo_cm) + ' × ' + esc(l.ancho_cm) + ' cm' : '';
+        return '<tr><td contenteditable>' + esc(l.modelo || prodNombre(c.producto)) + '</td><td contenteditable>' + med + '</td>' +
+          '<td class="n" contenteditable>' + esc(l.cantidad || 1) + '</td><td class="n">' + (Number(l.m2) ? num3(l.m2) + ' m²' : '') + '</td></tr>';
+      }).join('') +
+      (m2 ? '<tr><td colspan="3"><b>Total</b></td><td class="n"><b>' + num3(m2) + ' m²</b></td></tr>' : '') + '</tbody></table>'
+    : '<p contenteditable>' + esc(prodNombre(c.producto)) + ' a medida, según la cotización N° ' + esc(c.numero || '') + '.</p>';
+  var inv = '<table class="inv"><tbody>' + filasInversion(c).map(function(f){
+      return '<tr><td contenteditable>' + esc(f[0]) + '</td><td class="n" contenteditable>' + plata(f[1]) + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  document.getElementById('app').innerHTML =
+    '<div class="barra"><b>Propuesta formal</b>' +
+      '<button type="button" id="b-hitos">Pago por hitos</button>' +
+      '<label>Agregar fotos<input type="file" id="b-fotos" accept="image/*" multiple></label>' +
+      '<button type="button" id="b-enviada">Marcar como enviada</button>' +
+      '<button type="button" class="pri" id="b-pdf">Imprimir o guardar PDF</button></div>' +
+    '<p class="ayuda">Todo el texto se puede corregir tocándolo. Revisa plazo, forma de pago y valores antes de enviarla. Lo que cambies acá no modifica la cotización.</p>' +
+    '<div class="hoja">' +
+      '<div class="cab"><img src="fotos/logo-casa-zaru.svg" alt="Casa Zaru">' +
+        '<div class="d"><b>Propuesta</b>N° ' + esc(c.numero || '—') + ' · ' + esc(fecha) + '<br><span contenteditable>Válida por 15 días</span></div></div>' +
+      '<div class="para"><small>Preparada para</small><span contenteditable>' + esc(c.cliente || 'Cliente') + '</span></div>' +
+      '<p contenteditable>Gracias por considerar a Casa Zaru para tu proyecto. Esta propuesta detalla lo que fabricaremos, la inversión, la forma de pago y el plazo. Cualquier ajuste de medidas, madera o cantidad lo vemos contigo antes de partir.</p>' +
+      '<h2>Lo que fabricaremos</h2>' + tabla +
+      '<h2>Inversión</h2>' + inv +
+      '<p class="nota" contenteditable>Valores con IVA incluido. El envío se cotiza aparte según el destino, a todo Chile; también puedes retirar en nuestro taller de Villarrica.</p>' +
+      '<h2>Forma de pago</h2><p id="t-pago" contenteditable>' + PAGO_NORMAL + '</p>' +
+      '<h2>Plazo</h2><p contenteditable>La fabricación de un pedido estándar toma de 7 a 15 días hábiles desde el abono. Para este proyecto, el plazo y las entregas parciales se confirman por escrito al aprobar la propuesta.</p>' +
+      '<h2>Qué incluye</h2><ul contenteditable>' +
+        '<li>Fabricación a medida en la madera que elijas, con la terminación aplicada: llega lista para instalar.</li>' +
+        (esPuerta ? '<li>Las puertas no incluyen marco, bisagras, chapa ni manilla. El marco se puede cotizar aparte.</li>' : '') +
+        '<li>Embalaje reforzado. Si llega con daño, la reponemos.</li>' +
+        '<li>Garantía Casa Zaru de 5 años por fallas estructurales de fabricación.</li>' +
+        '<li>Fotos del avance durante la fabricación.</li></ul>' +
+      '<div id="z-fotos"></div>' +
+      '<h2>Siguiente paso</h2><p contenteditable>Para confirmar, respóndenos por este mismo medio. Con el primer pago reservamos tu lugar en la producción y te enviamos el detalle final para tu revisión antes de fabricar.</p>' +
+      '<div class="pie"><span contenteditable>El equipo de Casa Zaru</span><span>casazaru.cl · hola@casazaru.cl</span></div>' +
+    '</div>';
+  document.title = 'Propuesta ' + (c.numero || '') + ' · Casa Zaru';
+  document.getElementById('b-pdf').onclick = function(){ window.print(); };
+  document.getElementById('b-hitos').onclick = function(){
+    HITOS = !HITOS;
+    document.getElementById('t-pago').textContent = HITOS ? PAGO_HITOS : PAGO_NORMAL;
+    this.textContent = HITOS ? 'Pago 70 / 30' : 'Pago por hitos';
+  };
+  document.getElementById('b-fotos').onchange = function(){
+    var z = document.getElementById('z-fotos');
+    if (!z.firstChild) z.innerHTML = '<h2>Trabajos similares</h2><div class="fotos" id="g-fotos"></div>';
+    var g = document.getElementById('g-fotos');
+    Array.prototype.slice.call(this.files, 0, 9).forEach(function(f){
+      var im = document.createElement('img'); im.src = URL.createObjectURL(f); im.title = 'Toca para quitarla';
+      im.onclick = function(){ im.remove(); if (!g.children.length) z.innerHTML = ''; };
+      g.appendChild(im);
+    });
+    this.value = '';
+  };
+  document.getElementById('b-enviada').onclick = marcarEnviada;
+}
+/* Deja la nota en el historial de la cotización (el panel la muestra como
+   «Propuesta enviada») y, si nadie la había contactado, cuenta como primer contacto. */
+async function marcarEnviada(){
+  var b = document.getElementById('b-enviada');
+  if (!COT || b.disabled) return;
+  b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    var r = await sb.from('cotizaciones').select('seg_historial,fecha_primer_contacto').eq('id', COT.id).single();
+    if (r.error) throw r.error;
+    var hist = Array.isArray(r.data.seg_historial) ? r.data.seg_historial.slice() : [];
+    hist.push({ etapa: 0, fecha: hoyISO(), nota: NOTA_PROPUESTA });
+    var cambios = { seg_historial: hist };
+    if (!r.data.fecha_primer_contacto) cambios.fecha_primer_contacto = new Date().toISOString();
+    var u = await sb.from('cotizaciones').update(cambios).eq('id', COT.id).select('id');
+    if (u.error || !u.data || !u.data.length) throw (u.error || new Error('sin permiso para editar esta cotización'));
+    b.textContent = 'Marcada como enviada';
+  } catch (e) {
+    b.disabled = false; b.textContent = 'Marcar como enviada';
+    alert('No se pudo guardar la marca: ' + (e.message || e));
+  }
+}
+async function iniciar(){
+  var id = new URLSearchParams(location.search).get('id');
+  if (!id) { aviso('Falta la cotización. Abre esta página desde el panel, pestaña <b>Proyectos</b>.'); return; }
+  var s = await sb.auth.getSession();
+  if (!s.data || !s.data.session) { aviso('Primero inicia sesión en el panel y vuelve a abrir la propuesta desde la pestaña <b>Proyectos</b>.'); return; }
+  var r = await sb.from('cotizaciones').select('id,numero,cliente,producto,total_bajo,total_medio,total_alto,vidrio_tipo,vidrio_monto,fecha_creacion').eq('id', id).maybeSingle();
+  if (r.error || !r.data) { aviso('No encontré esa cotización, o tu sesión no puede verla.'); return; }
+  COT = r.data;
+  var l = await sb.from('cotizacion_lineas').select('linea,modelo,largo_cm,ancho_cm,cantidad,m2').eq('cotizacion_id', id).order('linea');
+  pintar(COT, (l.error || !l.data) ? [] : l.data);
+}
+iniciar().catch(function(e){ aviso('No se pudo cargar: ' + esc(e.message || e)); });
+</script>
+</body>
+</html>
