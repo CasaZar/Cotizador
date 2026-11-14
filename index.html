@@ -1817,6 +1817,35 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 .marca .wa-otras a + a { border-top: 1px dashed #CFE6D7; margin-top: 8px; }
 .marca .wa-otras strong { display: block; font-size: 15px; font-weight: 600; color: #166534; }
 .marca .wa-otras span { display: block; font-size: 12.5px; color: #4B6352; margin-top: 2px; }
+/* Asistente del cotizador (14-11-2026). La tarjeta va primera en «otras salidas»
+   y nace oculta: asisRefrescar() la muestra si el interruptor lo permite. Mientras
+   está oculta, la que sigue no debe heredar la línea de separación. */
+.marca .wa-otras a.asis-card[style*="none"] + a { border-top: 0; margin-top: 0; }
+#asis-bg { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(30,30,30,.45); align-items: flex-end; justify-content: center; }
+#asis-bg.on { display: flex; }
+#asis { background: #F6F3EE; width: 100%; max-width: 480px; height: min(78vh, 620px); border-radius: 18px 18px 0 0; display: flex; flex-direction: column; overflow: hidden; color: #2B2B2B; }
+@media (min-width: 700px) { #asis-bg { align-items: center; } #asis { border-radius: 18px; } }
+.asis-h { background: #485B3D; color: #fff; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.asis-h b { display: block; font-size: 15px; font-weight: 600; }
+.asis-h span { display: block; font-size: 12px; opacity: .85; }
+.asis-h button { background: none; border: 0; color: #fff; font-size: 26px; line-height: 1; padding: 0 4px; cursor: pointer; }
+.asis-m { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.asis-b { max-width: 86%; padding: 9px 12px; border-radius: 14px; font-size: 14.5px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.asis-b.a { background: #fff; border: 1px solid #E4DDD3; align-self: flex-start; border-bottom-left-radius: 4px; }
+.asis-b.u { background: #485B3D; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.asis-b.esp { color: #7A746C; font-style: italic; }
+.asis-wa { align-self: flex-start; font-size: 13px; font-weight: 600; color: #166534; background: #EAF6EE; border: 1px solid #BFE3CB; border-radius: 20px; padding: 6px 12px; text-decoration: none; }
+.asis-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
+.asis-chips button { font: inherit; font-size: 13px; border: 1px solid #D9D1C5; background: #fff; border-radius: 20px; padding: 6px 11px; cursor: pointer; color: #2B2B2B; }
+.asis-f { display: flex; gap: 8px; padding: 8px 12px; background: #fff; border-top: 1px solid #E4DDD3; }
+.asis-f input { flex: 1; min-width: 0; font: inherit; font-size: 16px; border: 1px solid #D9D1C5; border-radius: 10px; padding: 10px 12px; }
+.asis-f button { font: inherit; font-weight: 600; border: 0; background: #B5652E; color: #fff; border-radius: 10px; padding: 0 16px; cursor: pointer; }
+.asis-f button[disabled] { opacity: .5; }
+.asis-pie { margin: 0; padding: 6px 12px 10px; background: #fff; font-size: 11.5px; color: #7A746C; text-align: center; }
+/* el panel: la conversación del cliente con el asistente, dentro de su ficha */
+.asis-trans p { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+.asis-trans p.u b { color: #485B3D; }
+.asis-trans p.a { color: #5d574f; }
 .marca .wa-btn:hover { background: #168A41; }
 .marca .wa-btn .wa-ico { width: 26px; height: 26px; }
 .marca .wa-cap { color: #2F5E3F; margin-top: 9px; }
@@ -3170,6 +3199,7 @@ function aplicarValor(clave, v) {
   else if (clave === 'tierPulgada') { Object.assign(VALORES.tierPulgada, v); }
   else if (clave === 'basesFierro') { if (Array.isArray(v) && v.length) VALORES.basesFierro = v; }
   else if (clave === 'protocolos')  { if (Array.isArray(v)) PROTOCOLOS = v; }   /* [] válido: borrarlos todos */
+  else if (clave === 'asistente')   { ASIS_CFG = v; asisRefrescar(); }          /* interruptor del asistente */
   else if (clave === 'seguimiento') {
     if (v.ballena > 0) PEZ_GORDO = v.ballena;
     if (v.metaLunes  >= 0) CFG_SEG.metaLunes  = v.metaLunes;
@@ -7790,6 +7820,122 @@ function waNumero() {
   if (vendorMode || srcEmail) return WA_WEB;   /* lo que cotiza un vendedor sigue con el número de siempre */
   return vieneDeAnuncio(origenVisita) ? WA_ANUNCIOS : WA_WEB;
 }
+/* ── ASISTENTE DEL COTIZADOR (14-11-2026) ──
+   Responde al instante las dudas de quien acaba de cotizar, a cualquier hora:
+   el 28,7 % de las cotizaciones llega fuera del turno del vendedor y cierra
+   menos de la mitad. Quien responde es la Edge Function `asistente` del
+   proyecto del Cotizador (ahí vive la llave del modelo; acá nunca llega). La
+   conversación queda guardada y el vendedor la ve en la ficha del cliente.
+   El interruptor es la fila `asistente` de cotizador_valores:
+     apagado → la tarjeta no existe para nadie
+     prueba  → solo si el link trae ?asistente=1
+     activo  → la ven todos los clientes (nunca los vendedores)
+   Si la función falla o está apagada, el chat ofrece el WhatsApp de siempre. */
+var ASIS_URL = SB_URL + '/functions/v1/asistente';
+var ASIS_CFG = null;       /* { estado, tope_sesion, tope_dia }, desde cotizador_valores */
+var ASIS_PRUEBA = false;   /* el link trajo ?asistente=1 (se recuerda mientras dure la pestaña) */
+var ASIS = { cot: null, waDuda: '', msgs: [], enviando: false, fin: false };
+var ASIS_HOLA = 'Hola, soy el asistente virtual de Casa Zaru. Puedo resolver dudas sobre tu cotización: maderas, plazos, envío, pago o cuidados. ¿Qué te gustaría saber?';
+var ASIS_NO_PUEDO = 'Ahora no puedo responderte por aquí. Escríbenos por WhatsApp y te contestamos apenas abramos.';
+try {
+  if (/[?&]asistente=1(&|$)/.test(location.search)) sessionStorage.setItem('zaru_asis_prueba', '1');
+  ASIS_PRUEBA = sessionStorage.getItem('zaru_asis_prueba') === '1';
+} catch (e) {}
+function asisVisible() {
+  if (vendorMode || !ASIS_CFG) return false;
+  return ASIS_CFG.estado === 'activo' || (ASIS_CFG.estado === 'prueba' && ASIS_PRUEBA);
+}
+function asisRefrescar() {
+  var ver = asisVisible();
+  Array.prototype.forEach.call(document.querySelectorAll('.asis-card'), function(a){ a.style.display = ver ? '' : 'none'; });
+}
+function asisCard() {
+  return '<a href="#" class="asis-card" style="display:none" onclick="asisAbrir();return false"><strong>¿Una duda rápida? Respuesta al instante →</strong>' +
+    '<span>Nuestro asistente virtual te responde ahora, a cualquier hora.</span></a>';
+}
+/* la sesión anónima del navegador: la misma del embudo si existe, para poder
+   cruzar la conversación con la visita; nunca identifica a la persona */
+function asisSesion() {
+  var s = null;
+  try { s = sessionStorage.getItem('zaru_embudo_ses') || sessionStorage.getItem('zaru_asis_ses'); } catch (e) {}
+  if (!s || !/^[a-z0-9]{8,40}$/.test(s)) {
+    s = (Math.random().toString(36).slice(2, 10) + Date.now().toString(36)).replace(/[^a-z0-9]/g, '');
+    try { sessionStorage.setItem('zaru_asis_ses', s); } catch (e) {}
+  }
+  return s;
+}
+function asisAbrir() {
+  var bg = document.getElementById('asis-bg');
+  if (!bg) {
+    bg = document.createElement('div');
+    bg.id = 'asis-bg';
+    bg.innerHTML = '<div id="asis" role="dialog" aria-label="Asistente de Casa Zaru">' +
+      '<div class="asis-h"><div><b>Asistente de Casa Zaru</b><span>Asistente virtual · responde al instante</span></div>' +
+        '<button type="button" onclick="asisCerrar()" aria-label="Cerrar">×</button></div>' +
+      '<div class="asis-m" id="asis-m"></div>' +
+      '<div class="asis-chips" id="asis-chips"></div>' +
+      '<form class="asis-f" onsubmit="asisEnviar();return false">' +
+        '<input type="text" id="asis-in" maxlength="600" autocomplete="off" placeholder="Escribe tu duda…">' +
+        '<button type="submit" id="asis-btn">Enviar</button></form>' +
+      '<p class="asis-pie">Es un asistente automático. Fechas exactas, descuentos y pedidos en curso los confirma nuestro equipo por WhatsApp.</p>' +
+    '</div>';
+    bg.addEventListener('click', function(e){ if (e.target === bg) asisCerrar(); });
+    document.body.appendChild(bg);
+  }
+  if (!ASIS.msgs.length) ASIS.msgs.push({ rol: 'assistant', texto: ASIS_HOLA });
+  bg.classList.add('on');
+  asisPintar();
+  /* en el celular no se enfoca solo: el teclado taparía el saludo */
+  if (window.innerWidth > 700) setTimeout(function(){ var i = document.getElementById('asis-in'); if (i) i.focus(); }, 60);
+}
+function asisCerrar() {
+  var bg = document.getElementById('asis-bg');
+  if (bg) bg.classList.remove('on');
+}
+function asisPintar() {
+  var m = document.getElementById('asis-m');
+  if (!m) return;
+  var html = ASIS.msgs.map(function(x){
+    var b = '<div class="asis-b ' + (x.rol === 'user' ? 'u' : 'a') + '">' + escA(x.texto) + '</div>';
+    if (x.derivar && ASIS.waDuda) b += '<a class="asis-wa" href="' + escA(ASIS.waDuda) + '" target="_blank" rel="noopener" onclick="embudoTick(\'duda\')">Seguir por WhatsApp →</a>';
+    return b;
+  }).join('');
+  if (ASIS.enviando) html += '<div class="asis-b a esp">Escribiendo…</div>';
+  m.innerHTML = html;
+  m.scrollTop = m.scrollHeight;
+  var chips = document.getElementById('asis-chips');
+  if (chips) chips.innerHTML = (ASIS.msgs.length === 1 && !ASIS.enviando)
+    ? ['¿Cuánto demora?', '¿Qué madera me conviene?', '¿Cómo es el pago y el envío?'].map(function(t){
+        return '<button type="button" onclick="asisEnviar(this.textContent)">' + t + '</button>';
+      }).join('')
+    : '';
+  var inp = document.getElementById('asis-in'), btn = document.getElementById('asis-btn');
+  if (inp) { inp.disabled = ASIS.fin; if (ASIS.fin) inp.placeholder = 'Sigamos por WhatsApp'; }
+  if (btn) btn.disabled = ASIS.enviando || ASIS.fin;
+}
+function asisEnviar(pre) {
+  var inp = document.getElementById('asis-in');
+  var t = String(pre || (inp ? inp.value : '') || '').replace(/\s+/g, ' ').trim().slice(0, 600);
+  if (!t || ASIS.enviando || ASIS.fin) return;
+  if (inp) inp.value = '';
+  ASIS.msgs.push({ rol: 'user', texto: t });
+  ASIS.enviando = true;
+  asisPintar();
+  var cuerpo = { sesion: asisSesion(), texto: t, numero: qnum || null, cot: ASIS.cot, prueba: ASIS_PRUEBA || EMBUDO_LOCAL };
+  fetch(ASIS_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY }, body: JSON.stringify(cuerpo) })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d || {} }; }); })
+    .then(function(x){
+      if (!x.ok || !x.d.respuesta) throw new Error(x.d.error || 'sin respuesta');
+      ASIS.msgs.push({ rol: 'assistant', texto: String(x.d.respuesta), derivar: !!x.d.derivar });
+      if (x.d.restantes === 0) ASIS.fin = true;
+    })
+    .catch(function(){
+      /* apagado, sin llave o caído: la salida es el WhatsApp de siempre */
+      ASIS.msgs.push({ rol: 'assistant', texto: ASIS_NO_PUEDO, derivar: true });
+      ASIS.fin = true;
+    })
+    .then(function(){ ASIS.enviando = false; asisPintar(); });
+}
 /* ── WHATSAPP Y ACCIONES DEL DOCUMENTO (revisión UX 06-10-2026) ──
    El botón iba al final, después de ~9 bloques. Ahora confirmar() mueve el
    .wa-block justo debajo de los precios; copiar link y PDF quedan al final.
@@ -7812,12 +7958,18 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     'Hola, tengo una duda sobre mi cotización ' + qnum + ' de Casa Zaru.' + link);
   var urlMuest = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(
     'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
+  /* lo que el asistente necesita saber de esta cotización: lo mismo que ya ve
+     el cliente en pantalla (producto y precio), nada de sus datos personales */
+  ASIS.cot = { producto: prod, nombre: nombreProd || PNAME[prod] || '', det: det || '', bajo: bajo, alto: alto, transf: transfPct(), uso: uso };
+  ASIS.waDuda = urlDuda;
+  setTimeout(asisRefrescar, 0);
   return '<div class="wa-block">' +
     '<a class="wa-btn" href="' + url + '" target="_blank" onclick="embudoTick(\'whatsapp\')">' + WA_ICONO + quieroTxt() + (dctoPct() > 0 ? ' con descuento' : '') + '</a>' +
     '<div class="wa-cap">' + (prod === 'especial' && ES && ES.nOp === 2
       ? 'Se abre WhatsApp con tu cotización: dinos qué opción eliges.'
       : 'Se abre WhatsApp con tu cotización y te respondemos.') + '</div>' +
     '<div class="wa-otras">' +
+      asisCard() +
       '<a href="' + urlDuda + '" target="_blank" onclick="embudoTick(\'duda\')"><strong>¿Tienes dudas? Pregúntanos →</strong>' +
         '<span>Te respondemos por WhatsApp, sin compromiso.</span></a>' +
       /* la cotización especial no ofrece muestrario: suele ser otra madera y otra terminación */
@@ -9732,6 +9884,31 @@ function proyAvisar(id){
     (x.numero ? ' (cotización ' + x.numero + ')' : '') + '.\n\nEstá en el panel, pestaña Proyectos. ¿Lo llamas tú?';
   window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(txt), '_blank');
 }
+/* ── Lo que el cliente habló con el asistente del cotizador (14-11-2026) ──
+   Se cruza por número de cotización. En la ficha queda la conversación entera,
+   para que el primer mensaje del vendedor parta de lo que el cliente ya preguntó. */
+var ASIS_CHATS = {};
+function asisDe(g){
+  var out = [];
+  g.quotes.forEach(function(q){ if (q.numero && ASIS_CHATS[q.numero]) out = out.concat(ASIS_CHATS[q.numero]); });
+  return out.sort(function(a, b){ return a.id - b.id; });
+}
+function asisBadge(g){
+  var ms = asisDe(g);
+  if (!ms.length) return '';
+  return '<span class="resp-badge">' + (ms.some(function(m){ return m.derivar; }) ? 'Asistente: quedó algo para ti' : 'Habló con el asistente') + '</span>';
+}
+function asisBloque(g){
+  var ms = asisDe(g);
+  if (!ms.length) return '';
+  var preg = ms.filter(function(m){ return m.rol === 'user'; }).length;
+  var cuando = new Date(ms[ms.length - 1].creado).toLocaleString('es-CL', { day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit' });
+  return '<details class="seg-qdet"' + detAttrs('asis:' + g.lead.id) + '><summary>Habló con el asistente · ' + preg + (preg === 1 ? ' pregunta' : ' preguntas') + ' · ' + escA(cuando) +
+    (ms.some(function(m){ return m.derivar; }) ? ' · <strong>quedó algo para ti</strong>' : '') + '</summary><div class="asis-trans">' +
+    ms.map(function(m){
+      return '<p class="' + (m.rol === 'user' ? 'u' : 'a') + '"><b>' + (m.rol === 'user' ? 'Cliente' : 'Asistente') + ':</b> ' + escA(m.texto) + '</p>';
+    }).join('') + '</div></details>';
+}
 /* FASE 6: vista Backlog — las que nunca se contactaron, más reciente primero */
 function renderBacklog(){
   subFiltros('');
@@ -10394,6 +10571,22 @@ async function loadDash() {
       });
     } else { CLICS_WA = null; CLICS_MUEST = null; }
   } catch(e) { CLICS_WA = null; CLICS_MUEST = null; }
+  /* Conversaciones con el asistente del cotizador (últimos 45 días, sin las de
+     prueba), por número de cotización. Si la tabla no existe todavía o falla la
+     lectura, simplemente no se muestra nada. */
+  ASIS_CHATS = {};
+  try {
+    var ac = await sbTodas(function(){
+      return sbClient.from('asistente_mensajes')
+        .select('id,numero,rol,texto,creado,derivar')
+        .eq('prueba', false)
+        .gte('creado', addDias(hoyISO(), -45))
+        .order('id');
+    });
+    if (!ac.error && ac.data) ac.data.forEach(function(m){
+      if (m && m.numero) (ASIS_CHATS[m.numero] = ASIS_CHATS[m.numero] || []).push(m);
+    });
+  } catch(e) { ASIS_CHATS = {}; }
   /* las eliminadas no se muestran en el panel normal (solo en la pestaña Eliminadas del admin) */
   var all = allRows.filter(function(x){ return !x.eliminada; });
   /* vendedor: sus cotizaciones + las web (salvo B2B como Jepe, que solo ve su propio canal) */
@@ -11931,6 +12124,7 @@ function segFila(g, cls){
   if (esLeadManual(x))                                   marcas += leadManualChip(x, 'lead-badge');
   if (g.quotes.some(function(q){ return q.respondio; })) marcas += '<span class="resp-badge">💬 Respondió</span>';
   if (x.motivo_pausa)                                    marcas += '<span class="pausa-badge">⏸ '+escA(pausaLabel(x.motivo_pausa))+'</span>';
+  marcas += asisBadge(g);
   marcas += chipAnuncio(g);
   /* de quién es el cliente: mismo criterio que la ficha completa */
   var origen = (g.hasVendor && g.hasWeb) ? 'Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'
@@ -12292,9 +12486,10 @@ function segClientCard(g, cls){
   var toqueChip = compacta ? '<span class="seg-touch nuevo">Sin contactar</span>'
                            : '<span class="seg-touch">Toque '+Math.min(etapa+1,cadC.length)+'/'+cadC.length+'</span>';
   return '<div class="seg-card '+cls+(pez?' pez':'')+(interesado?' interesado':'')+(recu?' recu':'')+(esLeadManual(x)?' manual':'')+'">'+
-    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+leadBadge+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+pausaBadge+'</div>'+
+    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+leadBadge+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+asisBadge(g)+pausaBadge+'</div>'+
     '<div class="seg-meta">'+meta+'</div>'+
     qbody+
+    asisBloque(g)+
     (compacta ? '' : '<div class="seg-toques">'+toques+'</div>')+
     '<div class="seg-btns">'+
       (cls==='donehoy' ? '<button class="sbtn undo" onclick="segDeshacer(\''+x.id+'\')">↩ Deshacer contacto</button>' : '')+
