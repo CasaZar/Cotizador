@@ -840,6 +840,12 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .proy-chip { font-size:12px;font-weight:600;border-radius:20px;padding:2px 9px;background:#E9E6E1;color:#5d574f;white-space:nowrap; }
 .proy-chip.rojo { background:#FEE2E2;color:#991B1B; }
 .proy-chip.verde { background:#E5EEDF;color:#3c5a2c; }
+.proy-chip.terra { background:#F6E6DA;color:#8a4a1f; }
+.proy-alerta { background:#FEE2E2;color:#991B1B;border-radius:8px;padding:9px 12px;font-size:13.5px;font-weight:700;margin:4px 0 10px; }
+.proy-sem { font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7A746C;margin:12px 0 6px; }
+.proy-medio { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0 8px; }
+.proy-medio button { font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:9px 6px;border:1.5px solid #D9D1C5;background:#fff;color:#2B2B2B;cursor:pointer; }
+.proy-medio button.on { background:#485B3D;border-color:#485B3D;color:#fff; }
 .proy-btns { display:flex;flex-wrap:wrap;gap:6px; }
 .proy-b { font:inherit;font-size:13px;font-weight:600;border-radius:8px;padding:7px 11px;border:1.5px solid #D9D1C5;background:#fff;color:#2B2B2B;text-decoration:none;cursor:pointer;white-space:nowrap; }
 .proy-b.pri { background:#B5652E;border-color:#B5652E;color:#fff; }
@@ -9807,10 +9813,12 @@ function proyBarra(g){
     var h = horasSinToque(g);
     if (h >= 72) chips += '<span class="proy-chip rojo">' + Math.round(h / 24) + ' días sin toque</span>';
   }
+  chips += proyChipContacto(proyContactos(g));
   if (prop) chips += '<span class="proy-chip verde">Propuesta enviada ' + fmtFechaCorta(prop) + '</span>';
   var btn =
-    '<a class="proy-b pri" href="propuesta.html?id=' + encodeURIComponent(x.id) + '" target="_blank" rel="noopener">Propuesta formal</a>' +
     (tel ? '<a class="proy-b" href="tel:+' + tel + '">Llamar</a>' : '') +
+    '<button type="button" class="proy-b pri" onclick="proyContacteUI(\'' + x.id + '\')">📞 Lo contacté</button>' +
+    '<a class="proy-b" href="propuesta.html?id=' + encodeURIComponent(x.id) + '" target="_blank" rel="noopener">Propuesta formal</a>' +
     (esDueno() ? '<button type="button" class="proy-b" onclick="proyPiso(\'' + x.id + '\')">Piso de precio</button>'
                : '<button type="button" class="proy-b" onclick="proyAvisar(\'' + x.id + '\')">Avisar a Tomás</button>');
   return '<div class="proy-barra"><div class="proy-chips"><b>' + fmt(g.valor) + '</b>' + chips + '</div><div class="proy-btns">' + btn + '</div></div>';
@@ -9840,7 +9848,10 @@ function renderProyectos(){
      30 días: los antiguos van plegados para que arriba quede lo que se mueve. */
   var PROY_VIVO_DIAS = 30;
   var nuevos = grupos.filter(proySinContacto);
-  var resto = grupos.filter(function(g){ return nuevos.indexOf(g) === -1; });
+  var reint = grupos.filter(function(g){ return nuevos.indexOf(g) === -1 && proyReintentar(g); });
+  var resto = grupos.filter(function(g){ return nuevos.indexOf(g) === -1 && reint.indexOf(g) === -1; });
+  var tarde24 = nuevos.filter(function(g){ return esperaMin(g.lead) >= PROY_AVISO_H * 60; }).length;
+  var sem = medidorSemana(lunesISO());
   var antiguos = resto.filter(function(g){ return diasDe(g) > PROY_VIVO_DIAS; });
   var vivos = resto.filter(function(g){ return antiguos.indexOf(g) === -1; });
   var conv = vivos.filter(function(g){ return g.quotes.some(function(q){ return q.respondio; }) || esInteresado(g); });
@@ -9863,10 +9874,19 @@ function renderProyectos(){
       '<div class="stat-card"><div class="stat-v">' + antiguos.length + '</div><div class="stat-l">Antiguos · ' + fmtM(suma(antiguos)) + '</div></div>' +
       '<div class="stat-card"><div class="stat-v">' + nuevos.length + '</div><div class="stat-l">Sin primer contacto</div></div>' +
       '<div class="stat-card"><div class="stat-v">' + nGan + '</div><div class="stat-l">Ganados en 90 días · ' + fmtM(mGan) + '</div></div>' +
-    '</div>';
+    '</div>' +
+    '<div class="proy-sem">Semana del lunes ' + fmtFechaCorta(lunesISO()) + ' · proyectos de ' + fmtM(PROY_MIN) + ' o más</div>' +
+    '<div class="day-bar">' +
+      '<div class="stat-card"><div class="stat-v">' + sem.contactos + '</div><div class="stat-l">Contactados (llamada o contacto)</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + sem.propuestas + '</div><div class="stat-l">Propuestas enviadas</div></div>' +
+      '<div class="stat-card"><div class="stat-v">' + sem.ganados + '</div><div class="stat-l">Ganados' + (sem.ganados ? ' · ' + fmtM(sem.ganadosMonto) : '') + '</div></div>' +
+    '</div>' +
+    (tarde24 ? '<div class="proy-alerta">' + tarde24 + (tarde24 === 1 ? ' proyecto lleva' : ' proyectos llevan') + ' más de ' + PROY_AVISO_H + ' h sin contacto</div>' : '');
   var html = '';
   if (nuevos.length) html += '<div class="seg-sec late">Llamar hoy: sin primer contacto<span class="seg-cnt">' + nuevos.length + '</span></div>' +
     nuevos.map(function(g){ return proyItem(g, 'late'); }).join('');
+  if (reint.length) html += '<div class="seg-sec late">Reintentar: no contestaron<span class="seg-cnt">' + reint.length + '</span></div>' +
+    reint.map(function(g){ return proyItem(g, 'late'); }).join('');
   if (conv.length) html += '<div class="seg-sec conv">En conversación<span class="seg-cnt">' + conv.length + '</span></div>' +
     conv.map(function(g){ return proyItem(g, 'today'); }).join('');
   if (espera.length) html += '<div class="seg-sec today">Contactados, sin respuesta todavía<span class="seg-cnt">' + espera.length + '</span></div>' +
@@ -9884,7 +9904,9 @@ function renderProyectos(){
         var f = x.fecha_creacion ? new Date(x.fecha_creacion).toLocaleDateString('es-CL') : '';
         return '<div class="proy-resc"><div><strong>' + escA(x.cliente || '—') + '</strong> · ' + escA(prodNombre(x.producto)) + ' · ' + fmt(x.total_alto||0) +
           '<small>' + escA(f) + ' · ' + escA(x.motivo_perdida || 'sin motivo') + (x.contacto ? ' · ' + escA(x.contacto) : '') + '</small></div>' +
-          '<div class="proy-btns">' + (x.link ? '<a class="proy-b" href="' + escA(x.link) + '" target="_blank" rel="noopener">Ver cotización</a>' : '') +
+          '<div class="proy-btns">' + proyChipContacto(proyContactos({ quotes:[x] })) +
+          '<button type="button" class="proy-b pri" onclick="proyContacteUI(\'' + x.id + '\')">📞 Lo contacté</button>' +
+          (x.link ? '<a class="proy-b" href="' + escA(x.link) + '" target="_blank" rel="noopener">Ver cotización</a>' : '') +
           '<button type="button" class="proy-b" onclick="segReabrir(\'' + x.id + '\')">Reabrir</button></div></div>';
       }).join('') + '</details>';
   }
@@ -9920,6 +9942,100 @@ function proyAvisar(id){
   var txt = 'Proyecto nuevo: ' + (x.cliente || 'sin nombre') + ' · ' + prodNombre(x.producto) + ' · ' + fmt(x.total_alto || 0) +
     (x.numero ? ' (cotización ' + x.numero + ')' : '') + '.\n\nEstá en el panel, pestaña Proyectos. ¿Lo llamas tú?';
   window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(txt), '_blank');
+}
+/* ── CONTACTO DE PROYECTO (17-11-2026, plan comercial; boceto aprobado) ──
+   César anota cada llamada o contacto directo (WhatsApp, correo, visita) con
+   un proyecto desde su tarjeta. NO gasta un toque de la cadencia: se puede
+   anotar aunque ya se mandaron los mensajes, y también en «Para rescatar».
+   Queda como nota en seg_historial con fecha, hora, medio y respuesta, más la
+   fila en `toques` ('llamada', o 'cadencia' para otro contacto: el check de la
+   tabla no conoce otro tipo; lo que los distingue es la nota). No toca
+   seg_proxima: «No contestó» no le agenda un WhatsApp, lo deja arriba en
+   Proyectos para reintentar la llamada. El medidor y «Mi día» lo cuentan. */
+var NOTA_CONTACTO_PROY = 'Contacto de proyecto';
+var PROY_AVISO_H = 24;
+var proyMedio = 'llamada';
+function horaHHMM(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+/* notas de contacto de todas sus cotizaciones, la más reciente primero */
+function proyContactos(g){
+  var out = [];
+  (g.quotes || []).forEach(function(q){
+    (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){ if (h && h.nota === NOTA_CONTACTO_PROY) out.push(h); });
+  });
+  return out.sort(function(a, b){ return (String(b.fecha) + (b.hora || '')).localeCompare(String(a.fecha) + (a.hora || '')); });
+}
+/* el último contacto fue «No contestó» de un día anterior: toca reintentar hoy */
+function proyReintentar(g){
+  var cs = proyContactos(g);
+  return !!cs.length && cs[0].resp === 'nada' && String(cs[0].fecha) < hoyISO();
+}
+function proyChipContacto(cs){
+  if (!cs.length) return '';
+  var u = cs[0], ll = u.via === 'llamada', ic = ll ? '📞 ' : '💬 ';
+  var cuando = fmtFechaCorta(u.fecha) + (u.hora ? ' ' + u.hora : '');
+  if (u.resp === 'nada'){
+    var n = 0;
+    for (var i = 0; i < cs.length && cs[i].resp === 'nada'; i++) n++;
+    return '<span class="proy-chip terra">' + ic + (ll ? 'No contestó ' : 'Sin respuesta ') + cuando + ' · reintentar' + (n > 1 ? ' · ' + n + ' intentos' : '') + '</span>';
+  }
+  return '<span class="proy-chip verde">' + ic + (ll ? 'Llamado ' : 'Contactado ') + cuando + (u.resp ? ' · ' + escA(respTxt(u.resp)) : '') + '</span>';
+}
+function proyContacteUI(id){
+  if (!COTIS[id]) return;
+  proyMedio = 'llamada';
+  proyPintarContacto(id);
+}
+function proyPintarContacto(id){
+  var x = COTIS[id]; if (!x) return;
+  var ll = proyMedio === 'llamada';
+  var b = function(r, sub){
+    return '<button class="mbtn" onclick="proyContacto(\'' + id + '\',\'' + r.id + '\')">' + r.txt + (sub ? ' <span class="mbtn-sub">' + sub + '</span>' : '') + '</button>';
+  };
+  pModal('<h3>Contacto con ' + escA(x.cliente || 'el cliente') + '</h3>' +
+    '<div class="proy-medio">' +
+      '<button type="button" class="' + (ll ? 'on' : '') + '" onclick="proyMedio=\'llamada\';proyPintarContacto(\'' + id + '\')">📞 Llamada</button>' +
+      '<button type="button" class="' + (ll ? '' : 'on') + '" onclick="proyMedio=\'contacto\';proyPintarContacto(\'' + id + '\')">💬 Otro contacto</button>' +
+    '</div>' +
+    '<div class="pausa-tip">' + (ll ? '' : 'WhatsApp, correo o visita al taller. ') + 'Queda con fecha y hora, y no gasta un toque del seguimiento.</div>' +
+    b({ id:'nada', txt: ll ? 'No contestó' : 'No respondió' }, 'queda arriba para reintentar') +
+    RESPUESTAS_PREV.filter(function(r){ return r.id !== 'nada'; }).map(function(r){ return b(r, r.id === 'compra' ? 'queda con ★' : ''); }).join('') +
+    RESPUESTAS_PAUSA.map(function(r){ return b(r, 'se pausa'); }).join('') +
+    RESPUESTAS_CIERRE.map(function(r){ return b(r, 'se marca perdida'); }).join('') +
+    '<button class="mbtn cancel" onclick="pClose()">Cancelar</button>');
+}
+async function proyContacto(id, resp){
+  var x = COTIS[id]; if (!x) return;
+  pClose();
+  var via = proyMedio === 'llamada' ? 'llamada' : 'contacto';
+  var tipoToque = via === 'llamada' ? 'llamada' : 'cadencia';
+  var ahora = new Date().toISOString();
+  var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
+  hist.push({ etapa:0, fecha:hoyISO(), hora:horaHHMM(), nota:NOTA_CONTACTO_PROY, via:via, resp:resp });
+  var quien = via === 'llamada' ? 'Llamada' : 'Contacto';
+  var cierre = RESPUESTAS_CIERRE.filter(function(r){ return r.id === resp; })[0];
+  if (cierre){
+    registrarToque(x, 0, tipoToque);
+    segPerder(id, cierre.motivo, { seg_historial:hist, seg_proxima:null });
+    return;
+  }
+  var updates = { seg_historial:hist };
+  if (!x.fecha_primer_contacto) updates.fecha_primer_contacto = ahora;
+  if (RESPUESTAS_CON_CONVERSACION.indexOf(resp) !== -1 && !x.respondio){ updates.respondio = true; updates.fecha_primera_respuesta = ahora; }
+  if (resp === 'compra' && !x.interesado) Object.assign(updates, marcaInteresado());
+  /* una perdida que en la llamada vuelve a conversar se reabre */
+  var reabre = x.estado === 'perdida' && resp !== 'nada';
+  if (reabre){ updates.estado = 'enviada'; updates.motivo_perdida = null; }
+  var pausaR = RESPUESTAS_PAUSA.filter(function(r){ return r.id === resp; })[0];
+  if (pausaR){
+    var p = PAUSAS.find(function(q){ return q.id === pausaR.pausa; });
+    if (p){
+      var fecha = addDias(hoyISO(), p.dias);
+      hist.push({ etapa:0, fecha:hoyISO(), nota:'Pausa: ' + pausaLabel(p.id) + ' → toque el ' + fecha });
+      updates.motivo_pausa = p.id; updates.seg_proxima = fecha;
+    }
+  }
+  var ok = await segSave(id, updates, quien + ' anotada · ' + (resp === 'nada' ? (via === 'llamada' ? 'no contestó' : 'no respondió') : respTxt(resp).toLowerCase()) + (reabre ? ' · cotización reabierta' : ''));
+  if (ok) registrarToque(x, 0, tipoToque);
 }
 /* ── Lo que el cliente habló con el asistente del cotizador (14-11-2026) ──
    Se cruza por número de cotización. En la ficha queda la conversación entera,
@@ -13937,7 +14053,7 @@ function minutosHabiles(desde, hasta){
 function medidorSemana(lunes){
   var fin = addDias(lunes, 7), ahora = new Date();
   var m = { nuevos:0, fuera:0, contactados:0, enHora:0, esperas:[], sinContacto:0, tarde:0,
-            proyNuevos:0, proyMonto:0, llamadas:0, propuestas:0, ganados:0, ganadosMonto:0 };
+            proyNuevos:0, proyMonto:0, llamadas:0, contactos:0, propuestas:0, ganados:0, ganadosMonto:0 };
   var porCli = {};
   allRows.forEach(function(x){
     if (x.eliminada || !x.fecha_creacion || /^Prueba/.test(x.motivo_perdida || '')) return;
@@ -13980,6 +14096,8 @@ function medidorSemana(lunes){
         if (!h || !enSemana(String(h.fecha || '').slice(0, 10))) return;
         if (h.nota === NOTA_PROPUESTA) m.propuestas++;
         if (h.via === 'llamada') m.llamadas++;
+        /* contactados = llamadas (de la cadencia o de Proyectos) + otros contactos anotados en Proyectos */
+        if (h.via === 'llamada' || (h.nota === NOTA_CONTACTO_PROY && h.via === 'contacto')) m.contactos++;
       });
       if (q.estado === 'ganado' && q.fecha_concretada && enSemana(fechaBaseISO(q.fecha_concretada))){
         var mg = q.monto_cierre || q.total_alto || 0;
@@ -14009,13 +14127,13 @@ function medidorHtml(){
       card(med(a), 'Mediana de espera hábil', med(b)) +
       card(a.tarde, 'Sin contacto y ya pasó la hora', b.tarde, a.tarde > 0 ? ' seg-latef' : '') +
       card(conMonto(a.proyNuevos, a.proyMonto), 'Proyectos nuevos', conMonto(b.proyNuevos, b.proyMonto)) +
-      card(a.llamadas + ' / ' + a.propuestas, 'Proyectos: llamadas / propuestas', b.llamadas + ' / ' + b.propuestas) +
+      card(a.contactos + ' / ' + a.propuestas, 'Proyectos: contactados / propuestas', b.contactos + ' / ' + b.propuestas) +
       card(conMonto(a.ganados, a.ganadosMonto), 'Proyectos ganados', conMonto(b.ganados, b.ganadosMonto), a.ganados > 0 ? ' seg-donehoyf' : '') +
     '</div>' +
     '<div class="ptier-note" style="border-radius:7px;margin:6px 0 16px"><strong>Primer contacto:</strong> esta semana ' + a.nuevos +
       (a.nuevos === 1 ? ' persona cotizó sola' : ' personas cotizaron solas') + ' en la web por primera vez (' + a.fuera + ' fuera del turno); ' +
       a.contactados + ' ya recibieron su primer mensaje y ' + a.sinContacto + ' todavía no. La espera se cuenta en minutos hábiles: lunes a viernes de 9:00 a 17:30 y sábado de 10:00 a 14:00. ' +
-      '<strong>Proyectos:</strong> clientes con ' + fmt(PROY_MIN) + ' o más en alguna cotización. Las llamadas son los toques marcados como llamada; las propuestas, las marcadas como enviadas.</div></div>';
+      '<strong>Proyectos:</strong> clientes con ' + fmt(PROY_MIN) + ' o más en alguna cotización. Contactados son las llamadas y los contactos anotados con «Lo contacté»; las propuestas, las marcadas como enviadas.</div></div>';
 }
 function renderActividad(){
   var esAdmin  = isPanelAdmin();
