@@ -3909,7 +3909,7 @@ function transfPct(){ return Math.round(VALORES.generales.transferencia * 100); 
 function transfLabel(){ return b2bAplica() ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : ('Transferencia −' + transfPct() + '%'); }
 /* «Cuenta empresa»: solo el vendedor la ve, en todos los productos */
 var B2B_SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';   /* Gestión: la llave solo ejecuta b2b_estado y b2b_tramo_rut */
-var B2B_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
+var B2B_SB_ANON = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
 var b2bTimer = null, b2bBusq = 0, b2bMsg = '';
 /* RUT con dígito verificador correcto, como 12345678-K; si no, '' */
 function rutValido(v) {
@@ -13473,7 +13473,7 @@ async function fvConfirmar(){
    reintenta sola la próxima vez que se abre el panel (fvReintentarGestion).
    La llave es la pública (anon) de la Gestión, la misma que ya va en su HTML. */
 var GESTION_URL = 'https://padnttpgzuotxeipjrry.supabase.co';
-var GESTION_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
+var GESTION_ANON = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
 var FV_ENVIANDO = {};
 /* las fichas de antes de la etapa 2 no traen las líneas separadas: se leen
    del link al mandarlas */
