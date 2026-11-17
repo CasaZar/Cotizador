@@ -354,6 +354,10 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 /* nota al pie de un bloque; la cotización ya no la usa, pero sí la pestaña Actividad del panel */
 .ptier-note { padding: 6px 10px; font-size: 12px; color: var(--tm); background: var(--crt); border-top: 1px solid var(--bg3); text-align: center; }
 .precios-pro { background: #485B3D; color: #fff; font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 12px; text-align: center; margin-bottom: 10px; line-height: 1.4; }
+.prof-tog { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; margin: 2px 0 10px; cursor: pointer; line-height: 1.35; }
+.prof-tog input { width: 18px; height: 18px; margin: 1px 0 0; flex: none; accent-color: #485B3D; }
+.prof-tog small { display: block; color: var(--tm); font-size: 12.5px; }
+#prof-nom-w { margin-bottom: 10px; }
 .b2b-ok { margin-top: 8px; background: #EEF2EA; border: 1px solid #C9D4BF; border-radius: 9px; padding: 9px 11px; font-size: 14px; }
 .b2b-ok b { color: #485B3D; }
 .b2b-ok small { display: block; color: var(--tm); font-size: 12.5px; margin-top: 2px; line-height: 1.4; }
@@ -3429,7 +3433,35 @@ var b2bDcto = 0;          /* tramo de la cuenta empresa: 0, 2 o 5 */
 var b2bEmp = null;        /* { rut, nombre } de la cuenta encontrada */
 var B2B_TRAMOS = [2, 5];
 function b2bValido(v) { v = parseInt(v, 10) || 0; return B2B_TRAMOS.indexOf(v) !== -1 ? v : 0; }
-function b2bAplica() { return b2bDcto > 0 && b2bDcto >= dctoEsp; }
+function b2bAplica() { return !profModo && b2bDcto > 0 && b2bDcto >= dctoEsp; }
+/* ── LA PRESENTA UN PROFESIONAL (17-11-2026) ──
+   Una diseñadora o arquitecta le muestra la cotización a SU cliente con precio
+   lista y cobra comisión: 5 % (el de transferencia, del Manual) + el tramo de
+   SU cuenta empresa, sobre el NETO de productos (total ÷ 1,19, sin envío), solo
+   si el cliente paga por transferencia. Se le paga a fin de mes contra boleta
+   de honorarios (Casa Zaru retiene). Con el modo encendido:
+   - el RUT de «Cuenta empresa» es el de ELLA: su tramo NO baja el precio del
+     cliente (b2bAplica() da falso), solo sube su comisión;
+   - el documento muestra UN precio: sin «con transferencia», sin la nota ni la
+     franja del 5 % (sinTransf()). El link lo conserva (d.pv), así el cliente
+     que lo abra o baje el PDF tampoco lo ve;
+   - se guarda origen.profesional, y la ficha de venta no descuenta el 5 % y
+     calcula la comisión. */
+var profModo = false, profNom = '', profRut = '';
+function sinTransf() { return profModo; }
+function profPct() { return transfPct() + (b2bDcto || 0); }
+function profNombre() { return String(profNom || (b2bEmp && b2bEmp.nombre) || '').trim().slice(0, 80); }
+/* comisión estimada de un precio con IVA: % sobre el neto, a pesos enteros */
+function profComision(totalConIva) { return Math.round(Math.round(totalConIva / 1.19) * profPct() / 100); }
+function profSet(on) {
+  profModo = !!on;
+  var l = document.getElementById('b2b-rut-l'), n = document.getElementById('prof-nom-w'), r = document.getElementById('b2b-rut');
+  if (l) l.firstChild.nodeValue = profModo ? 'RUT del profesional' : 'RUT empresa';
+  if (n) n.hidden = !profModo;
+  if (r) r.placeholder = profModo ? 'Suma a su cuenta y define su comisión' : 'Para facturas con cuenta empresa';
+  b2bPintar(); calcLive(); vCambio(); if (typeof vMsgPintar === 'function') vMsgPintar();
+}
+function profNomInput(v) { profNom = String(v || '').slice(0, 80); b2bPintar(); vCambio(); vMsgPintar(); }
 /* ── DESCUENTO ESPECIAL (20-10-2026) ──
    Lo pone SOLO el vendedor (selector en «Extras», que el público no ve), de
    5% o 10%. Baja TODOS los precios, el de tarjeta y el de transferencia: se
@@ -3909,7 +3941,7 @@ function transfPct(){ return Math.round(VALORES.generales.transferencia * 100); 
 function transfLabel(){ return b2bAplica() ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : ('Transferencia −' + transfPct() + '%'); }
 /* «Cuenta empresa»: solo el vendedor la ve, en todos los productos */
 var B2B_SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';   /* Gestión: la llave solo ejecuta b2b_estado y b2b_tramo_rut */
-var B2B_SB_ANON = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
+var B2B_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
 var b2bTimer = null, b2bBusq = 0, b2bMsg = '';
 /* RUT con dígito verificador correcto, como 12345678-K; si no, '' */
 function rutValido(v) {
@@ -3929,8 +3961,10 @@ function renderB2B(){
   w.classList.remove('hidden');
   w.innerHTML =
     '<div class="vx-sub">'+
-      '<label class="flabel" for="b2b-rut">RUT empresa<span class="flabel-op">opcional</span></label>'+
-      '<input class="finput" type="text" id="b2b-rut" autocomplete="off" placeholder="Para facturas con cuenta empresa" value="' + escA(b2bEmp ? b2bEmp.rut : '') + '" oninput="b2bRutInput(this.value)">'+
+      '<label class="prof-tog"><input type="checkbox" id="prof-on"' + (profModo ? ' checked' : '') + ' onchange="profSet(this.checked)"><span class="prof-t">La presenta un profesional <small>El cliente ve precio lista; el profesional cobra comisión</small></span></label>'+
+      '<div id="prof-nom-w"' + (profModo ? '' : ' hidden') + '><input class="finput" type="text" id="prof-nom" autocomplete="off" placeholder="Nombre del profesional o estudio" value="' + escA(profNom) + '" oninput="profNomInput(this.value)"></div>'+
+      '<label class="flabel" id="b2b-rut-l" for="b2b-rut">' + (profModo ? 'RUT del profesional' : 'RUT empresa') + '<span class="flabel-op">opcional</span></label>'+
+      '<input class="finput" type="text" id="b2b-rut" autocomplete="off" placeholder="' + (profModo ? 'Suma a su cuenta y define su comisión' : 'Para facturas con cuenta empresa') + '" value="' + escA(b2bEmp ? b2bEmp.rut : profRut) + '" oninput="b2bRutInput(this.value)">'+
       '<div id="b2b-res">' + b2bResHtml() + '</div>'+
     '</div>';
   b2bPintar();
@@ -3939,6 +3973,7 @@ function b2bRutInput(v) {
   clearTimeout(b2bTimer);
   b2bBusq++;   /* una respuesta que llegue tarde ya no vale */
   var rut = rutValido(v);
+  profRut = rut;   /* el profesional puede no tener cuenta todavía: su RUT igual se guarda */
   if (!rut) {
     var largo = String(v || '').replace(/[^0-9kK]/g, '').length;
     b2bFijar(null, 0, largo >= 8 ? 'RUT no válido: revisa el dígito verificador.' : '');
@@ -3976,6 +4011,14 @@ function b2bPintar(cargando) {
 }
 function b2bResHtml(cargando) {
   if (cargando) return '<div class="finput-hint">' + cargando + '</div>';
+  if (profModo) {
+    var nomP = profNombre();
+    var falta = [!nomP ? 'su nombre' : '', !profRut ? 'su RUT' : ''].filter(Boolean).join(' y ');
+    return '<div class="b2b-ok"><b>Profesional' + (nomP ? ': ' + escA(nomP) : '') + '</b> · comisión ' + profPct() + ' %<small>' +
+      'Sobre el neto de productos (sin IVA ni envío), si el cliente paga por transferencia' +
+      (b2bDcto ? '; incluye su tramo de ' + b2bDcto + ' %' : '') + '. El cliente ve precio lista y no ve el precio con transferencia.' +
+      (falta ? ' Falta ' + falta + '.' : '') + '</small></div>';
+  }
   if (b2bDcto > 0) return '<div class="b2b-ok"><b>✓ ' + escA(b2bEmp && b2bEmp.nombre ? b2bEmp.nombre : 'Cuenta empresa') + '</b> · tramo ' + b2bDcto + ' %<small>' +
     (b2bAplica() ? 'Se aplica solo: ' + b2bDcto + ' % con tarjeta, ' + (transfPct() + b2bDcto) + ' % con transferencia.'
                  : 'El descuento especial de ' + dctoEsp + ' % es mayor: se usa ese y no se suman.') + '</small></div>';
@@ -6372,22 +6415,26 @@ function vPrecioPintar() {
     var d = doc[t[1]];
     return d && d.desg ? d.desg : '';
   };
-  box.innerHTML = '<table class="v-tab"><thead><tr><th>Madera</th><th>' + col + '</th><th>Transferencia</th></tr></thead><tbody>' +
+  /* con profesional, la tercera columna es su comisión (no hay precio con transferencia para el cliente) */
+  var col3 = profModo ? 'Comisión ' + profPct() + ' %' : 'Transferencia';
+  var cel3 = profModo ? function(t){ return fmt(profComision(precio(t))); } : transf;
+  box.innerHTML = '<table class="v-tab"><thead><tr><th>Madera</th><th>' + col + '</th><th>' + col3 + '</th></tr></thead><tbody>' +
     tiers.map(function(t){
       var dg = desglose(t);
       return '<tr><td>' + t[1] + '</td><td>' + fmt(precio(t)) +
         (pct > 0 ? '<small class="lista">' + fmt(Math.round(r.tot[t[0]])) + '</small>' : '') +
         (dg ? '<small>' + escA(dg) + '</small>' : '') + '</td>' +
-        '<td class="v-tr">' + transf(t) + '</td></tr>';
+        '<td class="v-tr">' + cel3(t) + '</td></tr>';
     }).join('') + '</tbody></table>' +
-    '<div class="v-nota">' + (r.items.length > 1 ? r.items.length + ' productos · ' : '') + 'IVA incluido · envío aparte · ' + transfLabel() +
+    '<div class="v-nota">' + (r.items.length > 1 ? r.items.length + ' productos · ' : '') + 'IVA incluido · envío aparte · ' +
+      (profModo ? 'el cliente ve un solo precio · comisión bruta sobre el neto, antes de la retención' : transfLabel()) +
       (fromHash ? ' · con los precios del día de la cotización abierta; al guardar se recalculan con los de hoy' : '') +
       (r.falta ? ' · falta completar el producto en pantalla: ' + escA(r.falta) : '') + '</div>';
   /* barra del celular: la madera más cara con transferencia, como en el boceto */
   var ult = tiers[tiers.length - 1];
   var bl = document.querySelector('#barra-precio .bp-l');
   if (bl) bl.textContent = ult[1];
-  if (bpv) bpv.innerHTML = transf(ult) + '<small>con transferencia</small>';
+  if (bpv) bpv.innerHTML = profModo ? fmt(precio(ult)) + '<small>precio lista</small>' : transf(ult) + '<small>con transferencia</small>';
   barraPrecio.hay = true; barraPintar();
   vMsgPintar();
 }
@@ -6536,6 +6583,19 @@ function vMensaje(link) {
   nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
   var cods = combo.map(function(it){ return it.p; });
   if (prod && cods.indexOf(prod) === -1) cods.push(prod);
+  /* con profesional, el mensaje va a ELLA (no al cliente final): su link para
+     mostrar y la regla de la comisión, que en el documento no aparece */
+  if (profModo) {
+    /* «Hola Carolina», pero «Hola» a secas si es un estudio u oficina */
+    var pn = profNombre().split(/\s+/)[0] || '';
+    if (/^(estudio|taller|oficina|arquitect|dise[ñn]o|constructora|inmobiliaria|interiorismo)/i.test(pn) || !/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(pn)) pn = '';
+    var paraCli = String(document.getElementById('f-cli').value || '').trim();
+    return (pn ? 'Hola ' + pn : 'Hola') + ', te escribe César de Casa Zaru.\n\n' +
+      'Te dejo la cotización' + (paraCli ? ' para ' + paraCli : '') + ' a precio lista, para que se la muestres a tu cliente:\n' + link + '\n\n' +
+      'Desde el mismo link la puedes descargar en PDF.\n\n' +
+      'Tu comisión es de ' + profPct() + ' % sobre el valor neto de los productos (sin IVA ni envío), cuando tu cliente paga por transferencia. ' +
+      'Te la pagamos a fin de mes contra tu boleta de honorarios.';
+  }
   if (prod === 'especial' && ES) {   /* el título del documento dice qué es; sin «precio en cada madera» */
     var t = ES.tit.trim();
     t = t ? t.charAt(0).toLowerCase() + t.slice(1) : 'tu proyecto';
@@ -7472,7 +7532,7 @@ function htmlEspecial(cli, fecha) {
       '</div><div class="pz-der">' +
         (hayD ? '<div class="pz-antes">antes ' + fmt(tot[o]) + '</div>' : '') +
         '<div class="pz-precio">' + fmt(dctoMonto(tot[o])) + '</div>' +
-        (ES.tr ? '<div class="pz-trans">' + fmt(dctoMonto(tot[o]) * tf) + '<small>' + conTransf + '</small></div>'
+        (ES.tr && !sinTransf() ? '<div class="pz-trans">' + fmt(dctoMonto(tot[o]) * tf) + '<small>' + conTransf + '</small></div>'
                : '<div class="es-iva">IVA incluido</div>') +
       '</div></div></div>';
   }).join('');
@@ -7481,7 +7541,7 @@ function htmlEspecial(cli, fecha) {
       b2bDcto + ' % sobre lista (' + (transfPct() + b2bDcto) + ' % con transferencia)</div>'
     : '';
   var precios = '<div class="precios">' + proNote + cards +
-    '<div class="precios-nota">Precio acordado con tu vendedor · IVA incluido' + (ES.tr ? ' · ' + transfLabel() : '') + '</div></div>';
+    '<div class="precios-nota">Precio acordado con tu vendedor · IVA incluido' + (ES.tr && !sinTransf() ? ' · ' + transfLabel() : '') + '</div></div>';
   var th = '<th style="text-align:left">Detalle</th>' + ops.map(function(o){ return '<th>' + (ES.nOp === 2 ? 'Opción ' + esLetra(o) : 'Valor') + '</th>'; }).join('');
   var filas = ES.items.map(function(it){
     return '<tr><td class="es-l"><b>' + escA(it.nom) + '</b>' + (it.det.trim() ? '<small>' + escA(it.det) + '</small>' : '') +
@@ -7570,7 +7630,7 @@ function shell(nombre, cli, fecha, body) {
   dctoBannerHtml(cli) +
   '<div class="coti-title">' + tituloDoc(nombre) + '</div>' +
   '<div class="coti-para">Para ' + escA(cli) +
-    (prod === 'especial' && ES && ES.emp ? ' · ' + escA(ES.emp) : '') + '</div>' +
+    (prod === 'especial' && ES && ES.emp && !profModo ? ' · ' + escA(ES.emp) : '') + '</div>' +   /* con profesional, la empresa del RUT es la de ella, no la del cliente */
   llegaListaHtml() +
   /* El cuadro verde de "César te escribe por WhatsApp" se sacó el 21-08-2026:
      el botón de WhatsApp del final ya dice lo mismo y el aviso empujaba el
@@ -7644,8 +7704,9 @@ function conCombinada(rows) {
   return rows.map(function(r, i){ return i === 2 ? Object.assign({}, r, { combinada: true }) : r; });
 }
 function tierTable(rows, recTier, desgloseFn) {
-  return preciosCards(rows, recTier, desgloseFn || null,
-    'Precios con IVA incluido · Envío según comuna · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
+  return preciosCards(rows, recTier, desgloseFn || null, sinTransf()
+    ? 'Precios con IVA incluido · Envío según comuna'
+    : 'Precios con IVA incluido · Envío según comuna · Con tarjeta pagas el valor indicado · Con transferencia ahorras ' + transfPct() + '%');
 }
 /* pastilla de UNA especie cuando la fila es de una sola (revestimiento:
    "Ciprés" va en el tramo bajo, que en el resto es Oregón, y mostraba esa foto) */
@@ -7689,7 +7750,7 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
         '<div class="pz-der">' +
           (r.antes ? '<div class="pz-antes">antes ' + fmt(r.antes) + '</div>' : '') +
           '<div class="pz-precio">' + fmt(r.total) + '</div>' +
-          '<div class="pz-trans">' + fmt(r.total * tf) + '<small>' + conTransf + '</small></div>' +
+          (sinTransf() ? '' : '<div class="pz-trans">' + fmt(r.total * tf) + '<small>' + conTransf + '</small></div>') +
         '</div>' +
       '</div>' +
     '</div>';
@@ -7822,7 +7883,7 @@ function boxes() {
     '</div>' +
   '</div>' +
   '<div class="bankrow">' +
-    'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>' +
+    (sinTransf() ? '' : 'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>') +
     '<strong>Muvale Diseño SpA</strong> · RUT 77.157.082-8 · Banco BCI · Cta Cte 97457175 · hola@casazaru.cl' +
   '</div>' +
   maderasAcordeon();
@@ -8003,7 +8064,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     'Hola, me interesa recibir el muestrario de maderas de Casa Zaru (cotización ' + qnum + ').');
   /* lo que el asistente necesita saber de esta cotización: lo mismo que ya ve
      el cliente en pantalla (producto y precio), nada de sus datos personales */
-  ASIS.cot = { producto: prod, nombre: nombreProd || PNAME[prod] || '', det: det || '', bajo: bajo, alto: alto, transf: transfPct(), uso: uso };
+  ASIS.cot = { producto: prod, nombre: nombreProd || PNAME[prod] || '', det: det || '', bajo: bajo, alto: alto, transf: sinTransf() ? 0 : transfPct(), uso: uso };
   ASIS.waDuda = urlDuda;
   setTimeout(asisRefrescar, 0);
   return '<div class="wa-block">' +
@@ -8250,12 +8311,21 @@ function getShareData(conValores) {
       if (Object.keys(valsC).length) d.vals = valsC;
     }
     if (b2bAplica()) { d.b2b = b2bDcto; if (b2bEmp && b2bEmp.nombre) d.ben = b2bEmp.nombre; }
+    profAlLink(d);
     if (dctoEsp > 0) d.de = dctoEsp;   /* descuento especial del vendedor */
     if (stkComuna) d.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };
     if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
     return d;
   }
   return getShareDataProducto(conValores);
+}
+/* con profesional, el link lleva pv=1 (un solo precio, sin transferencia) y
+   quién es, para que el vendedor que lo reabra no lo pierda. El % de comisión
+   NO va: se recalcula con su RUT, y el link lo puede leer el cliente. */
+function profAlLink(d) {
+  if (!profModo) return;
+  d.pv = 1;
+  d.pro = { n: profNombre(), r: profRut || '' };
 }
 function getShareDataProducto(conValores) {
   var cli = document.getElementById('f-cli') ? document.getElementById('f-cli').value.trim() : '';
@@ -8271,6 +8341,7 @@ function getShareDataProducto(conValores) {
     data.b2b = b2bDcto;
     if (b2bEmp && b2bEmp.nombre) data.ben = b2bEmp.nombre;
   }
+  profAlLink(data);
   if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
@@ -8373,6 +8444,12 @@ function restoreFromData(d) {
   vGuardadaNum = d.qnum || ''; vCambios = false;   /* vendedor: «← Editar» parte de una ya guardada */
   b2bDcto = b2bValido(d.b2b);       /* cuenta empresa: solo 2 o 5 (el link lo puede armar cualquiera) */
   b2bEmp = b2bDcto && d.ben ? { rut: '', nombre: String(d.ben).slice(0, 80) } : null;
+  /* profesional: el cliente solo necesita pv (un precio); el vendedor recupera
+     quién es y vuelve a pedir su tramo, que define la comisión */
+  profModo = d.pv === 1 || d.pv === '1';
+  profNom = profModo && d.pro ? String(d.pro.n || '').slice(0, 80) : '';
+  profRut = profModo && d.pro ? rutValido(d.pro.r) : '';
+  if (profModo && profRut && vendorMode) b2bBuscar(profRut);
   dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
   /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
@@ -8717,6 +8794,9 @@ async function saveQuote(data, lineas) {
     /* medida pasada del tope (¿milímetros?): queda marcada para que el panel no
        la trate como monto alto. Va dentro de origen para no necesitar columna nueva. */
     if (medidasRaras().length) payload.origen = Object.assign({}, payload.origen || {}, { medida_rara: true });
+    /* profesional que la presenta: la ficha de venta y la liquidación de fin de mes salen de acá */
+    if (profModo) payload.origen = Object.assign({}, payload.origen || {}, {
+      profesional: { nombre: profNombre(), rut: profRut || '', pct: profPct(), tramo: b2bDcto || 0, base: 'neto' } });
     /* descuento especial del vendedor: se guarda el precio rebajado (lo que de
        verdad paga el cliente) y la marca va en origen, para no necesitar columna */
     if (dctoPct() > 0) {
@@ -12261,6 +12341,10 @@ function chipAnuncio(g) {
   /* descuento especial que puso el vendedor (el mayor, si hubo varias cotizaciones) */
   var dcto = (g.quotes || []).reduce(function(a, q){ return Math.max(a, (q.origen && parseInt(q.origen.dcto_especial, 10)) || 0); }, 0);
   var dctoChip = dcto ? '<span class="dcto-badge" title="Se le envió con descuento especial: los montos ya están rebajados">🏷 Con descuento ' + dcto + '%</span>' : '';
+  /* la presentó un profesional: precio lista, sin descuento por transferencia, y comisión a fin de mes */
+  var pro = (g.quotes || []).map(function(q){ return q.origen && q.origen.profesional; }).filter(Boolean)[0];
+  if (pro) dctoChip += '<span class="dcto-badge" title="La presentó un profesional: el cliente paga precio lista (sin el 5 % por transferencia) y la comisión se paga a fin de mes">Profesional: ' +
+    escA(String(pro.nombre || 's/n').slice(0, 30)) + ' · ' + (parseInt(pro.pct, 10) || 0) + ' %</span>';
   return (deAnuncio ? '<span class="anuncio-badge" title="Llegó por un anuncio: hazle el seguimiento desde el WhatsApp +56 9 2766 0141, no desde el 5558">📣 Anuncio · seguir desde el 0141</span>' : '') + medida + dctoChip;
 }
 /* Fila de una línea. Ojo: NO puede ser un <button>, porque adentro lleva
@@ -13102,19 +13186,35 @@ function fvPesos(v){ var n = parseInt(String(v == null ? '' : v).replace(/\D/g, 
 function fvNueva(x){
   return { v:1, estado:'borrador', cot:x.numero||'', items:'', tier:'', madera:'', lista:0,
     pago:'transferencia', envio:{ tipo:'starken', comuna:'', cod:0, kg:0, monto:0 },
-    doc:{ tipo:'boleta', rut:'', razon:'' }, direccion:'', abono_pct:70, hist:[] };
+    doc:{ tipo:'boleta', rut:'', razon:'' }, direccion:'', abono_pct:70, hist:[], prof:fvProfDe(x) };
+}
+/* profesional que presentó la cotización (origen.profesional, ver profModo) */
+function fvProfDe(x){
+  var p = x && x.origen && x.origen.profesional;
+  if (!p) return null;
+  var pct = parseInt(p.pct, 10) || 0;
+  return { nombre:String(p.nombre || '').slice(0, 80), rut:String(p.rut || ''), pct:pct, tramo:parseInt(p.tramo, 10) || 0 };
 }
 /* las cuentas, siempre desde la ficha: nunca se guarda un total escrito a mano */
 function fvCalc(f){
   var lista = fvPesos(f.lista);
-  var pct = fvPctTransf();
+  /* con profesional el cliente paga lista también por transferencia: ese 5 % es su comisión */
+  var pct = f.prof ? 0 : fvPctTransf();
   /* mismo redondeo que calcularVenta() de la Gestión (precio − redondeo del
      descuento): así el total de la ficha y el del pedido no difieren en $1 */
   var productos = f.pago === 'transferencia' ? lista - Math.round(lista * pct) : lista;
   var envio = f.envio.tipo === 'retiro' ? 0 : fvPesos(f.envio.monto);
   var total = productos + envio;
   var abono = f.abono_pct === 100 ? total : Math.round(total * f.abono_pct / 100);
-  return { lista:lista, pct:pct, productos:productos, envio:envio, total:total, abono:abono, saldo:total - abono };
+  /* comisión BRUTA: % sobre el neto de productos (sin envío). Con link de pago
+     (tarjeta) la pasarela se come el 5 %: queda solo su tramo. La retención de
+     la boleta de honorarios se calcula al liquidar el mes, no acá. */
+  var comPct = 0, com = 0;
+  if (f.prof) {
+    comPct = f.pago === 'transferencia' ? f.prof.pct : (f.prof.tramo || 0);
+    com = Math.round(Math.round(productos / 1.19) * comPct / 100);
+  }
+  return { lista:lista, pct:pct, productos:productos, envio:envio, total:total, abono:abono, saldo:total - abono, com_pct:comPct, com:com };
 }
 /* lo que se cotizó, en palabras, desde la fila del link (quote_links.data) */
 function fvItemsDesde(d, x){
@@ -13193,6 +13293,7 @@ function fichaUI(id){
   var f = x.ficha_venta;
   if (f && f.estado === 'enviada'){ FV = JSON.parse(JSON.stringify(f)); FV_VISTA = 'confirmar'; fvPintar(); return; }
   FV = (f && f.estado === 'borrador') ? JSON.parse(JSON.stringify(f)) : fvNueva(x);
+  if (FV.prof === undefined) FV.prof = fvProfDe(x);   /* borradores de antes del 17-11 */
   FV_VISTA = 'ficha';
   fvPintar();
   if (!FV.items) fvCargarCotizacion(id);
@@ -13275,13 +13376,15 @@ function fvTotales(){
   var c = fvCalc(FV);
   var envTxt = FV.envio.tipo === 'retiro' ? 'Retira en Villarrica' : (FV.envio.tipo === 'starken' ? 'Envío Starken' : 'Envío');
   el.innerHTML =
-    '<div><span>Productos'+(FV.pago === 'transferencia' ? ' (−'+Math.round(c.pct*100)+' %)' : '')+'</span><span>'+fmt(c.productos)+'</span></div>'+
+    '<div><span>Productos'+(FV.pago === 'transferencia' && c.pct > 0 ? ' (−'+Math.round(c.pct*100)+' %)' : '')+'</span><span>'+fmt(c.productos)+'</span></div>'+
     '<div><span>'+envTxt+'</span><span>'+(FV.envio.tipo === 'retiro' ? '—' : fmt(c.envio))+'</span></div>'+
     '<div class="t"><span>Total</span><span>'+fmt(c.total)+'</span></div>'+
     (FV.abono_pct === 100
       ? '<div class="s"><span>Paga todo al confirmar</span><span>'+fmt(c.total)+'</span></div>'
       : '<div class="s"><span>Abono 70 %</span><span>'+fmt(c.abono)+'</span></div>'+
-        '<div class="s"><span>Saldo 30 % antes del despacho</span><span>'+fmt(c.saldo)+'</span></div>');
+        '<div class="s"><span>Saldo 30 % antes del despacho</span><span>'+fmt(c.saldo)+'</span></div>') +
+    /* solo para el vendedor: el mensaje al cliente no lo lleva */
+    (FV.prof ? '<div class="s fv-prof"><span>Comisión ' + escA(FV.prof.nombre || 'profesional') + ' (' + c.com_pct + ' % del neto, bruta)</span><span>' + fmt(c.com) + '</span></div>' : '');
 }
 function fvPintar(){
   if (!FV) return;
@@ -13329,7 +13432,8 @@ function fvHtmlFicha(x){
     (f.tier ? '<div class="fv-row1"><span>Precio de los productos</span><input class="fv-in" id="fv-lista" inputmode="numeric" value="'+(f.lista||'')+'" oninput="fvTotales()"></div>'+
               '<div class="fv-nota">El de la cotización, con tarjeta. Cámbialo solo si acordaron otro.</div>' : '')+
     '<div class="fv-lbl">Pago</div>'+
-    '<div class="fv-segs">'+fvSeg('pago','transferencia','Transferencia −'+Math.round(fvPctTransf()*100)+' %',f.pago)+fvSeg('pago','link','Link de pago',f.pago)+'</div>'+
+    '<div class="fv-segs">'+fvSeg('pago','transferencia', f.prof ? 'Transferencia' : 'Transferencia −'+Math.round(fvPctTransf()*100)+' %',f.pago)+fvSeg('pago','link','Link de pago',f.pago)+'</div>'+
+    (f.prof ? '<div class="fv-nota">La presentó ' + escA(f.prof.nombre || 'un profesional') + ': el cliente paga precio lista también por transferencia; el ' + Math.round(fvPctTransf()*100) + ' % es su comisión.</div>' : '')+
     '<div class="fv-segs">'+fvSeg('abono','70','Abono 70 %',String(f.abono_pct))+fvSeg('abono','100','Paga todo',String(f.abono_pct))+'</div>'+
     '<div class="fv-lbl">Envío</div>'+
     '<div class="fv-segs">'+fvSeg('envio','starken','Starken',f.envio.tipo)+fvSeg('envio','retiro','Retira en Villarrica',f.envio.tipo)+fvSeg('envio','otro','Otro',f.envio.tipo)+'</div>'+
@@ -13378,7 +13482,7 @@ function fvMensaje(x, f){
     : '';
   return 'Hola' + (nom ? ' ' + nom : '') + ', antes de pasar tu pedido a producción, revisa que esto esté correcto:\n\n' +
     String(f.items).trim() + '\nMadera: ' + f.madera + (term ? '\nTerminación: ' + term : '') + '\n\n' +
-    'Productos: ' + fmt(c.productos) + (f.pago === 'transferencia' ? ' (con ' + Math.round(c.pct*100) + ' % por transferencia)' : '') + '\n' +
+    'Productos: ' + fmt(c.productos) + (f.pago === 'transferencia' && c.pct > 0 ? ' (con ' + Math.round(c.pct*100) + ' % por transferencia)' : '') + '\n' +
     envTxt + '\n*Total: ' + fmt(c.total) + '*\n\n' +
     pagoTxt + '\n\n' +
     docTxt + dirTxt + '\nPlazo de fabricación: 7 a 15 días hábiles.\n\n' +
@@ -13405,10 +13509,16 @@ function fvPaso(f, que){
   f.hist = Array.isArray(f.hist) ? f.hist : [];
   f.hist.push({ t:new Date().toISOString(), que:que, por:quienMarca() });
 }
+/* lo que viaja con la ficha (y a la Gestión): con profesional, su comisión bruta */
+function fvCalcGuardar(c, f){
+  var o = { productos:c.productos, envio:c.envio, total:c.total, abono:c.abono, saldo:c.saldo, pct_transf:c.pct };
+  if (f && f.prof) { o.comision = c.com; o.comision_pct = c.com_pct; }
+  return o;
+}
 /* guarda la ficha en la cotización; devuelve true si quedó */
 async function fvGuardar(f, okMsg){
   var c = fvCalc(f);
-  f.calc = { productos:c.productos, envio:c.envio, total:c.total, abono:c.abono, saldo:c.saldo, pct_transf:c.pct };
+  f.calc = fvCalcGuardar(c, f);
   var ok = await segSave(FV_ID, { ficha_venta:f }, okMsg);
   if (!ok) showToast('No se guardó la ficha. ¿Ya se corrió supabase-cotizador/ficha-venta.sql?', false);
   return ok;
@@ -13455,7 +13565,7 @@ async function fvConfirmar(){
   var f = JSON.parse(JSON.stringify(FV));
   var c = fvCalc(f);
   f.estado = 'confirmada'; f.confirmada = new Date().toISOString(); fvPaso(f, 'confirmada');
-  f.calc = { productos:c.productos, envio:c.envio, total:c.total, abono:c.abono, saldo:c.saldo, pct_transf:c.pct };
+  f.calc = fvCalcGuardar(c, f);
   var id = FV_ID;
   fvCerrar();
   var ok = await cerrarGanada(id, c.productos, { ficha_venta:f }, '¡Venta confirmada! 🎉');
@@ -13473,7 +13583,7 @@ async function fvConfirmar(){
    reintenta sola la próxima vez que se abre el panel (fvReintentarGestion).
    La llave es la pública (anon) de la Gestión, la misma que ya va en su HTML. */
 var GESTION_URL = 'https://padnttpgzuotxeipjrry.supabase.co';
-var GESTION_ANON = 'sb_publishable_XeCtx06OFHQ3LsYxYk5NTA_kkWHlJHG';
+var GESTION_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
 var FV_ENVIANDO = {};
 /* las fichas de antes de la etapa 2 no traen las líneas separadas: se leen
    del link al mandarlas */
