@@ -13145,6 +13145,7 @@ function fvLeer(){
   if (!FV) return;
   var v = function(id){ var el = document.getElementById(id); return el ? el.value : null; };
   if (v('fv-items') !== null) FV.items = v('fv-items');
+  if (v('fv-term') !== null) FV.terminacion = v('fv-term').trim();
   if (v('fv-lista') !== null) FV.lista = fvPesos(v('fv-lista'));
   if (v('fv-env-monto') !== null) FV.envio.monto = fvPesos(v('fv-env-monto'));
   if (v('fv-env-comuna') !== null) FV.envio.comuna = v('fv-env-comuna').trim();
@@ -13207,6 +13208,8 @@ function fvHtmlFicha(x){
     '<textarea class="fv-in fv-items" id="fv-items" rows="3" placeholder="Cargando lo cotizado…" oninput="fvLeer()">'+escA(f.items)+'</textarea>'+
     '<div class="fv-lbl">Madera</div>'+
     '<div class="fv-tiers">'+tiers+'</div>'+madSel+
+    '<div class="fv-lbl">Terminación <span>la confirma el cliente</span></div>'+
+    '<input class="fv-in" id="fv-term" placeholder="Ej.: aceite natural, barniz exterior" value="'+escA(f.terminacion||'')+'" oninput="fvLeer()">'+
     (f.tier ? '<div class="fv-row1"><span>Precio de los productos</span><input class="fv-in" id="fv-lista" inputmode="numeric" value="'+(f.lista||'')+'" oninput="fvTotales()"></div>'+
               '<div class="fv-nota">El de la cotización, con tarjeta. Cámbialo solo si acordaron otro.</div>' : '')+
     '<div class="fv-lbl">Pago</div>'+
@@ -13230,6 +13233,7 @@ function fvFalta(f){
   if (!String(f.items||'').trim()) return 'Escribe qué productos son';
   if (!f.tier) return 'Elige la madera';
   if (!f.madera) return 'Elige cuál madera del grupo';
+  if (!String(f.terminacion||'').trim()) return 'Escribe la terminación: el cliente la confirma con su «Confirmo»';
   if (!(fvPesos(f.lista) > 0)) return 'Falta el precio de los productos';
   if (f.envio.tipo !== 'retiro' && !(fvPesos(f.envio.monto) > 0)) return 'Falta el valor del envío (o elige «Retira en Villarrica»)';
   if (f.envio.tipo !== 'retiro' && !String(f.envio.comuna||'').trim()) return 'Falta la comuna de entrega';
@@ -13248,13 +13252,23 @@ function fvMensaje(x, f){
     ? 'Factura a nombre de ' + f.doc.razon + ', RUT ' + f.doc.rut + '.'
     : 'Boleta a nombre de ' + (x.cliente || '').trim() + '.';
   var dirTxt = (f.envio.tipo !== 'retiro' && f.direccion) ? '\nDirección de entrega: ' + f.direccion + '.' : '';
-  return 'Hola' + (nom ? ' ' + nom : '') + ', te dejo el resumen de tu pedido para que lo revises:\n\n' +
-    String(f.items).trim() + '\nMadera: ' + f.madera + '\n\n' +
+  /* «Confirmo» (17-11-2026): el cliente confirma por escrito medidas, madera y
+     terminación, y queda avisado de que por ser a medida no hay retracto */
+  var term = String(f.terminacion || '').trim();
+  var prods = String((x.producto || '')).split('+');
+  var hayPuerta = prods.some(function(p){ return PUERTAS_P.indexOf(p.trim()) !== -1; });
+  var puertaTxt = hayPuerta
+    ? 'Como es una puerta: la medida es la de la hoja. Antes de confirmar, revisa el vano y lo que hay alrededor (vigas, muros, topes) y hacia dónde abre.\n\n'
+    : '';
+  return 'Hola' + (nom ? ' ' + nom : '') + ', antes de pasar tu pedido a producción, revisa que esto esté correcto:\n\n' +
+    String(f.items).trim() + '\nMadera: ' + f.madera + (term ? '\nTerminación: ' + term : '') + '\n\n' +
     'Productos: ' + fmt(c.productos) + (f.pago === 'transferencia' ? ' (con ' + Math.round(c.pct*100) + ' % por transferencia)' : '') + '\n' +
     envTxt + '\n*Total: ' + fmt(c.total) + '*\n\n' +
     pagoTxt + '\n\n' +
     docTxt + dirTxt + '\nPlazo de fabricación: 7 a 15 días hábiles.\n\n' +
-    '¿Está todo bien? Si me confirmas, lo pasamos a producción.';
+    puertaTxt +
+    'Por ser a tu medida no aplica el derecho a retracto: fabricamos exactamente con estas medidas, madera y terminación. Nuestras políticas: casazaru.cl/policies/refund-policy\n\n' +
+    'Si está todo correcto, respóndeme «Confirmo» y lo pasamos a producción.';
 }
 function fvVerMensaje(){
   fvLeer();
@@ -13308,12 +13322,13 @@ function fvHtmlConfirmar(x){
   var f = FV, c = fvCalc(f);
   return '<h3>¿Confirmó '+escA(waNombre(x) || x.cliente || 'el cliente')+'?</h3>'+
     '<div class="fv-sub">Ficha enviada el '+fmtFechaCorta(f.enviada || '')+'</div>'+
-    '<div class="fv-res">'+escA(f.items).replace(/\n/g,'<br>')+'<br>Madera: '+escA(f.madera)+'</div>'+
+    '<div class="fv-res">'+escA(f.items).replace(/\n/g,'<br>')+'<br>Madera: '+escA(f.madera)+(f.terminacion ? '<br>Terminación: '+escA(f.terminacion) : '')+'</div>'+
     '<div class="fv-tot">'+
       '<div class="t"><span>Total</span><span>'+fmt(c.total)+'</span></div>'+
       (f.abono_pct === 100 ? '<div class="s"><span>Paga todo</span><span>'+fmt(c.total)+'</span></div>'
                            : '<div class="s"><span>Abono 70 %</span><span>'+fmt(c.abono)+'</span></div>')+
     '</div>'+
+    '<div class="fv-nota" style="margin-bottom:8px">Vale solo si respondió «Confirmo» (o algo igual de claro) en el chat: eso es la prueba de las medidas.</div>'+
     '<button class="mbtn pri" onclick="fvConfirmar()">Sí, confirmó — venta ganada</button>'+
     '<button class="mbtn" style="text-align:center" onclick="fvCorregir()">Pidió un cambio: corregir la ficha</button>'+
     (waPhone(x.contacto) ? '<button class="mbtn" style="text-align:center" onclick="FV_VISTA=\'mensaje\';fvPintar()">Volver a mandar el mensaje</button>' : '')+
