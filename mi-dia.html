@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mi día · Casa Zaru</title>
+<!--
+  «Mi día» del equipo (17-11-2026). Versión recortada del «Mi día» del dueño: solo
+  lo que esta persona tiene que hacer (misiones, rutina, pulso de marketing, ideas).
+  Datos: tablas equipo_dias / equipo_marcas del proyecto Cotizador (migración 0003,
+  repo de Gestión: supabase-cotizador/migrations/0003_equipo_mi_dia.sql).
+  El día lo publica la corrida de las 07:30; aquí solo se marca. Qué ve cada cuenta
+  lo decide RLS (cada correo ve su fila; el admin las ve todas).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--verde:#485B3D;--terra:#B5652E;--cafe:#6b4a32;--gris:#f3f1ec;--linea:#e2ddd3;--txt:#2b2b2b;--suave:#77736b;--rojo:#b23a2a;--ambar:#c98a1a;--fondo:#faf9f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);font:15px/1.45 Poppins,system-ui,sans-serif;color:var(--txt)}
+.wrap{max-width:560px;margin:0 auto;padding:0 0 40px}
+.top{background:var(--verde);color:#fff;padding:18px 16px 14px;display:flex;align-items:flex-start;gap:10px}
+.top h1{font:600 24px 'Playfair Display',serif;margin:0}.top p{margin:3px 0 0;opacity:.85;font-size:13px}
+.top .sp{flex:1}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;font:500 12px Poppins;padding:5px 9px;cursor:pointer}
+.nav{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--linea);background:#fff;font-size:13px;overflow-x:auto}
+.nav a{padding:5px 11px;border-radius:14px;color:var(--suave);text-decoration:none;white-space:nowrap}.nav a.on{background:var(--verde);color:#fff}
+.sec{padding:16px 16px 4px}
+.sec h2{font:600 13.5px Poppins;margin:0 0 10px;display:flex;align-items:center;gap:8px;color:var(--cafe);background:var(--gris);border-radius:8px;padding:7px 10px}
+.sec h2 .n{margin-left:auto;font-weight:500;color:var(--suave)}
+svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mis{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px;margin-bottom:10px}
+.mis.venc{border-left:4px solid var(--rojo)}.mis.pronto{border-left:4px solid var(--ambar)}
+.mis.hecha{opacity:.75;border-left:4px solid var(--verde)}
+.chip{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:10px;background:var(--gris);color:var(--cafe);margin:0 4px 2px 0}
+.chip.r{background:#f6e3df;color:var(--rojo)}.chip.a{background:#f7ecd6;color:#8a5d0c}.chip.v{background:#e4ecdf;color:var(--verde)}
+.mis b{display:block;margin:6px 0 6px;font-weight:500;font-size:15px}
+.listo{font-size:13px;color:var(--suave);background:#fafaf7;border-radius:6px;padding:7px 9px}
+.listo em{font-style:normal;color:var(--verde);font-weight:500}
+.btns{display:flex;gap:6px;margin-top:10px}
+.btn{flex:1;font:500 13px Poppins;padding:10px 4px;border-radius:8px;border:1px solid var(--linea);background:#fff;color:var(--txt);cursor:pointer}
+.btn.ok{background:var(--verde);color:#fff;border-color:var(--verde)}
+.btn:disabled{opacity:.5}
+.form{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.form input{flex:1 1 200px;font:14px Poppins;padding:9px 10px;border:1px solid var(--linea);border-radius:8px;min-width:0}
+.form .btn{flex:0 0 auto;padding:9px 14px}
+.estado{margin-top:8px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.estado a{color:var(--verde);word-break:break-all}
+.link{background:none;border:none;color:var(--suave);text-decoration:underline;font:13px Poppins;cursor:pointer;padding:0}
+.rut label{display:flex;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px dashed var(--linea);font-size:14px;cursor:pointer}
+.rut input{accent-color:var(--verde);width:18px;height:18px}.rut small{margin-left:auto;color:var(--suave)}
+.pulso{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.k{background:#fff;border:1px solid var(--linea);border-radius:10px;padding:9px}
+.k .v{font:600 20px Poppins;display:block;color:var(--verde)}.k .l{font-size:11.5px;color:var(--suave);line-height:1.3;display:block}
+.k .c{font-size:11px;color:var(--suave)}
+.nota{font-size:12px;color:var(--suave);margin:6px 0 0}
+.idea{font-size:14px;padding:9px 11px;border-left:3px solid var(--terra);background:#fbf6f1;border-radius:0 8px 8px 0;margin-bottom:7px}
+.fijo div,.cola div{font-size:14px;padding:7px 0;border-bottom:1px solid var(--linea);display:flex;gap:10px}
+.fijo span{color:var(--suave);min-width:46px}
+.cola div{color:var(--suave)}
+.bloq{font-size:14px;background:#fbf6f1;border-radius:8px;padding:9px 11px;margin-bottom:6px}
+.bloqueo{padding:40px 20px;text-align:center}
+.bloqueo h2{font:600 22px 'Playfair Display',serif;margin:0 0 6px}.bloqueo p{color:var(--suave);margin:0 0 18px}
+.login{display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto;text-align:left}
+.login label{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.login input{font:15px Poppins;padding:10px;border:1px solid var(--linea);border-radius:8px}
+.login .msg{font-size:13px;color:var(--rojo);min-height:18px;margin:0}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw}
+.vieja{margin:12px 16px 0;background:#f7ecd6;color:#8a5d0c;border-radius:8px;padding:9px 11px;font-size:13px}
+</style></head><body>
+<div class="wrap">
+  <header class="top"><div><h1 id="tit">Tu día</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="salir" hidden>Salir</button></header>
+  <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a class="on" href="mi-dia.html">Mi día</a></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
+var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
+var ADMIN_MAIL = 'hola@casazaru.cl';   /* solo cosmético: lo que protege es RLS (0003) */
+/* Probar en el PC: localhost + ?local lee mi-dia-local.json y guarda las marcas solo en memoria. */
+var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]local\b/.test(location.search);
+var sb = LOCAL ? null : supabase.createClient(SB_URL, SB_KEY);
+var AQUI = location.origin + location.pathname;
+var HASH0 = location.hash;
+var MI_MAIL = '', DIA = null, FECHA = '', M = { misiones: {}, rutina: {} }, ABIERTO = {};
+
+function $(s){ return document.querySelector(s); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(t){ var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ e.hidden = true; }, 2600); }
+var ICO = {
+  diana: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
+  lista: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  barras: '<svg class="i" viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
+  idea: '<svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5V16h8v-2.5A6 6 0 0 0 12 3z"/></svg>',
+  candado: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  cal: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  cola: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+};
+function fechaCorta(iso){ if (!iso) return ''; var p = String(iso).slice(0,10).split('-'); return p[2] + '-' + p[1]; }
+var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function fechaLarga(iso){ var d = new Date(iso + 'T12:00:00'); return DIAS[d.getDay()] + ' ' + fechaCorta(iso); }
+function hoyISO(){ var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+
+function bloquear(t, p){ $('#main').innerHTML = '<div class="bloqueo"><h2>' + esc(t) + '</h2><p>' + esc(p) + '</p></div>'; $('#sub').textContent = ''; }
+function formLogin(msg){
+  bloquear('Mi día', 'Entra con el correo y la contraseña que te dio Casa Zaru.');
+  $('.bloqueo').insertAdjacentHTML('beforeend',
+    '<form class="login" id="login"><label>Correo<input type="email" id="lg-mail" autocomplete="username" required></label>' +
+    '<label>Contraseña<input type="password" id="lg-clave" autocomplete="current-password" required></label>' +
+    '<button class="btn ok" type="submit">Entrar</button><p class="msg" id="lg-msg">' + esc(msg || '') + '</p>' +
+    '<button class="link" type="button" id="lg-olvido">Primera vez u olvidé mi contraseña</button></form>');
+  $('#login').onsubmit = async function(e){
+    e.preventDefault(); $('#lg-msg').textContent = 'Entrando…';
+    var x = await sb.auth.signInWithPassword({ email: $('#lg-mail').value.trim(), password: $('#lg-clave').value });
+    if (x.error) { $('#lg-msg').textContent = 'Correo o contraseña incorrectos.'; return; }
+    location.reload();
+  };
+  $('#lg-olvido').onclick = async function(){
+    var m = $('#lg-mail').value.trim();
+    if (!m) { $('#lg-msg').textContent = 'Escribe tu correo arriba y vuelve a tocar aquí.'; return; }
+    $('#lg-msg').textContent = 'Enviando…';
+    var x = await sb.auth.resetPasswordForEmail(m, { redirectTo: AQUI });
+    $('#lg-msg').textContent = x.error ? 'No se pudo enviar. Intenta en unos minutos.' : 'Si ese correo tiene acceso, te llegó un link para crear tu contraseña.';
+  };
+}
+function formClave(){
+  bloquear('Crea tu contraseña', 'Elige una contraseña de al menos 8 caracteres.');
+  $('.bloqueo').insertAdjacentHTML('beforeend',
+    '<form class="login" id="clave"><label>Contraseña nueva<input type="password" id="cl-1" autocomplete="new-password" minlength="8" required></label>' +
+    '<label>Repítela<input type="password" id="cl-2" autocomplete="new-password" minlength="8" required></label>' +
+    '<button class="btn ok" type="submit">Guardar y entrar</button><p class="msg" id="cl-msg"></p></form>');
+  $('#clave').onsubmit = async function(e){
+    e.preventDefault();
+    if ($('#cl-1').value !== $('#cl-2').value) { $('#cl-msg').textContent = 'No coinciden.'; return; }
+    var x = await sb.auth.updateUser({ password: $('#cl-1').value });
+    if (x.error) { $('#cl-msg').textContent = 'El link venció. Vuelve a pedirlo desde «Primera vez».'; return; }
+    location.replace(AQUI);
+  };
+}
+
+/* ── Guardar marcas: la fila entera de hoy, con lo de esta persona (solo ella escribe su fila). ── */
+async function guardar(){
+  M.actualizado = new Date().toISOString();
+  if (LOCAL) { render(); return true; }
+  var r = await sb.from('equipo_marcas').upsert({ correo: MI_MAIL, fecha: FECHA, data: M }, { onConflict: 'correo,fecha' });
+  if (r.error) { toast('No se guardó. Revisa la conexión y vuelve a tocar.'); return false; }
+  render(); return true;
+}
+function marca(id){ return (M.misiones || {})[id] || null; }
+async function marcar(id, estado, extra){
+  var antes = JSON.stringify(M);
+  M.misiones = M.misiones || {};
+  if (!estado) delete M.misiones[id];
+  else M.misiones[id] = Object.assign({ estado: estado, ts: new Date().toISOString() }, extra || {});
+  ABIERTO = {};
+  if (!(await guardar())) { M = JSON.parse(antes); render(); }
+  else if (estado === 'listo') toast('Listo. Mañana aparece la siguiente de la cola.');
+}
+async function rutina(k, v){
+  var antes = JSON.stringify(M);
+  M.rutina = M.rutina || {}; if (v) M.rutina[k] = true; else delete M.rutina[k];
+  if (!(await guardar())) { M = JSON.parse(antes); render(); }
+}
+function linkValido(s){ return /^https?:\/\/\S+\.\S+/.test(s); }
+
+/* ── Pintar ── */
+function misionHTML(x){
+  var m = marca(x.id), cls = 'mis', chips = '<span class="chip">' + esc(x.area_nombre || x.area || '') + '</span>';
+  if (typeof x.dias === 'number' && x.dias < 0) { cls += ' venc'; chips += '<span class="chip r">Vencida ' + esc(fechaCorta(x.vence)) + '</span>'; }
+  else if (typeof x.dias === 'number' && x.dias <= 2) { cls += ' pronto'; chips += '<span class="chip a">' + (x.dias === 0 ? 'Vence hoy' : 'Vence ' + esc(fechaCorta(x.vence))) + '</span>'; }
+  else if (x.vence) chips += '<span class="chip">Vence ' + esc(fechaCorta(x.vence)) + '</span>';
+  if (x.saltos >= 2) chips += '<span class="chip a">' + x.saltos + ' saltos</span>';
+  var cuerpo = '';
+  if (m && m.estado === 'listo') {
+    cls += ' hecha';
+    cuerpo = '<div class="estado"><span class="chip v">Listo</span><a href="' + esc(m.link) + '" target="_blank" rel="noopener">' + esc(m.link) + '</a><button class="link" data-des="' + esc(x.id) + '">Deshacer</button></div>';
+  } else if (m && m.estado === 'bloqueada') {
+    cuerpo = '<div class="estado"><span class="chip a">Bloqueada</span>' + esc(m.por) + '<button class="link" data-des="' + esc(x.id) + '">Deshacer</button></div>';
+  } else if (m && m.estado === 'manana') {
+    cuerpo = '<div class="estado"><span class="chip">Pasa a mañana</span><button class="link" data-des="' + esc(x.id) + '">Deshacer</button></div>';
+  } else if (ABIERTO[x.id] === 'listo') {
+    cuerpo = '<div class="form"><input type="url" id="in-' + esc(x.id) + '" placeholder="Pega el link donde se ve hecho" inputmode="url">' +
+      '<button class="btn ok" data-ok-listo="' + esc(x.id) + '">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>';
+  } else if (ABIERTO[x.id] === 'bloqueada') {
+    cuerpo = '<div class="form"><input type="text" id="in-' + esc(x.id) + '" placeholder="¿Esperando a quién o qué?" maxlength="200">' +
+      '<button class="btn ok" data-ok-bloq="' + esc(x.id) + '">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>';
+  } else {
+    cuerpo = '<div class="btns"><button class="btn ok" data-abrir="listo" data-id="' + esc(x.id) + '">Listo</button>' +
+      '<button class="btn" data-abrir="bloqueada" data-id="' + esc(x.id) + '">Bloqueada</button>' +
+      '<button class="btn" data-manana="' + esc(x.id) + '">Mañana</button></div>';
+  }
+  return '<div class="' + cls + '">' + chips + '<b>' + esc(x.titulo) + '</b>' +
+    '<div class="listo"><em>Listo cuando:</em> ' + esc(x.listo_cuando || 'pegas el link donde se ve hecho.') + '</div>' + cuerpo + '</div>';
+}
+function render(){
+  var d = DIA, h = '';
+  var mis = d.misiones || [], rut = d.rutina || [];
+  var nListas = mis.filter(function(x){ var m = marca(x.id); return m && m.estado === 'listo'; }).length;
+  var nRut = rut.filter(function(r){ return (M.rutina || {})[r.k]; }).length;
+  $('#tit').textContent = 'Tu día' + (d.nombre ? ', ' + d.nombre : '');
+  $('#sub').textContent = fechaLarga(FECHA) + ' · ' + nListas + ' de ' + mis.length + ' misiones · rutina ' + nRut + '/' + rut.length;
+  if (FECHA !== hoyISO()) h += '<div class="vieja">Este es el día del ' + esc(fechaLarga(FECHA)) + '. El de hoy se publica a las 07:30.</div>';
+
+  h += '<section class="sec"><h2>' + ICO.diana + 'Misiones de hoy<span class="n">' + nListas + '/' + mis.length + '</span></h2>';
+  h += mis.length ? mis.map(misionHTML).join('') : '<p class="nota">Hoy no hay misiones. Avanza con la rutina.</p>';
+  h += '</section>';
+
+  if (rut.length) {
+    h += '<section class="sec rut"><h2>' + ICO.lista + 'Rutina fija (no son misiones)<span class="n">' + nRut + '/' + rut.length + '</span></h2>';
+    h += rut.map(function(r){ return '<label><input type="checkbox" data-rut="' + esc(r.k) + '"' + ((M.rutina || {})[r.k] ? ' checked' : '') + '>' + esc(r.label) + '<small>' + esc(r.cuando || '') + '</small></label>'; }).join('');
+    h += '</section>';
+  }
+  var p = d.pulso;
+  if (p && p.cifras && p.cifras.length) {
+    h += '<section class="sec"><h2>' + ICO.barras + esc(p.titulo || 'Pulso de marketing') + '</h2><div class="pulso">';
+    h += p.cifras.map(function(c){ return '<div class="k"><span class="v">' + esc(c.valor == null ? '—' : c.valor) + '</span><span class="l">' + esc(c.label) + '</span>' + (c.comp ? '<span class="c">' + esc(c.comp) + '</span>' : '') + '</div>'; }).join('');
+    h += '</div>' + (p.nota ? '<p class="nota">' + esc(p.nota) + '</p>' : '') + '</section>';
+  }
+  if (d.ideas && d.ideas.length) {
+    h += '<section class="sec"><h2>' + ICO.idea + 'Ideas para redes (de los chats)</h2>' + d.ideas.map(function(t){ return '<div class="idea">' + esc(t) + '</div>'; }).join('') + '</section>';
+  }
+  if (d.fijo && d.fijo.length) {
+    h += '<section class="sec fijo"><h2>' + ICO.cal + 'Fechas que vienen</h2>' + d.fijo.map(function(f){ return '<div><span>' + esc(fechaCorta(f.fecha)) + '</span>' + esc(f.obligacion) + '</div>'; }).join('') + '</section>';
+  }
+  if (d.bloqueadas && d.bloqueadas.length) {
+    h += '<section class="sec"><h2>' + ICO.candado + 'Bloqueadas<span class="n">' + d.bloqueadas.length + '</span></h2>' +
+      d.bloqueadas.map(function(b){ return '<div class="bloq"><b style="font-weight:500">' + esc(b.titulo) + '</b>' + (b.por ? ' · ' + esc(b.por) : '') + '</div>'; }).join('') + '</section>';
+  }
+  if (d.cola && d.cola.length) {
+    h += '<section class="sec cola"><h2>' + ICO.cola + 'En cola · salen cuando cierres las de hoy<span class="n">' + d.cola.length + '</span></h2>' +
+      d.cola.map(function(c){ return '<div>' + esc(c.titulo) + '</div>'; }).join('') + '</section>';
+  }
+  $('#main').innerHTML = h;
+}
+
+/* Un solo listener para todo (los botones se repintan). */
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button,[data-rut]'); if (!b || !DIA) return;
+  if (b.dataset.abrir) { ABIERTO = {}; ABIERTO[b.dataset.id] = b.dataset.abrir; render(); var i = document.getElementById('in-' + b.dataset.id); if (i) i.focus(); return; }
+  if (b.hasAttribute('data-cerrar')) { ABIERTO = {}; render(); return; }
+  if (b.dataset.manana) { marcar(b.dataset.manana, 'manana'); return; }
+  if (b.dataset.des) { marcar(b.dataset.des, null); return; }
+  if (b.dataset.okListo) {
+    var v = (document.getElementById('in-' + b.dataset.okListo).value || '').trim();
+    if (!linkValido(v)) { toast('Pega un link que empiece con https://'); return; }
+    marcar(b.dataset.okListo, 'listo', { link: v }); return;
+  }
+  if (b.dataset.okBloq) {
+    var t = (document.getElementById('in-' + b.dataset.okBloq).value || '').trim();
+    if (t.length < 3) { toast('Escribe a quién o qué estás esperando.'); return; }
+    marcar(b.dataset.okBloq, 'bloqueada', { por: t }); return;
+  }
+});
+document.addEventListener('change', function(e){ var r = e.target.dataset && e.target.dataset.rut; if (r) rutina(r, e.target.checked); });
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Enter' || !e.target.id || e.target.id.indexOf('in-') !== 0) return;
+  var g = document.querySelector('[data-ok-listo],[data-ok-bloq]'); if (g) g.click();
+});
+
+async function cargar(){
+  if (LOCAL) {
+    var j = await (await fetch('mi-dia-local.json', { cache: 'no-store' })).json();
+    DIA = j.data; FECHA = j.fecha; M = j.marcas || { misiones: {}, rutina: {} }; render(); return;
+  }
+  var r = await sb.auth.getSession();
+  var sess = r && r.data && r.data.session;
+  if (sess && /type=(recovery|invite)/.test(HASH0)) { formClave(); return; }
+  if (!sess) { formLogin(); return; }
+  $('#salir').hidden = false;
+  MI_MAIL = ((sess.user && sess.user.email) || '').toLowerCase();
+  /* El admin puede ver el de otra persona con ?de=correo (solo lectura de hecho: RLS no le deja marcar). */
+  var de = (new URLSearchParams(location.search).get('de') || '').toLowerCase();
+  var quien = (MI_MAIL === ADMIN_MAIL && de) ? de : MI_MAIL;
+  var q = await sb.from('equipo_dias').select('fecha,data').eq('correo', quien).order('fecha', { ascending: false }).limit(1);
+  if (q.error) { bloquear('No se pudo cargar tu día', 'Revisa la conexión y recarga la página.'); return; }
+  if (!q.data || !q.data.length) { bloquear('Todavía no hay un día para esta cuenta', 'Se publica de lunes a sábado a las 07:30.'); return; }
+  DIA = q.data[0].data; FECHA = q.data[0].fecha;
+  var mq = await sb.from('equipo_marcas').select('data').eq('correo', quien).eq('fecha', FECHA).limit(1);
+  M = (mq.data && mq.data[0] && mq.data[0].data) || { misiones: {}, rutina: {} };
+  render();
+}
+$('#salir').onclick = async function(){ await sb.auth.signOut(); location.replace(AQUI); };
+cargar().catch(function(){ bloquear('No se pudo cargar tu día', 'Revisa la conexión y recarga la página.'); });
+</script>
+</body></html>
