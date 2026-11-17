@@ -64,9 +64,26 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .login .msg{font-size:13px;color:var(--rojo);min-height:18px;margin:0}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw}
 .vieja{margin:12px 16px 0;background:#f7ecd6;color:#8a5d0c;border-radius:8px;padding:9px 11px;font-size:13px}
+/* 18-11-2026: su semana, para contenido, anuncios activos y nota para Tomás */
+.semana{display:flex;gap:6px;padding:0 16px 14px;background:var(--verde)}
+.semana div{flex:1;background:rgba(255,255,255,.14);color:#fff;border-radius:8px;padding:6px 8px;font-size:11.5px;line-height:1.25}
+.semana b{display:block;font:600 16px Poppins}
+.ped{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--linea);font-size:14px;align-items:flex-start}
+.ped .n{font:600 11.5px Poppins;color:var(--suave);min-width:38px;padding-top:2px}
+.ped .t{flex:1;min-width:0}.ped .t b{font-weight:500;display:block}.ped .t small{color:var(--suave);font-size:12.5px}
+.ped button{flex:none;font:500 12px Poppins;white-space:nowrap;padding:5px 10px;border-radius:12px;border:1px solid var(--linea);color:var(--cafe);background:#fff;cursor:pointer}
+.ped button.on{background:#e4ecdf;border-color:#e4ecdf;color:var(--verde)}
+.ad{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:13.5px}
+.ad .t{flex:1;min-width:0;word-break:break-word}.ad small{display:block;color:var(--suave);font-size:12px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:5px;background:#b9b3a7}
+.dot.verde{background:#5d8a4a}.dot.ambar{background:var(--ambar)}.dot.rojo{background:var(--rojo)}
+.notabox textarea{width:100%;font:14px Poppins;border:1px solid var(--linea);border-radius:8px;padding:9px;min-height:70px;resize:vertical}
+.notabox .env{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px;font-size:12px;color:var(--suave)}
+.notabox .env .btn{flex:0 0 auto;padding:8px 16px}
 </style></head><body>
 <div class="wrap">
   <header class="top"><div><h1 id="tit">Tu día</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="salir" hidden>Salir</button></header>
+  <div class="semana" id="semana" hidden></div>
   <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a class="on" href="mi-dia.html">Mi día</a></nav>
   <main id="main"></main>
 </div>
@@ -94,7 +111,10 @@ var ICO = {
   idea: '<svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5V16h8v-2.5A6 6 0 0 0 12 3z"/></svg>',
   candado: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
   cal: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
-  cola: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'
+  cola: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  camara: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>',
+  parlante: '<svg class="i" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg>',
+  globo: '<svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>'
 };
 function fechaCorta(iso){ if (!iso) return ''; var p = String(iso).slice(0,10).split('-'); return p[2] + '-' + p[1]; }
 var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
@@ -162,7 +182,22 @@ async function rutina(k, v){
   if (!(await guardar())) { M = JSON.parse(antes); render(); }
 }
 function linkValido(s){ return /^https?:\/\/\S+\.\S+/.test(s); }
-
+/* Fotos pedidas al taller y nota para Tomás (18-11-2026): van en la misma fila de marcas. */
+async function fotos(num){
+  var antes = JSON.stringify(M);
+  M.fotos = M.fotos || {};
+  if (M.fotos[num]) delete M.fotos[num]; else M.fotos[num] = new Date().toISOString();
+  if (!(await guardar())) { M = JSON.parse(antes); render(); }
+  else if (M.fotos[num]) toast('Anotado. Tomás lo ve mañana en su «Mi día».');
+}
+var BORRADOR = null;
+async function guardarNota(){
+  var t = (BORRADOR == null ? '' : BORRADOR).trim().slice(0, 500);
+  var antes = JSON.stringify(M);
+  if (t) M.nota = { texto: t, ts: new Date().toISOString() }; else delete M.nota;
+  if (!(await guardar())) { M = JSON.parse(antes); render(); return; }
+  BORRADOR = null; toast(t ? 'Nota guardada. Le llega mañana a Tomás.' : 'Nota borrada.');
+}
 /* ── Pintar ── */
 function misionHTML(x){
   var m = marca(x.id), cls = 'mis', chips = '<span class="chip">' + esc(x.area_nombre || x.area || '') + '</span>';
@@ -199,6 +234,14 @@ function render(){
   var nRut = rut.filter(function(r){ return (M.rutina || {})[r.k]; }).length;
   $('#tit').textContent = 'Tu día' + (d.nombre ? ', ' + d.nombre : '');
   $('#sub').textContent = fechaLarga(FECHA) + ' · ' + nListas + ' de ' + mis.length + ' misiones · rutina ' + nRut + '/' + rut.length;
+  var sm = d.semana, se = $('#semana');
+  if (sm && sm.dias) {
+    se.innerHTML = '<div><b>' + esc(sm.listas) + ' de ' + esc(sm.misiones) + '</b>misiones listas</div>' +
+      '<div><b>' + esc(sm.rutina) + ' de ' + esc(sm.rutina_total) + '</b>rutina</div>' +
+      (sm.reels_meta ? '<div><b>' + esc(sm.reels) + ' de ' + esc(sm.reels_meta) + '</b>reels</div>' : '');
+    se.title = 'Esta semana hasta ayer (' + sm.dias + (sm.dias === 1 ? ' día' : ' días') + ')';
+    se.hidden = false;
+  } else se.hidden = true;
   if (FECHA !== hoyISO()) h += '<div class="vieja">Este es el día del ' + esc(fechaLarga(FECHA)) + '. El de hoy se publica a las 07:30.</div>';
 
   h += '<section class="sec"><h2>' + ICO.diana + 'Misiones de hoy<span class="n">' + nListas + '/' + mis.length + '</span></h2>';
@@ -210,11 +253,29 @@ function render(){
     h += rut.map(function(r){ return '<label><input type="checkbox" data-rut="' + esc(r.k) + '"' + ((M.rutina || {})[r.k] ? ' checked' : '') + '>' + esc(r.label) + '<small>' + esc(r.cuando || '') + '</small></label>'; }).join('');
     h += '</section>';
   }
+  if (d.contenido && d.contenido.length) {
+    var fo = M.fotos || {};
+    h += '<section class="sec"><h2>' + ICO.camara + 'Para contenido · sale del taller esta semana<span class="n">' + d.contenido.length + '</span></h2>';
+    h += d.contenido.map(function(c){
+      var on = !!fo[c.num];
+      return '<div class="ped"><span class="n">' + esc(c.num) + '</span><div class="t"><b>' + esc(c.titulo) + '</b><small>' + esc(c.detalle || '') + '</small></div>' +
+        '<button data-fotos="' + esc(c.num) + '"' + (on ? ' class="on"' : '') + '>' + (on ? 'Fotos pedidas' : 'Pedir fotos') + '</button></div>';
+    }).join('');
+    h += '<p class="nota">Pedidos que se despachan esta semana. «Pedir fotos» le avisa a Tomás para que el taller las saque antes de embalar.</p></section>';
+  }
   var p = d.pulso;
   if (p && p.cifras && p.cifras.length) {
     h += '<section class="sec"><h2>' + ICO.barras + esc(p.titulo || 'Pulso de marketing') + '</h2><div class="pulso">';
     h += p.cifras.map(function(c){ return '<div class="k"><span class="v">' + esc(c.valor == null ? '—' : c.valor) + '</span><span class="l">' + esc(c.label) + '</span>' + (c.comp ? '<span class="c">' + esc(c.comp) + '</span>' : '') + '</div>'; }).join('');
     h += '</div>' + (p.nota ? '<p class="nota">' + esc(p.nota) + '</p>' : '') + '</section>';
+  }
+  var an = d.anuncios;
+  if (an && an.items && an.items.length) {
+    h += '<section class="sec"><h2>' + ICO.parlante + 'Anuncios activos · semana al ' + esc(fechaCorta(an.fecha)) + '<span class="n">' + an.items.length + (an.activos > an.items.length ? ' de ' + esc(an.activos) : '') + '</span></h2>';
+    h += an.items.map(function(a){
+      return '<div class="ad"><span class="dot ' + esc(a.color) + '"></span><div class="t">' + esc(a.nombre) + '<small>' + esc(a.dato) + (a.conjunto ? ' · ' + esc(a.conjunto) : '') + '</small></div></div>';
+    }).join('');
+    h += (an.nota ? '<p class="nota">' + esc(an.nota) + '</p>' : '') + '</section>';
   }
   if (d.ideas && d.ideas.length) {
     h += '<section class="sec"><h2>' + ICO.idea + 'Ideas para redes (de los chats)</h2>' + d.ideas.map(function(t){ return '<div class="idea">' + esc(t) + '</div>'; }).join('') + '</section>';
@@ -222,6 +283,11 @@ function render(){
   if (d.fijo && d.fijo.length) {
     h += '<section class="sec fijo"><h2>' + ICO.cal + 'Fechas que vienen</h2>' + d.fijo.map(function(f){ return '<div><span>' + esc(fechaCorta(f.fecha)) + '</span>' + esc(f.obligacion) + '</div>'; }).join('') + '</section>';
   }
+  var nt = (M.nota && M.nota.texto) || '';
+  var val = BORRADOR == null ? nt : BORRADOR;
+  h += '<section class="sec notabox"><h2>' + ICO.globo + 'Nota para Tomás</h2>' +
+    '<textarea id="nota" maxlength="500" placeholder="Algo que necesitas, una idea o una duda. Le llega mañana en su «Mi día».">' + esc(val) + '</textarea>' +
+    '<div class="env"><span>' + (nt ? 'Guardada · la puedes cambiar hasta el cierre' : 'Una nota por día · le llega mañana') + '</span><button class="btn ok" data-nota>Guardar</button></div></section>';
   if (d.bloqueadas && d.bloqueadas.length) {
     h += '<section class="sec"><h2>' + ICO.candado + 'Bloqueadas<span class="n">' + d.bloqueadas.length + '</span></h2>' +
       d.bloqueadas.map(function(b){ return '<div class="bloq"><b style="font-weight:500">' + esc(b.titulo) + '</b>' + (b.por ? ' · ' + esc(b.por) : '') + '</div>'; }).join('') + '</section>';
@@ -239,6 +305,8 @@ document.addEventListener('click', function(e){
   if (b.dataset.abrir) { ABIERTO = {}; ABIERTO[b.dataset.id] = b.dataset.abrir; render(); var i = document.getElementById('in-' + b.dataset.id); if (i) i.focus(); return; }
   if (b.hasAttribute('data-cerrar')) { ABIERTO = {}; render(); return; }
   if (b.dataset.manana) { marcar(b.dataset.manana, 'manana'); return; }
+  if (b.dataset.fotos) { fotos(b.dataset.fotos); return; }
+  if (b.hasAttribute('data-nota')) { var ta = document.getElementById('nota'); BORRADOR = ta ? ta.value : ''; guardarNota(); return; }
   if (b.dataset.des) { marcar(b.dataset.des, null); return; }
   if (b.dataset.okListo) {
     var v = (document.getElementById('in-' + b.dataset.okListo).value || '').trim();
@@ -252,6 +320,7 @@ document.addEventListener('click', function(e){
   }
 });
 document.addEventListener('change', function(e){ var r = e.target.dataset && e.target.dataset.rut; if (r) rutina(r, e.target.checked); });
+document.addEventListener('input', function(e){ if (e.target.id === 'nota') BORRADOR = e.target.value; });
 document.addEventListener('keydown', function(e){
   if (e.key !== 'Enter' || !e.target.id || e.target.id.indexOf('in-') !== 0) return;
   var g = document.querySelector('[data-ok-listo],[data-ok-bloq]'); if (g) g.click();
