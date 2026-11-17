@@ -1895,6 +1895,19 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 .marca .maderas-acc summary::after { content: 'Ver  +'; white-space: pre; flex-shrink: 0; background: var(--verde); color: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; border-radius: 20px; padding: 7px 14px; line-height: 1; }
 .marca .maderas-acc[open] summary::after { content: 'Cerrar  −'; background: #fff; color: var(--verde); box-shadow: inset 0 0 0 1.5px var(--verde); }
 .marca .maderas-acc[open] .ma-minis { display: none; }
+/* Bloques desplegables de la cotización (17-11-2026) */
+.plegs { display: grid; gap: 8px; margin-bottom: 14px; }
+.pleg { border: 1px solid #C9D3C1; border-radius: 12px; background: #fff; overflow: hidden; }
+.pleg-sola { margin-bottom: 22px; }
+.pleg summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 14px; color: var(--verde, #485B3D); font-family: 'Nanum Myeongjo', serif; font-size: 16px; font-weight: 800; }
+.pleg summary::-webkit-details-marker { display: none; }
+.pleg summary::after { content: '+'; flex-shrink: 0; font-family: 'Poppins', sans-serif; font-size: 22px; font-weight: 400; line-height: 1; color: var(--terracota, #B5652E); }
+.pleg[open] summary::after { content: '−'; }
+.pleg .ibox-b { padding-top: 0; }
+.pleg .pleg-b { padding: 0 12px 12px; }
+.pleg .medida-av, .pleg .bankrow { margin-bottom: 0; }
+.pleg .bankrow { margin-top: 10px; }
+.pleg .pleg-b.warranty, .marca .pleg .pleg-b.warranty { border: 0; border-radius: 0; background: #fff; margin: 0; padding: 0 14px 14px; text-align: left; }
 .marca .warranty { background: #fff; border: 1px solid #C9D3C1; border-left: 4px solid var(--verde); }
 .marca .warranty strong { font-size: 15px; color: var(--verde); }
 .marca .warranty .tag-link { display: table; margin: 8px auto 0; }
@@ -7855,19 +7868,26 @@ function medidaAviso() {
       '<li>Que la instale personal calificado, dejando la holgura para que la madera se mueva.</li>' +
       '<li>Si es de exterior, debe quedar <strong>bajo alero o protegida</strong> de la lluvia y el sol directo.</li>' +
     '</ul></div>';
-  return '<div class="medida-av">' +
+  /* 17-11-2026: el aviso va plegado en «Condiciones» (pedido del usuario: toda la
+     información queda, pero desplegable). La línea de aceptación sigue a la vista. */
+  return '<details class="pleg"><summary>Condiciones · hecho a tu medida</summary><div class="pleg-b"><div class="medida-av">' +
       '<div class="ma-t">HECHO A TU MEDIDA</div>' +
       '<div class="ma-r">Por ser a tu medida, no aplica el derecho a retracto.</div>' +
       '<p>Fabricamos exactamente con las medidas, la madera y la terminación que nos confirmas: revísalas antes de pagar el abono.</p>' +
       '<p>Si llega con daño, la reponemos sin costo. <a href="https://casazaru.cl/policies/refund-policy" target="_blank" class="tag-link">Ver política de cambios, devoluciones y garantía</a></p>' +
-    '</div>' + puertas +
-    '<p class="ma-acepta">Al pagar el abono aceptas los <a href="https://casazaru.cl/policies/terms-of-service" target="_blank">Términos y condiciones</a> y la <a href="https://casazaru.cl/policies/refund-policy" target="_blank">Política de cambios, devoluciones y garantía</a> de casazaru.cl.</p>';
+    '</div>' + puertas + '</div></details>';
+}
+function aceptaLinea() {
+  if (!polNueva()) return '';
+  return '<p class="ma-acepta">Al pagar el abono aceptas los <a href="https://casazaru.cl/policies/terms-of-service" target="_blank">Términos y condiciones</a> y la <a href="https://casazaru.cl/policies/refund-policy" target="_blank">Política de cambios, devoluciones y garantía</a> de casazaru.cl.</p>';
 }
 function boxes() {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
-  return medidaAviso() + '<div class="iboxes">' +
-    '<div class="ibox ibox-incluye">' +
-      '<div class="ibox-h">Tu pedido incluye</div>' +
+  /* 17-11-2026: mismos textos de siempre, pero cada bloque se abre con «+».
+     El PDF los abre todos (ver pdfClon). */
+  return '<div class="plegs">' +
+    '<details class="pleg ibox-incluye">' +
+      '<summary>Tu pedido incluye</summary>' +
       '<div class="ibox-b"><ul>' +
         '<li>Madera maciza <strong>100% sólida</strong> del sur de Chile, sin MDF, melamina ni enchapado</li>' +
         '<li>Hecha <strong>a mano y a tu medida</strong> en nuestro taller</li>' +
@@ -7877,9 +7897,9 @@ function boxes() {
         '<li>Cera de mantención incluida (100 cc)</li>' +
         '<li><strong>Garantía de 5 años</strong></li>' +
       '</ul>' + noIncluyeHtml() + '</div>' +
-    '</div>' +
-    '<div class="ibox">' +
-      '<div class="ibox-h">Pago y proceso</div>' +
+    '</details>' +
+    '<details class="pleg">' +
+      '<summary>Pago y proceso</summary>' +
       '<div class="ibox-b"><ul>' +
         '<li>Confirmar con <strong>70%</strong> · Transferencia o tarjeta</li>' +
         '<li>Fabricación <strong>7 a 15 días hábiles</strong> desde confirmación</li>' +
@@ -7889,13 +7909,14 @@ function boxes() {
         '<li>Al recibir, revisa tu pieza: si llega con daño, avísanos <strong>dentro de 12 horas</strong> con fotos y la reponemos sin costo</li>' +
         /* con profesional: mismo valor con tarjeta, pero en 1 cuota (las cuotas suben la comisión de Mercado Pago) */
         (sinTransf() ? '<li>Mismo valor con transferencia o tarjeta, en <strong>1 cuota</strong></li>' : '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>') +
-      '</ul></div>' +
-    '</div>' +
-  '</div>' +
-  '<div class="bankrow">' +
-    (sinTransf() ? '' : 'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>') +
-    '<strong>Muvale Diseño SpA</strong> · RUT 77.157.082-8 · Banco BCI · Cta Cte 97457175 · hola@casazaru.cl' +
-  '</div>' +
+      '</ul>' +
+      '<div class="bankrow">' +
+        (sinTransf() ? '' : 'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>') +
+        '<strong>Muvale Diseño SpA</strong> · RUT 77.157.082-8 · Banco BCI · Cta Cte 97457175 · hola@casazaru.cl' +
+      '</div></div>' +
+    '</details>' +
+    medidaAviso() +
+  '</div>' + aceptaLinea() +
   maderasAcordeon();
 }
 
@@ -8156,6 +8177,9 @@ function pdfLienzo(){
   var copia = document.getElementById('q-out').cloneNode(true);
   copia.id = '';   /* sin ids duplicados en el documento */
   copia.style.cssText = 'position:static;width:' + PDF_ANCHO + 'px;max-width:' + PDF_ANCHO + 'px;margin:0;padding:18px 22px;background:#FAF8F2;';
+  /* el PDF lleva toda la información: los desplegables van abiertos */
+  var plegs = copia.querySelectorAll('details.pleg');
+  for (var k = 0; k < plegs.length; k++) plegs[k].open = true;
   ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor'].forEach(function(sel){
     var lista = copia.querySelectorAll(sel);
     for (var i = 0; i < lista.length; i++) lista[i].parentNode.removeChild(lista[i]);
@@ -8298,12 +8322,11 @@ function muestrario() {
 
 function warranty() {
   if (comboCaptura) return '';
-  return '<div class="warranty">' +
-    '<strong>Garantía Casa Zaru · 5 años</strong>' +
+  return '<details class="pleg pleg-sola"><summary>Garantía Casa Zaru · 5 años</summary><div class="pleg-b warranty">' +
     'Cubre fallas estructurales de fabricación, válida desde la fecha de compra. ' +
     'No cubre exposición directa y constante a lluvia o sol sin la protección adecuada, ni daños por uso indebido o intervenciones de terceros. ' +
     '<a href="https://drive.google.com/file/d/18j3u74v3-BWCeu5nRxQUD_tus1P4U380/view?usp=sharing" target="_blank" class="tag-link">Ver términos y condiciones →</a>' +
-  '</div>';
+  '</div></details>';
 }
 
 /* ── SHARE LINK ── */
