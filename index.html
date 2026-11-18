@@ -11696,6 +11696,8 @@ function waFila(f, i){
            '<svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg>Responder</a>';
     else if (f.mensaje)
       h += '<button class="pz-acc wap'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" onclick="waCopiar(\''+id+'\')" title="No tengo su número: copia el mensaje y búscalo en WhatsApp">Copiar mensaje</button>';
+    /* Abrir chat (18-11-2026): abre la conversación en la app de WhatsApp del PC, sin texto, siempre activo */
+    h += '<a class="pz-acc" href="#" onclick="return waAbrirChat(this,\''+id+'\')" title="Abre la conversación en la app de WhatsApp">Abrir chat</a>';
     h += '<button class="pz-acc" onclick="waMarcar(\''+id+'\',\'respondido\')">Ya respondí</button>';
     if (abierta) h += '<button class="wa-no" onclick="waMarcar(\''+id+'\',\'no_corresponde\')">No corresponde</button>';
   }
@@ -11783,7 +11785,24 @@ function waResponder(a, id){
     showToast('Completa lo que está entre corchetes antes de enviarlo', false);
     return false;
   }
-  a.href = 'https://wa.me/' + f.telefono + '?text=' + encodeURIComponent(txt);
+  /* whatsapp:// abre la app instalada (PC o celular) con el texto puesto, sin pasar por el navegador */
+  a.removeAttribute('target');
+  a.href = 'whatsapp://send?phone=' + waTel(f.telefono) + '&text=' + encodeURIComponent(txt);
+  return true;
+}
+function waTel(t){
+  var d = String(t || '').replace(/\D/g, '');
+  if (d.length === 9 && d.charAt(0) === '9') d = '56' + d;   /* celular chileno sin el 56 */
+  return d;
+}
+function waAbrirChat(a, id){
+  var f = waBuscar(id); if (!f) return false;
+  var tel = waTel(f.telefono);
+  if (tel.length >= 11) { a.href = 'whatsapp://send?phone=' + tel; return true; }
+  /* sin número: se abre WhatsApp y se copia el nombre para buscarlo */
+  try { navigator.clipboard.writeText(f.cliente || ''); } catch (e) {}
+  a.href = 'whatsapp://';
+  showToast('No tengo su número: copié «' + (f.cliente || '') + '», búscalo en WhatsApp', false);
   return true;
 }
 function waCopiar(id){
