@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mensajes · Casa Zaru</title>
+<!--
+  Bandeja de mensajes (18-11-2026) · ETAPA 1: SOLO LECTURA.
+  Muestra los chats que llegan al WhatsApp de la bandeja (+56 9 9305 1122) por la API oficial
+  de Meta y el borrador que deja Claude para cada uno. Desde aquí todavía NO se envía nada:
+  el borrador se copia. El botón Enviar es la etapa 2.
+  Datos: tablas mensajes_chats / mensajes / mensajes_borradores del proyecto Cotizador
+  (migración 0004 y función mensajes-webhook, en el repo de Gestión: supabase-cotizador/).
+  Quién ve qué lo decide RLS (el dueño y los vendedores activos); esta página no escribe.
+  Probar en el PC: localhost + ?local lee mensajes-local.json (datos de mentira).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--verde:#485B3D;--terra:#B5652E;--cafe:#6b4a32;--gris:#f3f1ec;--linea:#e2ddd3;--txt:#2b2b2b;--suave:#77736b;--rojo:#b23a2a;--ambar:#c98a1a;--fondo:#faf9f6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);font:15px/1.45 Poppins,system-ui,sans-serif;color:var(--txt)}
+.wrap{max-width:560px;margin:0 auto;padding:0 0 40px}
+.top{background:var(--verde);color:#fff;padding:18px 16px 14px;display:flex;align-items:flex-start;gap:8px}
+.top h1{font:600 24px 'Playfair Display',serif;margin:0}.top p{margin:3px 0 0;opacity:.85;font-size:13px}
+.top .sp{flex:1}
+.top button{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;font:500 12px Poppins;padding:5px 9px;cursor:pointer}
+.nav{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--linea);background:#fff;font-size:13px;overflow-x:auto}
+.nav a{padding:5px 11px;border-radius:14px;color:var(--suave);text-decoration:none;white-space:nowrap}.nav a.on{background:var(--verde);color:#fff}
+svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--linea)}
+.tab{flex:1;background:none;border:none;border-bottom:3px solid transparent;font:500 12.5px Poppins;color:var(--suave);padding:11px 4px;cursor:pointer}
+.tab.on{color:var(--verde);font-weight:600;border-bottom-color:var(--verde)}
+.fila{display:flex;gap:10px;width:100%;text-align:left;background:#fff;border:none;border-bottom:1px solid var(--linea);padding:12px 14px;font:inherit;color:inherit;cursor:pointer}
+.ini{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font:600 12px Poppins;background:var(--gris);color:var(--cafe);flex:none}
+.txt{flex:1;min-width:0;display:block}
+.l1{display:flex;justify-content:space-between;gap:8px}
+.nom{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hora{font-size:12px;color:var(--suave);white-space:nowrap}
+.ult{display:block;font-size:13.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.borr{display:block;font-size:12.5px;color:var(--suave);margin-top:4px;padding-left:8px;border-left:2px solid var(--terra);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chips{display:block;margin-top:5px}
+.chip{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:10px;background:var(--gris);color:var(--cafe);margin:0 4px 2px 0}
+.chip.wa{background:#e4ecdf;color:var(--verde)}.chip.ig{background:#f4e4d8;color:var(--terra)}
+.chip.r{background:#f6e3df;color:var(--rojo)}.chip.a{background:#f7ecd6;color:#8a5d0c}
+.vacio{color:var(--suave);font-size:14px;text-align:center;padding:34px 20px;margin:0}
+.cab{display:flex;gap:10px;align-items:center;background:#fff;border-bottom:1px solid var(--linea);padding:10px 12px;position:sticky;top:0;z-index:2}
+.cab b{display:block;font-size:15px}.cab small{display:block;color:var(--suave);font-size:12px}
+.cab div{min-width:0}.cab b,.cab small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.atras{background:var(--gris);border:none;border-radius:8px;width:36px;height:36px;display:grid;place-items:center;cursor:pointer;flex:none}
+.chat{background:#f3efe8;padding:12px;display:flex;flex-direction:column;gap:8px}
+.dia{align-self:center;font-size:11.5px;color:var(--suave);background:#fff;border-radius:10px;padding:2px 10px}
+.msg{max-width:84%;padding:8px 10px;border-radius:10px;font-size:14px;background:#fff;align-self:flex-start;word-wrap:break-word;overflow-wrap:anywhere}
+.msg.yo{align-self:flex-end;background:#e4ecdf}
+.msg small{display:block;font-size:11px;color:var(--suave);margin-top:3px}
+.vent{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:10px 12px;margin:10px 12px 0;border-radius:9px;background:#e4ecdf;color:var(--verde)}
+.vent svg.i{stroke:var(--verde);margin-top:1px}
+.vent.no{background:#f7ecd6;color:#8a5d0c}.vent.no svg.i{stroke:#8a5d0c}
+.bloq{display:flex;gap:8px;align-items:flex-start;background:#f6e3df;color:var(--rojo);font-size:13px;padding:10px 12px;margin:10px 12px 0;border-radius:9px}
+.bloq svg.i{stroke:var(--rojo);margin-top:1px}
+.draft{border:1.5px dashed var(--terra);background:#fffcf8;border-radius:10px;padding:10px 12px;margin:10px 12px 0}
+.draft .lab{font:600 11.5px Poppins;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);display:flex;gap:6px;align-items:center}
+.draft .lab svg.i{width:14px;height:14px;stroke:var(--terra)}
+.draft p{font-size:14px;margin:7px 0}
+.checks{list-style:none;padding:0;margin:9px 0 0;font-size:12.5px;color:var(--suave)}
+.checks li{display:flex;gap:6px;align-items:flex-start;padding:2px 0}
+.checks svg{width:15px;height:15px;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:2px;stroke:#5d8a4a}
+.checks li.no{color:var(--rojo)}.checks li.no svg{stroke:var(--rojo)}
+.bots{display:flex;gap:8px;padding:10px 12px 0}
+.btn{flex:1;font:600 14px Poppins;padding:11px 6px;border-radius:9px;border:1px solid var(--linea);background:#fff;color:var(--txt);cursor:pointer}
+.btn.ok{background:var(--verde);color:#fff;border-color:var(--verde)}
+.nota{font-size:12px;color:var(--suave);margin:8px 14px 0}
+.bloqueo{padding:40px 20px;text-align:center}
+.bloqueo h2{font:600 22px 'Playfair Display',serif;margin:0 0 6px}.bloqueo p{color:var(--suave);margin:0 0 18px}
+.login{display:flex;flex-direction:column;gap:10px;max-width:320px;margin:0 auto;text-align:left}
+.login label{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.login input{font:15px Poppins;padding:10px;border:1px solid var(--linea);border-radius:8px}
+.login .msgl{font-size:13px;color:var(--rojo);min-height:18px;margin:0}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw;z-index:5}
+</style></head><body>
+<div class="wrap">
+  <header class="top"><div><h1>Mensajes</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="act" hidden>Actualizar</button><button id="salir" hidden>Salir</button></header>
+  <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a href="mi-dia.html">Mi día</a><a class="on" href="mensajes.html">Mensajes</a></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+var SB_URL = 'https://cmxqorsyxoltrakxawro.supabase.co';
+var SB_KEY = 'sb_publishable_Z4Bu9BnRkjiKmuCUzUGz0Q_hwxOc-Go';
+/* Probar en el PC: localhost + ?local lee mensajes-local.json (datos de mentira, nada de la base). */
+var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]local\b/.test(location.search);
+var sb = LOCAL ? null : supabase.createClient(SB_URL, SB_KEY);
+var AQUI = location.origin + location.pathname;
+
+var TABS = [ { k: 'por_aprobar', n: 'Por aprobar' }, { k: 'de_cesar', n: 'De César' }, { k: 'esperando', n: 'Esperando' } ];
+var VACIO = {
+  por_aprobar: 'No hay mensajes por aprobar.',
+  de_cesar: 'César no ha tomado ningún chat.',
+  esperando: 'No hay chats esperando respuesta del cliente.'
+};
+var CHATS = [], ULT = {}, BORR = {}, MSGS = [], TAB = 'por_aprobar', ABIERTO = null, LISTO = false, FIRMA = '';
+var LOCAL_MSGS = {};
+
+function $(s){ return document.querySelector(s); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(t){ var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ e.hidden = true; }, 2600); }
+var ICO = {
+  atras: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  reloj: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  candado: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  lapiz: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  si: '<svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>',
+  no: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+
+/* ── Formato ─────────────────────────────────────────────────────────── */
+function dos(n){ return (n < 10 ? '0' : '') + n; }
+function hora(d){ return dos(d.getHours()) + ':' + dos(d.getMinutes()); }
+function diaCorto(d){ return dos(d.getDate()) + '-' + dos(d.getMonth() + 1); }
+function mismoDia(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function cuando(iso){
+  if (!iso) return '';
+  var d = new Date(iso); if (isNaN(d.getTime())) return '';
+  return mismoDia(d, new Date()) ? hora(d) : diaCorto(d) + ' ' + hora(d);
+}
+function corta(s, n){ s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function telBonito(t){
+  var d = String(t == null ? '' : t).replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length === 11 && d.indexOf('569') === 0) return '+56 9 ' + d.slice(3, 7) + ' ' + d.slice(7);
+  return '+' + d;
+}
+function nombre(c){ return c.nombre || telBonito(c.telefono) || (c.canal === 'instagram' ? 'Cliente de Instagram' : 'Cliente'); }
+function iniciales(c){
+  var n = String(c.nombre || '').trim();
+  if (n) { var p = n.split(/\s+/); return (p[0].charAt(0) + (p[1] ? p[1].charAt(0) : '')).toUpperCase(); }
+  var d = String(c.telefono || '').replace(/\D/g, '');
+  return d ? d.slice(-2) : '··';
+}
+function anuncio(c){ var o = c.origen || {}; return o.headline || o.ad_title || ''; }
+var TIPOS = { image: 'foto', audio: 'audio', video: 'video', document: 'documento', sticker: 'sticker', location: 'ubicación', contacts: 'contacto', reaction: 'reacción', adjunto: 'archivo adjunto' };
+function textoMsg(m){ return m.texto || (m.tipo && m.tipo !== 'text' ? '[' + (TIPOS[m.tipo] || m.tipo) + ']' : '[mensaje sin texto]'); }
+function ventana(c){
+  if (!c.ultimo_entrante_at) return { abierta: false, texto: 'El cliente todavía no escribe.' };
+  var ms = new Date(c.ultimo_entrante_at).getTime() + 24 * 3600000 - Date.now();
+  if (!(ms > 0)) return { abierta: false, texto: 'Ventana de 24 horas cerrada: solo se le puede escribir con una plantilla aprobada.' };
+  var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+  return { abierta: true, texto: 'Ventana de 24 horas abierta: quedan ' + (h ? h + ' h ' : '') + m + ' min para responder con texto libre.' };
+}
+function chatPorId(id){ for (var i = 0; i < CHATS.length; i++) if (Number(CHATS[i].id) === Number(id)) return CHATS[i]; return null; }
+
+/* ── Pantallas ───────────────────────────────────────────────────────── */
+function bloquear(t, p){ $('#main').innerHTML = '<div class="bloqueo"><h2>' + esc(t) + '</h2><p>' + esc(p) + '</p></div>'; $('#sub').textContent = ''; }
+function formLogin(){
+  bloquear('Mensajes', 'Entra con tu correo y contraseña del panel de Casa Zaru.');
+  $('.bloqueo').insertAdjacentHTML('beforeend',
+    '<form class="login" id="login"><label>Correo<input type="email" id="lg-mail" autocomplete="username" required></label>' +
+    '<label>Contraseña<input type="password" id="lg-clave" autocomplete="current-password" required></label>' +
+    '<button class="btn ok" type="submit">Entrar</button><p class="msgl" id="lg-msg"></p></form>');
+  $('#login').onsubmit = async function(e){
+    e.preventDefault(); $('#lg-msg').textContent = 'Entrando…';
+    var x = await sb.auth.signInWithPassword({ email: $('#lg-mail').value.trim(), password: $('#lg-clave').value });
+    if (x.error) { $('#lg-msg').textContent = 'Correo o contraseña incorrectos.'; return; }
+    location.reload();
+  };
+}
+
+function fila(c){
+  var u = ULT[c.id], b = BORR[c.id], rev = (b && b.revision) || {};
+  var chips = '<span class="chip ' + (c.canal === 'instagram' ? 'ig' : 'wa') + '">' + (c.canal === 'instagram' ? 'Instagram' : 'WhatsApp') + '</span>';
+  var an = anuncio(c);
+  if (an) chips += '<span class="chip">' + esc(corta('Anuncio: ' + an, 34)) + '</span>';
+  if (rev.necesita_humano) chips += '<span class="chip r">Necesita una persona</span>';
+  if (rev.falta_precio) chips += '<span class="chip a">Falta un precio</span>';
+  if (!ventana(c).abierta) chips += '<span class="chip a">Fuera de 24 h</span>';
+  return '<button class="fila" data-chat="' + Number(c.id) + '"><span class="ini">' + esc(iniciales(c)) + '</span><span class="txt">' +
+    '<span class="l1"><span class="nom">' + esc(nombre(c)) + '</span><span class="hora">' + esc(cuando(u ? u.enviado_at : c.ultimo_entrante_at)) + '</span></span>' +
+    '<span class="ult">' + esc(u ? (u.autor !== 'cliente' ? 'Nosotros: ' : '') + textoMsg(u) : 'Sin mensajes') + '</span>' +
+    (b ? '<span class="borr">' + esc(b.texto) + '</span>' : '') +
+    '<span class="chips">' + chips + '</span></span></button>';
+}
+function renderLista(){
+  var g = { por_aprobar: [], de_cesar: [], esperando: [] };
+  CHATS.forEach(function(c){ if (g[c.estado]) g[c.estado].push(c); });
+  var h = '<div class="tabs">' + TABS.map(function(t){
+    return '<button class="tab' + (TAB === t.k ? ' on' : '') + '" data-tab="' + t.k + '">' + esc(t.n) + ' · ' + g[t.k].length + '</button>';
+  }).join('') + '</div>';
+  h += g[TAB].length ? g[TAB].map(fila).join('') : '<p class="vacio">' + esc(VACIO[TAB]) + '</p>';
+  $('#main').innerHTML = h;
+  $('#sub').textContent = g.por_aprobar.length + ' por aprobar · actualizado ' + hora(new Date());
+}
+
+function chk(ok, si, no){ return '<li' + (ok ? '' : ' class="no"') + '>' + (ok ? ICO.si : ICO.no) + '<span>' + esc(ok ? si : no) + '</span></li>'; }
+function borradorHtml(c, b){
+  var rev = b.revision || {};
+  var parr = String(b.texto).split(/\n{2,}/).map(function(p){ return '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join('');
+  var t = Number(c.toques_sin_respuesta) || 0;
+  var ch = chk(!c.tomado_por, 'César no ha entrado a este chat', 'Chat de César: esto es solo una sugerencia para él') +
+    chk(t < 2, 'Toques sin respuesta: ' + t + ' de 2', 'Ya van ' + t + ' toques sin respuesta: no insistir') +
+    chk(rev.sin_palabras_prohibidas !== false, 'Sin palabras ni signos prohibidos', 'Revisar: usa una palabra o signo prohibido');
+  if (rev.falta_precio) ch += chk(false, '', 'Falta completar un precio (busca [PRECIO: …] en el texto)');
+  if (rev.necesita_humano) ch += chk(false, '', 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : ''));
+  return '<div class="draft"><div class="lab">' + ICO.lapiz + (b.para === 'cesar' ? 'Sugerencia para César' : 'Borrador de Claude') + '</div>' + parr +
+    '<ul class="checks">' + ch + '</ul></div>' +
+    '<div class="bots"><button class="btn ok" data-copiar="' + Number(b.id) + '">Copiar borrador</button></div>' +
+    '<p class="nota">Por ahora el borrador solo se copia. El botón Enviar llega en la etapa siguiente.</p>';
+}
+function burbujas(){
+  var h = '', ant = null;
+  MSGS.forEach(function(m){
+    var d = new Date(m.enviado_at);
+    if (!isNaN(d.getTime()) && (!ant || !mismoDia(ant, d))) { h += '<div class="dia">' + esc(mismoDia(d, new Date()) ? 'Hoy' : diaCorto(d)) + '</div>'; ant = d; }
+    var mio = m.autor !== 'cliente';
+    var quien = m.autor === 'automatico' ? ' · automático' : (m.autor === 'externo' ? ' · desde el celular' : (m.autor === 'bandeja' ? ' · ' + (m.enviado_por || 'bandeja') : ''));
+    h += '<div class="msg' + (mio ? ' yo' : '') + '">' + esc(textoMsg(m)).replace(/\n/g, '<br>') +
+      '<small>' + esc((isNaN(d.getTime()) ? '' : hora(d)) + (mio ? quien : '')) + '</small></div>';
+  });
+  return h;
+}
+function renderChat(){
+  var c = chatPorId(ABIERTO);
+  if (!c) { ABIERTO = null; renderLista(); return; }
+  var b = BORR[c.id], v = ventana(c), an = anuncio(c);
+  var sub = (c.canal === 'instagram' ? 'Instagram' : 'WhatsApp') + (c.nombre && c.telefono ? ' · ' + telBonito(c.telefono) : '') + (an ? ' · Anuncio: ' + an : '');
+  var h = '<div class="cab"><button class="atras" data-atras aria-label="Volver a la lista">' + ICO.atras + '</button><div><b>' + esc(nombre(c)) + '</b><small>' + esc(sub) + '</small></div></div>';
+  h += '<div class="chat">' + (MSGS.length ? burbujas() : '<p class="vacio">Cargando mensajes…</p>') + '</div>';
+  h += '<div class="vent' + (v.abierta ? '' : ' no') + '">' + ICO.reloj + '<span>' + esc(v.texto) + '</span></div>';
+  if (c.tomado_por) h += '<div class="bloq">' + ICO.candado + '<span>Este chat lo lleva ' + esc(c.tomado_por === 'cesar' ? 'César' : c.tomado_por) + '. Aquí nada sale automático.</span></div>';
+  h += b ? borradorHtml(c, b) : '<p class="vacio">No hay borrador pendiente para este chat.</p>';
+  $('#main').innerHTML = h;
+}
+function render(){ if (ABIERTO) renderChat(); else renderLista(); }
+
+/* ── Datos (solo lectura) ────────────────────────────────────────────── */
+async function cargarDatos(){
+  var chats, msgs, borrs;
+  if (LOCAL) {
+    var j = await (await fetch('mensajes-local.json', { cache: 'no-store' })).json();
+    var isoHace = function(min){ return new Date(Date.now() - min * 60000).toISOString(); };
+    chats = j.chats.map(function(c){ c.ultimo_entrante_at = c._hace_min == null ? null : isoHace(c._hace_min); return c; });
+    msgs = []; LOCAL_MSGS = {};
+    j.mensajes.forEach(function(m){ m.enviado_at = isoHace(m._hace_min); (LOCAL_MSGS[m.chat_id] = LOCAL_MSGS[m.chat_id] || []).push(m); msgs.push(m); });
+    msgs.sort(function(a, b){ return a.enviado_at < b.enviado_at ? 1 : -1; });
+    borrs = j.borradores;
+  } else {
+    var r = await Promise.all([
+      sb.from('mensajes_chats').select('id,canal,nombre,telefono,estado,tomado_por,origen,ultimo_entrante_at,toques_sin_respuesta')
+        .is('deleted_at', null).neq('estado', 'cerrado').order('ultimo_entrante_at', { ascending: false, nullsFirst: false }).limit(300),
+      sb.from('mensajes').select('chat_id,autor,tipo,texto,enviado_at').order('enviado_at', { ascending: false }).limit(800),
+      sb.from('mensajes_borradores').select('id,chat_id,texto,revision,para,created_at').eq('estado', 'pendiente').order('created_at', { ascending: false }).limit(300)
+    ]);
+    if (r[0].error || r[1].error || r[2].error) throw new Error('consulta');
+    chats = r[0].data || []; msgs = r[1].data || []; borrs = r[2].data || [];
+  }
+  CHATS = chats; ULT = {}; BORR = {};
+  msgs.forEach(function(m){ if (!ULT[m.chat_id]) ULT[m.chat_id] = m; });       /* vienen del más nuevo al más viejo */
+  borrs.forEach(function(b){ if (!BORR[b.chat_id]) BORR[b.chat_id] = b; });
+}
+async function cargarMsgs(id){
+  if (LOCAL) { MSGS = (LOCAL_MSGS[id] || []).slice().sort(function(a, b){ return a.enviado_at < b.enviado_at ? -1 : 1; }); return; }
+  var r = await sb.from('mensajes').select('id,autor,tipo,texto,enviado_at,enviado_por').eq('chat_id', Number(id)).order('enviado_at', { ascending: true }).limit(400);
+  if (r.error) throw new Error('mensajes');
+  MSGS = r.data || [];
+}
+function firma(){ return JSON.stringify([CHATS, BORR, ABIERTO, MSGS.length]); }
+async function recargar(silencio){
+  try {
+    await cargarDatos();
+    if (ABIERTO) await cargarMsgs(ABIERTO);
+    var f = firma();
+    if (!silencio || f !== FIRMA) render();      /* al refrescar solo, no se repinta si nada cambió */
+    FIRMA = f;
+    if (!silencio) toast('Actualizado.');
+  } catch (e) { if (!silencio) toast('No se pudo actualizar. Revisa la conexión.'); }
+}
+async function abrir(id){
+  ABIERTO = Number(id); MSGS = []; render(); window.scrollTo(0, 0);
+  try { await cargarMsgs(ABIERTO); } catch (e) { toast('No se pudieron cargar los mensajes.'); }
+  FIRMA = firma(); render();
+}
+async function copiar(id){
+  var b = null;
+  for (var k in BORR) if (Number(BORR[k].id) === Number(id)) b = BORR[k];
+  if (!b) return;
+  try { await navigator.clipboard.writeText(b.texto); toast('Borrador copiado.'); }
+  catch (e) {
+    var ta = document.createElement('textarea'); ta.value = b.texto; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Borrador copiado.'); } catch (e2) { toast('No se pudo copiar.'); }
+    document.body.removeChild(ta);
+  }
+}
+
+/* Un solo listener para todo (los botones se repintan). */
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button'); if (!b || !LISTO) return;
+  if (b.dataset.tab) { TAB = b.dataset.tab; render(); return; }
+  if (b.dataset.chat) { abrir(b.dataset.chat); return; }
+  if (b.hasAttribute('data-atras')) { ABIERTO = null; MSGS = []; FIRMA = firma(); render(); window.scrollTo(0, 0); return; }
+  if (b.dataset.copiar) { copiar(b.dataset.copiar); return; }
+});
+
+async function cargar(){
+  if (!LOCAL) {
+    var r = await sb.auth.getSession();
+    var sess = r && r.data && r.data.session;
+    if (!sess) { formLogin(); return; }
+    $('#salir').hidden = false;
+    /* Solo para mostrar un aviso claro: lo que protege es RLS (0004). */
+    var p = await sb.rpc('mensajes_puede_leer');
+    if (p.error || p.data !== true) { bloquear('Tu cuenta no tiene acceso a Mensajes', 'Si lo necesitas, pídeselo a Casa Zaru.'); return; }
+  }
+  await cargarDatos();
+  LISTO = true; FIRMA = firma();
+  $('#act').hidden = false;
+  render();
+  setInterval(function(){ if (!document.hidden) recargar(true); }, 60000);
+}
+$('#salir').onclick = async function(){ await sb.auth.signOut(); location.replace(AQUI); };
+$('#act').onclick = function(){ recargar(false); };
+cargar().catch(function(){ bloquear('No se pudieron cargar los mensajes', 'Revisa la conexión y recarga la página.'); });
+</script>
+</body></html>
