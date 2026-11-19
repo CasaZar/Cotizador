@@ -265,8 +265,13 @@ function aplicar(d){
   EDITABLES.forEach(function(k){ d[k] = (k in c) ? c[k] : d._orig[k]; });
   d._pap = !!(e && e.en_papelera_at && !e.eliminada_at);
   d._elim = !!(e && e.eliminada_at);
-  d._txt = norm([d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre,d.anio].join(' '));
+  d._num = +(/^M(\d+)$/.exec(num(d)) || [0,0])[1];
+  d._txt = norm([num(d),d.id,d.producto,d.madera,d.tipo,d.etapa,d.ambiente,d.forma,d.uso,d.descripcion,d.gancho,d.que_pasa,(d.etiquetas||[]).join(' '),d.ruta,d.nombre,d.anio].join(' '));
 }
+/* Número para buscar (19-11-2026): las piezas de Google Fotos tienen id interno g… (lo usan
+   fototeca_ediciones y fototeca_usos, no se cambia) y un número M aparte, en numeros.json. */
+function num(d){ return d.n || d.id; }
+function ponerNumeros(x){ var m = (x && x.n) || {}; DATA.forEach(function(d){ if (m[d.id]) d.n = m[d.id]; }); }
 function nUsos(d){ return (USADAS[d.id] || []).length; }
 async function cargarUsos(){
   if (LOCAL) return;
@@ -343,7 +348,10 @@ function filtrar(mantener){
     if (soloia && !esIA(d)) return false;
     if (sinper && d.personas) return false;
     for (var c in f) if (f[c] && d[c] !== f[c]) return false;
-    return toks.every(function(t){ return d._txt.indexOf(t) !== -1; });
+    return toks.every(function(t){
+      var mn = /^m0*(\d+)$/.exec(t);   /* «m345», «m0345» o «m00345» buscan esa pieza exacta */
+      return mn ? d._num === +mn[1] : d._txt.indexOf(t) !== -1;
+    });
   }).sort(function(a,b){ return (b.calidad||0) - (a.calidad||0); });
   mostrados = 0; $('#grilla').innerHTML = ''; pintar(mantener ? Math.max(antes, PASO) : PASO);
   var vis = DATA.filter(function(d){ return !d._elim && !d._pap; }).length;
@@ -411,7 +419,7 @@ function mostrar(d){
   ACTUAL = d; EDITANDO = false;
   var L = lista(), i = L.indexOf(d);
   var url = 'https://drive.google.com/file/d/'+d.drive+'/view';
-  var filas = [['Producto',d.producto],
+  var filas = [['Número',num(d)],['Producto',d.producto],
     ['Madera',d.madera+(d.confianza&&d.confianza!=='alta'?' (confianza '+d.confianza+')':'')],
     ['Tipo',d.tipo==='video'?'Video'+(d.dur?' · '+fmtDur(d.dur):'')+(d.tipo_video?' · '+d.tipo_video:''):'Foto'],
     ['Año',d.anio],['Etapa',d.etapa],['Ambiente',d.ambiente],['Uso',d.uso],['Calidad',d.calidad?d.calidad+' de 5':''],
@@ -426,7 +434,7 @@ function mostrar(d){
       '<button class="flecha der" id="sig" aria-label="Siguiente"'+(i >= 0 && i < L.length-1 ? '' : ' disabled')+'>›</button></div>'+
     '<div class="cuerpo">'+
       '<h2>'+esc(titulo(d))+'</h2>'+
-      '<div class="meta">'+esc([d.tipo==='video'?'Video'+(d.dur?' '+fmtDur(d.dur):''):'Foto', d.anio, d.calidad?'calidad '+d.calidad:'', d.uso].filter(Boolean).join(' · '))+'</div>'+
+      '<div class="meta">'+esc([num(d), d.tipo==='video'?'Video'+(d.dur?' '+fmtDur(d.dur):''):'Foto', d.anio, d.calidad?'calidad '+d.calidad:'', d.uso].filter(Boolean).join(' · '))+'</div>'+
       (d._pap ? '<div class="aviso-pap"><b>Está en la papelera.</b> Nadie más la ve en la Fototeca.</div>' : '')+
       (ES_ADMIN ? segIA : (esIA(d)?'<div class="aviso-ia"><b>'+(d.ia==='sí'?'Imagen hecha con IA.':'Posible imagen hecha con IA.')+'</b> No usarla como foto de un trabajo real'+(d.ia_nota?' ('+esc(d.ia_nota)+')':'')+'.</div>':''))+
       (d.personas?'<div class="aviso-per"><b>Aparecen personas.</b> Pedir permiso antes de publicar.</div>':'')+
@@ -438,7 +446,7 @@ function mostrar(d){
       '<dl class="datos">'+filas.map(function(r){ return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'; }).join('')+'</dl>'+
       '<div class="etq">'+(d.etiquetas||[]).map(function(t){ return '<button data-t="'+esc(t)+'">'+esc(t)+'</button>'; }).join('')+'</div>'+
       (d.drive ? '<div class="fila"><button class="btn sec" id="copiar">Copiar link de Drive</button><a class="btn sec" href="'+esc(url)+'" target="_blank" rel="noopener">Abrir en Drive</a></div>' : '<p class="nota">El original está en el Drive, en la carpeta de arriba.</p>')+
-      '<p class="nota">'+esc(d.nombre)+' · '+esc(d.id)+'</p>'+
+      '<p class="nota">'+esc(d.nombre)+(d.n ? '' : ' · '+esc(d.id))+'</p>'+
     '</div>';
   cerrarHoja();
   $('#ficha').hidden = false; $('#velo').hidden = false; document.body.classList.add('fija');
@@ -590,7 +598,7 @@ function formulario(d){
   $('#ficha').innerHTML =
     '<div class="fbar"><button class="volver" id="cancelar">‹ Cancelar</button><button class="guardar" id="guardar">Guardar</button></div>'+
     '<div class="cuerpo">'+
-      '<div style="display:flex;gap:12px;align-items:center"><div class="papelito" style="border:0;padding:0"><div class="mini" id="fmini"></div></div><div><b>Editar datos</b><div class="meta">'+esc(d.id)+' · '+(d.tipo==='video'?'video':'foto')+'</div></div></div>'+
+      '<div style="display:flex;gap:12px;align-items:center"><div class="papelito" style="border:0;padding:0"><div class="mini" id="fmini"></div></div><div><b>Editar datos</b><div class="meta">'+esc(num(d))+' · '+(d.tipo==='video'?'video':'foto')+'</div></div></div>'+
       '<label class="campo"><span class="lbl">Producto</span>'+selectCampo('e-producto','producto',d.producto)+'</label>'+
       '<label class="campo"><span class="lbl">Madera</span>'+selectCampo('e-madera','madera',d.madera)+'</label>'+
       '<label class="campo"><span class="lbl">Uso</span>'+selectCampo('e-uso','uso',d.uso,USOS)+'</label>'+
@@ -729,6 +737,7 @@ async function cargar(){
     var j = await (await fetch('fototeca-local/datos.json')).json();
     try { var j2l = await (await fetch('fototeca-local/datos-2.json')).json(); j.items = j.items.concat(j2l.items || []); } catch (e) {}
     META = j.meta; DATA = j.items;
+    try { ponerNumeros(await (await fetch('fototeca-local/numeros.json')).json()); } catch (e) {}
     sprites().forEach(function(s){ SPR[s] = 'fototeca-local/'+nomSprite(s); });
     ES_ADMIN = /[?&]admin\b/.test(location.search);
     PUEDE_USOS = ES_ADMIN || /[?&]usos\b/.test(location.search); MI_MAIL = ES_ADMIN ? 'hola@casazaru.cl' : 'emerge.smm@gmail.com';
@@ -756,6 +765,11 @@ async function cargar(){
     try { var x2 = await (await fetch(a2.data.signedUrl)).json(); j2.items = j2.items.concat(x2.items || []); } catch (e) {}
   }
   DATA = j2.items;
+  /* numeros.json: el número M de las piezas de Google Fotos. Si no está, se ve el id g… como antes. */
+  var a3 = await sb.storage.from(BUCKET).createSignedUrl('numeros.json', FIRMA_SEG);
+  if (!a3.error && a3.data) {
+    try { ponerNumeros(await (await fetch(a3.data.signedUrl)).json()); } catch (e) {}
+  }
   var nombres = sprites().map(nomSprite);
   var b = await sb.storage.from(BUCKET).createSignedUrls(nombres, FIRMA_SEG);
   (b.data || []).forEach(function(x){
