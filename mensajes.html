@@ -378,13 +378,25 @@ async function llamar(ruta, cuerpo){
   try { j = await r.json(); } catch (e) { j = null; }
   return { status: r.status, j: j || {} };
 }
-function pedirEnvio(){
+async function pedirEnvio(){
   var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
   var no = motivoNoEnviar(c);
   if (no) { toast(no, 5000); return; }
   var texto = String(textoActual(c, BORR[c.id]) || '').trim();
   if (!texto) { toast('Escribe el mensaje antes de enviar.'); return; }
   if (texto.indexOf('[PRECIO') !== -1) { toast('Falta completar un precio: busca [PRECIO: …] en el texto.', 5000); return; }
+  /* Antes de confirmar se vuelve a leer el chat. La pantalla se refresca cada minuto, así que el cliente
+     pudo escribir algo que todavía no se ve: en ese caso primero se muestra, y recién después se envía. */
+  var antes = MSGS.length;
+  OCUPADO = true;
+  try { await cargarDatos(); await cargarMsgs(ABIERTO); }
+  catch (e) { OCUPADO = false; toast('No se pudo revisar el chat. Mira la conexión y vuelve a intentar.', 5000); return; }
+  OCUPADO = false; FIRMA = firma();
+  c = chatPorId(ABIERTO);
+  if (!c) { ABIERTO = null; render(); return; }
+  if (MSGS.length !== antes) { render(); toast('Llegó un mensaje nuevo en este chat. Léelo antes de enviar.', 6000); return; }
+  no = motivoNoEnviar(c);
+  if (no) { render(); toast(no, 5000); return; }
   CONFIRMA = 'enviar'; render();
 }
 async function enviarConfirmado(){
