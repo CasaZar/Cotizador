@@ -3,14 +3,16 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Mensajes · Casa Zaru</title>
 <!--
-  Bandeja de mensajes (18-11-2026) · ETAPA 1: SOLO LECTURA.
+  Bandeja de mensajes (18-11-2026) · ETAPA 2: LEER, EDITAR Y ENVIAR CON APROBACIÓN.
   Muestra los chats que llegan al WhatsApp de la bandeja (+56 9 9305 1122) por la API oficial
-  de Meta y el borrador que deja Claude para cada uno. Desde aquí todavía NO se envía nada:
-  el borrador se copia. El botón Enviar es la etapa 2.
+  de Meta y el borrador que deja Claude para cada uno. Una persona lo revisa, lo edita si quiere
+  y aprieta Enviar (con confirmación). Nada sale automático.
   Datos: tablas mensajes_chats / mensajes / mensajes_borradores del proyecto Cotizador
-  (migración 0004 y función mensajes-webhook, en el repo de Gestión: supabase-cotizador/).
-  Quién ve qué lo decide RLS (el dueño y los vendedores activos); esta página no escribe.
-  Probar en el PC: localhost + ?local lee mensajes-local.json (datos de mentira).
+  (migraciones 0004 y 0006 y función mensajes-webhook, en el repo de Gestión: supabase-cotizador/).
+  Esta página NO escribe en la base: Enviar y «Tomar este chat» llaman a la función
+  (rutas /enviar y /tomar) con la sesión del usuario, y es la base la que acepta o rechaza
+  (ventana de 24 horas, tope de 2 sin respuesta, chat tomado, texto). Quién ve qué lo decide RLS.
+  Probar en el PC: localhost + ?local lee mensajes-local.json (datos de mentira; el envío se simula).
 -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -59,6 +61,14 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .draft .lab{font:600 11.5px Poppins;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);display:flex;gap:6px;align-items:center}
 .draft .lab svg.i{width:14px;height:14px;stroke:var(--terra)}
 .draft p{font-size:14px;margin:7px 0}
+.draft textarea{display:block;width:100%;margin-top:8px;font:14px/1.45 Poppins,system-ui,sans-serif;color:var(--txt);background:#fff;border:1px solid var(--linea);border-radius:8px;padding:9px 10px;resize:vertical;min-height:150px}
+.draft textarea[readonly]{background:#f6f3ee;color:var(--suave)}
+.conf{margin:10px 12px 0;background:#fff;border:1px solid var(--terra);border-radius:10px;padding:10px 12px 12px}
+.conf p{margin:0;font-size:13.5px}
+.conf .bots{padding:10px 0 0}
+.btn:disabled{opacity:.5;cursor:default}
+.nota.aviso{color:#8a5d0c}
+.link{background:none;border:none;color:var(--verde);text-decoration:underline;font:500 13px Poppins;cursor:pointer;padding:0}
 .checks{list-style:none;padding:0;margin:9px 0 0;font-size:12.5px;color:var(--suave)}
 .checks li{display:flex;gap:6px;align-items:flex-start;padding:2px 0}
 .checks svg{width:15px;height:15px;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:2px;stroke:#5d8a4a}
@@ -98,11 +108,16 @@ var VACIO = {
   esperando: 'No hay chats esperando respuesta del cliente.'
 };
 var CHATS = [], ULT = {}, BORR = {}, MSGS = [], TAB = 'por_aprobar', ABIERTO = null, LISTO = false, FIRMA = '';
-var LOCAL_MSGS = {};
+var LOCAL_MSGS = {}, LOCAL_DATOS = null;
+var ADMIN_MAIL = 'hola@casazaru.cl';   /* solo para mostrar: quién puede qué lo deciden RLS y la función */
+var MI_MAIL = '', VEND = {};
+/* Redacción: lo que la persona escribió por chat, la clave de cada envío (reintentar no duplica),
+   la confirmación abierta ('enviar' | 'tomar') y si hay una llamada en curso. */
+var EDIT = {}, CLAVE = {}, CONFIRMA = null, OCUPADO = false;
 
 function $(s){ return document.querySelector(s); }
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function toast(t){ var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ e.hidden = true; }, 2600); }
+function toast(t, ms){ var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ e.hidden = true; }, ms || 2600); }
 var ICO = {
   atras: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
   reloj: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -190,19 +205,60 @@ function renderLista(){
 }
 
 function chk(ok, si, no){ return '<li' + (ok ? '' : ' class="no"') + '>' + (ok ? ICO.si : ICO.no) + '<span>' + esc(ok ? si : no) + '</span></li>'; }
-function borradorHtml(c, b){
-  var rev = b.revision || {};
-  var parr = String(b.texto).split(/\n{2,}/).map(function(p){ return '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join('');
+/* Quién lleva el chat y qué puedo hacer yo (la función y la base lo vuelven a comprobar). */
+function quienLleva(c){
+  var t = String(c.tomado_por || '').toLowerCase();
+  if (!t) return '';
+  if (t === 'cesar') return 'César';
+  if (MI_MAIL && t === MI_MAIL) return 'tú';
+  return VEND[t] || (t === ADMIN_MAIL ? 'Tomás' : t.split('@')[0]);
+}
+function puedoEscribir(c){
+  var t = String(c.tomado_por || '').toLowerCase();
+  return !t || t === MI_MAIL || MI_MAIL === ADMIN_MAIL;
+}
+function motivoNoEnviar(c){
+  if (c.canal !== 'whatsapp') return 'Por ahora solo se puede enviar por WhatsApp.';
+  if (!ventana(c).abierta) return 'No se puede enviar: la ventana de 24 horas está cerrada.';
+  if ((Number(c.toques_sin_respuesta) || 0) >= 2) return 'No se puede enviar: ya van 2 mensajes sin respuesta y no se insiste.';
+  if (!puedoEscribir(c)) return 'No se puede enviar: este chat lo lleva ' + quienLleva(c) + '.';
+  return '';
+}
+function textoActual(c, b){ return EDIT[c.id] != null ? EDIT[c.id] : (b ? b.texto : ''); }
+
+function redaccionHtml(c, b){
+  var rev = (b && b.revision) || {};
   var t = Number(c.toques_sin_respuesta) || 0;
-  var ch = chk(!c.tomado_por, 'César no ha entrado a este chat', 'Chat de César: esto es solo una sugerencia para él') +
-    chk(t < 2, 'Toques sin respuesta: ' + t + ' de 2', 'Ya van ' + t + ' toques sin respuesta: no insistir') +
-    chk(rev.sin_palabras_prohibidas !== false, 'Sin palabras ni signos prohibidos', 'Revisar: usa una palabra o signo prohibido');
-  if (rev.falta_precio) ch += chk(false, '', 'Falta completar un precio (busca [PRECIO: …] en el texto)');
-  if (rev.necesita_humano) ch += chk(false, '', 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : ''));
-  return '<div class="draft"><div class="lab">' + ICO.lapiz + (b.para === 'cesar' ? 'Sugerencia para César' : 'Borrador de Claude') + '</div>' + parr +
-    '<ul class="checks">' + ch + '</ul></div>' +
-    '<div class="bots"><button class="btn ok" data-copiar="' + Number(b.id) + '">Copiar borrador</button></div>' +
-    '<p class="nota">Por ahora el borrador solo se copia. El botón Enviar llega en la etapa siguiente.</p>';
+  var no = motivoNoEnviar(c);
+  var fijo = OCUPADO || CONFIRMA === 'enviar';
+  var dis = OCUPADO ? ' disabled' : '';
+  var h = '<div class="draft"><div class="lab">' + ICO.lapiz + esc(b ? (b.para === 'cesar' ? 'Sugerencia de Claude' : 'Borrador de Claude') : 'Tu respuesta') + '</div>' +
+    '<textarea id="txt" rows="7" maxlength="4000" placeholder="Escribe la respuesta…"' + (fijo ? ' readonly' : '') + '>' + esc(textoActual(c, b)) + '</textarea>';
+  if (b) {
+    var ch = chk(!c.tomado_por, 'Nadie ha tomado este chat', 'Chat tomado: aquí nada sale automático') +
+      chk(t < 2, 'Mensajes sin respuesta: ' + t + ' de 2', 'Ya van ' + t + ' mensajes sin respuesta: no insistir') +
+      chk(rev.sin_palabras_prohibidas !== false, 'Sin palabras ni signos prohibidos', 'Revisar: usa una palabra o signo prohibido');
+    if (rev.falta_precio) ch += chk(false, '', 'Falta completar un precio (busca [PRECIO: …] en el texto)');
+    if (rev.necesita_humano) ch += chk(false, '', 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : ''));
+    h += '<ul class="checks">' + ch + '</ul>';
+  }
+  h += '</div>';
+  if (CONFIRMA === 'enviar') {
+    return h + '<div class="conf"><p>Se enviará por WhatsApp a <b>' + esc(nombre(c)) + '</b>' +
+      (c.nombre && c.telefono ? ' (' + esc(telBonito(c.telefono)) + ')' : '') + '. No se puede deshacer.</p>' +
+      '<div class="bots"><button class="btn ok" data-confirmar="enviar"' + dis + '>' + (OCUPADO ? 'Enviando…' : 'Sí, enviar') + '</button>' +
+      '<button class="btn" data-cancelar' + dis + '>Cancelar</button></div></div>';
+  }
+  if (CONFIRMA === 'tomar') {
+    return h + '<div class="conf"><p>El chat queda a tu nombre y ya no vuelve a «Por aprobar». Claude te sigue sugiriendo respuestas, pero aquí nunca saldrá nada automático.</p>' +
+      '<div class="bots"><button class="btn ok" data-confirmar="tomar"' + dis + '>' + (OCUPADO ? 'Guardando…' : 'Sí, tomar') + '</button>' +
+      '<button class="btn" data-cancelar' + dis + '>Cancelar</button></div></div>';
+  }
+  h += '<div class="bots"><button class="btn ok" data-enviar' + (no ? ' disabled' : '') + '>Enviar</button><button class="btn" data-copiar>Copiar</button></div>';
+  if (no) h += '<p class="nota aviso">' + esc(no) + '</p>';
+  if (b && EDIT[c.id] != null && EDIT[c.id] !== b.texto) h += '<p class="nota"><button class="link" data-restaurar>Volver al borrador de Claude</button></p>';
+  if (!c.tomado_por) h += '<p class="nota"><button class="link" data-tomar>Tomar este chat</button></p>';
+  return h;
 }
 function burbujas(){
   var h = '', ant = null;
@@ -224,23 +280,38 @@ function renderChat(){
   var h = '<div class="cab"><button class="atras" data-atras aria-label="Volver a la lista">' + ICO.atras + '</button><div><b>' + esc(nombre(c)) + '</b><small>' + esc(sub) + '</small></div></div>';
   h += '<div class="chat">' + (MSGS.length ? burbujas() : '<p class="vacio">Cargando mensajes…</p>') + '</div>';
   h += '<div class="vent' + (v.abierta ? '' : ' no') + '">' + ICO.reloj + '<span>' + esc(v.texto) + '</span></div>';
-  if (c.tomado_por) h += '<div class="bloq">' + ICO.candado + '<span>Este chat lo lleva ' + esc(c.tomado_por === 'cesar' ? 'César' : c.tomado_por) + '. Aquí nada sale automático.</span></div>';
-  h += b ? borradorHtml(c, b) : '<p class="vacio">No hay borrador pendiente para este chat.</p>';
+  if (c.tomado_por) {
+    var ql = quienLleva(c);
+    h += '<div class="bloq">' + ICO.candado + '<span>' + esc(ql === 'tú' ? 'Este chat lo llevas tú.' : 'Este chat lo lleva ' + ql + '.') + ' Aquí nada sale automático.</span></div>';
+  }
+  h += redaccionHtml(c, b);
   $('#main').innerHTML = h;
 }
-function render(){ if (ABIERTO) renderChat(); else renderLista(); }
+function render(){
+  if (ABIERTO) {
+    renderChat();
+    var n = CHATS.filter(function(c){ return c.estado === 'por_aprobar'; }).length;
+    $('#sub').textContent = n + ' por aprobar · actualizado ' + hora(new Date());
+  } else renderLista();
+}
 
 /* ── Datos (solo lectura) ────────────────────────────────────────────── */
 async function cargarDatos(){
   var chats, msgs, borrs;
   if (LOCAL) {
-    var j = await (await fetch('mensajes-local.json', { cache: 'no-store' })).json();
-    var isoHace = function(min){ return new Date(Date.now() - min * 60000).toISOString(); };
-    chats = j.chats.map(function(c){ c.ultimo_entrante_at = c._hace_min == null ? null : isoHace(c._hace_min); return c; });
+    /* El archivo se lee una sola vez: después los datos de mentira viven en memoria, para poder simular envíos. */
+    if (!LOCAL_DATOS) {
+      var j = await (await fetch('mensajes-local.json', { cache: 'no-store' })).json();
+      var isoHace = function(min){ return new Date(Date.now() - min * 60000).toISOString(); };
+      j.chats.forEach(function(c){ c.ultimo_entrante_at = c._hace_min == null ? null : isoHace(c._hace_min); });
+      j.mensajes.forEach(function(m){ m.enviado_at = isoHace(m._hace_min); });
+      LOCAL_DATOS = j;
+    }
+    chats = LOCAL_DATOS.chats.filter(function(c){ return c.estado !== 'cerrado'; });
     msgs = []; LOCAL_MSGS = {};
-    j.mensajes.forEach(function(m){ m.enviado_at = isoHace(m._hace_min); (LOCAL_MSGS[m.chat_id] = LOCAL_MSGS[m.chat_id] || []).push(m); msgs.push(m); });
+    LOCAL_DATOS.mensajes.forEach(function(m){ (LOCAL_MSGS[m.chat_id] = LOCAL_MSGS[m.chat_id] || []).push(m); msgs.push(m); });
     msgs.sort(function(a, b){ return a.enviado_at < b.enviado_at ? 1 : -1; });
-    borrs = j.borradores;
+    borrs = LOCAL_DATOS.borradores;
   } else {
     var r = await Promise.all([
       sb.from('mensajes_chats').select('id,canal,nombre,telefono,estado,tomado_por,origen,ultimo_entrante_at,toques_sin_respuesta')
@@ -277,26 +348,115 @@ async function abrir(id){
   try { await cargarMsgs(ABIERTO); } catch (e) { toast('No se pudieron cargar los mensajes.'); }
   FIRMA = firma(); render();
 }
-async function copiar(id){
-  var b = null;
-  for (var k in BORR) if (Number(BORR[k].id) === Number(id)) b = BORR[k];
-  if (!b) return;
-  try { await navigator.clipboard.writeText(b.texto); toast('Borrador copiado.'); }
+async function copiar(){
+  var c = chatPorId(ABIERTO); if (!c) return;
+  var t = String(textoActual(c, BORR[c.id]) || '');
+  if (!t.trim()) { toast('No hay texto para copiar.'); return; }
+  try { await navigator.clipboard.writeText(t); toast('Texto copiado.'); }
   catch (e) {
-    var ta = document.createElement('textarea'); ta.value = b.texto; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); toast('Borrador copiado.'); } catch (e2) { toast('No se pudo copiar.'); }
+    var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Texto copiado.'); } catch (e2) { toast('No se pudo copiar.'); }
     document.body.removeChild(ta);
   }
+}
+
+/* ── Enviar y tomar: van por la función, con la sesión del usuario ────── */
+function nuevaClave(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'c-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+async function llamar(ruta, cuerpo){
+  var s = await sb.auth.getSession();
+  var tok = s && s.data && s.data.session && s.data.session.access_token;
+  if (!tok) return { status: 401, j: { error: 'Tu sesión venció. Recarga la página y vuelve a entrar.' } };
+  var r = await fetch(SB_URL + '/functions/v1/mensajes-webhook/' + ruta, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok, 'apikey': SB_KEY },
+    body: JSON.stringify(cuerpo)
+  });
+  var j = null;
+  try { j = await r.json(); } catch (e) { j = null; }
+  return { status: r.status, j: j || {} };
+}
+function pedirEnvio(){
+  var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
+  var no = motivoNoEnviar(c);
+  if (no) { toast(no, 5000); return; }
+  var texto = String(textoActual(c, BORR[c.id]) || '').trim();
+  if (!texto) { toast('Escribe el mensaje antes de enviar.'); return; }
+  if (texto.indexOf('[PRECIO') !== -1) { toast('Falta completar un precio: busca [PRECIO: …] en el texto.', 5000); return; }
+  CONFIRMA = 'enviar'; render();
+}
+async function enviarConfirmado(){
+  var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
+  var b = BORR[c.id];
+  var texto = String(textoActual(c, b) || '').trim();
+  if (!texto) { CONFIRMA = null; render(); toast('El mensaje está vacío.'); return; }
+  /* La misma clave mientras el texto no cambie: si la red falla y se reintenta, el mensaje no sale dos veces. */
+  var k = CLAVE[c.id];
+  if (!k || k.texto !== texto) k = CLAVE[c.id] = { texto: texto, clave: nuevaClave() };
+  OCUPADO = true; render();
+  var res = null;
+  try {
+    if (LOCAL) {
+      await new Promise(function(r){ setTimeout(r, 700); });
+      LOCAL_DATOS.mensajes.push({ id: Date.now(), chat_id: c.id, autor: 'bandeja', tipo: 'text', texto: texto, enviado_por: 'modo local', enviado_at: new Date().toISOString() });
+      LOCAL_DATOS.borradores = LOCAL_DATOS.borradores.filter(function(x){ return x.chat_id !== c.id; });
+      c.toques_sin_respuesta = (Number(c.toques_sin_respuesta) || 0) + 1;
+      if (!c.tomado_por) c.estado = 'esperando';
+      res = { status: 200, j: { ok: true } };
+    } else {
+      res = await llamar('enviar', { chat_id: Number(c.id), texto: texto, clave: k.clave, borrador_id: b ? Number(b.id) : null });
+    }
+  } catch (e) { res = null; }
+  OCUPADO = false; CONFIRMA = null;
+  if (!res) { render(); toast('No hubo respuesta. Toca Actualizar y mira si el mensaje salió antes de reintentar.', 6000); return; }
+  if (res.j && res.j.ok) {
+    delete CLAVE[c.id]; delete EDIT[c.id];
+    await recargar(true); render();
+    toast(res.j.aviso || (LOCAL ? 'Simulado: en modo local no se envía nada.' : 'Enviado.'), res.j.aviso ? 6000 : 2600);
+    return;
+  }
+  if (res.j && res.j.definitivo) delete CLAVE[c.id];
+  render(); toast((res.j && res.j.error) || 'No se pudo enviar.', 6000);
+}
+async function tomarConfirmado(){
+  var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
+  OCUPADO = true; render();
+  var res = null;
+  try {
+    if (LOCAL) {
+      await new Promise(function(r){ setTimeout(r, 400); });
+      c.estado = 'de_cesar'; c.tomado_por = MI_MAIL || 'tu@prueba.cl';
+      LOCAL_DATOS.borradores.forEach(function(x){ if (x.chat_id === c.id) x.para = 'cesar'; });
+      res = { status: 200, j: { ok: true } };
+    } else {
+      res = await llamar('tomar', { chat_id: Number(c.id) });
+    }
+  } catch (e) { res = null; }
+  OCUPADO = false; CONFIRMA = null;
+  if (res && res.j && res.j.ok) { await recargar(true); render(); toast('El chat quedó a tu nombre.'); return; }
+  await recargar(true); render();
+  toast((res && res.j && res.j.error) || 'No se pudo tomar el chat. Revisa la conexión.', 5000);
 }
 
 /* Un solo listener para todo (los botones se repintan). */
 document.addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b || !LISTO) return;
   if (b.dataset.tab) { TAB = b.dataset.tab; render(); return; }
-  if (b.dataset.chat) { abrir(b.dataset.chat); return; }
-  if (b.hasAttribute('data-atras')) { ABIERTO = null; MSGS = []; FIRMA = firma(); render(); window.scrollTo(0, 0); return; }
-  if (b.dataset.copiar) { copiar(b.dataset.copiar); return; }
+  if (b.dataset.chat) { CONFIRMA = null; abrir(b.dataset.chat); return; }
+  if (b.hasAttribute('data-atras')) { if (OCUPADO) return; ABIERTO = null; MSGS = []; CONFIRMA = null; FIRMA = firma(); render(); window.scrollTo(0, 0); return; }
+  if (b.hasAttribute('data-copiar')) { copiar(); return; }
+  if (b.hasAttribute('data-enviar')) { pedirEnvio(); return; }
+  if (b.hasAttribute('data-tomar')) { if (!OCUPADO) { CONFIRMA = 'tomar'; render(); } return; }
+  if (b.hasAttribute('data-cancelar')) { if (!OCUPADO) { CONFIRMA = null; render(); } return; }
+  if (b.hasAttribute('data-restaurar')) { if (ABIERTO) { delete EDIT[ABIERTO]; delete CLAVE[ABIERTO]; render(); } return; }
+  if (b.dataset.confirmar === 'enviar') { enviarConfirmado(); return; }
+  if (b.dataset.confirmar === 'tomar') { tomarConfirmado(); return; }
 });
+/* Lo que se escribe queda guardado por chat: un repintado no lo pierde. */
+document.addEventListener('input', function(e){ if (e.target && e.target.id === 'txt' && ABIERTO) EDIT[ABIERTO] = e.target.value; });
+function escribiendo(){ return !!(document.activeElement && document.activeElement.id === 'txt'); }
 
 async function cargar(){
   if (!LOCAL) {
@@ -304,15 +464,21 @@ async function cargar(){
     var sess = r && r.data && r.data.session;
     if (!sess) { formLogin(); return; }
     $('#salir').hidden = false;
+    MI_MAIL = ((sess.user && sess.user.email) || '').toLowerCase();
     /* Solo para mostrar un aviso claro: lo que protege es RLS (0004). */
     var p = await sb.rpc('mensajes_puede_leer');
     if (p.error || p.data !== true) { bloquear('Tu cuenta no tiene acceso a Mensajes', 'Si lo necesitas, pídeselo a Casa Zaru.'); return; }
+    /* Nombres para mostrar quién lleva cada chat (si no se pueden leer, se muestra el correo recortado). */
+    var v = await sb.from('vendedores').select('email,nombre');
+    (v.data || []).forEach(function(x){ if (x.email && x.nombre) VEND[String(x.email).toLowerCase()] = x.nombre; });
   }
+  if (LOCAL) MI_MAIL = 'tu@prueba.cl';
   await cargarDatos();
   LISTO = true; FIRMA = firma();
   $('#act').hidden = false;
   render();
-  setInterval(function(){ if (!document.hidden) recargar(true); }, 60000);
+  /* Se refresca sola, salvo mientras alguien escribe, confirma o hay un envío en curso. */
+  setInterval(function(){ if (!document.hidden && !OCUPADO && !CONFIRMA && !escribiendo()) recargar(true); }, 60000);
 }
 $('#salir').onclick = async function(){ await sb.auth.signOut(); location.replace(AQUI); };
 $('#act').onclick = function(){ recargar(false); };
