@@ -5876,9 +5876,11 @@ function generar() {
      que le faltaba el modelo */
   if (!validarProducto(errEl)) return;
   if (!cli) return falta(vendorMode ? 'Escribe el nombre del cliente.' : 'Escribe tu nombre.');
-  if (!conStr) return falta(vendorMode ? (porCorreo ? 'Escribe el correo del cliente.' : 'Escribe el WhatsApp del cliente.')
+  /* link del asistente de WhatsApp: ya sabemos por dónde escribirle, no se le pide de nuevo */
+  var sinCon = !!asis && !vendorMode && !conStr;
+  if (!conStr && !sinCon) return falta(vendorMode ? (porCorreo ? 'Escribe el correo del cliente.' : 'Escribe el WhatsApp del cliente.')
                                        : (porCorreo ? 'Escribe tu correo para ver tu cotización.' : 'Escribe tu WhatsApp para ver tu cotización.'));
-  if (!waPhone(conStr) && !esCorreo(conStr))
+  if (!sinCon && !waPhone(conStr) && !esCorreo(conStr))
     return falta(porCorreo ? 'Revisa el correo (ej. nombre@gmail.com).' : 'Revisa el número: son 8 dígitos después del +56 9.');
   var telChk = waPhone(conStr);
   if (telChk && !esCorreo(conStr) && telBasura(telChk)) return falta(vendorMode ? 'Ese número no parece real. Revísalo.' : 'Ese número no parece real. Revísalo: por ahí te contactamos.');
@@ -8703,6 +8705,75 @@ async function copyShareLink() {
     if (btn) { btn.textContent = '✓ Mensaje copiado'; btn.classList.add('copied'); setTimeout(function(){ btn.textContent = '📋 Copiar mensaje para WhatsApp'; btn.classList.remove('copied'); }, 2500); }
   }
   vCopiarTexto(msg).then(done);
+}
+
+/* ── LINK DEL ASISTENTE DE WHATSAPP (19-11-2026) ──
+   El asistente de la bandeja pide las medidas en el chat y manda
+   casazaru.cl/cotizador?prod=…&c=<código>&src=asistente. Acá se abre ese
+   código: la base devuelve las medidas y el nombre (nunca el teléfono) y
+   anota la apertura. El precio sale del cálculo de siempre.
+   - «listo» (cubierta, repisa, peldaños): pasa directo a la cotización y se guarda.
+   - si falta elegir modelo (puertas, mesas): queda el formulario con las medidas
+     puestas; se guarda cuando la persona aprieta el botón.
+   No se le pide el WhatsApp de nuevo: al guardar, la base pone el del chat
+   (trigger de la 0008). Si ya la había cotizado, se le muestra esa misma.
+   Solo se aceptan producto, uso, medidas y modelo de puerta: nada que mueva el precio. */
+var asis = null;
+function asisForm() {
+  if (!asis) return;
+  ['f-cli', 'f-con'].forEach(function(id){
+    var el = document.getElementById(id), sec = el && el.closest('.fsec');
+    if (sec) sec.classList.add('hidden');
+  });
+  if (document.getElementById('asis-aviso')) return;
+  /* debajo de la cabecera, a todo el ancho (al lado del título lo apretaba) */
+  var tit = document.querySelector('#s2 .form-hdr') || document.getElementById('f-title');
+  var txt = asis.listo ? 'Pusimos las medidas que nos diste por WhatsApp. Si cambiaron, corrígelas acá.'
+                       : 'Pusimos las medidas que nos diste por WhatsApp. Elige el modelo y mira tu precio.';
+  if (tit) tit.insertAdjacentHTML('afterend',
+    '<div id="asis-aviso" style="display:flex;gap:8px;align-items:flex-start;background:#EEF3EA;border:1px solid #D9E3D2;border-radius:10px;padding:10px 12px;margin:10px 0 14px;font-size:14px;line-height:1.4;color:#2F3B28">' +
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#485B3D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M20 6 9 17l-5-5"/></svg>' +
+      '<span>' + txt + '</span></div>');
+}
+async function asisAbrir(codigo) {
+  var cod = String(codigo || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 24);
+  if (cod.length < 10) return false;
+  var info = null;
+  try {
+    var r = await sbClient.rpc('asistente_link_abrir', { p_codigo: cod });
+    if (!r.error && r.data && r.data.d && r.data.d.p) info = r.data;
+  } catch (e) {}
+  if (!info) return false;
+  /* ya la cotizó: se le muestra ESA; abrir de nuevo no guarda otra */
+  if (info.s) { try { if (await loadFromShortCode(String(info.s))) return true; } catch (e) {} }
+  var d = info.d;
+  if (['cubierta', 'repisa', 'peldano', 'mesa', 'granero', 'maciza', 'vidrios'].indexOf(d.p) === -1) return false;
+  var filas = (Array.isArray(d.rows) ? d.rows : []).slice(0, 8).map(function(f){
+    return { lg: parseFloat(f.lg) || 0, an: parseFloat(f.an) || 0, ca: Math.min(Math.max(parseInt(f.ca) || 1, 1), 99) };
+  }).filter(function(f){ return f.lg > 0 && f.an > 0; });
+  if (!filas.length) return false;
+  asis = { c: cod, listo: info.listo === true };
+  origenVisita = Object.assign({}, origenVisita || {}, { src: 'asistente', c: cod });
+  fromHash = false; qnum = ''; savedQnum = null; conStr = '';
+  restaurando = asis.listo;   /* directo a la cotización: no se muestra el formulario a medio llenar */
+  try {
+    restoreProducto({ p: d.p, uso: d.uso ? String(d.uso).slice(0, 20) : '', rows: filas,
+                      mods: Array.isArray(d.mods) ? d.mods.map(function(m){ return String(m).slice(0, 80); }) : [],
+                      esp: d.p === 'peldano' && d.esp ? String(d.esp).slice(0, 2) : null });
+    document.getElementById('f-cli').value = String(info.n || 'Cliente WhatsApp').slice(0, 60);
+    document.getElementById('f-con').value = '';
+    asisForm();
+    try { calcLive(); } catch (e) {}
+    if (asis.listo && hasValidDims()) {
+      uso = usoActual();
+      embudoTick('datos');
+      await confirmar();
+    }
+  } catch (e) {}
+  restaurando = false;
+  var s3 = document.getElementById('s3');
+  if (!s3 || s3.classList.contains('hidden')) show('s2');
+  return true;
 }
 
 function loadFromHash() {
@@ -15153,6 +15224,18 @@ document.addEventListener('DOMContentLoaded', function() {
       embudoSoloClics = false; embudoCanal = 'web';
       try { sessionStorage.removeItem('zaru_embudo_visita'); } catch (e) {}
       embudoTick('visita');
+    }
+  } else if (params.get('c') && !location.hash && !vendorMode) {
+    /* link del asistente de WhatsApp: abre con las medidas del chat (asisAbrir) */
+    var ctA = document.getElementById('carga-txt'); if (ctA) ctA.textContent = 'Abriendo tu cotización…';
+    embudoCanal = 'asistente';
+    origenCapturar(params);
+    embudoArrancar();
+    asisAbrir(params.get('c')).then(function(ok){ if (!ok) asisFallido(); }, asisFallido);
+    /* el código no existe o venció: cotiza desde cero, como cualquier visita */
+    function asisFallido() {
+      asis = null; restaurando = false;
+      if (prodDirecto) initProd(prodDirecto); else show('s1');
     }
   } else if (!loadFromHash()) {
     /* entrada pública: la única puerta que arma el embudo. El tick de

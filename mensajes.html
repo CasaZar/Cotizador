@@ -43,6 +43,13 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .chip.wa{background:#e4ecdf;color:var(--verde)}.chip.ig{background:#f4e4d8;color:var(--terra)}
 .chip.r{background:#f6e3df;color:var(--rojo)}.chip.a{background:#f7ecd6;color:#8a5d0c}
 .vacio{color:var(--suave);font-size:14px;text-align:center;padding:34px 20px;margin:0}
+.nums{background:#fff;border-bottom:1px solid var(--linea);padding:10px 14px 12px}
+.nums h3{margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
+.nums .g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.nums .k{border:1px solid var(--linea);border-radius:9px;padding:6px 2px;text-align:center}
+.nums .k b{display:block;font-size:17px;line-height:1.2}
+.nums .k span{font-size:11px;color:var(--suave)}
+.nums p{margin:8px 0 0;font-size:12.5px;color:var(--suave)}
 .cab{display:flex;gap:10px;align-items:center;background:#fff;border-bottom:1px solid var(--linea);padding:10px 12px;position:sticky;top:0;z-index:2}
 .cab b{display:block;font-size:15px}.cab small{display:block;color:var(--suave);font-size:12px}
 .cab div{min-width:0}.cab b,.cab small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -184,6 +191,7 @@ function fila(c){
   var chips = '<span class="chip ' + (c.canal === 'instagram' ? 'ig' : 'wa') + '">' + (c.canal === 'instagram' ? 'Instagram' : 'WhatsApp') + '</span>';
   var an = anuncio(c);
   if (an) chips += '<span class="chip">' + esc(corta('Anuncio: ' + an, 34)) + '</span>';
+  if (rev.cotiza) chips += '<span class="chip">Lleva cotización</span>';
   if (rev.necesita_humano) chips += '<span class="chip r">Necesita una persona</span>';
   if (rev.falta_precio) chips += '<span class="chip a">Falta un precio</span>';
   if (!ventana(c).abierta) chips += '<span class="chip a">Fuera de 24 h</span>';
@@ -193,12 +201,26 @@ function fila(c){
     (b ? '<span class="borr">' + esc(b.texto) + '</span>' : '') +
     '<span class="chips">' + chips + '</span></span></button>';
 }
+/* Cotizaciones del asistente (0008): cuántos links salieron, cuántos se abrieron y en qué terminaron. */
+var NUM = null;
+var PROD_N = { cubierta: 'Cubiertas', repisa: 'Repisas', peldano: 'Peldaños', puertas: 'Puertas', mesa: 'Mesas' };
+function numerosHtml(){
+  if (!NUM) return '';
+  var k = function(n, t){ return '<div class="k"><b>' + (Number(n) || 0) + '</b><span>' + t + '</span></div>'; };
+  var por = (NUM.por_producto || []).filter(function(p){ return Number(p.enviados) > 0; }).map(function(p){
+    return esc(PROD_N[p.producto] || p.producto) + ' ' + Number(p.enviados) + ' enviados, ' + Number(p.cotizaron) + ' cotizaron';
+  });
+  return '<div class="nums"><h3>Cotizaciones del asistente · ' + (Number(NUM.dias) || 30) + ' días</h3><div class="g">' +
+    k(NUM.enviados, 'links enviados') + k(NUM.abiertos, 'abiertos') + k(NUM.cotizaron, 'cotizaron') + k(NUM.ventas, 'ventas') + '</div>' +
+    (por.length ? '<p>' + por.join(' · ') + '</p>' : '') + '</div>';
+}
 function renderLista(){
   var g = { por_aprobar: [], de_cesar: [], esperando: [] };
   CHATS.forEach(function(c){ if (g[c.estado]) g[c.estado].push(c); });
   var h = '<div class="tabs">' + TABS.map(function(t){
     return '<button class="tab' + (TAB === t.k ? ' on' : '') + '" data-tab="' + t.k + '">' + esc(t.n) + ' · ' + g[t.k].length + '</button>';
   }).join('') + '</div>';
+  h += numerosHtml();
   h += g[TAB].length ? g[TAB].map(fila).join('') : '<p class="vacio">' + esc(VACIO[TAB]) + '</p>';
   $('#main').innerHTML = h;
   $('#sub').textContent = g.por_aprobar.length + ' por aprobar · actualizado ' + hora(new Date());
@@ -238,6 +260,8 @@ function redaccionHtml(c, b){
     var ch = chk(!c.tomado_por, 'Nadie ha tomado este chat', 'Chat tomado: aquí nada sale automático') +
       chk(t < 2, 'Mensajes sin respuesta: ' + t + ' de 2', 'Ya van ' + t + ' mensajes sin respuesta: no insistir') +
       chk(rev.sin_palabras_prohibidas !== false, 'Sin palabras ni signos prohibidos', 'Revisar: usa una palabra o signo prohibido');
+    if (rev.links_ok === false) ch += chk(false, '', 'Trae un link que no es de la casa: revísalo antes de enviar');
+    if (rev.cotiza) ch += chk(true, 'Lleva el link de su cotización con las medidas puestas', '');
     if (rev.falta_precio) ch += chk(false, '', 'Falta completar un precio (busca [PRECIO: …] en el texto)');
     if (rev.necesita_humano) ch += chk(false, '', 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : ''));
     h += '<ul class="checks">' + ch + '</ul>';
@@ -312,6 +336,7 @@ async function cargarDatos(){
     LOCAL_DATOS.mensajes.forEach(function(m){ (LOCAL_MSGS[m.chat_id] = LOCAL_MSGS[m.chat_id] || []).push(m); msgs.push(m); });
     msgs.sort(function(a, b){ return a.enviado_at < b.enviado_at ? 1 : -1; });
     borrs = LOCAL_DATOS.borradores;
+    NUM = LOCAL_DATOS.resumen || null;
   } else {
     var r = await Promise.all([
       sb.from('mensajes_chats').select('id,canal,nombre,telefono,estado,tomado_por,origen,ultimo_entrante_at,toques_sin_respuesta')
@@ -321,6 +346,8 @@ async function cargarDatos(){
     ]);
     if (r[0].error || r[1].error || r[2].error) throw new Error('consulta');
     chats = r[0].data || []; msgs = r[1].data || []; borrs = r[2].data || [];
+    /* los números del asistente: si la consulta falla, la bandeja sigue igual, sin ese cuadro */
+    try { var rn = await sb.rpc('asistente_resumen', { p_dias: 30 }); NUM = rn.error ? null : rn.data; } catch (e) { NUM = null; }
   }
   CHATS = chats; ULT = {}; BORR = {};
   msgs.forEach(function(m){ if (!ULT[m.chat_id]) ULT[m.chat_id] = m; });       /* vienen del más nuevo al más viejo */
@@ -332,7 +359,7 @@ async function cargarMsgs(id){
   if (r.error) throw new Error('mensajes');
   MSGS = r.data || [];
 }
-function firma(){ return JSON.stringify([CHATS, BORR, ABIERTO, MSGS.length]); }
+function firma(){ return JSON.stringify([CHATS, BORR, ABIERTO, MSGS.length, NUM]); }
 async function recargar(silencio){
   try {
     await cargarDatos();
