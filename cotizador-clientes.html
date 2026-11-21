@@ -1200,6 +1200,35 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-marca.caro { background:#B5652E; color:#fff; }
 .hz-marca.fuera { background:#F3F4F6; color:#6B7280; }
 .hz-fila.camp-fuera .hz-nom, .hz-fila.camp-fuera .hz-monto { color:var(--tm); }
+/* Pestaña Campañas (21-11-2026) */
+.cp-wrap { max-width:720px; }
+.cp-card { background:#fff; border:1px solid #E5E7EB; border-radius:12px; padding:12px 14px; margin:0 0 12px; }
+.cp-chip { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; }
+.cp-activa { background:#E3EFE0; color:#3F7A3A; } .cp-pausada { background:#F6ECD2; color:#8A6512; }
+.cp-terminada { background:#ECE8E2; color:#6F6A62; } .cp-borrador { background:#F3E3D8; color:#B5652E; }
+.cp-nom { font-weight:600; font-size:15px; margin:6px 0 2px; }
+.cp-fec { font-size:12px; color:var(--tm); }
+.cp-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0; }
+.cp-kpi { text-align:center; border-top:1px solid #E5E7EB; padding-top:6px; }
+.cp-kpi b { display:block; font-size:16px; } .cp-kpi span { font-size:10px; color:var(--tm); }
+.cp-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.cp-b { flex:1; min-width:110px; text-align:center; border-radius:8px; padding:9px 6px; font-size:12px; font-weight:600; border:1px solid #485B3D; color:#485B3D; background:#fff; cursor:pointer; font-family:inherit; }
+.cp-b.pri { background:#485B3D; color:#fff; } .cp-b.alt { border-color:#B5652E; color:#B5652E; }
+.cp-wrap > .cp-b { width:100%; }
+.cp-volver { background:none; border:0; color:#485B3D; font-weight:600; font-size:13px; padding:4px 0 10px; cursor:pointer; font-family:inherit; }
+.cp-sec { font-size:12px; font-weight:600; color:var(--tm); text-transform:uppercase; letter-spacing:.04em; margin:16px 0 8px; border-top:1px solid #E5E7EB; padding-top:12px; }
+.cp-big b { font-size:26px; color:#485B3D; } .cp-big span { color:var(--tm); font-size:12px; margin-left:6px; }
+.cp-cmp { font-size:13px; background:#EEF3EA; border-radius:8px; padding:8px 10px; margin-top:8px; }
+.cp-emb div { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:12px; }
+.cp-emb em { font-style:normal; width:100px; flex:none; color:var(--tm); }
+.cp-emb i { display:block; height:14px; background:#485B3D; border-radius:3px; min-width:2px; }
+.cp-lst div { display:flex; justify-content:space-between; gap:8px; font-size:13px; padding:7px 0; border-bottom:1px dashed #E5E7EB; }
+.cp-lst small { display:block; color:var(--tm); }
+.cp-todo div { font-size:13px; padding:8px 0; border-bottom:1px dashed #E5E7EB; line-height:1.45; }
+.cp-nota { font-size:11px; color:var(--tm); margin-top:6px; line-height:1.4; }
+.cp-aviso { background:#FBF3E6; border-left:3px solid #B5652E; padding:8px 10px; font-size:12px; border-radius:4px; margin:10px 0; }
+.cp-msg { white-space:pre-line; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.45; }
+.cp-tg { display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 0; }
 .hz-fila.camp-fuera .hz-ini { background:#F3F4F6; color:#9CA3AF; }
 .hz-anuncio { display:inline-block; margin-left:6px; font-size:12px; font-weight:600; color:#1D4ED8; }
 .hz-act { flex-shrink:0; }
@@ -9811,7 +9840,8 @@ var PZ_ICO = {
   wa:'<path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/>',
   foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
   mkt:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
-  proy:'<path d="M4 20V9l8-5 8 5v11M4 20h16M9 20v-6h6v6"/>'
+  proy:'<path d="M4 20V9l8-5 8 5v11M4 20h16M9 20v-6h6v6"/>',
+  camp:'<path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/>'
 };
 /* Fototeca: buscador de fotos y videos del Drive (09-11-2026). Es fototeca.html, en este
    mismo sitio: usa la sesión del panel y lee sus datos del bucket privado «fototeca».
@@ -9840,6 +9870,7 @@ function pzTabs(){
   t.push({id:'dormidos', label:'Dormidos', ico:'dormidos', g:2});
   t.push({id:'reactivar', label:'Reactivar', ico:'reactivar', g:2});
   t.push({id:'backlog', label:'Nunca contactados', ico:'backlog', g:2});
+  if (isPanelAdmin()) t.push({id:'camp', label:'Campañas', ico:'camp', g:2});   /* 21-11-2026 */
   t.push({id:'actividad', label:isPanelAdmin() ? 'Actividad' : 'Mi actividad', ico:'actividad', g:3});
   if (MKT) t.push({id:'mkt', label:'Marketing', ico:'mkt', g:3});
   t.push({id:'fototeca', label:'Fototeca', ico:'foto', g:3, url:FOTOTECA_URL});
@@ -9923,7 +9954,7 @@ function setDashView(v){
   dashView=v; renderTabs();
   /* el buscador va en TODAS las vistas menos el Manual, que no es una lista.
      Seguimiento además tiene sus chips de bloque, que van en la fila de abajo. */
-  if (v !== 'manual' && v !== 'wa' && v !== 'mkt') renderDashFilters();
+  if (v !== 'manual' && v !== 'wa' && v !== 'mkt' && v !== 'camp') renderDashFilters();
   if (v === 'seg') renderSegFilters();
   renderVistaActual();
 }
@@ -9955,6 +9986,7 @@ function renderVistaActual(){
   else if (v==='actividad') renderActividad();
   else if (v==='backlog')   renderBacklog();
   else if (v==='proy')      renderProyectos();
+  else if (v==='camp')      renderCampanas();
   else if (v==='manual')    renderManual();
   else                      renderDash();
 }
@@ -10953,6 +10985,7 @@ async function loadDash() {
   await cargarConfigSeg();   /* corte y metas del día antes de armar la cola */
   await waCargar();          /* «WhatsApp al día»: si falla, la sección no aparece */
   await mktCargar();         /* «Marketing»: solo para quien lee el bucket marketing */
+  await campCargar();        /* la campaña activa, si hay (tabla campanas, 0010) */
   computeSegPend();
   setDashView(dashView);
   /* jobs diarios (fases 7 y 8), después de pintar: no bloquean la carga y
@@ -12151,7 +12184,7 @@ function pendPreguntar(){
   var canal = p.canal === 'mail' ? 'el correo' : 'WhatsApp';
   if (p.canal === 'camp') {   /* campaña peldaños: solo el sí o el no */
     pModal('<h3>¿Le escribiste a '+quien+'?</h3>'+
-      '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña de peldaños. Queda anotado y no se vuelve a pedir.</div>'+
+      '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña «'+escA(CAMPANA ? CAMPANA.nombre : '')+'». Queda anotado y no se vuelve a pedir.</div>'+
       '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',true)">Sí, ya le escribí</button>'+
       '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',false)">No, todavía no</button>'+
       '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
@@ -12224,24 +12257,63 @@ function pendConfirmar(id, si){
    volviendo a cotizar, y el muestrario. Fuera: los que compraron, los que
    compraron en otro lado y los números que no funcionan. Escribirle deja la
    nota CAMPANA.nota en su historial y ya no se vuelve a pedir. */
-var CAMPANA = { nota:'Campaña peldaños', desde:'2026-10-21', hasta:'2026-10-30' };   /* el 10% vale hasta el 30-10 */
-function campanaActiva(){ var h = hoyISO(); return h >= CAMPANA.desde && h <= CAMPANA.hasta; }
-function campanaClientes(){
+/* Desde el 21-11-2026 la campaña ya no está fija aquí: cada campaña es una
+   fila de la tabla `campanas` (migración 0010 del Cotizador) y se maneja en
+   la pestaña Campañas (activar, pausar, terminar, reactivar como ronda).
+   CAMPANA = la que está activa, o null. La de octubre quedó sembrada como
+   «terminada» con la misma nota, así que sus resultados se siguen viendo. */
+var CAMPANAS = [];        /* todas, sin las borradas, la más nueva primero */
+var CAMPANA = null;       /* la activa */
+var CAMP_TABLA_OK = null; /* false si la tabla no existe todavía (falta la 0010) */
+function campNorm(c){
+  var f = (c.filtros && typeof c.filtros === 'object') ? c.filtros : {};
+  if (!Array.isArray(f.excluir_notas)) f.excluir_notas = [];
+  c.filtros = f;
+  return c;
+}
+async function campCargar(){
+  try {
+    var r = await sbClient.from('campanas').select('*').is('deleted_at', null).order('id', { ascending:false });
+    CAMP_TABLA_OK = !r.error;
+    CAMPANAS = (!r.error && r.data) ? r.data.map(campNorm) : [];
+  } catch(e){ CAMP_TABLA_OK = false; CAMPANAS = []; }
+  CAMPANA = CAMPANAS.filter(function(c){ return c.estado === 'activa'; })[0] || null;
+}
+function campanaActiva(){
+  if (!CAMPANA || !CAMPANA.desde || !CAMPANA.hasta) return false;
+  var h = hoyISO(); return h >= CAMPANA.desde && h <= CAMPANA.hasta;
+}
+/* el historial de un cliente (todas sus cotizaciones) tiene esta nota */
+function campTieneNota(qs, nota){
+  return qs.some(function(q){ return (Array.isArray(q.seg_historial) ? q.seg_historial : []).some(function(h){ return h && h.nota === nota; }); });
+}
+/* A quién le toca la campaña `cp` (la activa si no se pasa). Los filtros
+   salen de la fila; la regla del tope de 2 sin respuesta no se puede apagar. */
+function campanaClientes(cp){
+  cp = cp || CAMPANA;
+  if (!cp) return [];
+  var f = cp.filtros || {}, prod = String(cp.producto || '');
+  var excl = Array.isArray(f.excluir_notas) ? f.excluir_notas : [];
   var map = {};
   (dashRows || []).forEach(function(x){ if (x.eliminada) return; var k = clientKey(x); (map[k] = map[k] || []).push(x); });
   var out = [];
   Object.keys(map).forEach(function(k){
     var qs = map[k];
-    var pel = qs.filter(function(q){ return String(q.producto || '').indexOf('peldan') !== -1; })
+    var pel = qs.filter(function(q){ return prod && String(q.producto || '').indexOf(prod) !== -1; })
                 .sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
     if (!pel.length) return;
-    if (pel.some(function(q){ return q.estado === 'ganado'; })) return;
+    if (f.sacar_compraron !== false && pel.some(function(q){ return q.estado === 'ganado'; })) return;
     var x = pel[0];
-    if (/otro lado|no funciona/i.test(x.motivo_perdida || '')) return;
+    var mot = String(x.motivo_perdida || '');
+    if (/no funciona/i.test(mot)) return;                                   /* número malo: siempre fuera */
+    if (f.sacar_otro_lado !== false && /otro lado/i.test(mot)) return;
+    if (f.sacar_desistio && /desisti/i.test(mot)) return;
+    if (!f.incluir_cerradas && (x.estado || 'enviada') !== 'enviada') return;
     if (!waPhone(x.contacto)) return;
-    /* cotizó con el precio nuevo ya puesto: no hay descuento que ofrecerle */
-    if (fechaBaseISO(x.fecha_creacion) >= CAMPANA.desde) return;
-    var hecho = qs.some(function(q){ return (q.seg_historial || []).some(function(h){ return h && h.nota === CAMPANA.nota; }); });
+    /* p. ej. peldaños de octubre: quien cotizó con el precio nuevo ya puesto no tenía descuento que recibir */
+    if (f.solo_antes_de && fechaBaseISO(x.fecha_creacion) >= f.solo_antes_de) return;
+    if (excl.some(function(n){ return campTieneNota(qs, n); })) return;
+    var hecho = campTieneNota(qs, cp.nota);
     if (!hecho && mensajesSinResp(qs) >= TOPE_SIN_RESP) return;   /* 2 sin respuesta: fuera de toda campaña */
     out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
   });
@@ -12256,19 +12328,22 @@ function campanaClientes(){
 }
 /* sin el link de la cotización: el link guarda el precio de cuando cotizó, y
    la idea es justamente recotizar con el precio nuevo */
-function campanaMsg(x){
+/* El mensaje es el texto de la campaña con sus variables:
+   {saludo} «Hola Ana» · {nombre} · {soy} « Soy César, de Casa Zaru.» solo la
+   primera vez que se le escribe (30-10-2026) · {hace} «Hace unos días» (≤ 7
+   días) o «Hace un tiempo» · {con_nosotros} «con nosotros» o «en Casa Zaru». */
+var CAMP_VARS = ['saludo','nombre','soy','hace','con_nosotros'];
+function campanaMsg(x, cp){
+  cp = cp || CAMPANA;
   var nom = waNombre(x), hola = nom ? 'Hola ' + nom : 'Hola';
-  /* Texto del usuario (21-10-2026): corto, en párrafos, sin decir «escalera».
-     El 10% es SOLO para los que ya habían cotizado, sobre compras de
-     $1.000.000 y hasta el 30-10; César lo aplica al recotizar con el
-     «descuento especial» del modo vendedor. */
   var dias = Math.round((new Date(hoyISO()) - new Date(fechaBaseISO(x.fecha_creacion))) / 86400000);
-  /* César se presenta una sola vez (30-10-2026): si ya le escribió, solo saluda */
   var yaPres = yaSePresento(x);
-  return waLimpio(hola + ', ¿cómo estás?' + (yaPres ? '' : ' Soy César, de Casa Zaru.') +
-    '\n\n' + (dias <= 7 ? 'Hace unos días' : 'Hace un tiempo') + ' cotizaste unos peldaños ' + (yaPres ? 'en Casa Zaru' : 'con nosotros') + ' y quería saber si el proyecto sigue en pie.' +
-    '\n\nSi es así, estamos con un 10% de descuento en peldaños para compras sobre $1.000.000, hasta el 30 de octubre. Coméntame y te actualizo la cotización con el descuento.' +
-    '\n\nSaludos.');
+  var v = { saludo:hola, nombre:nom || '', soy:yaPres ? '' : ' Soy César, de Casa Zaru.',
+            hace:dias <= 7 ? 'Hace unos días' : 'Hace un tiempo', con_nosotros:yaPres ? 'en Casa Zaru' : 'con nosotros' };
+  var t = String((cp && cp.mensaje) || '').replace(/\{(\w+)\}/g, function(m, k){
+    return Object.prototype.hasOwnProperty.call(v, k) ? v[k] : m;
+  });
+  return waLimpio(t);
 }
 function campanaHtml(){
   if (!campanaActiva()) return '';
@@ -12287,10 +12362,11 @@ function campanaHtml(){
      llevaba «open» fijo y se volvía a abrir cada vez que se repintaba la
      lista, o sea al tocar cualquier cliente. */
   var campCerrada = !!detLeer()['campana-cerrada'];
-  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' ontoggle="campRecordar(this)"><summary>🪜 Campaña peldaños · ' + pend + ' por escribir' +
+  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' ontoggle="campRecordar(this)"><summary>Campaña · ' + escA(CAMPANA.nombre) + ' · ' + pend + ' por escribir' +
     '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
-    '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario. A los que cotizaron peldaños se les ofrece <strong>10% sobre $1.000.000, hasta el 30 de octubre</strong>. ' +
-    'Si contesta, recotiza con «＋ Nueva cotización» y el descuento especial de 10%.</div>' +
+    '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario, hasta el ' + escA(fmtFechaCorta(CAMPANA.hasta)) + '. ' +
+    (CAMPANA.oferta ? 'Se ofrece <strong>' + escA(CAMPANA.oferta) + '</strong>. ' : '') +
+    escA(CAMPANA.instruccion || '') + '</div>' +
     '<div class="hz-lista">' + filas + '</div></details>';
 }
 /* En qué quedó el cliente, en palabras (24-10-2026). Antes decía «abierta» o
@@ -12357,11 +12433,313 @@ function campRecordar(el){
   try { localStorage.setItem(DET_KEY, JSON.stringify(a)); } catch(e){}
 }
 async function campanaAnotar(id){
-  var x = COTIS[id]; if (!x) return;
+  var x = COTIS[id]; if (!x || !CAMPANA) return;
   var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
   hist.push({ etapa:0, fecha:hoyISO(), nota:CAMPANA.nota });
-  var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña de peldaños');
+  var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña «' + CAMPANA.nombre + '»');
   if (ok) registrarToque(x, 0, 'cadencia');
+}
+/* ── PESTAÑA CAMPAÑAS (21-11-2026) ──
+   Lista de campañas con su estado, resultados por campaña y «qué hacer», y el
+   formulario para crear una o reactivarla como ronda nueva. Ve la pestaña el
+   admin; solo el dueño cambia cosas (lo mismo dice la RLS de la tabla).
+   Resultados POR CLIENTE, no por cotización: al que le escribieron y después
+   compró en una cotización NUEVA (lo normal: César recotiza) igual cuenta.
+     escrito      = alguna de sus cotizaciones lleva la nota en el historial
+     respondió    = después de esa fecha: recotizó, compró, o quedó anotada
+                    una respuesta (fecha_primera_respuesta o resp_fecha)
+     compró       = cotización del mismo producto «ganada» después de esa fecha
+     venta        = monto de cierre de esas ganadas (lo del panel; la Gestión
+                    puede diferir en el envío) */
+var CAMP_SEL = null, CAMP_EDIT = null;
+function campPorId(id){ return CAMPANAS.filter(function(c){ return String(c.id) === String(id); })[0] || null; }
+function campRes(cp){
+  var prod = String(cp.producto || ''), map = {};
+  (dashRows || []).forEach(function(x){ if (x.eliminada) return; var k = clientKey(x); (map[k] = map[k] || []).push(x); });
+  var R = { escritos:0, respondieron:0, recotizados:0, compraron:[], venta:0, abiertos:[] };
+  Object.keys(map).forEach(function(k){
+    var qs = map[k], f0 = null;
+    qs.forEach(function(q){
+      (Array.isArray(q.seg_historial) ? q.seg_historial : []).forEach(function(h){
+        if (h && h.nota === cp.nota){ var d = String(h.fecha || '').slice(0, 10); if (d && (!f0 || d < f0)) f0 = d; }
+      });
+    });
+    if (!f0) return;
+    R.escritos++;
+    var delProd = qs.filter(function(q){ return String(q.producto || '').indexOf(prod) !== -1; });
+    var ganadas = delProd.filter(function(q){ return q.estado === 'ganado' && fechaBaseISO(q.fecha_concretada || q.fecha_creacion) >= f0; });
+    var recot = delProd.some(function(q){ return q.fecha_creacion && fechaBaseISO(q.fecha_creacion) >= f0; });
+    var anotada = qs.some(function(q){
+      if (q.fecha_primera_respuesta && fechaBaseISO(q.fecha_primera_respuesta) >= f0) return true;
+      return (Array.isArray(q.seg_historial) ? q.seg_historial : []).some(function(h){ return h && h.resp_fecha && String(h.resp_fecha).slice(0, 10) >= f0; });
+    });
+    if (recot) R.recotizados++;
+    if (recot || ganadas.length || anotada) R.respondieron++;
+    if (ganadas.length){
+      var monto = 0, fecha = '', x = ganadas[0];
+      ganadas.forEach(function(q){
+        monto += (q.monto_cierre || q.total_alto || 0);
+        var d = fechaBaseISO(q.fecha_concretada || q.fecha_creacion);
+        if (d > fecha){ fecha = d; x = q; }
+      });
+      R.venta += monto;
+      R.compraron.push({ x:x, monto:monto, fecha:fecha });
+      return;
+    }
+    var abiertas = qs.filter(function(q){ return (q.estado || 'enviada') === 'enviada'; });
+    if (abiertas.length && (recot || anotada || qs.some(function(q){ return q.interesado; }))){
+      var lead = abiertas.sort(function(a, b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); })[0];
+      var valor = abiertas.reduce(function(a, q){ return Math.max(a, medidaRara(q) ? 0 : (q.total_medio || q.total_alto || 0)); }, 0);
+      R.abiertos.push({ x:lead, valor:valor });
+    }
+  });
+  R.compraron.sort(function(a, b){ return a.fecha < b.fecha ? 1 : -1; });
+  R.abiertos.sort(function(a, b){ return b.valor - a.valor; });
+  return R;
+}
+var CAMP_EST = { borrador:'Borrador', activa:'Activa', pausada:'Pausada', terminada:'Terminada' };
+function campChip(c){
+  var t = CAMP_EST[c.estado] || c.estado;
+  if (c.estado === 'activa' && c.desde && hoyISO() < c.desde) t = 'Activa · parte el ' + fmtFechaCorta(c.desde);
+  if (c.estado === 'activa' && c.hasta && hoyISO() > c.hasta) t = 'Activa · venció el ' + fmtFechaCorta(c.hasta);
+  return '<span class="cp-chip cp-' + c.estado + '">' + escA(t) + '</span>';
+}
+function campFechas(c){
+  if (!c.desde && !c.hasta) return 'Sin fechas';
+  return (c.desde ? fmtFechaCorta(c.desde) : '¿?') + ' al ' + (c.hasta ? fmtFechaCorta(c.hasta) : '¿?');
+}
+function campKpis(R){
+  return '<div class="cp-kpis">' +
+    '<div class="cp-kpi"><b>' + R.escritos + '</b><span>escritos</span></div>' +
+    '<div class="cp-kpi"><b>' + R.respondieron + '</b><span>respondieron</span></div>' +
+    '<div class="cp-kpi"><b>' + R.compraron.length + '</b><span>compraron</span></div>' +
+    '<div class="cp-kpi"><b>' + fmtM(R.venta) + '</b><span>venta</span></div></div>';
+}
+function campBtn(txt, js, cls){ return '<button type="button" class="cp-b' + (cls ? ' ' + cls : '') + '" onclick="' + js + '">' + txt + '</button>'; }
+function campBotones(c, enDetalle){
+  var dueno = esDueno(), b = '', id = String(c.id);
+  if (!enDetalle) b += campBtn(c.estado === 'borrador' ? 'Ver' : 'Ver resultados', 'campVer(\'' + id + '\')');
+  if (!dueno) return b;
+  if (c.estado === 'borrador') b += campBtn('Editar', 'campEditar(\'' + id + '\')') + campBtn('Activar', 'campEstado(\'' + id + '\',\'activa\')', 'pri');
+  if (c.estado === 'activa')   b += campBtn('Pausar', 'campEstado(\'' + id + '\',\'pausada\')') + campBtn('Terminar', 'campEstado(\'' + id + '\',\'terminada\')', 'alt');
+  if (c.estado === 'pausada')  b += campBtn('Editar', 'campEditar(\'' + id + '\')') + campBtn('Reanudar', 'campEstado(\'' + id + '\',\'activa\')', 'pri') + campBtn('Terminar', 'campEstado(\'' + id + '\',\'terminada\')', 'alt');
+  if (c.estado === 'terminada') b += campBtn('Reactivar como ronda nueva', 'campRonda(\'' + id + '\')', 'alt');
+  return b;
+}
+function renderCampanas(){
+  document.getElementById('dash-filters').innerHTML = '';   /* no es una lista de cotizaciones: sin buscador */
+  subFiltros('');
+  var st = document.getElementById('dash-stats'); st.style.display = 'none'; st.innerHTML = '';
+  var el = document.getElementById('dash-tbl');
+  if (CAMP_TABLA_OK === false){
+    el.innerHTML = '<div class="cp-wrap"><div class="cp-aviso">Falta crear la tabla de campañas: hay que pegar <strong>supabase-cotizador/migrations/0010_campanas.sql</strong> en el SQL Editor del Cotizador. Mientras tanto no hay campañas.</div></div>';
+    return;
+  }
+  if (CAMP_EDIT){ el.innerHTML = campFormHtml(); campFormRefrescar(); return; }
+  var sel = CAMP_SEL ? campPorId(CAMP_SEL) : null;
+  if (sel){ el.innerHTML = campDetalleHtml(sel); return; }
+  var html = '<div class="cp-wrap">';
+  if (!CAMPANAS.length) html += '<div class="seg-empty" style="padding:24px;text-align:center">Todavía no hay campañas.</div>';
+  CAMPANAS.forEach(function(c){
+    html += '<div class="cp-card">' + campChip(c) + '<div class="cp-nom">' + escA(c.nombre) + '</div>' +
+      '<div class="cp-fec">' + escA(campFechas(c)) + (c.oferta ? ' · ' + escA(c.oferta) : '') + '</div>';
+    if (c.estado === 'borrador') html += '<div class="cp-fec" style="margin-top:6px">Hoy calzan <strong>' + campanaClientes(c).length + ' clientes</strong></div>';
+    else html += campKpis(campRes(c));
+    html += '<div class="cp-btns">' + campBotones(c, false) + '</div></div>';
+  });
+  if (esDueno()) html += campBtn('＋ Nueva campaña', 'campNueva()', 'pri');
+  html += '<p class="cp-nota">Solo una campaña puede estar activa a la vez. Mientras dura, su bloque aparece arriba de Seguimiento con el botón de WhatsApp y su mensaje.</p></div>';
+  el.innerHTML = html;
+}
+function campDetalleHtml(c){
+  var R = campRes(c), id = String(c.id);
+  var conv = R.escritos ? (R.compraron.length / R.escritos * 100) : 0;
+  var max = Math.max(R.escritos, 1);
+  var barra = function(t, n, color){
+    return '<div><em>' + t + '</em><i style="width:' + Math.round(n / max * 180) + 'px' + (color ? ';background:' + color : '') + '"></i>' + n + '</div>';
+  };
+  var html = '<div class="cp-wrap"><button type="button" class="cp-volver" onclick="CAMP_SEL=null;renderVistaActual()">‹ Todas las campañas</button>' +
+    '<div class="cp-card">' + campChip(c) + '<div class="cp-nom">' + escA(c.nombre) + '</div>' +
+    '<div class="cp-fec">' + escA(campFechas(c)) + (c.oferta ? ' · ' + escA(c.oferta) : '') + '</div>';
+  if (c.estado !== 'borrador'){
+    html += '<div class="cp-big" style="margin-top:12px"><b>' + fmt(R.venta) + '</b><span>vendido según el panel</span></div>' +
+      '<div class="cp-cmp"><strong>' + conv.toFixed(1).replace('.', ',') + ' %</strong> de los escritos compró (' + R.compraron.length + ' de ' + R.escritos + ').</div>' +
+      '<div class="cp-sec">Embudo</div><div class="cp-emb">' +
+        barra('Escritos', R.escritos) + barra('Respondieron', R.respondieron) + barra('Recotizados', R.recotizados) + barra('Compraron', R.compraron.length, '#B5652E') +
+      '</div>';
+    if (R.compraron.length){
+      html += '<div class="cp-sec">Compraron</div><div class="cp-lst">' + R.compraron.map(function(v){
+        return '<div><span>' + escA(v.x.cliente || '—') + '<small>' + escA(fmtFechaCorta(v.fecha)) + ' · ' + escA(v.x.numero || '') + '</small></span><b>' + fmt(v.monto) + '</b></div>';
+      }).join('') + '</div><p class="cp-nota">Cuenta a todo cliente escrito que después compró ese producto, aunque haya sido en una cotización nueva. El monto es el de cierre del panel; la Gestión puede diferir por el envío.</p>';
+    }
+  }
+  /* qué hacer: sale de los datos, sin cifras inventadas */
+  var todo = [];
+  if (c.estado === 'activa'){
+    var L = campanaClientes(c), pend = L.filter(function(x){ return !x.hecho; }).length;
+    if (!campanaActiva()) todo.push(hoyISO() < c.desde ? 'Parte el <b>' + escA(fmtFechaCorta(c.desde)) + '</b>: desde ese día aparece en Seguimiento.' : 'Venció el <b>' + escA(fmtFechaCorta(c.hasta)) + '</b> y ya no se muestra en Seguimiento. Termínala para cerrar sus resultados.');
+    else todo.push('<b>' + pend + ' por escribir</b> de ' + L.length + '. Están arriba de Seguimiento.');
+  }
+  if (R.abiertos.length){
+    var nombres = R.abiertos.slice(0, 5).map(function(a){ return escA(a.x.cliente || '—') + ' (~' + fmtM(a.valor) + ')'; }).join(', ');
+    todo.push('<b>' + R.abiertos.length + (R.abiertos.length === 1 ? ' respondió o está interesado y no ha comprado' : ' respondieron o están interesados y no han comprado') + '</b>: ' + nombres + (R.abiertos.length > 5 ? '…' : '') + '. Escribirles esta semana.');
+  }
+  if (c.estado === 'terminada' || c.estado === 'pausada'){
+    var n = campanaClientes(campBorradorRonda(c)).length;
+    todo.push('<b>Ronda nueva</b>: hoy calzan <b>' + n + ' clientes</b> (sin los que compraron, se fueron a otro lado o desistieron; con el tope de 2 sin respuesta).');
+  }
+  if (c.estado === 'borrador') todo.push('Hoy calzan <b>' + campanaClientes(c).length + ' clientes</b>. Revisa el mensaje y actívala.');
+  if (todo.length) html += '<div class="cp-sec">Qué hacer ahora</div><div class="cp-todo">' + todo.map(function(t){ return '<div>' + t + '</div>'; }).join('') + '</div>';
+  /* cómo está armada */
+  var f = c.filtros || {}, fl = [];
+  fl.push('Cotizaron: ' + escA(prodNombre(c.producto)));
+  fl.push(f.incluir_cerradas ? 'abiertas y cerradas' : 'solo abiertas');
+  if (f.sacar_compraron !== false) fl.push('sin los que compraron');
+  if (f.sacar_otro_lado !== false) fl.push('sin «compró en otro lado»');
+  if (f.sacar_desistio) fl.push('sin «desistió»');
+  if (f.solo_antes_de) fl.push('cotizaron antes del ' + escA(fmtFechaCorta(f.solo_antes_de)));
+  if (f.excluir_notas.length) fl.push('sin los escritos en: ' + f.excluir_notas.map(escA).join(', '));
+  var ejemplo = { cliente:'Ana', contacto:'', fecha_creacion:addDias(hoyISO(), -20) };
+  html += '<div class="cp-sec">Cómo está armada</div><div class="cp-fec" style="line-height:1.5">' + fl.join(' · ') + '</div>' +
+    '<div class="cp-fec" style="margin:8px 0 4px">Mensaje (ejemplo con «Ana», cotizó hace 20 días):</div>' +
+    '<div class="cp-msg">' + escA(campanaMsg(ejemplo, c)) + '</div>' +
+    (c.instruccion ? '<div class="cp-fec" style="margin-top:8px">Para el vendedor: ' + escA(c.instruccion) + '</div>' : '') +
+    '<div class="cp-btns" style="margin-top:14px">' + campBotones(c, true) + '</div></div></div>';
+  return html;
+}
+function campVer(id){ CAMP_SEL = id; CAMP_EDIT = null; renderVistaActual(); window.scrollTo(0, 0); }
+/* la ronda siguiente de una campaña: mismo producto y mensaje (para revisar),
+   a todos los que no compraron ni dijeron que no */
+function campBorradorRonda(c){
+  var base = String(c.nombre).replace(/\s*·\s*ronda \d+$/i, ''), baseNota = String(c.nota).replace(/\s*·\s*ronda \d+$/i, '');
+  var n = 2;
+  while (CAMPANAS.some(function(o){ return o.nota === baseNota + ' · ronda ' + n; })) n++;
+  return campNorm({ id:null, estado:'borrador', nombre:base + ' · ronda ' + n, nota:baseNota + ' · ronda ' + n,
+    desde:'', hasta:'', producto:c.producto, mensaje:c.mensaje || '', oferta:'', instruccion:c.instruccion || '', _de:c.nombre,
+    filtros:{ incluir_cerradas:true, sacar_compraron:true, sacar_otro_lado:true, sacar_desistio:true, solo_antes_de:'', excluir_notas:[] } });
+}
+function campRonda(id){ var c = campPorId(id); if (!c) return; CAMP_EDIT = campBorradorRonda(c); CAMP_SEL = null; renderVistaActual(); window.scrollTo(0, 0); }
+function campNueva(){
+  CAMP_EDIT = campNorm({ id:null, estado:'borrador', nombre:'', nota:'', desde:'', hasta:'', producto:'cubierta', oferta:'', instruccion:'',
+    mensaje:'{saludo}, ¿cómo estás?{soy}\n\n{hace} cotizaste {con_nosotros} y quería saber si el proyecto sigue en pie.\n\n[la oferta]\n\nSaludos.',
+    filtros:{ incluir_cerradas:true, sacar_compraron:true, sacar_otro_lado:true, sacar_desistio:true, solo_antes_de:'', excluir_notas:[] } });
+  CAMP_SEL = null; renderVistaActual(); window.scrollTo(0, 0);
+}
+function campEditar(id){
+  var c = campPorId(id); if (!c) return;
+  CAMP_EDIT = JSON.parse(JSON.stringify(c)); campNorm(CAMP_EDIT);
+  CAMP_SEL = null; renderVistaActual(); window.scrollTo(0, 0);
+}
+/* la nota no se cambia si ya hay clientes escritos con ella: es lo que une la campaña con sus resultados */
+function campNotaUsada(nota){ return !!nota && (dashRows || []).some(function(q){ return campTieneNota([q], nota); }); }
+function campFormHtml(){
+  var c = CAMP_EDIT, f = c.filtros;
+  var orig = c.id ? campPorId(c.id) : null;
+  var notaFija = orig && campNotaUsada(orig.nota);
+  var chk = function(k, txt){
+    return '<label class="cp-tg"><input type="checkbox"' + (f[k] ? ' checked' : '') + ' onchange="CAMP_EDIT.filtros.' + k + '=this.checked;campFormRefrescar()"> ' + txt + '</label>';
+  };
+  var prodOpts = Object.keys(PNAME).map(function(k){ return '<option value="' + k + '"' + (c.producto === k ? ' selected' : '') + '>' + PNAME[k] + '</option>'; }).join('');
+  var otras = CAMPANAS.filter(function(o){ return String(o.id) !== String(c.id); });
+  var excl = otras.map(function(o){
+    var on = f.excluir_notas.indexOf(o.nota) !== -1;
+    return '<label class="cp-tg"><input type="checkbox"' + (on ? ' checked' : '') + ' onchange="campExcluir(\'' + escA(String(o.nota).replace(/'/g, '')) + '\',this.checked)"> Sacar a los ya escritos en «' + escA(o.nombre) + '»</label>';
+  }).join('');
+  var inp = function(lbl, k, tipo, extra){
+    return '<div class="fsec"><label class="flabel">' + lbl + '</label><input class="finput" type="' + (tipo || 'text') + '" value="' + escA(c[k] || '') + '"' + (extra || '') +
+      ' oninput="CAMP_EDIT.' + k + '=this.value" onchange="CAMP_EDIT.' + k + '=this.value;campFormRefrescar()"></div>';
+  };
+  return '<div class="cp-wrap"><button type="button" class="cp-volver" onclick="campCancelar()">‹ Cancelar</button>' +
+    '<div class="cp-card"><div class="cp-nom">' + (c.id ? 'Editar campaña' : 'Campaña nueva') + '</div>' +
+    (c._de ? '<div class="cp-aviso">Ronda nueva de «' + escA(c._de) + '». El mensaje viene de esa campaña: <strong>revisa la oferta y las fechas</strong> antes de activarla.</div>' : '') +
+    inp('Nombre', 'nombre', 'text', ' maxlength="80" placeholder="Ej.: Mesas · envío incluido"') +
+    (notaFija
+      ? '<div class="fsec"><label class="flabel">Nota en el historial</label><div class="cp-fec">' + escA(c.nota) + ' (ya hay clientes escritos con ella: no se cambia)</div></div>'
+      : inp('Nota que queda en el historial del cliente (única)', 'nota', 'text', ' maxlength="80" placeholder="Ej.: Campaña mesas"')) +
+    '<div style="display:flex;gap:8px">' + inp('Desde', 'desde', 'date') + inp('Hasta', 'hasta', 'date') + '</div>' +
+    '<div class="cp-sec">A quién</div>' +
+    '<div class="fsec"><label class="flabel">Cotizaron</label><select class="finput" onchange="CAMP_EDIT.producto=this.value;campFormRefrescar()">' + prodOpts + '</select></div>' +
+    chk('incluir_cerradas', 'Incluir cotizaciones cerradas') +
+    chk('sacar_compraron', 'Sacar a los que ya compraron') +
+    chk('sacar_otro_lado', 'Sacar «compró en otro lado»') +
+    chk('sacar_desistio', 'Sacar «desistió del proyecto»') +
+    '<div class="fsec"><label class="flabel">Solo los que cotizaron antes de (opcional)</label><input class="finput" type="date" value="' + escA(f.solo_antes_de || '') + '" onchange="CAMP_EDIT.filtros.solo_antes_de=this.value;campFormRefrescar()"></div>' +
+    excl +
+    '<div class="cp-aviso" id="camp-calzan"></div>' +
+    '<div class="cp-sec">Mensaje</div>' +
+    '<textarea class="finput" rows="9" style="font-family:inherit" oninput="CAMP_EDIT.mensaje=this.value;campFormRefrescar()">' + escA(c.mensaje || '') + '</textarea>' +
+    '<p class="cp-nota">Variables: {saludo} «Hola Ana» · {nombre} · {soy} « Soy César, de Casa Zaru.» (solo la primera vez que se le escribe) · {hace} «Hace unos días» o «Hace un tiempo» · {con_nosotros}.</p>' +
+    '<div class="cp-fec" style="margin:8px 0 4px">Así le llega a un cliente de la lista:</div><div class="cp-msg" id="camp-preview"></div>' +
+    inp('Oferta, en una línea (se muestra al vendedor)', 'oferta', 'text', ' maxlength="300" placeholder="Ej.: 10 % sobre $1.000.000 hasta el 12-12"') +
+    '<div class="fsec"><label class="flabel">Qué hace el vendedor si contesta</label><textarea class="finput" rows="3" style="font-family:inherit" oninput="CAMP_EDIT.instruccion=this.value">' + escA(c.instruccion || '') + '</textarea></div>' +
+    '<div class="cp-btns" style="margin-top:14px">' + campBtn('Guardar', 'campGuardar(false)') + campBtn('Guardar y activar', 'campGuardar(true)', 'pri') + '</div>' +
+    '</div></div>';
+}
+function campExcluir(nota, on){
+  var a = CAMP_EDIT.filtros.excluir_notas.filter(function(n){ return n !== nota; });
+  if (on) a.push(nota);
+  CAMP_EDIT.filtros.excluir_notas = a;
+  campFormRefrescar();
+}
+function campFormRefrescar(){
+  if (!CAMP_EDIT) return;
+  var L = campanaClientes(CAMP_EDIT);
+  var el = document.getElementById('camp-calzan');
+  if (el) el.innerHTML = 'Hoy calzan <b>' + L.length + ' clientes</b>. El tope de 2 mensajes sin respuesta se respeta siempre.';
+  var pv = document.getElementById('camp-preview');
+  if (pv){
+    var x = L.length ? L[0].x : { cliente:'Ana', contacto:'', fecha_creacion:addDias(hoyISO(), -20) };
+    pv.textContent = campanaMsg(x, CAMP_EDIT) || '(sin mensaje)';
+  }
+}
+function campCancelar(){ var id = CAMP_EDIT && CAMP_EDIT.id; CAMP_EDIT = null; CAMP_SEL = id || null; renderVistaActual(); }
+async function campGuardar(activar){
+  var c = CAMP_EDIT; if (!c) return;
+  var nombre = String(c.nombre || '').trim(), nota = String(c.nota || '').trim();
+  if (nombre.length < 3) { showToast('Falta el nombre de la campaña', false); return; }
+  if (nota.length < 3) { showToast('Falta la nota que queda en el historial', false); return; }
+  if (CAMPANAS.some(function(o){ return o.nota === nota && String(o.id) !== String(c.id); })) { showToast('Ya hay otra campaña con esa nota', false); return; }
+  if (c.desde && c.hasta && c.hasta < c.desde) { showToast('La fecha «hasta» es antes de «desde»', false); return; }
+  if (activar){
+    if (!c.desde || !c.hasta) { showToast('Para activarla faltan las fechas', false); return; }
+    if (String(c.mensaje || '').trim().length < 20) { showToast('Para activarla falta el mensaje', false); return; }
+    if (/\[la oferta\]/i.test(c.mensaje)) { showToast('El mensaje todavía dice [la oferta]', false); return; }
+    var igual = CAMPANAS.filter(function(o){ return String(o.id) !== String(c.id) && String(o.mensaje).trim() === String(c.mensaje).trim(); })[0];
+    if (igual && !confirm('El mensaje es igual al de «' + igual.nombre + '» (con su oferta y sus fechas). ¿Activarla igual?')) return;
+  }
+  var f = c.filtros;
+  var row = { nombre:nombre, nota:nota, desde:c.desde || null, hasta:c.hasta || null, producto:c.producto, mensaje:String(c.mensaje || ''),
+    oferta:String(c.oferta || '').trim() || null, instruccion:String(c.instruccion || '').trim() || null,
+    filtros:{ incluir_cerradas:!!f.incluir_cerradas, sacar_compraron:f.sacar_compraron !== false, sacar_otro_lado:f.sacar_otro_lado !== false,
+              sacar_desistio:!!f.sacar_desistio, solo_antes_de:f.solo_antes_de || '', excluir_notas:f.excluir_notas.slice() } };
+  var orig = c.id ? campPorId(c.id) : null;
+  if (orig && campNotaUsada(orig.nota)) delete row.nota;   /* no se cambia: ver campNotaUsada */
+  var r = c.id ? await sbClient.from('campanas').update(row).eq('id', c.id).select()
+               : await sbClient.from('campanas').insert(row).select();
+  if (r.error || !r.data || !r.data.length){ showToast('No se pudo guardar: ' + (r.error ? r.error.message : 'sin permiso'), false); return; }
+  var id = String(r.data[0].id);
+  CAMP_EDIT = null;
+  await campCargar();
+  if (activar) { await campEstado(id, 'activa'); return; }
+  CAMP_SEL = id; renderVistaActual(); showToast('Campaña guardada', true);
+}
+async function campEstado(id, estado){
+  var c = campPorId(id); if (!c) return;
+  if (estado === 'activa'){
+    if (!c.desde || !c.hasta || String(c.mensaje || '').trim().length < 20) { showToast('Para activarla faltan fechas o mensaje: edítala primero', false); return; }
+    var otra = (CAMPANA && String(CAMPANA.id) !== String(id)) ? CAMPANA : null;
+    if (otra){
+      if (!confirm('Ya está activa «' + otra.nombre + '». ¿La pauso y activo «' + c.nombre + '»?')) return;
+      var p = await sbClient.from('campanas').update({ estado:'pausada' }).eq('id', otra.id).select();
+      if (p.error || !p.data || !p.data.length){ showToast('No se pudo pausar «' + otra.nombre + '»', false); return; }
+    }
+  }
+  if (estado === 'terminada' && !confirm('¿Terminar «' + c.nombre + '»? Deja de aparecer en Seguimiento; sus resultados se siguen viendo aquí.')) return;
+  var r = await sbClient.from('campanas').update({ estado:estado }).eq('id', id).select();
+  await campCargar();
+  if (r.error || !r.data || !r.data.length){ showToast('No se pudo cambiar: ' + (r.error ? r.error.message : 'sin permiso'), false); renderVistaActual(); return; }
+  CAMP_SEL = id; renderTabs(); renderVistaActual();
+  showToast(estado === 'activa' ? 'Activada: aparece arriba de Seguimiento' : estado === 'pausada' ? 'Pausada' : 'Terminada', true);
 }
 /* En el tope de 2 sin respuesta no hay botón de WhatsApp ni de correo: un
    aviso y «Me contestó», que anota la respuesta y lo libera. Lo que ya quedó
