@@ -2765,6 +2765,9 @@ var MESA_MODELOS = [
      cotización hablaba de una base de fierro que esta mesa no tiene. */
   { nombre:'Mesa de Centro Río Maullín',   foto:'https://cdn.shopify.com/s/files/1/0800/2283/1138/files/Photoroom_20250612_163633.jpg', forma:'rectangular', base:'madera', tipo:'centro' },
   { nombre:'Mesa de Centro Lago Toltén',   foto:'https://cdn.shopify.com/s/files/1/0800/2283/1138/files/Photoroom_20260721_124801.jpg', forma:'redonda',     base:'fierro', tipo:'centro' },
+  /* 23-11-2026: versión baja de la Río Puelo. No está en la tienda: solo la
+     ofrece el vendedor, con la foto de la de comedor mientras no haya una propia. */
+  { nombre:'Mesa de Centro Río Puelo',     foto:'rio-puelo',             forma:'redonda',     base:'madera', tipo:'centro', soloVendedor:true },
   { nombre:'Mesas de Centro Río Bueno (par)', foto:'https://cdn.shopify.com/s/files/1/0800/2283/1138/files/Photoroom_20250613_093742.jpg', forma:'rectangular', base:'madera', tipo:'centro', par:true }
 ];
 /* ── COMEDOR vs CENTRO ──
@@ -3138,6 +3141,15 @@ var MESA_BASES = {
     { hasta:80,   bajo:229900, medio:249900, alto:249900 },
     { hasta:100,  bajo:259900, medio:279900, alto:289900 },
     { hasta:9999, bajo:289900, medio:319900, alto:329900 }
+  ]},
+  /* Base de la Río Puelo de centro, desde el costo real del taller (23-11-2026,
+     base para 100 cm de diámetro): 8 h + madera $35.000 pino / $58.000 castaño /
+     $80.000 raulí, sin IVA, + $5.000 de insumos → ÷ (1 − 47 % − 2 %) × 1,19 →
+     x9.900. Los dos tramos valen lo mismo hasta tener el costo de otros
+     diámetros (uno solo con hasta:9999 se rotula «desde 9999 cm»). */
+  'Mesa de Centro Río Puelo': { modo:'diametro', tramos:[
+    { hasta:100,  bajo:189900, medio:239900, alto:289900 },
+    { hasta:9999, bajo:189900, medio:239900, alto:289900 }
   ]},
   /* El conjunto son DOS mesas de centro que se venden juntas. No lleva base con
      precio propio: las patas son paneles de madera del mismo espesor que la
