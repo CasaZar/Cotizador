@@ -8215,9 +8215,18 @@ function pdfLienzo(){
   /* el PDF lleva toda la información: los desplegables van abiertos */
   var plegs = copia.querySelectorAll('details.pleg');
   for (var k = 0; k < plegs.length; k++) plegs[k].open = true;
-  ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor'].forEach(function(sel){
+  /* 23-11-2026: también lo que en papel no se puede apretar — la pregunta por
+     el envío cuando aún no hay comuna (.envio-stk.sin-envio; con envío
+     cotizado se queda, porque trae el monto) y los botones «Ver política…» /
+     «Ver términos…» (.tag-link). Ganan el espacio para que quepa en 2 hojas. */
+  ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor', '.envio-stk.sin-envio', 'a.tag-link'].forEach(function(sel){
     var lista = copia.querySelectorAll(sel);
-    for (var i = 0; i < lista.length; i++) lista[i].parentNode.removeChild(lista[i]);
+    for (var i = 0; i < lista.length; i++){
+      var padre = lista[i].parentNode;
+      padre.removeChild(lista[i]);
+      /* el <p> que solo envolvía al botón no deja un hueco */
+      if (padre.tagName === 'P' && !padre.textContent.trim()) padre.parentNode.removeChild(padre);
+    }
   });
   envoltorio.appendChild(copia);
   document.body.appendChild(envoltorio);
@@ -8304,7 +8313,22 @@ async function descargarPDF(){
     var anchoMm = 216 - PDF_MARG.izq * 2;
     var altoUtilMm = 279 - PDF_MARG.sup - PDF_MARG.inf;
     var pxPorMm = canvas.width / anchoMm;
-    var cortes = pdfPaginar(canvas, Math.floor(altoUtilMm * pxPorMm));
+    var pageHpx = Math.floor(altoUtilMm * pxPorMm);
+    var cortes = pdfPaginar(canvas, pageHpx);
+    /* ── SIN HOJA CASI VACÍA (23-11-2026) ──
+       Cuando la última página queda con un resto chico (típico: solo la franja
+       del pie con el N° de cotización), se achica todo un poco —hasta 88 %—
+       para que entre en una hoja menos. Se busca la escala más grande que lo
+       logra, así el texto se reduce lo mínimo; si ni al 88 % alcanza, queda
+       como antes. La copia se centra en la hoja. */
+    var escala = 1, nPag = cortes.length - 1;
+    if (nPag >= 2 && (cortes[nPag] - cortes[nPag - 1]) < pageHpx * 0.30){
+      for (var s = 0.99; s >= 0.88; s -= 0.01){
+        var c2 = pdfPaginar(canvas, Math.floor(pageHpx / s));
+        if (c2.length - 1 < nPag){ escala = s; cortes = c2; break; }
+      }
+    }
+    var anchoDib = anchoMm * escala, xDib = PDF_MARG.izq + (anchoMm - anchoDib) / 2;
     for (var p = 0; p < cortes.length - 1; p++){
       var h = cortes[p+1] - cortes[p];
       if (h <= 2) continue;
@@ -8312,7 +8336,7 @@ async function descargarPDF(){
       tc.width = canvas.width; tc.height = h;
       tc.getContext('2d').drawImage(canvas, 0, cortes[p], canvas.width, h, 0, 0, canvas.width, h);
       if (p > 0) pdf.addPage();
-      pdf.addImage(tc.toDataURL('image/jpeg', 0.95), 'JPEG', PDF_MARG.izq, PDF_MARG.sup, anchoMm, h / pxPorMm);
+      pdf.addImage(tc.toDataURL('image/jpeg', 0.95), 'JPEG', xDib, PDF_MARG.sup, anchoDib, h / pxPorMm * escala);
     }
     /* Pie con numeración en cada página. Además de ordenar el documento, sirve
        de huella de versión: los PDF de las versiones con el bug de paginación
