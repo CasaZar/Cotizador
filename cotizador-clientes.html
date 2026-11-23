@@ -9695,11 +9695,31 @@ function waVariante(x){
 /* ── CÉSAR SE PRESENTA UNA SOLA VEZ (30-10-2026, pedido del usuario) ──
    «Soy César de Casa Zaru» va solo en el primer mensaje que recibe el cliente.
    Ya presentado = el cliente tiene algún toque, respuesta o venta en CUALQUIERA
-   de sus cotizaciones (la misma vara del chip «Nunca contactados»). Excepción:
+   de sus cotizaciones (la misma vara del chip «Nunca contactados»), sin contar
+   lo que hizo un vendedor de baja (contactadoPorEquipoActual). Excepción:
    si se le pasó al 0141 (origen.no_escribio), el primer mensaje desde ese
    número sí se presenta, porque le escribe un número que no conoce. */
+/* 23-11-2026: lo que escribió un vendedor que ya no está (Jepe, baja el 03-11)
+   no cuenta como presentación de César. En sus cotizaciones solo vale lo
+   anotado desde el día de su baja: antes de eso, el que escribía era él. */
+function contactadoPorEquipoActual(x){
+  var k = clientKey(x), de = null;
+  for (var i = 0; i < VENDEDORES.length; i++) if (VENDEDORES[i].baja) (de = de || {})[VENDEDORES[i].email] = VENDEDORES[i].baja;
+  if (!de) return true;
+  var conToque = {};
+  (TOQUES || []).forEach(function(t){ if (t && t.cotizacion_id != null && !de[t.hecho_por]) conToque[t.cotizacion_id] = true; });
+  return (allRows || []).some(function(q){
+    if (!q || q.eliminada || clientKey(q) !== k) return false;
+    var h = Array.isArray(q.seg_historial) ? q.seg_historial : [];
+    var baja = de[q.user_email];
+    if (!baja) return cotizContactada(q) || q.estado === 'ganado' || conToque[q.id] ||
+                      h.some(function(e){ return e && ((e.etapa || 0) > 0 || e.via); });
+    return conToque[q.id] || h.some(function(e){ return e && ((e.etapa || 0) > 0 || e.via) && String(e.fecha || '') >= baja; });
+  });
+}
 function yaSePresento(x){
   if (!x || !clientesContactados()[clientKey(x)]) return false;
+  if (!contactadoPorEquipoActual(x)) return false;
   var ne = x.origen && x.origen.no_escribio;
   if (ne) {
     var h = Array.isArray(x.seg_historial) ? x.seg_historial : [];
