@@ -351,6 +351,9 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .dcto-seg .dcto-op { flex: 1; background: #fff; border: 0; border-right: 1px solid var(--bd); padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--tm); cursor: pointer; font-family: inherit; }
 .dcto-seg .dcto-op:last-child { border-right: 0; }
 .dcto-seg .dcto-op.on { background: #485B3D; color: #fff; }
+/* «Maderas que ve el cliente»: 8 botones, en celular pasan a 2 filas de 4 */
+.dcto-seg.smad-seg { flex-wrap: wrap; }
+.dcto-seg.smad-seg .dcto-op { flex: 1 0 25%; border-bottom: 1px solid var(--bd); font-size: 13px; }
 .pz-trans { font-size: 13px; font-weight: 600; color: #2D6A4F; margin-top: 3px; line-height: 1.25; }
 .pz-trans small { display: block; font-size: 11px; font-weight: 500; }
 .precios-nota { font-size: 11.5px; color: var(--tm); text-align: center; line-height: 1.5; margin-top: 2px; }
@@ -3567,7 +3570,7 @@ function dctoFactor() { var p = dctoPct(); return p > 0 ? 1 - p / 100 : 1; }
 function dctoMonto(x) { return dctoPct() > 0 ? Math.round(Math.round(x) * dctoFactor()) : x; }
 function dctoSel(v) {
   dctoEsp = dctoValido(v);
-  document.querySelectorAll('.dcto-op').forEach(function(b){
+  document.querySelectorAll('.dcto-op:not(.smad-op)').forEach(function(b){
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
   });
   b2bPintar();   /* el aviso de la cuenta dice cuál de los dos se usa */
@@ -3579,6 +3582,45 @@ function dctoSelHtml() {
     '<div class="dcto-seg">' +
       [0].concat(DCTO_OPCIONES).map(function(v){
         return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + ' %' : 'Sin') + '</button>';
+      }).join('') +
+    '</div>' +
+  '</div>';
+}
+/* ── SOLO UNA MADERA (23-11-2026, pedido del usuario) ──
+   El vendedor puede dejar la cotización con una sola madera (p. ej. una
+   arquitecta que se la manda a su cliente solo en raulí). Solo cambia lo que
+   se ve: tarjetas, «Elige tu madera», mensaje y botón de WhatsApp. La fila
+   guardada conserva los tres tramos. El link lo lleva en data.sm (la clave de
+   la foto, validada contra MADERA_FOTOS). No aplica a cotizaciones combinadas. */
+var soloMad = '';
+var soloMadTotal = 0;   /* precio de lista de esa madera, lo deja preciosCards para whatsappCTA */
+function soloMadValido(v) {
+  v = String(v || '');
+  var ok = false;
+  Object.keys(MADERA_FOTOS).forEach(function(t){ MADERA_FOTOS[t].forEach(function(m){ if (m.f === v) ok = true; }); });
+  return ok ? v : '';
+}
+function soloMadInfo() {
+  if (!soloMad || comboDoc || comboCaptura || comboShare || prod === 'especial') return null;
+  var hit = null;
+  Object.keys(MADERA_FOTOS).forEach(function(t){ MADERA_FOTOS[t].forEach(function(m){ if (m.f === soloMad) hit = { t: t, f: m.f, n: m.n }; }); });
+  return hit;
+}
+function soloMadSel(v) {
+  soloMad = soloMadValido(v);
+  document.querySelectorAll('.smad-op').forEach(function(b){
+    b.classList.toggle('on', (b.getAttribute('data-v') || '') === soloMad);
+  });
+  vCambio();
+}
+function soloMadSelHtml() {
+  var ops = [{ f: '', n: 'Todas' }];
+  ['bajo', 'medio', 'alto'].forEach(function(t){ (MADERA_FOTOS[t] || []).forEach(function(m){ ops.push(m); }); });
+  return '<div class="vx-sub">' +
+    '<div class="vx-sub-h">Maderas que ve el cliente</div>' +
+    '<div class="dcto-seg smad-seg">' +
+      ops.map(function(m){
+        return '<button type="button" class="dcto-op smad-op' + (m.f === soloMad ? ' on' : '') + '" data-v="' + m.f + '" onclick="soloMadSel(\'' + m.f + '\')">' + m.n + '</button>';
       }).join('') +
     '</div>' +
   '</div>';
@@ -4105,7 +4147,7 @@ function b2bResHtml(cargando) {
     var nomP = profNombre();
     var falta = [!nomP ? 'su nombre' : '', !profRut ? 'su RUT' : ''].filter(Boolean).join(' y ');
     return '<div class="b2b-ok"><b>Profesional' + (nomP ? ': ' + escA(nomP) : '') + '</b> · comisión ' + profPct() + ' % / ' + profPctTarjeta() + ' %<small>' +
-      profPct() + ' % si el cliente paga por transferencia, ' + profPctTarjeta() + ' % con tarjeta (1 cuota). Sobre el neto de productos (sin IVA ni envío)' +
+      profPct() + ' % si el cliente paga por transferencia, ' + profPctTarjeta() + ' % con tarjeta en 1 cuota, ' + Math.max(0, profPctTarjeta() - 2) + ' % en 3 cuotas. Sobre el neto de productos (sin IVA ni envío)' +
       '; tramo ' + profTramo() + ' %' + (b2bDcto > PROF_TRAMO_MIN ? ' de su cuenta' : ' (parte en 2 %)') +
       '. El cliente ve un solo precio, igual con tarjeta o transferencia.' +
       (falta ? ' Falta ' + falta + '.' : '') + '</small></div>';
@@ -6516,8 +6558,11 @@ function vPrecioPintar() {
   var box = document.getElementById('v-precio');
   if (!vendorMode || !box) return;
   /* el descuento puede venir de un link abierto: los botones siguen a la variable */
-  document.querySelectorAll('.dcto-op').forEach(function(b){
+  document.querySelectorAll('.dcto-op:not(.smad-op)').forEach(function(b){
     b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
+  });
+  document.querySelectorAll('.smad-op').forEach(function(b){
+    b.classList.toggle('on', (b.getAttribute('data-v') || '') === soloMad);
   });
   var ph = document.getElementById('v-precio-h');
   if (ph) ph.textContent = prod === 'especial' ? 'Resumen' : 'Precio por madera';
@@ -6737,8 +6782,9 @@ function vMensaje(link) {
       'Te dejo la cotización de ' + t + (ES.nOp === 2 ? ', con dos opciones' : '') + ':\n' + link + '\n\n' +
       'Cualquier duda me avisas.';
   }
+  var smM = soloMadInfo();
   return (nom ? 'Hola ' + nom : 'Hola') + ', te escribe César de Casa Zaru.\n\n' +
-    'Te dejo la cotización de ' + prodTexto(cods.join('+')).suyo + ', con el precio en cada madera:\n' + link + '\n\n' +
+    'Te dejo la cotización de ' + prodTexto(cods.join('+')).suyo + (smM ? ' en ' + smM.n + ':\n' : ', con el precio en cada madera:\n') + link + '\n\n' +
     'Cualquier duda, o si quieres fotos para comparar maderas, me avisas y te mando.';
 }
 function vMsgPintar() {
@@ -6815,7 +6861,7 @@ function vMontar() {
     if (b2b) datos.appendChild(b2b);   /* el RUT es un dato del cliente */
   }
   var aj = document.getElementById('v-ajustes');
-  if (aj) aj.innerHTML = '<div class="v-h">Ajustes de precio<span>se pueden cambiar hasta guardar</span></div>' + dctoSelHtml() +
+  if (aj) aj.innerHTML = '<div class="v-h">Ajustes de precio<span>se pueden cambiar hasta guardar</span></div>' + dctoSelHtml() + soloMadSelHtml() +
     '<div id="v-b2b-res"></div>';
   b2bPintar();
   /* abajo a la derecha: «Vista del cliente» y «Guardar y copiar link», lado a lado */
@@ -7653,6 +7699,8 @@ function esResumenPintar(box) {
 /* sobre los precios del documento: «Elige tu madera · válido hasta…» */
 function eligeTxt() {
   if (prod === 'especial') return (ES && ES.nOp === 2) ? 'Dos opciones · ' : '';
+  var sm = soloMadInfo();
+  if (sm) return 'Madera ' + sm.n + ' · ';
   return 'Elige tu madera · ';
 }
 /* el documento del cliente */
@@ -7877,6 +7925,16 @@ function preciosCards(rows, recTier, desgloseFn, nota) {
     if (typeof r.base === 'number') c.base = r.base * fd;
     return c;
   });
+  /* solo una madera: queda la tarjeta de su tramo, con su nombre y su foto */
+  soloMadTotal = 0;
+  var sm = soloMadInfo();
+  if (sm && rows.some(function(r){ return r.tier === sm.t; })) {
+    rows = rows.filter(function(r){ return r.tier === sm.t; }).slice(0, 1).map(function(r){
+      return Object.assign({}, r, { label: sm.n, combinada: false });
+    });
+    soloMadTotal = rows[0].antes || rows[0].total;
+    recTier = null;
+  }
   var tf = transferFactor();
   var lt = transfLabel();
   var conTransf = 'con ' + lt.charAt(0).toLowerCase() + lt.slice(1);
@@ -8030,8 +8088,9 @@ function boxes() {
         /* 06-10-2026: sin "costo aparte" (pedido del usuario), pero sin esconder que el envío se cobra */
         '<li><strong>Despachamos a todo Chile</strong>: el envío lo cotizamos según tu comuna. También puedes retirar en nuestro taller en Villarrica</li>' +
         '<li>Al recibir, revisa tu pieza: si llega con daño, avísanos <strong>dentro de 12 horas</strong> con fotos y la reponemos sin costo</li>' +
-        /* con profesional: mismo valor con tarjeta, pero en 1 cuota (las cuotas suben la comisión de Mercado Pago) */
-        (sinTransf() ? '<li>Mismo valor con transferencia o tarjeta, en <strong>1 cuota</strong></li>' : '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>') +
+        /* con profesional: mismo valor con transferencia o tarjeta; desde el 23-11 también en 3 cuotas
+           (la comisión del profesional baja 2 puntos en cuotas: eso no lo ve el cliente) */
+        (sinTransf() ? '<li>Mismo valor con transferencia o tarjeta, hasta <strong>3 cuotas sin interés</strong></li>' : '<li>Tarjeta en <strong>3 cuotas sin interés</strong></li>') +
       '</ul>' +
       '<div class="bankrow">' +
         (sinTransf() ? '' : 'Pagando por <strong>transferencia</strong> ahorras un <span class="dcto-tag">' + transfPct() + '%</span><br>') +
@@ -8201,6 +8260,8 @@ function asisEnviar(pre) {
    supabase-cotizador/embudo-whatsapp.sql; sin él la base lo rechaza callada). */
 function whatsappCTA(bajo, alto, det, nombreProd) {
   if (comboCaptura) return '';   /* va una sola vez, al final del documento combinado */
+  var smW = soloMadInfo();
+  if (smW && soloMadTotal) { bajo = alto = soloMadTotal; nombreProd = (nombreProd || PNAME[prod]) + ' en ' + smW.n; }
   if (dctoPct() > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + (Math.round(alto) !== Math.round(bajo) ? ' – ' + fmt(alto) : '') + ' con IVA' +
     (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
@@ -8523,6 +8584,7 @@ function getShareDataProducto(conValores) {
   }
   profAlLink(data);
   if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
+  if (soloMad) data.sm = soloMad;        /* y si se cotizó en una sola madera */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
   if (prod === 'banca') data.bb = getBancaBase();           /* base de fierro o de madera */
@@ -8631,6 +8693,7 @@ function restoreFromData(d) {
   profRut = profModo && d.pro ? rutValido(d.pro.r) : '';
   if (profModo && profRut && vendorMode) b2bBuscar(profRut);
   dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
+  soloMad = soloMadValido(d.sm);    /* una sola madera: solo una clave de MADERA_FOTOS */
   /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
   conStr = d.con || '';
@@ -13956,10 +14019,13 @@ function fvCalc(f){
      prof.pct (7 % o 10 %); link de pago en 1 cuota: prof.pct_tarjeta (5 % u 8 %),
      porque Mercado Pago se come ~3,8 %. La retención de
      la boleta de honorarios se calcula al liquidar el mes, no acá. */
+  /* link en 3 cuotas sin interés (23-11-2026): 2 puntos menos que en 1 cuota
+     (3 % u 6 %), porque las cuotas suben lo que cobra Mercado Pago. */
   var comPct = 0, com = 0;
   if (f.prof) {
     comPct = f.pago === 'transferencia' ? f.prof.pct
       : (f.prof.pct_tarjeta != null ? f.prof.pct_tarjeta : Math.max(0, f.prof.pct - 2));
+    if (f.pago === 'link3') comPct = Math.max(0, comPct - 2);
     com = Math.round(Math.round(productos / 1.19) * comPct / 100);
   }
   return { lista:lista, pct:pct, productos:productos, envio:envio, total:total, abono:abono, saldo:total - abono, com_pct:comPct, com:com };
@@ -14083,6 +14149,7 @@ function fvCotizarEnvio(){
   }).catch(function(){ var o = document.getElementById('fv-stk'); if (o) o.textContent = 'Starken no respondió — escríbelo a mano'; });
 }
 
+function profTarj1(p){ return p.pct_tarjeta != null ? p.pct_tarjeta : Math.max(0, p.pct - 2); }
 function fvSeg(campo, valor, txt, actual){
   return '<button type="button" class="fv-seg'+(actual === valor ? ' on' : '')+'" onclick="fvSet(\''+campo+'\',\''+valor+'\')">'+txt+'</button>';
 }
@@ -14180,9 +14247,9 @@ function fvHtmlFicha(x){
     (f.tier ? '<div class="fv-row1"><span>Precio de los productos</span><input class="fv-in" id="fv-lista" inputmode="numeric" value="'+(f.lista||'')+'" oninput="fvTotales()"></div>'+
               '<div class="fv-nota">El de la cotización, con tarjeta. Cámbialo solo si acordaron otro.</div>' : '')+
     '<div class="fv-lbl">Pago</div>'+
-    '<div class="fv-segs">'+fvSeg('pago','transferencia', f.prof ? 'Transferencia' : 'Transferencia −'+Math.round(fvPctTransf()*100)+' %',f.pago)+fvSeg('pago','link', f.prof ? 'Link de pago (1 cuota)' : 'Link de pago',f.pago)+'</div>'+
-    (f.prof ? '<div class="fv-nota">La presentó ' + escA(f.prof.nombre || 'un profesional') + ': el cliente paga el mismo valor por transferencia o tarjeta (link en 1 cuota). Su comisión: ' +
-      f.prof.pct + ' % si transfiere, ' + (f.prof.pct_tarjeta != null ? f.prof.pct_tarjeta : Math.max(0, f.prof.pct - 2)) + ' % con tarjeta.</div>' : '')+
+    '<div class="fv-segs">'+fvSeg('pago','transferencia', f.prof ? 'Transferencia' : 'Transferencia −'+Math.round(fvPctTransf()*100)+' %',f.pago)+fvSeg('pago','link', f.prof ? 'Link (1 cuota)' : 'Link de pago',f.pago)+(f.prof ? fvSeg('pago','link3','Link (3 cuotas)',f.pago) : '')+'</div>'+
+    (f.prof ? '<div class="fv-nota">La presentó ' + escA(f.prof.nombre || 'un profesional') + ': el cliente paga el mismo valor por transferencia o tarjeta (hasta 3 cuotas sin interés). Su comisión: ' +
+      f.prof.pct + ' % si transfiere, ' + profTarj1(f.prof) + ' % con link en 1 cuota, ' + Math.max(0, profTarj1(f.prof) - 2) + ' % en 3 cuotas.</div>' : '')+
     '<div class="fv-segs">'+fvSeg('abono','70','Abono 70 %',String(f.abono_pct))+fvSeg('abono','100','Paga todo',String(f.abono_pct))+'</div>'+
     '<div class="fv-lbl">Envío</div>'+
     '<div class="fv-segs">'+fvSeg('envio','starken','Starken',f.envio.tipo)+fvSeg('envio','retiro','Retira en Villarrica',f.envio.tipo)+fvSeg('envio','otro','Otro',f.envio.tipo)+'</div>'+
