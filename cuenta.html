@@ -116,7 +116,9 @@ function render(c){
     '<div class="lbl" style="margin-top:20px">Tus beneficios</div>'+
     '<div class="lista">'+
       '<div class="it"><div><b style="white-space:normal">1 muestrario sin costo</b><small>Valor de lista $20.000.</small></div></div>'+
-      '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>Sobre $1.500.000 acumulados se activa el 7 % pagando con transferencia; sobre $3.000.000, el 10 %. Desde la primera compra ya tienes el 5 %.</small></div></div>'+
+      (c.profesional
+        ? '<div class="it"><div><b style="white-space:normal">Cuenta de profesional</b><small>Tu cuenta parte en el 7 % pagando con transferencia desde la primera compra; sobre $3.000.000 acumulados, el 10 %.</small></div></div>'
+        : '<div class="it"><div><b style="white-space:normal">Descuento por lo que acumulas</b><small>Sobre $1.500.000 acumulados se activa el 7 % pagando con transferencia; sobre $3.000.000, el 10 %. Desde la primera compra ya tienes el 5 %.</small></div></div>')+
       '<div class="it"><div><b style="white-space:normal">Cotizador para tus presupuestos</b><small>Valores por medida y especie, con el acabado incluido.</small></div></div>'+
       '<div class="it"><div><b style="white-space:normal">Despacho a todo Chile</b><small>Con convenios de transporte; el costo se ve por proyecto.</small></div></div>'+
     '</div>'+
