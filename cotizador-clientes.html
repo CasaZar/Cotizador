@@ -1543,6 +1543,12 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
    Cliente arriba, descuentos juntos, precio por madera en vivo y un solo
    botón «Guardar y copiar link». Ver vPrecioPintar() y vTrasGuardar(). */
 .solo-ven, .v-solo, .v-estado { display: none; }
+/* contacto del cliente en el cotizador de vendedores: WhatsApp · Correo · Instagram (23-11-2026) */
+.v-con-seg { display: flex; border: 1px solid var(--bd, #E6E0D6); border-radius: 6px; overflow: hidden; margin: 2px 0 10px; }
+.v-con-seg button { flex: 1; height: 38px; border: 0; background: #fff; font: inherit; font-size: 14px; color: var(--tm, #7A7368); cursor: pointer; }
+.v-con-seg button + button { border-left: 1px solid var(--bd, #E6E0D6); }
+.v-con-seg button.on { background: #2B2722; color: #fff; font-weight: 600; }
+body.modo-vendedor #f-con-modo { display: none; }
 body.modo-vendedor .solo-ven { display: inline; }
 body.modo-vendedor .v-solo { display: block; }
 body.modo-vendedor .solo-pub, body.modo-vendedor #s2 .live-price-wrap,
@@ -2164,6 +2170,18 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 #s-dash.pz .pz-acc.wap { background:var(--pz-wa); border-color:var(--pz-wa); color:#fff; flex:1; font-weight:600; }
 #s-dash.pz .pz-acc.wap .pz-i { width:17px; height:17px; }
 #s-dash.pz .pz-acc.apag { opacity:.45; }
+/* Canales de WhatsApp al día (23-11-2026): 5558 · 0141 anuncios · Instagram */
+#s-dash.pz .wa-chips { display:flex; gap:6px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid var(--pz-linea); }
+#s-dash.pz .wa-chip { height:30px; border:1px solid var(--pz-linea); background:#fff; border-radius:999px; padding:0 9px; font:inherit; font-size:12.5px; color:var(--pz-tinta); cursor:pointer; }
+#s-dash.pz .wa-chip b { font-weight:600; margin-left:3px; }
+#s-dash.pz .wa-chip.on { background:var(--pz-tinta); color:#fff; border-color:var(--pz-tinta); }
+#s-dash.pz .wa-canal { display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.3px; border-radius:3px; padding:1px 6px; margin-right:6px; vertical-align:1px; background:var(--pz-papel); color:var(--pz-sec); }
+#s-dash.pz .wa-canal.c0141 { background:#E5F1EA; color:var(--pz-wa); }
+#s-dash.pz .wa-canal.cig { background:#F6E6EF; color:#B1407A; }
+#s-dash.pz .wa-cot { margin:0 14px 8px 62px; font-size:12.5px; background:#EEF3EA; border-radius:4px; padding:7px 10px; color:var(--pz-verde, #485B3D); }
+#s-dash.pz .wa-cot a { color:inherit; }
+#s-dash.pz .pz-acc.wap.ig { background:#B1407A; border-color:#B1407A; }
+@media (max-width:600px){ #s-dash.pz .wa-cot { margin:0 14px 8px; } }
 /* Historial de WhatsApp al día */
 #s-dash.pz .wa-seg { display:flex; max-width:360px; margin:0 0 14px; border:1px solid var(--pz-borde); border-radius:4px; overflow:hidden; }
 #s-dash.pz .wa-seg button { flex:1; height:40px; border:0; background:#fff; font:inherit; font-size:14px; color:var(--pz-sec); cursor:pointer; }
@@ -3959,6 +3977,13 @@ function recWood() {
 }
 /* correo válido (para aceptar contacto por correo además de WhatsApp) */
 function esCorreo(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v||'').trim()); }
+/* contacto de Instagram (23-11-2026, solo vendedores): se guarda como «instagram:usuario» */
+function esInstagram(v){ return /^instagram:[A-Za-z0-9._]{1,30}$/.test(String(v||'').trim()); }
+/* «@juan.perez», «instagram.com/juan.perez/» o «juan.perez» → «juan.perez»; si no calza, '' */
+function igUsuario(v){
+  var s = String(v||'').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[/?#].*$/, '').replace(/^@/, '');
+  return /^[A-Za-z0-9._]{1,30}$/.test(s) ? s : '';
+}
 /* aviso para uso exterior: la madera debe ir bajo techo (la garantía no cubre sol/lluvia directos) */
 var AVISO_EXTERIOR = 'Para uso exterior recomendamos instalarla <strong>bajo techo</strong> (terraza cubierta, quincho techado o alero). La madera expuesta directamente al sol y la lluvia se deteriora, y la garantía no cubre ese daño.';
 function usoAviso(){
@@ -5908,6 +5933,19 @@ function generar() {
      que le faltaba el modelo */
   if (!validarProducto(errEl)) return;
   if (!cli) return falta(vendorMode ? 'Escribe el nombre del cliente.' : 'Escribe tu nombre.');
+  /* vendedor con cliente de Instagram: el contacto es su usuario, sin teléfono ni correo */
+  if (vendorMode && conModoIg) {
+    if (!conStr) return falta('Escribe el usuario de Instagram del cliente.');
+    var igU = igUsuario(conStr);
+    if (!igU) return falta('Revisa el usuario de Instagram (ej. @juan.perez).');
+    conStr = 'instagram:' + igU;
+    errEl.classList.add('hidden');
+    uso = usoActual();
+    embudoTick('datos');
+    vCopiarAlGuardar = vendorMode;
+    confirmar();
+    return;
+  }
   /* link del asistente de WhatsApp: ya sabemos por dónde escribirle, no se le pide de nuevo */
   var sinCon = !!asis && !vendorMode && !conStr;
   if (!conStr && !sinCon) return falta(vendorMode ? (porCorreo ? 'Escribe el correo del cliente.' : 'Escribe el WhatsApp del cliente.')
@@ -5930,10 +5968,13 @@ function generar() {
    el link de abajo lo cambia a correo y de vuelta. conStr se sigue leyendo del
    mismo #f-con, así que guardar, links y panel no cambian. */
 var conModoCorreo = false;
+var conModoIg = false;     /* solo vendedores: el cliente llegó por Instagram */
 function conModo(forzar) {
   conModoCorreo = (typeof forzar === 'boolean') ? forzar : !conModoCorreo;
   var inp = document.getElementById('f-con'), lbl = document.getElementById('f-con-lbl'), lnk = document.getElementById('f-con-modo');
   if (!inp) return;
+  if (conModoIg) { inp.value = ''; conModoIg = false; }   /* un usuario de Instagram no sirve como número ni correo */
+  conSegPintar();
   if (conModoCorreo) {
     inp.type = 'email'; inp.setAttribute('inputmode', 'email'); inp.setAttribute('autocomplete', 'email');
     inp.placeholder = 'nombre@correo.cl';
@@ -5951,7 +5992,32 @@ function conModo(forzar) {
 /* al tocar el campo vacío en modo WhatsApp se pone el "+56 9 ": quedan los 8 dígitos */
 function conPrefijo() {
   var inp = document.getElementById('f-con');
-  if (inp && !conModoCorreo && !inp.value.trim()) inp.value = '+56 9 ';
+  if (inp && !conModoCorreo && !conModoIg && !inp.value.trim()) inp.value = '+56 9 ';
+}
+/* ── Vendedor: WhatsApp · Correo · Instagram (23-11-2026) ──
+   En el cotizador de vendedores el link de abajo se cambia por tres botones.
+   Instagram guarda el contacto como «instagram:usuario», para que las
+   cotizaciones de los DM de Instagram también queden en el panel. El cotizador
+   público no cambia: sigue con WhatsApp o correo. */
+function conCanal(c) {
+  if (!vendorMode) return;
+  if (c === 'ig') {
+    var inp = document.getElementById('f-con'), lbl = document.getElementById('f-con-lbl');
+    if (!inp) return;
+    conModoCorreo = false; conModoIg = true;
+    inp.type = 'text'; inp.setAttribute('inputmode', 'text'); inp.setAttribute('autocomplete', 'off');
+    inp.placeholder = '@usuario';
+    if (!igUsuario(inp.value)) inp.value = '';   /* un número o un correo no son un usuario */
+    if (lbl) lbl.textContent = 'Instagram';
+    conSegPintar();
+    return;
+  }
+  conModo(c === 'correo');
+}
+function conSegPintar() {
+  var seg = document.getElementById('f-con-seg'); if (!seg) return;
+  var on = conModoIg ? 'ig' : (conModoCorreo ? 'correo' : 'wa');
+  seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-c') === on); });
 }
 
 /* ── ENVÍO STARKEN (17-10-2026) ──
@@ -6748,8 +6814,18 @@ function vMontar() {
   }
   var bb = document.querySelector('#barra-precio button'); if (bb) bb.textContent = 'Guardar y copiar link';
   var lbl = document.getElementById('f-con-lbl'), lnk = document.getElementById('f-con-modo');
-  if (lbl) lbl.textContent = conModoCorreo ? 'Correo' : 'WhatsApp';
+  if (lbl) lbl.textContent = conModoIg ? 'Instagram' : (conModoCorreo ? 'Correo' : 'WhatsApp');
   if (lnk) lnk.textContent = conModoCorreo ? 'Usar WhatsApp' : 'Usar correo';
+  /* WhatsApp · Correo · Instagram en vez del link (23-11-2026) */
+  if (lbl && !document.getElementById('f-con-seg')) {
+    /* fila completa arriba de «contacto + comuna»: en media columna no caben las tres palabras a 390 px */
+    var gCon = lbl.closest('.v-g2');
+    (gCon || lbl).insertAdjacentHTML(gCon ? 'beforebegin' : 'afterend', '<div class="v-con-seg" id="f-con-seg" role="group" aria-label="Contacto del cliente">'+
+      '<button type="button" data-c="wa" onclick="conCanal(\'wa\')">WhatsApp</button>'+
+      '<button type="button" data-c="correo" onclick="conCanal(\'correo\')">Correo</button>'+
+      '<button type="button" data-c="ig" onclick="conCanal(\'ig\')">Instagram</button></div>');
+    conSegPintar();
+  }
   /* barra verde: quién cotiza, a la derecha */
   var yo = (VENDEDORES.find(function(s){ return sesionEmail && (s.email === sesionEmail || s.srcEmail === sesionEmail); }) || VENDEDORES[0] || {}).nombre;
   document.querySelectorAll('#s1 .logo-bar, #s2 .logo-bar').forEach(function(b){
@@ -8215,9 +8291,18 @@ function pdfLienzo(){
   /* el PDF lleva toda la información: los desplegables van abiertos */
   var plegs = copia.querySelectorAll('details.pleg');
   for (var k = 0; k < plegs.length; k++) plegs[k].open = true;
-  ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor'].forEach(function(sel){
+  /* 23-11-2026: también lo que en papel no se puede apretar — la pregunta por
+     el envío cuando aún no hay comuna (.envio-stk.sin-envio; con envío
+     cotizado se queda, porque trae el monto) y los botones «Ver política…» /
+     «Ver términos…» (.tag-link). Ganan el espacio para que quepa en 2 hojas. */
+  ['.wa-block', '.muest-block', '.doc-acciones', '.maderas-acc', '.nota-asesor', '.envio-stk.sin-envio', 'a.tag-link'].forEach(function(sel){
     var lista = copia.querySelectorAll(sel);
-    for (var i = 0; i < lista.length; i++) lista[i].parentNode.removeChild(lista[i]);
+    for (var i = 0; i < lista.length; i++){
+      var padre = lista[i].parentNode;
+      padre.removeChild(lista[i]);
+      /* el <p> que solo envolvía al botón no deja un hueco */
+      if (padre.tagName === 'P' && !padre.textContent.trim()) padre.parentNode.removeChild(padre);
+    }
   });
   envoltorio.appendChild(copia);
   document.body.appendChild(envoltorio);
@@ -8304,7 +8389,22 @@ async function descargarPDF(){
     var anchoMm = 216 - PDF_MARG.izq * 2;
     var altoUtilMm = 279 - PDF_MARG.sup - PDF_MARG.inf;
     var pxPorMm = canvas.width / anchoMm;
-    var cortes = pdfPaginar(canvas, Math.floor(altoUtilMm * pxPorMm));
+    var pageHpx = Math.floor(altoUtilMm * pxPorMm);
+    var cortes = pdfPaginar(canvas, pageHpx);
+    /* ── SIN HOJA CASI VACÍA (23-11-2026) ──
+       Cuando la última página queda con un resto chico (típico: solo la franja
+       del pie con el N° de cotización), se achica todo un poco —hasta 88 %—
+       para que entre en una hoja menos. Se busca la escala más grande que lo
+       logra, así el texto se reduce lo mínimo; si ni al 88 % alcanza, queda
+       como antes. La copia se centra en la hoja. */
+    var escala = 1, nPag = cortes.length - 1;
+    if (nPag >= 2 && (cortes[nPag] - cortes[nPag - 1]) < pageHpx * 0.30){
+      for (var s = 0.99; s >= 0.88; s -= 0.01){
+        var c2 = pdfPaginar(canvas, Math.floor(pageHpx / s));
+        if (c2.length - 1 < nPag){ escala = s; cortes = c2; break; }
+      }
+    }
+    var anchoDib = anchoMm * escala, xDib = PDF_MARG.izq + (anchoMm - anchoDib) / 2;
     for (var p = 0; p < cortes.length - 1; p++){
       var h = cortes[p+1] - cortes[p];
       if (h <= 2) continue;
@@ -8312,7 +8412,7 @@ async function descargarPDF(){
       tc.width = canvas.width; tc.height = h;
       tc.getContext('2d').drawImage(canvas, 0, cortes[p], canvas.width, h, 0, 0, canvas.width, h);
       if (p > 0) pdf.addPage();
-      pdf.addImage(tc.toDataURL('image/jpeg', 0.95), 'JPEG', PDF_MARG.izq, PDF_MARG.sup, anchoMm, h / pxPorMm);
+      pdf.addImage(tc.toDataURL('image/jpeg', 0.95), 'JPEG', xDib, PDF_MARG.sup, anchoDib, h / pxPorMm * escala);
     }
     /* Pie con numeración en cada página. Además de ordenar el documento, sirve
        de huella de versión: los PDF de las versiones con el bug de paginación
@@ -8523,8 +8623,13 @@ function restoreFromData(d) {
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
   conStr = d.con || '';
   document.getElementById('f-cli').value = d.cli || '';
-  document.getElementById('f-con').value = d.con || '';
-  conModo(/@/.test(d.con || ''));   /* si el cliente dejó correo, el campo vuelve en modo correo */
+  if (vendorMode && esInstagram(d.con)) {          /* cliente de Instagram: vuelve en modo Instagram */
+    conCanal('ig');
+    document.getElementById('f-con').value = '@' + String(d.con).trim().slice(10);
+  } else {
+    conModo(/@/.test(d.con || ''));   /* si el cliente dejó correo, el campo vuelve en modo correo */
+    document.getElementById('f-con').value = d.con || '';
+  }
   /* la comuna de entrega viaja en el link: el envío se ve igual al abrirlo. Y si el link no
      la trae, no se hereda la que esta pestaña usó antes: un link es la foto de ESA cotización */
   stkComuna = null;
@@ -9582,6 +9687,7 @@ function computeSegPend(){
 
 /* teléfono chileno → número apto wa.me (o null si no hay teléfono usable) */
 function waPhone(contacto){
+  if (esInstagram(contacto)) return null;   /* «instagram:usuario1234»: los dígitos del usuario no son un teléfono */
   var d = String(contacto||'').replace(/\D/g,'');
   if (d.length===11 && d.slice(0,3)==='569') return d;
   if (d.length===9  && d[0]==='9')          return '56'+d;
@@ -11784,12 +11890,36 @@ async function waCargar(){
       .order('prioridad').order('espera_desde', { ascending:true, nullsFirst:false }).limit(300);
     if (r.error) return;           /* tabla sin crear o sin permiso: no se muestra */
     var filas = r.data || [];
-    var rev = '';
-    var u = await sbClient.from('whatsapp_pendientes').select('revision_at').order('revision_at', { ascending:false }).limit(1);
-    if (!u.error && u.data && u.data[0]) rev = u.data[0].revision_at;
-    WA = { filas:filas, revision:rev || null };
+    /* última revisión de cada canal (sin la 0012 no hay columna canal: todo es 5558) */
+    var revs = {};
+    var u = await sbClient.from('whatsapp_pendientes').select('revision_at,canal').order('revision_at', { ascending:false }).limit(200);
+    if (u.error) u = await sbClient.from('whatsapp_pendientes').select('revision_at').order('revision_at', { ascending:false }).limit(1);
+    if (!u.error) (u.data || []).forEach(function(x){ var c = x.canal || '5558'; if (!revs[c]) revs[c] = x.revision_at; });
+    WA = { filas:filas, revs:revs };
   } catch (e) { WA = null; }
 }
+/* ── Canales (23-11-2026) ──
+   5558 = web y catálogo (app de WhatsApp del PC) · 0141 = anuncios (WhatsApp Web)
+   · instagram = DM de Instagram (Meta Business Suite, sin número). Cada fila trae
+   su canal; una revisión de un canal no cierra filas de otro (wa_cargar, 0012). */
+var WA_CANALES = [['5558', '5558'], ['0141', '0141 anuncios'], ['instagram', 'Instagram']];
+var waCanalVer = 'todos';
+function waCanal(f){ return (f && f.canal) || '5558'; }
+function waCanalTag(c){
+  if (c === '0141') return '<span class="wa-canal c0141">0141</span>';
+  if (c === 'instagram') return '<span class="wa-canal cig">Instagram</span>';
+  return '<span class="wa-canal">5558</span>';
+}
+/* hay más de un canal en juego → se muestran chips y etiquetas */
+function waMulti(){ return !!WA && WA.filas.some(function(f){ return waCanal(f) !== '5558'; }); }
+function waEnCanal(f){ return waCanalVer === 'todos' || waCanal(f) === waCanalVer; }
+function waVerCanal(c){ waCanalVer = c; waVerTodos = false; waRepintar(); }
+function waRevCanal(){
+  var revs = (WA && WA.revs) || {};
+  if (waCanalVer !== 'todos') return revs[waCanalVer] || null;
+  return Object.keys(revs).reduce(function(a, k){ return (!a || revs[k] > a) ? revs[k] : a; }, null);
+}
+function waNombreCanal(c){ return c === '0141' ? 'el 0141' : (c === 'instagram' ? 'Instagram' : 'el 5558'); }
 function waCuando(iso){
   var d = new Date(iso); if (isNaN(d.getTime())) return '';
   var hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -11820,10 +11950,16 @@ function waFila(f, i){
   var h = '<div class="wa-fila '+cls+(abierta ? ' abierta' : '')+'">'+
     '<div class="wa-fl" onclick="waToggle(\''+id+'\')">'+
       '<div class="wa-ico">'+waIco(f)+'</div>'+
-      '<div class="wa-t"><div class="wa-n"><span>'+(f.pedido ? '<small>#'+escA(f.pedido)+'</small>' : '')+escA(f.cliente)+'</span>'+(em ? '<em>'+escA(em)+'</em>' : '')+'</div>'+
+      '<div class="wa-t"><div class="wa-n"><span>'+(waMulti() ? waCanalTag(waCanal(f)) : '')+(f.pedido ? '<small>#'+escA(f.pedido)+'</small>' : '')+escA(f.cliente)+'</span>'+(em ? '<em>'+escA(em)+'</em>' : '')+'</div>'+
         (f.contexto ? '<div class="wa-d">'+escA(f.contexto)+'</div>' : '')+
         (f.cita ? '<div class="wa-q">«'+escA(f.cita)+'»</div>' : '')+
       '</div></div>';
+  /* la cotización que se le hizo (la registra la revisión, por eso «registrada por Claude») */
+  if (f.cotizacion) {
+    var cotN = 'Cotización N° ' + escA(f.cotizacion);
+    if (f.cotizacion_link) cotN = '<a href="'+escA(f.cotizacion_link)+'" target="_blank" rel="noopener">'+cotN+'</a>';
+    h += '<div class="wa-cot">'+cotN+' · registrada por Claude'+(f.monto ? ' · ' + pzM(f.monto) : '')+'</div>';
+  }
   if (abierta && f.mensaje) {
     h += '<textarea class="wa-msg" id="wa-m-'+id+'" rows="6" oninput="waRevisar(\''+id+'\')">'+escA(f.mensaje)+'</textarea>'+
          '<div class="wa-av'+(hueco ? '' : ' hidden')+'" id="wa-av-'+id+'">Completa lo que está entre corchetes antes de enviarlo.</div>';
@@ -11832,10 +11968,18 @@ function waFila(f, i){
   if (f.tipo === 'plata') {
     h += '<button class="pz-acc" style="flex:1" onclick="waMarcar(\''+id+'\',\'respondido\')">Llegó</button>'+
          '<button class="wa-no" onclick="waMarcar(\''+id+'\',\'no_corresponde\')">No corresponde</button>';
+  } else if (waCanal(f) === 'instagram') {
+    /* Instagram no tiene número: se copia el mensaje y se abre el chat en Meta Business Suite */
+    if (f.mensaje)
+      h += '<button class="pz-acc wap ig'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" onclick="waInstagram(\''+id+'\')">Copiar y abrir Instagram</button>';
+    else
+      h += '<a class="pz-acc" href="#" onclick="return waAbrirIg(\''+id+'\')">Abrir chat</a>';
+    h += '<button class="pz-acc" onclick="waMarcar(\''+id+'\',\'respondido\')">Ya respondí</button>';
+    if (abierta) h += '<button class="wa-no" onclick="waMarcar(\''+id+'\',\'no_corresponde\')">No corresponde</button>';
   } else {
     if (f.mensaje && f.telefono)
       h += '<a class="pz-acc wap'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" target="_blank" rel="noopener" href="#" onclick="return waResponder(this,\''+id+'\')">'+
-           '<svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg>Responder</a>';
+           '<svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg>'+(waCanal(f) === '0141' ? 'Responder en el 0141' : 'Responder')+'</a>';
     else if (f.mensaje)
       h += '<button class="pz-acc wap'+(hueco ? ' apag' : '')+'" id="wa-b-'+id+'" onclick="waCopiar(\''+id+'\')" title="No tengo su número: copia el mensaje y búscalo en WhatsApp">Copiar mensaje</button>';
     /* Abrir chat (18-11-2026): abre la conversación en la app de WhatsApp del PC, sin texto, siempre activo */
@@ -11848,11 +11992,18 @@ function waFila(f, i){
 function waBloqueHtml(){
   if (!WA) return '';
   var h0 = new Date(); h0.setHours(0, 0, 0, 0);
-  var pend = WA.filas.filter(function(f){ return f.estado === 'pendiente'; });
+  var multi = waMulti();
+  if (!multi) waCanalVer = 'todos';
+  var pendTodos = WA.filas.filter(function(f){ return f.estado === 'pendiente'; });
+  var pend = pendTodos.filter(waEnCanal);
   var hechos = WA.filas.filter(function(f){
-    return (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
+    return waEnCanal(f) && (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
   });
-  var sub = WA.revision ? 'Revisado ' + escA(waCuando(WA.revision)) + '<span class="wa-sub-l"> · lo que escribieron al 5558</span>' : 'Todavía no hay una revisión cargada';
+  var revAt = waRevCanal();
+  var AL = { '5558':'al 5558', '0141':'al 0141', instagram:'por Instagram' };
+  var dondeTxt = waCanalVer === 'todos' ? (multi ? 'al 5558, al 0141 y por Instagram' : 'al 5558') : AL[waCanalVer];
+  var sub = revAt ? 'Revisado ' + escA(waCuando(revAt)) +
+            '<span class="wa-sub-l"> · lo que escribieron '+escA(dondeTxt)+'</span>' : 'Todavía no hay una revisión cargada';
   /* los de plata no se responden (solo se mira si llegó): se cuentan aparte */
   var nResp = pend.filter(function(f){ return f.tipo !== 'plata'; }).length;
   var nPlata = pend.length - nResp;
@@ -11860,6 +12011,12 @@ function waBloqueHtml(){
   var chip = pend.length ? '<span class="wa-estado'+(nResp ? '' : ' ok')+'">'+chipTxt+'</span>' : '<span class="wa-estado ok">Todo respondido</span>';
   var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-ico wa-logo"><svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg></div>'+
           '<div class="wa-t"><div class="wa-tit">WhatsApp al día</div><div class="wa-sub">'+sub+'</div></div>'+chip+'</div>';
+  if (multi) {
+    var nCanal = function(c){ return pendTodos.filter(function(f){ return f.tipo !== 'plata' && (c === 'todos' || waCanal(f) === c); }).length; };
+    h += '<div class="wa-chips">'+[['todos', 'Todos']].concat(WA_CANALES).map(function(c){
+      return '<button class="wa-chip'+(waCanalVer === c[0] ? ' on' : '')+'" onclick="waVerCanal(\''+c[0]+'\')">'+c[1]+'<b>'+nCanal(c[0])+'</b></button>';
+    }).join('')+'</div>';
+  }
   if (pend.length) {
     var plata = pend.reduce(function(a, f){ return a + (f.monto || 0); }, 0);
     var espMax = pend.reduce(function(a, f){
@@ -11878,7 +12035,7 @@ function waBloqueHtml(){
       h += '<a class="wa-mas" href="#" onclick="waVerTodos=true;waRepintar();return false">Ver '+resto.length+' más · '+escA(resto.slice(0, 2).join(', '))+(resto.length > 2 ? '…' : '')+'</a>';
     }
   } else {
-    h += '<div class="wa-vacio">'+(WA.revision ? 'Nadie está esperando respuesta en el 5558.' : 'Cuando corra la revisión de WhatsApp, aquí aparece lo que hay que responder.')+'</div>';
+    h += '<div class="wa-vacio">'+(revAt ? 'Nadie está esperando respuesta en '+escA(waCanalVer === 'todos' ? (multi ? 'ningún canal' : 'el 5558') : waNombreCanal(waCanalVer))+'.' : 'Cuando corra la revisión de WhatsApp, aquí aparece lo que hay que responder.')+'</div>';
   }
   if (hechos.length) {
     h += '<details class="wa-hechos"><summary>Respondidos hoy · '+hechos.length+'</summary>'+
@@ -11903,7 +12060,7 @@ function waToggle(id){
   var f = waBuscar(id); if (!f) return;
   var el = document.getElementById('wa-m-' + id);
   if (el) f.mensaje = el.value;          /* lo editado no se pierde al cerrar */
-  var idx = WA.filas.filter(function(x){ return x.estado === 'pendiente'; }).indexOf(f);
+  var idx = WA.filas.filter(function(x){ return x.estado === 'pendiente' && waEnCanal(x); }).indexOf(f);
   var abierta = (id in waAbiertos) ? waAbiertos[id] : (idx === 0 && f.tipo !== 'plata' && !!f.mensaje);
   waAbiertos[id] = !abierta;
   waRepintar();
@@ -11927,10 +12084,35 @@ function waResponder(a, id){
     showToast('Completa lo que está entre corchetes antes de enviarlo', false);
     return false;
   }
+  if (waCanal(f) === '0141') {
+    /* el 0141 vive en WhatsApp Web (la app del PC es el 5558): se abre ahí con el texto puesto */
+    a.setAttribute('target', '_blank');
+    a.href = 'https://web.whatsapp.com/send?phone=' + waTel(f.telefono) + '&text=' + encodeURIComponent(txt);
+    return true;
+  }
   /* whatsapp:// abre la app instalada (PC o celular) con el texto puesto, sin pasar por el navegador */
   a.removeAttribute('target');
   a.href = 'whatsapp://send?phone=' + waTel(f.telefono) + '&text=' + encodeURIComponent(txt);
   return true;
+}
+var WA_IG_BANDEJA = 'https://business.facebook.com/latest/inbox/instagram';
+function waAbrirIg(id){
+  var f = waBuscar(id); if (!f) return false;
+  window.open(f.enlace || WA_IG_BANDEJA, '_blank', 'noopener');
+  if (!f.enlace) { try { navigator.clipboard.writeText(f.cliente || ''); } catch (e) {} showToast('Copié «' + (f.cliente || '') + '»: búscalo en la bandeja de Instagram', false); }
+  return false;
+}
+function waInstagram(id){
+  var f = waBuscar(id); if (!f) return;
+  var txt = waTexto(id);
+  if (WA_HUECO.test(txt)) { waAbiertos[id] = true; waRepintar(); showToast('Completa lo que está entre corchetes antes de copiarlo', false); return; }
+  /* primero se copia (la página todavía tiene el foco) y en el mismo clic se abre el chat (si no, el navegador bloquea la ventana) */
+  try {
+    navigator.clipboard.writeText(txt).then(function(){
+      showToast(f.enlace ? 'Mensaje copiado: pégalo en el chat de Instagram' : 'Mensaje copiado: busca a «' + (f.cliente || '') + '» y pégalo', true);
+    }, function(){ showToast('No se pudo copiar el mensaje', false); });
+  } catch (e) { showToast('No se pudo copiar el mensaje', false); }
+  window.open(f.enlace || WA_IG_BANDEJA, '_blank', 'noopener');
 }
 function waTel(t){
   var d = String(t || '').replace(/\D/g, '');
@@ -11940,6 +12122,13 @@ function waTel(t){
 function waAbrirChat(a, id){
   var f = waBuscar(id); if (!f) return false;
   var tel = waTel(f.telefono);
+  if (waCanal(f) === '0141') {
+    if (tel.length >= 11) { a.setAttribute('target', '_blank'); a.href = 'https://web.whatsapp.com/send?phone=' + tel; return true; }
+    try { navigator.clipboard.writeText(f.cliente || ''); } catch (e) {}
+    a.setAttribute('target', '_blank'); a.href = 'https://web.whatsapp.com/';
+    showToast('No tengo su número: copié «' + (f.cliente || '') + '», búscalo en WhatsApp Web (0141)', false);
+    return true;
+  }
   if (tel.length >= 11) { a.href = 'whatsapp://send?phone=' + tel; return true; }
   /* sin número: se abre WhatsApp y se copia el nombre para buscarlo */
   try { navigator.clipboard.writeText(f.cliente || ''); } catch (e) {}
@@ -12017,10 +12206,12 @@ function waHistHtml(){
   else {
     var hDesde = Math.round((Date.now() - new Date(revs[0].revision_at).getTime()) / 3600000);
     if (hDesde > 30) avisos.push('La última revisión fue hace ' + (hDesde < 48 ? hDesde + ' h' : Math.round(hDesde / 24) + ' días') + ': lo que llegó después todavía no está aquí.');
+    /* los huecos se miden dentro de cada canal: una revisión del 0141 no cubre el 5558 */
     for (var i = 0; i < revs.length - 1; i++) {
-      var nueva = revs[i], vieja = revs[i + 1];
-      if (nueva.desde && new Date(nueva.desde).getTime() > new Date(vieja.revision_at).getTime() + 60000)
-        avisos.push('Quedó sin revisar de ' + waCuando(vieja.revision_at) + ' a ' + waCuando(nueva.desde) + '.');
+      var nueva = revs[i], cn = nueva.canal || '5558', vieja = null;
+      for (var j = i + 1; j < revs.length; j++) if ((revs[j].canal || '5558') === cn) { vieja = revs[j]; break; }
+      if (vieja && nueva.desde && new Date(nueva.desde).getTime() > new Date(vieja.revision_at).getTime() + 60000)
+        avisos.push('Quedó sin revisar ' + (cn === '5558' ? '' : waNombreCanal(cn) + ' ') + 'de ' + waCuando(vieja.revision_at) + ' a ' + waCuando(nueva.desde) + '.');
     }
   }
   var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-t"><div class="wa-sub">Últimos '+WAH_DIAS+' días · '+
@@ -12037,17 +12228,17 @@ function waHistHtml(){
             : (c.tipo === 'plata' ? 'Llegó el pago' : 'Respondido')) + ' · ' + waQuienCerro(c.resuelto_por);
     var vuelta = c.vigente ? '' : ' <b class="wa-tag rojo">volvió a la lista</b>';
     var monto = (c.tipo === 'plata' && c.monto) ? ' · ' + pzM(c.monto) : '';
-    h += '<div class="wa-h"><div class="wa-n"><span>'+(c.pedido ? '<small>#'+escA(c.pedido)+'</small>' : '')+escA(c.cliente)+'</span><em>'+escA(waHora(c.resuelto_at))+'</em></div>'+
+    h += '<div class="wa-h"><div class="wa-n"><span>'+(c.canal && c.canal !== '5558' || waMulti() ? waCanalTag(c.canal || '5558') : '')+(c.pedido ? '<small>#'+escA(c.pedido)+'</small>' : '')+escA(c.cliente)+'</span><em>'+escA(waHora(c.resuelto_at))+'</em></div>'+
          '<div class="wa-d">'+escA(que)+escA(monto)+vuelta+'</div>'+
          (c.contexto ? '<div class="wa-d wa-ctx">'+escA(c.contexto)+'</div>' : '')+'</div>';
   });
   h += '</div>';
   /* revisiones */
   h += '<div class="wa-caja wa-revs"><div class="wa-cab"><div class="wa-t"><div class="wa-tit2">Revisiones</div>'+
-       '<div class="wa-sub">Cada vez que se revisó el 5558 y desde cuándo</div></div></div>';
+       '<div class="wa-sub">Cada vez que se revisó cada canal y desde cuándo</div></div></div>';
   revs.forEach(function(r){
     var cubre = r.desde ? 'cubrió desde ' + waCuando(r.desde) : (r.nota ? r.nota : 'sin dato de desde cuándo');
-    h += '<div class="wa-h"><div class="wa-n"><span>'+escA(waDiaTxt(r.revision_at))+' · '+escA(waHora(r.revision_at))+'</span>'+
+    h += '<div class="wa-h"><div class="wa-n"><span>'+waCanalTag(r.canal || '5558')+escA(waDiaTxt(r.revision_at))+' · '+escA(waHora(r.revision_at))+'</span>'+
          '<em>'+r.chats+(r.chats === 1 ? ' chat' : ' chats')+'</em></div>'+
          '<div class="wa-d">'+escA(cubre)+' · '+r.nuevos+' nuevos · '+r.cerrados+' cerrados'+(r.forzada ? ' <b class="wa-tag rojo">pasó el freno</b>' : '')+'</div></div>';
   });
