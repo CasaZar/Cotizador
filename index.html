@@ -12468,7 +12468,8 @@ async function campanaAnotar(id){
    compró en una cotización NUEVA (lo normal: César recotiza) igual cuenta.
      escrito      = alguna de sus cotizaciones lleva la nota en el historial
      respondió    = después de esa fecha: recotizó, compró, o quedó anotada
-                    una respuesta (fecha_primera_respuesta o resp_fecha)
+                    una respuesta (fecha_primera_respuesta, o resp_fecha con
+                    una respuesta real: «nada» no cuenta)
      compró       = cotización del mismo producto «ganada» después de esa fecha
      venta        = monto de cierre de esas ganadas (lo del panel; la Gestión
                     puede diferir en el envío) */
@@ -12492,7 +12493,8 @@ function campRes(cp){
     var recot = delProd.some(function(q){ return q.fecha_creacion && fechaBaseISO(q.fecha_creacion) >= f0; });
     var anotada = qs.some(function(q){
       if (q.fecha_primera_respuesta && fechaBaseISO(q.fecha_primera_respuesta) >= f0) return true;
-      return (Array.isArray(q.seg_historial) ? q.seg_historial : []).some(function(h){ return h && h.resp_fecha && String(h.resp_fecha).slice(0, 10) >= f0; });
+      /* resp «nada» = no contestó: tiene resp_fecha pero no es respuesta */
+      return (Array.isArray(q.seg_historial) ? q.seg_historial : []).some(function(h){ return h && h.resp_fecha && RESPUESTAS_CON_CONVERSACION.indexOf(h.resp) !== -1 && String(h.resp_fecha).slice(0, 10) >= f0; });
     });
     if (recot) R.recotizados++;
     if (recot || ganadas.length || anotada) R.respondieron++;
