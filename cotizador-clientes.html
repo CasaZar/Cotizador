@@ -256,6 +256,11 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .door-blk { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px dashed var(--bd); }
 .door-blk:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 8px; }
 .door-mo { font-weight: 600; }
+/* código y lugar del plano (solo vendedor) */
+.door-ref { display: flex; gap: 8px; margin-bottom: 8px; }
+.door-ref input { padding: 10px 9px; border: 1px solid var(--bd); border-radius: 8px; font-size: 16px; font-family: 'Jost', sans-serif; background: white; color: var(--tx); min-width: 0; }
+.door-ref input:first-child { flex: 0 0 96px; }
+.door-ref input:last-child { flex: 1; }
 .rnum { font-size: 13.5px; color: var(--tm); min-width: 14px; text-align: center; flex-shrink: 0; }
 /* mismos 16 px: estos son los campos que más se tocan en el celular */
 .dim-row input, .dim-row select { flex: 1; padding: 12px 9px; border: 1px solid var(--bd); border-radius: 8px; font-size: 17.5px; font-family: 'Jost', sans-serif; background: white; color: var(--tx); min-width: 0; }
@@ -1823,6 +1828,20 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 .marca .cb-items { margin-top: 14px; background: #fff; border: 1px solid var(--bd); border-radius: 12px; }
 .marca .cb-item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
 .marca .cb-item + .cb-item { border-top: 1px solid var(--bd); }
+/* puertas con código del plano: una fila por puerta con la foto del modelo */
+.pf-lista { margin: 14px 0; background: #fff; border: 1px solid var(--bd); border-radius: 12px; }
+.pf-item { display: flex; gap: 12px; align-items: center; padding: 12px; }
+.pf-item + .pf-item, .cb-item + .pf-item, .pf-item + .cb-item { border-top: 1px solid var(--bd); }
+.pf-foto { width: 54px; height: 78px; flex-shrink: 0; border-radius: 6px; border: 1px solid var(--bd); background: #F1ECE3; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.pf-foto img { width: 100%; height: 100%; object-fit: contain; }
+.pf-txt { min-width: 0; flex: 1; }
+.pf-tit { font-weight: 600; font-size: 14px; line-height: 1.35; }
+.pf-cod { display: inline-block; font-size: 11px; font-weight: 600; background: #485B3D; color: #fff; border-radius: 4px; padding: 1px 6px; margin-right: 6px; vertical-align: 1px; }
+.pf-mod { font-size: 12.5px; color: #7A7368; margin-top: 2px; }
+.pf-mod em { font-style: normal; color: #3E6A8A; font-weight: 500; }
+.pf-med { font-size: 13px; margin-top: 3px; }
+.pf-cant { margin-left: auto; flex-shrink: 0; text-align: right; font-size: 12px; color: #7A7368; }
+.pf-cant b { display: block; font-size: 15px; color: var(--tx); }
 .marca .cb-dib { flex: 0 0 64px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
 .marca .cb-num { width: 30px; height: 30px; border-radius: 50%; background: #E7ECE2; color: var(--verde); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; }
 .marca .cb-txt { min-width: 0; }
@@ -5915,8 +5934,30 @@ function renumRows(contId) {
 /* El modelo va en su PROPIA línea, a todo el ancho, y las medidas abajo
    (21-08-2026): apretado en 4 columnas el nombre salía cortado ("Ensenad…").
    El ✕ se queda dentro del .dim-row porque renumRows() lo busca ahí. */
+/* Código y lugar del plano (24-11-2026, boceto aprobado): solo vendedores y
+   opcionales. Con código, la vista del cliente muestra una fila por puerta con
+   su foto («P10 · Comedor»); sin código se ve igual que antes. */
+function doorRefHtml(n) {
+  /* el cliente que abre el link no los ve, pero van en el DOM (ocultos): el
+     documento se arma leyendo el formulario y así no se pierden */
+  return '<div class="door-ref' + (vendorMode ? '' : ' hidden') + '">' +
+    '<input type="text" maxlength="8" placeholder="Código (P1)" id="pc'+n+'" oninput="calcLive()">' +
+    '<input type="text" maxlength="40" placeholder="Lugar (opcional)" id="pl'+n+'" oninput="calcLive()">' +
+  '</div>';
+}
+function doorRefLeer(n) {
+  var c = document.getElementById('pc'+n), l = document.getElementById('pl'+n);
+  return { c: c ? c.value.trim().slice(0, 8) : '', l: l ? l.value.trim().slice(0, 40) : '' };
+}
+function doorRefPoner(n, rf) {
+  if (!rf) return;
+  var c = document.getElementById('pc'+n), l = document.getElementById('pl'+n);
+  if (c) c.value = rf.c || '';
+  if (l) l.value = rf.l || '';
+}
 function doorRow(n, opts) {
   return '<div class="door-blk" id="r'+n+'">' +
+    doorRefHtml(n) +
     '<select class="fsel door-mo" id="mo'+n+'">'+opts+'</select>' +
     '<div class="col-labels" style="margin-top:8px">' +
       '<div class="col-lbl">Alto cm</div>' +
@@ -7167,6 +7208,14 @@ function cbIco(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (CB_
 /* una línea por producto (dibujo, nombre, medida, reborde) y lo común, una vez */
 function comboResumenHtml(items, ds, comunes, nom) {
   var filas = items.map(function(it, i){
+    var sh = it.share || {};
+    if (['granero','maciza','vidrios'].indexOf(it.p) !== -1 && puertasConRef(sh.refs)) {
+      var pf = (sh.rows || []).map(function(r, k){
+        var rf = sh.refs[k] || {};
+        return { mo: (sh.mods || [])[k] || '', lg: r.lg, an: r.an, ca: parseInt(r.ca, 10) || 1, c: rf.c || '', l: rf.l || '' };
+      });
+      return puertasFilasHtml(pf, it.p === 'vidrios' ? sh.vt : '');
+    }
     var medTiene = (it.lineas || []).some(function(l){ return l.largo_cm && l.ancho_cm; });
     var med = medTiene ? vLineaDesc(it) : '';
     var corto = vNombreCorto(it);
@@ -7321,6 +7370,33 @@ function htmlCubierta(cli, fecha) {
   );
 }
 
+/* ── PUERTAS CON CÓDIGO DEL PLANO (24-11-2026, boceto aprobado) ──
+   Una fila por puerta: foto del modelo, «P10 · Comedor», modelo y vidrio,
+   medida y cantidad. Solo cuando el vendedor escribió algún código o lugar;
+   si no, el documento sigue como antes. */
+function puertasConRef(refs) {
+  return !!(refs && refs.some(function(r){ return r && (r.c || r.l); }));
+}
+function puertaVidrioTxt(vt) {
+  return vt === 'Termopanel' ? 'vidrio termopanel' : vt === 'Biselado' ? 'vidrio biselado' : '';
+}
+function puertasFilasHtml(filas, vt) {
+  var vTxt = puertaVidrioTxt(vt);
+  return filas.map(function(f){
+    var dm = DOOR_MODELS.find(function(d){ return d.nombre === f.mo; });
+    var foto = dm ? '<img crossorigin="anonymous" src="' + dm.img + '" alt="' + escA(dm.nombre) + '">' : '';
+    var cod = f.c ? '<span class="pf-cod">' + escA(f.c) + '</span>' : '';
+    var lugar = f.l ? escA(f.l) : (f.mo ? 'Modelo ' + escA(f.mo) : 'Puerta');
+    var mod = f.l && f.mo ? 'Modelo ' + escA(f.mo) : '';
+    if (vTxt) mod += (mod ? ' · ' : '') + '<em>' + vTxt + '</em>';
+    var med = 'Alto ' + String(f.lg).replace('.', ',') + ' × ancho ' + String(f.an).replace('.', ',') + ' cm';
+    return '<div class="pf-item"><div class="pf-foto">' + foto + '</div><div class="pf-txt">' +
+      '<div class="pf-tit">' + cod + '<span>' + lugar + '</span></div>' +
+      (mod ? '<div class="pf-mod">' + mod + '</div>' : '') +
+      '<div class="pf-med">' + med + '</div></div>' +
+      '<div class="pf-cant"><b>' + f.ca + '</b>' + (f.ca === 1 ? 'puerta' : 'puertas') + '</div></div>';
+  }).join('');
+}
 function htmlPuerta(cli, fecha) {
   var hasExtra = prod==='vidrios';   /* solo las puertas con vidrio, ver renderDoorSub */
   var filas=[];
@@ -7329,8 +7405,10 @@ function htmlPuerta(cli, fecha) {
     if (!lgEl||!lgEl.value||!anEl.value) continue;
     var mo=moEl?moEl.value:'', lg=parseFloat(lgEl.value), an=parseFloat(anEl.value), ca=parseInt(caEl.value)||1;
     var m2=(lg/100)*(an/100);
-    filas.push({n:i,mo:mo,lg:lg,an:an,ca:ca,m2:m2});
+    var rf=doorRefLeer(i);
+    filas.push({n:i,mo:mo,lg:lg,an:an,ca:ca,m2:m2,c:rf.c,l:rf.l});
   }
+  var conRef = puertasConRef(filas);
   var mcT = getMarcoTotals(), mcMl = mcT.ml, mcM2 = mcT.m2;
   var vd = hasExtra ? vidrioExtraDatos() : null;         /* medida y cantidad propias del vidrio */
   var vidrioExtra = hasExtra ? vidrioExtraTotal() : 0;    /* igual para las 3 maderas */
@@ -7385,11 +7463,13 @@ function htmlPuerta(cli, fecha) {
     }).join('') + '</div>';
   }
   return shell(PNAME[prod], cli, fecha,
-    fotosHtml +
+    (conRef ? '' : fotosHtml) +
     vidrioNote +
     (mcM2>0 ? '<div class="info-bar">Marco: <strong>'+mcMl.toFixed(2)+' ml · '+mcM2.toFixed(2)+' m²</strong></div>' : '') +
-    '<table class="ptable"><thead><tr><th>N°</th><th>Modelo</th><th>Alto cm</th><th>Ancho cm</th><th>Cant.</th></tr></thead>' +
-    '<tbody>'+dimRows+'</tbody></table>' +
+    (conRef
+      ? '<div class="pf-lista">' + puertasFilasHtml(filas, vd && vd.tipo) + '</div>'
+      : '<table class="ptable"><thead><tr><th>N°</th><th>Modelo</th><th>Alto cm</th><th>Ancho cm</th><th>Cant.</th></tr></thead>' +
+        '<tbody>'+dimRows+'</tbody></table>') +
     rbNoteHtml() +
     vExtrasNoteHtml(vExtrasList) +
     tierTable(tierRows, recWood()) +
@@ -8851,13 +8931,17 @@ function getShareDataProducto(conValores) {
     }
   } else if (['granero','maciza','vidrios'].includes(prod)) {
     data.rows = []; data.mods = [];
+    var refs = [], conRef = false;
     for (var i = 1; i <= nrows; i++) {
       var lgEl = document.getElementById('lg'+i), anEl = document.getElementById('an'+i), caEl = document.getElementById('ca'+i), moEl = document.getElementById('mo'+i);
       if (lgEl && lgEl.value && anEl && anEl.value) {
         data.rows.push({lg: parseFloat(lgEl.value), an: parseFloat(anEl.value), ca: parseInt((caEl&&caEl.value)||1)||1});
         data.mods.push(moEl ? moEl.value : '');
+        var rf = doorRefLeer(i);
+        refs.push(rf); if (rf.c || rf.l) conRef = true;
       }
     }
+    if (conRef) data.refs = refs;   /* sin código ni lugar no se guarda nada: el link queda igual que antes */
     var vtEl = document.getElementById('vt');
     if (vtEl && vtEl.value) { data.vt = vtEl.value; data.vtDatos = vidrioExtraDatos(); }
     data.marco = [];
@@ -9067,6 +9151,7 @@ function restoreProducto(d) {
       document.getElementById('an1').value = rows[0].an;
       document.getElementById('ca1').value = rows[0].ca;
       if (isPuerta && mods[0]) { var mo1 = document.getElementById('mo1'); if (mo1) mo1.value = mods[0]; }
+      if (isPuerta && d.refs) doorRefPoner(1, d.refs[0]);
     }
     for (var i = 1; i < rows.length; i++) {
       addRow();
@@ -9074,6 +9159,7 @@ function restoreProducto(d) {
       document.getElementById('an'+nrows).value = rows[i].an;
       document.getElementById('ca'+nrows).value = rows[i].ca;
       if (isPuerta && mods[i]) { var moN = document.getElementById('mo'+nrows); if (moN) moN.value = mods[i]; }
+      if (isPuerta && d.refs) doorRefPoner(nrows, d.refs[i]);
     }
   }
   /* el par a pedido se vuelve a pintar ya con la fila 1 puesta (la mesa de
