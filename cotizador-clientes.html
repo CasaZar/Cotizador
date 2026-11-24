@@ -1552,6 +1552,10 @@ body.modo-vendedor #s1 .prof-banner { display: none; }
 .v-con-seg button + button { border-left: 1px solid var(--bd, #E6E0D6); }
 .v-con-seg button.on { background: #2B2722; color: #fff; font-weight: 600; }
 body.modo-vendedor #f-con-modo { display: none; }
+/* cotizaciones del asistente (0013): barra arriba y etiqueta en el panel */
+.por-claude { background: #5B6B8C; color: #fff; font-size: 13px; line-height: 1.35; padding: 9px 16px; display: flex; align-items: center; gap: 8px; position: relative; z-index: 60; }
+.por-claude svg { width: 16px; height: 16px; flex: none; fill: none; stroke: #fff; stroke-width: 1.8; }
+.tag-claude { display: inline-block; font-size: 11px; font-weight: 600; border-radius: 3px; padding: 1px 7px; background: #E8ECF4; color: #5B6B8C; vertical-align: 1px; white-space: nowrap; }
 body.modo-vendedor .solo-ven { display: inline; }
 body.modo-vendedor .v-solo { display: block; }
 body.modo-vendedor .solo-pub, body.modo-vendedor #s2 .live-price-wrap,
@@ -3396,6 +3400,7 @@ var prod = '', isPuertas = false, nrows = 1, nMarco = 1, qnum = '', conStr = '',
 var confirming = false;   /* evita que doble clic en "Ver cotización" genere duplicados */
 var savedQnum = null;     /* número de cotización ya guardado en esta sesión (anti-duplicado) */
 var vendorMode = false;   /* true con el link privado de vendedor (?pro=zr): habilita productos de uso interno */
+var porClaude = false;    /* ?pro=zr&por=claude: la cotización la registra el asistente (0013) */
 var b2bMode = false;      /* true solo en el link privado de Jepe (?src=jepe&pro=zr): muestra el selector de descuento */
 
 /* ── ORIGEN DE LA VISITA ──
@@ -9360,8 +9365,15 @@ async function saveQuote(data, lineas) {
         ? { cuenta_empresa: { pct: b2bDcto, rut: b2bEmp ? b2bEmp.rut : '', nombre: b2bEmp ? b2bEmp.nombre : '' } }
         : { dcto_especial: dctoEsp });
     }
+    /* la registra el asistente (solo la cuenta hola@ puede marcarla: lo cuida la base) */
+    if (vendorMode && porClaude) payload.registrada_por = 'claude';
     /* sin .select(): con RLS el público solo puede insertar, no leer de vuelta la fila */
     var res = await sbClient.from('cotizaciones').insert(payload);
+    /* sin la 0013 no existe la columna: se guarda igual, sin la marca */
+    if (res.error && payload.registrada_por && /registrada_por/.test(res.error.message || '')) {
+      delete payload.registrada_por;
+      res = await sbClient.from('cotizaciones').insert(payload);
+    }
     /* si la columna "origen" no existiera (SQL sin aplicar), la cotización se
        guarda igual sin ella: perder el origen es aceptable, perder al cliente no */
     if (res.error && payload.origen && /origen/.test(res.error.message || '')) {
@@ -9718,6 +9730,7 @@ var segSearch = '';           /* buscar cliente en seguimiento */
 var segSort = 'score';        /* score | valor | reciente | antiguo */
 var segBloque = '';           /* '' = todos los bloques | code de vendedor | 'web' */
 var segSoloInteresados = false;  /* filtro: mostrar solo los marcados con la estrella */
+var segSoloClaude = false;       /* filtro: solo los clientes con una cotización que registró Claude (0013) */
 /* "Cotizaron hoy" arranca plegada: es informativa, no tarea. La preferencia
    dura lo que dure la sesión del navegador. */
 var segHoyAbierto = false;
@@ -10704,6 +10717,20 @@ function asisDe(g){
   g.quotes.forEach(function(q){ if (q.numero && ASIS_CHATS[q.numero]) out = out.concat(ASIS_CHATS[q.numero]); });
   return out.sort(function(a, b){ return a.id - b.id; });
 }
+/* cotizaciones que registró Claude (0013): el seguimiento es de César, pero el primer
+   mensaje no lo mandó él. Se dice «Claude» y no «asistente» para no confundirlo con
+   el asistente de la bandeja (asisBadge). */
+function esDeClaude(q){ return !!(q && q.registrada_por === 'claude'); }
+/* chip del filtro: solo sale si hay alguna abierta; el número son las cotizaciones abiertas */
+function segChipClaude(){
+  var n = (dashRows || []).filter(function(q){ return esDeClaude(q) && !q.eliminada && (q.estado || 'enviada') === 'enviada'; }).length;
+  if (!n && !segSoloClaude) return '';
+  return '<button class="seg-chip'+(segSoloClaude?' on':'')+'" onclick="toggleSegClaude()" title="Clientes con una cotización que registró Claude">De Claude <b>'+n+'</b></button>';
+}
+function claudeBadge(g){
+  return (g.quotes || []).some(esDeClaude)
+    ? '<span class="tag-claude" title="La registró Claude al revisar WhatsApp o Instagram: el primer mensaje no lo mandaste tú">Registrada por Claude</span>' : '';
+}
 function asisBadge(g){
   var ms = asisDe(g);
   if (!ms.length) return '';
@@ -10930,10 +10957,12 @@ function segBloquesDef(){
 }
 function setSegBloque(o){ segBloque=o; computeSegPend(); renderTabs(); renderSegFilters(); renderSeguimiento(); }
 function toggleSegInteresados(){ segSoloInteresados=!segSoloInteresados; renderSegFilters(); renderSeguimiento(); }
+function toggleSegClaude(){ segSoloClaude=!segSoloClaude; renderSegFilters(); renderSeguimiento(); }
 function renderSegFilters(){
   var chips = '<button class="seg-chip'+(segBloque===''?' on':'')+'" onclick="setSegBloque(\'\')">Todos</button>'+
     segBloquesDef().map(function(b){ return '<button class="seg-chip'+(segBloque===b.o?' on':'')+'" onclick="setSegBloque(\''+b.o+'\')">'+b.t+'</button>'; }).join('')+
-    '<button class="seg-chip star'+(segSoloInteresados?' on':'')+'" onclick="toggleSegInteresados()">★ Interesados</button>';
+    '<button class="seg-chip star'+(segSoloInteresados?' on':'')+'" onclick="toggleSegInteresados()">★ Interesados</button>'+
+    segChipClaude();
   /* El buscador de arriba ya busca cliente, así que acá queda solo lo propio
      de Seguimiento: los bloques y el orden. */
   document.getElementById('dash-subfilters').innerHTML =
@@ -11633,6 +11662,7 @@ function renderSeguimiento(){
   var groups = buildSegGroups().filter(grupoPasaOmni);
   if (segFoco) groups = groups.filter(function(g){ return g.key === segFoco; });
   if (segSoloInteresados) groups = groups.filter(function(g){ return !!g.lead.interesado; });
+  if (segSoloClaude) groups = groups.filter(function(g){ return (g.quotes || []).some(esDeClaude); });
   var cmp = segComparator();
   var bloques = segBloquesDef();
   if (segBloque && !segFoco) bloques = bloques.filter(function(b){ return b.o===segBloque; });
@@ -13392,6 +13422,7 @@ function segFila(g, cls){
   if (g.quotes.some(function(q){ return q.respondio; })) marcas += '<span class="resp-badge">💬 Respondió</span>';
   if (x.motivo_pausa)                                    marcas += '<span class="pausa-badge">⏸ '+escA(pausaLabel(x.motivo_pausa))+'</span>';
   marcas += asisBadge(g);
+  marcas += claudeBadge(g);
   marcas += chipAnuncio(g);
   /* de quién es el cliente: mismo criterio que la ficha completa */
   var origen = (g.hasVendor && g.hasWeb) ? 'Cotizó con '+(sellerByCode(g.owner)||{nombre:g.owner}).nombre+' y solo'
@@ -13616,6 +13647,7 @@ function hoyFila(g, cls){
   var fuera = (g.camp && campanaTipo(g.camp) === 'fuera') ? ' camp-fuera' : '';
   var intLinea = x.interesado ? '<span class="hz-intl">'+interesadoTxt(x)+'</span>' : '';
   var leadLinea = esLeadManual(x) ? '<span class="hz-leadl">'+leadManualChip(x, 'hz-marca')+'</span>' : '';
+  var claudeLinea = claudeBadge(g) ? '<span class="hz-leadl">'+claudeBadge(g)+'</span>' : '';
   var nuncaLinea = nunca ? '<span class="hz-nuncal"><span class="hz-marca nunca">nunca le escribimos</span></span>' : '';
   return '<div class="hz-fila hz-'+cls+fuera+(nunca?' hz-nunca':'')+(x.interesado?' hz-int':'')+(esLeadManual(x)?' hz-manual':'')+(abierta?' abierta':'')+'">'+
     '<div class="hz-linea">'+
@@ -13624,7 +13656,7 @@ function hoyFila(g, cls){
         '<span class="hz-txt">'+
           '<span class="hz-nom">'+escA(x.cliente||'—')+' <span class="hz-monto">'+fmt(g.valor)+'</span>'+marca+'</span>'+
           '<span class="hz-det">'+escA(prods.join(', '))+(prods.length?' · ':'')+hoyRazon(g, cls)+anuncio+'</span>'+
-          nuncaLinea+leadLinea+intLinea+
+          nuncaLinea+leadLinea+claudeLinea+intLinea+
         '</span>'+
       '</button>'+
       '<span class="hz-act">'+boton+'</span>'+
@@ -13753,7 +13785,7 @@ function segClientCard(g, cls){
   var toqueChip = compacta ? '<span class="seg-touch nuevo">Sin contactar</span>'
                            : '<span class="seg-touch">Toque '+Math.min(etapa+1,cadC.length)+'/'+cadC.length+'</span>';
   return '<div class="seg-card '+cls+(pez?' pez':'')+(interesado?' interesado':'')+(recu?' recu':'')+(esLeadManual(x)?' manual':'')+'">'+
-    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+leadBadge+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+asisBadge(g)+pausaBadge+'</div>'+
+    '<div class="seg-cli">'+starBtn+recuBtn+escA(x.cliente||'—')+toqueChip+ownChip+leadBadge+orgBadge+pezBadge+interesadoBadge+recuBadge+respBadge+asisBadge(g)+claudeBadge(g)+pausaBadge+'</div>'+
     '<div class="seg-meta">'+meta+'</div>'+
     qbody+
     asisBloque(g)+
@@ -16090,6 +16122,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   } catch (e) {}
   if (params.get('pro') === 'zr') habilitarInternos();
+  /* ── COTIZACIONES DEL ASISTENTE (24-11-2026, 0013) ──
+     Claude registra con la cuenta hola@ las cotizaciones que manda por WhatsApp e
+     Instagram. Abre este link con &por=claude: la barra lo avisa y la fila queda con
+     registrada_por = 'claude'. El seguimiento sigue siendo de César. */
+  if (params.get('pro') === 'zr' && params.get('por') === 'claude') {
+    porClaude = true;
+    var bpc = document.createElement('div');
+    bpc.className = 'por-claude';
+    bpc.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>' +
+                    'Registrando como Claude (asistente) · el seguimiento queda para César';
+    document.body.insertBefore(bpc, document.body.firstChild);
+  }
   /* la sesión se consulta siempre: además de destapar lo interno, dice QUIÉN
      cotiza, para guardarlo a su nombre (ver correoEquipo) */
   sbClient.auth.getSession().then(function(r){
