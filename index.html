@@ -30,7 +30,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="description" content="Cotiza tu cubierta, mesa, puerta o peldaños en madera noble a medida. Precio al instante, fabricado en el sur de Chile.">
 <link rel="icon" type="image/png" href="fotos/logo-casa-zaru-og.png">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&family=Nanum+Myeongjo:wght@700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&family=Nanum+Myeongjo:wght@700;800&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
@@ -1801,6 +1801,48 @@ body.modo-vendedor #f-dyn .v-espfin { margin: 4px 0 0; }
 .marca .cierre-marca { background: var(--terracota); color: #fff; border-radius: 14px; padding: 16px; text-align: center; margin: 18px 0 8px; }
 .marca .cierre-marca .cm-lema { font-family: 'Nanum Myeongjo', serif; font-weight: 700; font-size: 16px; margin: 0 0 6px; }
 .marca .cierre-marca .cm-red { font-size: 12.5px; margin: 0; opacity: .95; }
+
+/* ── VARIOS PRODUCTOS, VISTA DEL CLIENTE (24-11-2026, boceto aprobado) ──
+   Solo dentro de .combo-doc: la cotización de un producto queda igual. Títulos
+   y precios en Playfair Display, el resto en Poppins (heredado de .marca). */
+.marca .combo-doc .coti-title, .marca .combo-doc .combo-total-h, .marca .combo-doc .pleg summary,
+.marca .combo-doc .maderas-acc summary, .marca .combo-doc .ibox-h, .marca .combo-doc .cierre-marca .cm-lema,
+.marca .combo-doc .pz-precio, .marca .combo-doc .cb-det-h {
+  font-family: 'Playfair Display', serif; letter-spacing: 0; font-variant-numeric: lining-nums;
+}
+.marca .combo-doc .coti-title { font-size: 27px; font-weight: 600; color: #3A4A31; }
+.marca .combo-doc .pz-precio { font-size: 23px; font-weight: 700; font-variant-numeric: lining-nums tabular-nums; }
+.marca .combo-doc .combo-total-h { font-size: 20px; font-weight: 600; color: #3A4A31; margin: 22px 0 0; }
+.marca .combo-doc .combo-total-h + .elige-madera { margin-top: 2px; }
+.marca .combo-doc .pleg summary { font-weight: 600; }
+.marca .combo-doc .cierre-marca .cm-lema { font-weight: 600; }
+.marca .cb-items { margin-top: 14px; background: #fff; border: 1px solid var(--bd); border-radius: 12px; }
+.marca .cb-item { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
+.marca .cb-item + .cb-item { border-top: 1px solid var(--bd); }
+.marca .cb-dib { flex: 0 0 64px; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+.marca .cb-num { width: 30px; height: 30px; border-radius: 50%; background: #E7ECE2; color: var(--verde); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.marca .cb-txt { min-width: 0; }
+.marca .cb-rot { font-size: 11px; color: var(--tm); letter-spacing: 1px; text-transform: uppercase; }
+.marca .cb-med { font-size: 15px; font-weight: 600; color: var(--tx); font-variant-numeric: tabular-nums; }
+.marca .cb-rb { font-size: 12.5px; color: #B5652E; line-height: 1.4; }
+.marca .cb-rb b { font-weight: 600; }
+.marca .cb-comun { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 12px; border-top: 1px dashed var(--bd); }
+.marca .cb-comun span { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; line-height: 1.35; background: #F1ECE4; border-radius: 14px; padding: 4px 10px; color: #4B4539; }
+.marca .cb-comun svg { width: 13px; height: 13px; flex-shrink: 0; stroke: var(--verde); fill: none; stroke-width: 1.8; }
+.marca .cb-pleg { margin-top: 10px; border-color: var(--dorado); }
+.marca .cb-pleg + .cb-pleg { margin-bottom: 22px; }
+.marca .cb-tp { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.marca .cb-tp th, .marca .cb-tp td { padding: 7px 4px; border-bottom: 1px solid var(--bd); text-align: right; vertical-align: top; }
+.marca .cb-tp th:first-child, .marca .cb-tp td:first-child { text-align: left; }
+.marca .cb-tp th { font-weight: 500; color: var(--tm); font-size: 11px; }
+.marca .cb-tp td small { display: block; font-size: 11px; color: var(--tm); }
+.marca .cb-tp tr.cb-tot td { font-weight: 600; border-bottom: 0; }
+.marca .cb-nota { font-size: 11.5px; color: var(--tm); margin: 6px 0 0; line-height: 1.45; }
+.marca .cb-det + .cb-det { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--bd); }
+.marca .cb-det-h { font-size: 16px; font-weight: 600; color: #3A4A31; margin: 0 0 8px; }
+.marca .cb-det .specs { margin-bottom: 0; }
+.marca .cb-ico-cam { width: 20px; height: 20px; vertical-align: -5px; margin-right: 6px; stroke: var(--verde); fill: none; stroke-width: 1.6; }
+.marca .cb-ico-pdf { width: 17px; height: 17px; vertical-align: -3px; margin-right: 6px; stroke: currentColor; fill: none; stroke-width: 1.6; }
 
 /* ── COTIZACIÓN ESPECIAL (11-11-2026) ── formulario del vendedor (es-*) y su documento */
 .es-lbl { display: block; font-family: 'Poppins', sans-serif; font-size: 13px; color: #57524B; margin: 14px 0 4px; }
@@ -5515,7 +5557,11 @@ function rbNoteHtml() {
   if (rb) {
     var vB = rebordeSolo('bajo'), vA = rebordeSolo('alto');
     var monto = (Math.round(vB) === Math.round(vA)) ? fmt(vA) : (fmt(vB) + ' a ' + fmt(vA) + ' según la madera');
-    out += '<div class="info-bar">Extra: <strong>'+escA(rb.nombre)+'</strong> — '+monto+'</div>';
+    /* en una cotización con varios productos este texto va al detalle plegado: el
+       rango parecía un cobro aparte y el reborde ya está sumado en el precio */
+    out += comboCaptura
+      ? '<div class="info-bar"><strong>'+escA(rb.nombre)+'</strong> · incluido en el precio</div>'
+      : '<div class="info-bar">Extra: <strong>'+escA(rb.nombre)+'</strong> — '+monto+'</div>';
   }
   var rs = rsDatos();
   if (rs) {
@@ -6240,9 +6286,13 @@ function stkMontar(qOut) {
   box.className = 'envio-stk sin-envio' + (stkComuna ? '' : ' plegado');
   box.dataset.kg = kg;
   var elegida = stkComuna ? stkEtiqueta(stkComuna) : '';
+  /* con varios productos (boceto 24-11-2026) el camión va como ícono de línea */
+  var cam = combo.length
+    ? '<svg class="cb-ico-cam" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 9h16v13H3zM19 13h5l4 4v5h-9"/><circle cx="8.5" cy="23.5" r="2.3"/><circle cx="23.5" cy="23.5" r="2.3"/></svg>'
+    : '🚚 ';
   box.innerHTML =
-    '<button type="button" class="es-abrir" onclick="stkAbrir()">🚚 ¿Cuál es el valor de envío a tu comuna? →</button>' +
-    '<div class="es-h"><span class="es-t">🚚 Envío Starken a domicilio</span></div>' +
+    '<button type="button" class="es-abrir" onclick="stkAbrir()">' + cam + '¿Cuál es el valor de envío a tu comuna? →</button>' +
+    '<div class="es-h"><span class="es-t">' + cam + 'Envío Starken a domicilio</span></div>' +
     '<div class="es-elegida' + (stkComuna ? '' : ' hidden') + '" id="stk-elegida"><span id="stk-elegida-txt">' + escA(elegida) + '</span>' +
       '<button type="button" class="es-cambiar" onclick="stkCambiar()">cambiar comuna</button></div>' +
     '<div class="es-busca' + (stkComuna ? ' hidden' : '') + '" id="stk-busca"><input type="text" class="es-in" id="stk-comuna" placeholder="Escribe tu comuna para ver el envío" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, \'doc\')" onblur="stkAutoElegir(\'doc\')">' +
@@ -6985,12 +7035,6 @@ function htmlCombinada(cli, fecha) {
     total_bajo: Math.round(tot.bajo), total_medio: Math.round(tot.medio), total_alto: Math.round(tot.alto),
     vidrio_tipo: vidrio
   }, lineas);
-  var cuerpo = items.map(function(it, i){
-    return '<div class="combo-item">' +
-      '<div class="combo-item-h"><span class="ci-n">' + (i+1) + '</span>' + it.nombre + '</div>' +
-      it.body +
-    '</div>';
-  }).join('');
   var totRows = [
     {label: 'Pino Oregón',              tier: 'bajo',  total: tot.bajo},
     {label: 'Castaño / Ciprés / Mañío', tier: 'medio', total: tot.medio},
@@ -6998,15 +7042,189 @@ function htmlCombinada(cli, fecha) {
   ];
   var nombres = items.map(function(it){ return PNAME[it.p] || it.p; });
   var titulo = items.length <= 3 ? nombres.join(' + ') : (items.length + ' productos');
+  /* ── LO QUE VE EL CLIENTE (24-11-2026, boceto aprobado) ──
+     Antes cada producto traía su tabla de medidas, sus tres tarjetas de madera
+     con dos precios y su ficha, y después venía el total: 24 montos y el total
+     recién en la tercera pantalla. Ahora va primero QUÉ se cotiza (una línea por
+     producto) y el TOTAL por madera, que es lo único que decide; el precio de
+     cada producto y todo el detalle quedan plegados (el PDF los abre). Los
+     totales, lo que se guarda y el mensaje de WhatsApp no cambian. */
+  var ds = items.map(comboDatos);
+  var comunes = comboComunes(ds);
+  var rec = comboRecomendada(ds);
+  var nom = comboNombres(items);
   comboDoc = items;
   try {
-    return shell(titulo, cli, fecha,
-      cuerpo +
-      '<div class="combo-total-h">Total de la cotización · ' + items.length + ' productos</div>' +
-      tierTable(totRows, null) +
+    return '<div class="combo-doc">' + shell(titulo, cli, fecha,
+      comboResumenHtml(items, ds, comunes, nom) +
+      '<div class="combo-total-h">' + nom.total + '</div>' +
+      tierTable(totRows, rec) +
+      comboPrecioCadaHtml(items, tot, nom) +
+      comboDetalleHtml(items, ds, comunes) +
       boxes() + warranty() + muestrario() + whatsappCTA(tot.bajo, tot.alto, items.length + ' productos', nombres.join(' + '))
-    );
+    ) + '</div>';
   } finally { comboDoc = null; }
+}
+/* lee del documento ya armado de cada producto (it.body) su ficha y su madera
+   recomendada, sin recalcular nada. <template> no carga imágenes ni corre nada. */
+function comboDatos(it) {
+  var t = document.createElement('template');
+  t.innerHTML = it.body || '';
+  var specs = Array.prototype.map.call(t.content.querySelectorAll('.specs .spec'), function(s){
+    var l = s.querySelector('.sl'), v = s.querySelector('.sv');
+    return { l: l ? l.textContent.trim() : '', v: v ? v.textContent.trim() : '' };
+  }).filter(function(s){ return s.l && s.v; });
+  var pzs = t.content.querySelectorAll('.precios .pz'), rec = -1;
+  for (var i = 0; i < pzs.length; i++) if (pzs[i].classList.contains('rec')) rec = i;
+  var bd = t.content.querySelector('.precios .pz-badge');
+  return { specs: specs, rec: pzs.length === 3 ? rec : -1, badge: bd ? bd.textContent.trim() : '' };
+}
+/* los datos de la ficha que son iguales en TODOS los productos: van una sola vez.
+   El peso nunca (es de cada uno). */
+function comboComunes(ds) {
+  var out = [];
+  (ds[0].specs || []).forEach(function(s){
+    if (/^peso/i.test(s.l)) return;
+    var todos = ds.every(function(d){ return d.specs.some(function(x){ return x.l === s.l && x.v === s.v; }); });
+    if (todos) out.push(s);
+  });
+  return out;
+}
+/* «la más pedida» solo si todos los productos recomiendan la misma madera con el mismo texto */
+function comboRecomendada(ds) {
+  var r = ds[0].rec, b = ds[0].badge;
+  if (r < 0 || !ds.every(function(d){ return d.rec === r && d.badge === b; })) return null;
+  return ['bajo', 'medio', 'alto'][r];
+}
+/* «Tus 2 cubiertas» si todo es lo mismo; si se mezclan, «Tu cotización · 3 productos» */
+function comboNombres(items) {
+  var N = NOMBRE_PIEZA[items[0].p], unidades = 0;
+  var igual = !!N && items.every(function(it){
+    var n = NOMBRE_PIEZA[it.p];
+    (((it.share && it.share.rows) || [])).forEach(function(r){ unidades += parseInt(r.ca, 10) || 1; });
+    return n && n[1] === N[1];
+  });
+  if (igual && unidades > 1) return { igual: true, singular: N[0],
+    titulo: 'Tus ' + unidades + ' ' + N[1], total: 'Total de tus ' + unidades + ' ' + N[1], cada: 'Precio de cada ' + N[0] };
+  return { igual: false, singular: '',
+    titulo: 'Tu cotización · ' + items.length + ' productos', total: 'Total de los ' + items.length + ' productos', cada: 'Precio de cada producto' };
+}
+/* «Con reborde de 4 cm en 3 cantos · incluido»: el reborde ya va sumado en el
+   precio del producto; antes se mostraba como «Extra … $36.767 a $55.046» */
+function comboRebordeTxt(it) {
+  var rb = it.share && it.share.rb;
+  if (!rb || !(rb.ml > 0)) return '';
+  var alto = String(rb.alto || '').replace('.', ',');
+  var ps = rb.piezas || {}, ks = Object.keys(ps), donde = '';
+  if (!rb.manual && ks.length === 1) {
+    var p = ps[ks[0]], l = (p.l1 ? 1 : 0) + (p.l2 ? 1 : 0), c = (p.c1 ? 1 : 0) + (p.c2 ? 1 : 0);
+    if (l + c === 1) donde = ' en <b>1 canto ' + (l ? 'largo' : 'corto') + '</b>';
+    else if (l + c > 1) donde = ' en <b>' + (l + c) + ' cantos</b>';
+  }
+  return 'Con reborde' + (alto ? ' de ' + alto + ' cm' : '') + donde + ' · incluido';
+}
+/* dibujo de línea de la pieza, a escala, con el reborde en terracota en sus cantos */
+function comboDibujo(it, n) {
+  var rows = (it.share && it.share.rows) || [];
+  var r = rows.length === 1 ? rows[0] : null;
+  var lg = r ? parseFloat(r.lg) : 0, an = r ? parseFloat(r.an) : 0;
+  if (!(lg > 0 && an > 0) || ['cubierta','repisa','peldano','banca','pcocina'].indexOf(it.p) === -1)
+    return '<span class="cb-num">' + n + '</span>';
+  var w = 58, h = 58 * an / lg;
+  if (h > 32) { h = 32; w = Math.max(10, 32 * lg / an); }
+  h = Math.max(8, h);
+  w = Math.round(w); h = Math.round(h);
+  var rb = it.share.rb, p = (rb && !rb.manual && rb.piezas && rb.piezas[Object.keys(rb.piezas)[0]]) || {};
+  var x2 = 2 + w, y2 = 2 + h, d = '';
+  if (rb && rb.ml > 0) {
+    if (p.l1) d += 'M2 2H' + x2;
+    if (p.l2) d += 'M2 ' + y2 + 'H' + x2;
+    if (p.c1) d += 'M2 2V' + y2;
+    if (p.c2) d += 'M' + x2 + ' 2V' + y2;
+  }
+  return '<svg width="' + (w + 4) + '" height="' + (h + 4) + '" viewBox="0 0 ' + (w + 4) + ' ' + (h + 4) + '" aria-hidden="true">' +
+    '<rect x="2" y="2" width="' + w + '" height="' + h + '" fill="#F1ECE4" stroke="#B9AE9C" stroke-width="1"/>' +
+    (d ? '<path d="' + d + '" stroke="#B5652E" stroke-width="3" fill="none" stroke-linecap="square"/>' : '') + '</svg>';
+}
+var CB_ICO = {
+  espesor: '<path d="M4 8h16M4 16h16"/>',
+  bordes: '<path d="M4 19v-8a6 6 0 0 1 6-6h10"/>',
+  plazo: '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+  protector: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/>',
+  otro: '<path d="M5 12l4 4 10-10"/>'
+};
+function cbIco(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (CB_ICO[k] || CB_ICO.otro) + '</svg>'; }
+/* una línea por producto (dibujo, nombre, medida, reborde) y lo común, una vez */
+function comboResumenHtml(items, ds, comunes, nom) {
+  var filas = items.map(function(it, i){
+    var medTiene = (it.lineas || []).some(function(l){ return l.largo_cm && l.ancho_cm; });
+    var med = medTiene ? vLineaDesc(it) : '';
+    var corto = vNombreCorto(it);
+    var dib = comboDibujo(it, i + 1);
+    /* sin dibujo, el número ya va en el círculo: no se repite en el rótulo */
+    var rot = dib.indexOf('cb-num') !== -1 ? corto : nom.igual ? corto + ' ' + (i + 1) : (i + 1) + ' · ' + corto;
+    var rb = comboRebordeTxt(it);
+    return '<div class="cb-item"><div class="cb-dib">' + dib + '</div><div class="cb-txt">' +
+      '<div class="cb-rot">' + escA(rot) + '</div>' +
+      (med ? '<div class="cb-med">' + escA(med) + '</div>' : '') +
+      (rb ? '<div class="cb-rb">' + rb + '</div>' : '') +
+    '</div></div>';
+  }).join('');
+  /* «terminados, con protector»: lo que decía el bloque verde de arriba (llegaListaHtml) */
+  var conProt = prodsDocDe(items).some(function(p){ return p !== 'revestimiento' && p !== 'revlibre' && p !== 'especial'; });
+  var chips = comunes.map(function(s){
+    var k = /^espesor/i.test(s.l) ? 'espesor' : /^bordes/i.test(s.l) ? 'bordes' : /^plazo/i.test(s.l) ? 'plazo' : 'otro';
+    return '<span>' + cbIco(k) + escA(s.l.replace(/\*$/, '')) + ': ' + escA(s.v) + '</span>';
+  }).join('') + (conProt ? '<span>' + cbIco('protector') + 'Terminados en taller, con protector</span>' : '');
+  return '<div class="cb-items">' + filas + (chips ? '<div class="cb-comun">' + chips + '</div>' : '') + '</div>';
+}
+function prodsDocDe(items) { return items.map(function(it){ return it.p; }); }
+/* plegado: cada producto con su precio en cada madera (con tarjeta, con el
+   mismo descuento que las tarjetas del total) */
+function comboPrecioCadaHtml(items, tot, nom) {
+  var tiers = ['bajo', 'medio', 'alto'].filter(function(t){ return tot[t] > 0; });
+  var CORTO = { bajo: 'Oregón', medio: 'Castaño…', alto: 'Coihue…' };
+  var celda = function(v){ return v > 0 ? fmt(dctoMonto(v)) : '—'; };
+  var filas = items.map(function(it, i){
+    var medTiene = (it.lineas || []).some(function(l){ return l.largo_cm && l.ancho_cm; });
+    return '<tr><td>' + escA(vNombreCorto(it)) + ' ' + (i + 1) + (medTiene ? '<small>' + escA(vLineaDesc(it)) + '</small>' : '') + '</td>' +
+      tiers.map(function(t){ return '<td>' + celda((it.tot && it.tot[t]) || 0) + '</td>'; }).join('') + '</tr>';
+  }).join('');
+  return '<details class="pleg cb-pleg"><summary>' + nom.cada + '</summary><div class="pleg-b">' +
+    '<table class="cb-tp"><thead><tr><th></th>' + tiers.map(function(t){ return '<th>' + CORTO[t] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    filas +
+    '<tr class="cb-tot"><td>Total</td>' + tiers.map(function(t){ return '<td>' + fmt(dctoMonto(tot[t])) + '</td>'; }).join('') + '</tr>' +
+    '</tbody></table>' +
+    '<p class="cb-nota">' + (sinTransf() ? 'IVA incluido' : 'Precio con tarjeta, IVA incluido') + '. Lo que se suma a cada producto (reborde, base u otro) ya va en su precio.</p>' +
+  '</div></details>';
+}
+/* plegado: el documento de cada producto sin sus tarjetas de precio ni lo que
+   ya se dijo una vez arriba (no se borra ningún otro dato) */
+function comboDetalleHtml(items, ds, comunes) {
+  var esComun = function(l){ return comunes.some(function(s){ return s.l === l; }); };
+  var espComun = comunes.some(function(s){ return /^espesor/i.test(s.l); });
+  var cuerpos = items.map(function(it, i){
+    var t = document.createElement('template');
+    t.innerHTML = it.body || '';
+    var f = t.content;
+    Array.prototype.forEach.call(f.querySelectorAll('.precios, .elige-madera'), function(e){ e.parentNode.removeChild(e); });
+    Array.prototype.forEach.call(f.querySelectorAll('.specs'), function(sp){
+      Array.prototype.forEach.call(sp.querySelectorAll('.spec'), function(s){
+        var l = s.querySelector('.sl');
+        if (l && esComun(l.textContent.trim())) s.parentNode.removeChild(s);
+      });
+      if (!sp.querySelector('.spec')) sp.parentNode.removeChild(sp);
+    });
+    if (espComun) Array.prototype.forEach.call(f.querySelectorAll('.info-bar'), function(b){
+      if (/^Espesor:/.test(b.textContent.trim())) b.parentNode.removeChild(b);
+    });
+    var d = document.createElement('div');
+    d.appendChild(f);
+    var medTiene = (it.lineas || []).some(function(l){ return l.largo_cm && l.ancho_cm; });
+    return '<div class="cb-det"><div class="cb-det-h">' + (i + 1) + ' · ' + escA(vNombreCorto(it)) +
+      (medTiene ? ' · ' + escA(vLineaDesc(it)) : '') + '</div>' + d.innerHTML + '</div>';
+  }).join('');
+  return '<details class="pleg cb-pleg"><summary>Medidas y detalle</summary><div class="pleg-b">' + cuerpos + '</div></details>';
 }
 
 function htmlCubierta(cli, fecha) {
@@ -7836,6 +8054,9 @@ function shell(nombre, cli, fecha, body) {
    en "Tu pedido incluye" (no se sacó nada de ahí). El revestimiento va sin
    terminación, así que a él no se le promete "terminada". */
 function llegaListaHtml() {
+  /* con varios productos lo dice un sello de su resumen (comboResumenHtml) y la
+     garantía sigue en su plegado: el precio total sube a la primera pantalla */
+  if (comboDoc) return '';
   var ps = prodsDoc();
   if (ps.every(function(p){ return p === 'revestimiento' || p === 'revlibre' || p === 'especial'; })) return '';
   var plural = ps.length > 1 || ['peldano','banca','pcocina'].indexOf(ps[0]) !== -1;
@@ -7852,7 +8073,7 @@ var NOMBRE_PIEZA = { cubierta:['cubierta','cubiertas'], repisa:['repisa','repisa
   granero:['puerta','puertas'], maciza:['puerta','puertas'], vidrios:['puerta','puertas'], mesa:['mesa','mesas'],
   banca:['banca','bancas'], pcocina:['puerta de cocina','puertas de cocina'] };
 function tituloDoc(nombre) {
-  if (comboDoc) return 'Tu cotización · ' + comboDoc.length + ' productos';
+  if (comboDoc) return comboNombres(comboDoc).titulo;
   if (prod === 'revlibre') return 'Tu revestimiento a medida';
   if (prod === 'especial') return escA((ES && ES.tit.trim()) || 'Tu cotización');   /* lo escribe el vendedor */
   if (prod === 'revestimiento') {
@@ -8302,7 +8523,9 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
     /* Sale de una petición real (26-08-2026): una clienta pidió la cotización
        en PDF "para enviársela al arquitecto". Para todos — cliente y
        vendedor: descarga el archivo directo, sin diálogo de impresión. */
-    '<button class="btn-pdf" onclick="descargarPDF()">📄 Descargar en PDF</button>' +
+    '<button class="btn-pdf" onclick="descargarPDF()">' + (comboDoc
+      ? '<svg class="cb-ico-pdf" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>'
+      : '📄 ') + 'Descargar en PDF</button>' +
   '</div>' +
   /* cierre de marca, como la tarjeta: también sale en el PDF (último bloque) */
   /* la especial no lleva el lema: puede ser pino u otra madera que no es noble */
