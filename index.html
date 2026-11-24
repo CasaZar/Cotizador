@@ -1526,6 +1526,49 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s1 .prof-cta { color: var(--verde); font-weight: 600; }
 body.modo-vendedor #s1 .prof-banner { display: none; }
 #s1 .s1-confianza { text-align: center; font-size: 12px; color: var(--tm); margin: 14px auto 0; max-width: 1120px; line-height: 1.5; }
+/* ── INICIO PÚBLICO (24-11-2026, boceto aprobado) ──
+   Todo cuelga de body:not(.modo-vendedor) o de .solo-pub: el vendedor no ve
+   ni un píxel distinto. Título que dice qué es, tres pasos, confianza arriba,
+   botón en la cubierta y, en celular, el resto como lista compacta ordenada
+   por lo que más se elige (mesas, puertas, peldaños, repisas, revestimiento). */
+#s1 .tagline { display: none; }
+.s1-pasos, .s1-conf-top, .s1-otros-t, .s1-duda, .pcard-btn { display: none; }
+body:not(.modo-vendedor) #s1 .dash-body { padding-top: 22px; }
+body:not(.modo-vendedor) #s1 .dash-intro-wrap { margin-bottom: 16px; }
+body:not(.modo-vendedor) #s1 .dash-body h2 { font-size: 27px; line-height: 1.15; letter-spacing: 0; }
+body:not(.modo-vendedor) #s1 .dash-intro { font-size: 14.5px; line-height: 1.45; letter-spacing: 0; }
+body:not(.modo-vendedor) #s1 .s1-pasos { display: flex; justify-content: space-between; gap: 6px; max-width: 420px; margin: 14px auto 0; }
+#s1 .s1-paso { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11.5px; color: var(--tm); line-height: 1.25; }
+#s1 .s1-paso svg { width: 22px; height: 22px; stroke: var(--terracota); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#s1 .s1-paso b { color: var(--tx); font-weight: 600; }
+body:not(.modo-vendedor) #s1 .s1-conf-top { display: block; max-width: 560px; margin: 12px auto 0; background: var(--bg3); border-radius: 10px; padding: 9px 10px; font-size: 11.5px; color: var(--tm); line-height: 1.5; }
+#s1 .s1-conf-top b { color: var(--tx); font-weight: 600; }
+body:not(.modo-vendedor) #s1 .pcard-btn { display: block; margin-top: 11px; background: var(--terracota); color: #fff; text-align: center; font-weight: 600; font-size: 15px; padding: 12px; border-radius: 10px; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="cubierta"] .pcard-body { padding: 12px 14px 14px; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="cubierta"] .pname { font-size: 17px; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="mesa"] { order: 2; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="puertas"] { order: 3; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="peldano"] { order: 4; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="repisa"] { order: 5; }
+body:not(.modo-vendedor) #s1 .pcard[data-prod="revestimiento"] { order: 6; }
+body:not(.modo-vendedor) #s1 .s1-duda { display: flex; gap: 10px; align-items: center; max-width: 560px; margin: 16px auto 0; border: 1px solid var(--bd); border-radius: 12px; padding: 11px 12px; font-size: 13px; line-height: 1.4; background: #fff; color: var(--tx); text-decoration: none; }
+#s1 .s1-duda svg { width: 24px; height: 24px; flex: none; stroke: var(--verde); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#s1 .s1-duda b { color: var(--verde); font-weight: 600; }
+body:not(.modo-vendedor) #s1 .prof-banner { display: block; background: none; padding: 0; margin-top: 16px; text-align: center; font-size: 12.5px; color: var(--tm); }
+body:not(.modo-vendedor) #s1 .prof-cta { text-decoration: underline; text-underline-offset: 2px; font-weight: 500; }
+@media (max-width: 719px) {
+  body:not(.modo-vendedor) #s1 .pgrid { gap: 0; }
+  body:not(.modo-vendedor) #s1 .s1-otros-t { display: block; grid-column: 1 / -1; order: 1; padding: 20px 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--tm); font-weight: 500; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; padding: 9px 12px 9px 9px; border-radius: 0; margin-top: -1px; transform: none; box-shadow: none; }
+  body:not(.modo-vendedor) #s1 #pcard-mesa-comedor { border-radius: 14px 14px 0 0; margin-top: 0; }
+  body:not(.modo-vendedor) #s1 .pcard[data-prod="revestimiento"] { border-radius: 0 0 14px 14px; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]):hover { border-color: var(--bd); }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) .pcard-img { width: 58px; height: 58px; aspect-ratio: auto; flex: none; border-radius: 9px; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) .pcard-body { padding: 0; flex: 1; min-width: 0; display: flex; align-items: center; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) .pname { line-height: 1.2; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) .psub { margin-top: 1px; }
+  body:not(.modo-vendedor) #s1 .pcard:not([data-prod="cubierta"]) .parrow { display: block; margin-left: auto; color: var(--terracota); font-size: 18px; }
+}
 
 /* ── FORMULARIO: medidas frecuentes y barra fija con el precio ── */
 #med-frec-box { margin-top: 14px; }
@@ -2350,31 +2393,41 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
   </div>
   <div class="dash-body">
     <div class="dash-intro-wrap">
-      <h2><span class="signo-ap">¿</span>Qué quieres cotizar?</h2>
+      <!-- 24-11-2026, boceto aprobado: de 564 visitas que caían acá en 30 días,
+           281 se iban sin elegir. Ahora dice qué es, qué pasa después y da la
+           confianza arriba. El vendedor (solo-ven) sigue viendo lo de siempre. -->
+      <h2><span class="solo-ven"><span class="signo-ap">¿</span>Qué quieres cotizar?</span><span class="solo-pub">Tu mueble de madera noble, a tu medida</span></h2>
       <div class="dash-divider"></div>
-      <p class="dash-intro">Precio al instante. Hecho a mano en Villarrica.</p>
+      <p class="dash-intro">Pon tus medidas y mira el precio al instante. Sin compromiso.</p>
+      <div class="s1-pasos solo-pub">
+        <div class="s1-paso"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span><b>1.</b> Elige qué necesitas</span></div>
+        <div class="s1-paso"><svg viewBox="0 0 24 24"><path d="M3 16 16 3l5 5L8 21z"/><path d="m7 12 2 2M10 9l2 2M13 6l2 2"/></svg><span><b>2.</b> Pon tus medidas</span></div>
+        <div class="s1-paso"><svg viewBox="0 0 24 24"><path d="M20 12 12 20l-8-8V4h8z"/><circle cx="8.5" cy="8.5" r="1.3"/></svg><span><b>3.</b> Mira tu precio</span></div>
+      </div>
+      <div class="s1-conf-top solo-pub"><b>Taller en Villarrica</b> · <b>+1.500</b> cubiertas entregadas · Envío a todo Chile · 3 cuotas sin interés</div>
     </div>
     <div id="combo-bar-s1"></div>
     <div class="pgrid">
 
       <div class="pcard" data-prod="cubierta"><span class="ptag">Lo más pedido</span>
         <div class="pcard-img" id="img-cubierta"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="7" width="18" height="3.5" rx="1"/><rect x="3" y="13.5" width="18" height="3.5" rx="1"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Cubiertas a medida</div><div class="psub">Cocina, baño, mesa o escritorio</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Cubiertas a medida</div><div class="psub">Cocina, baño, mesa o escritorio</div></div><span class="parrow">→</span><span class="pcard-btn solo-pub">Ver el precio de mi cubierta →</span></div>
       </div>
+      <div class="s1-otros-t solo-pub">También cotizamos</div>
 
       <div class="pcard" data-prod="repisa">
         <div class="pcard-img" id="img-repisa"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="11" width="18" height="2.5" rx="1"/><line x1="7" y1="13.5" x2="7" y2="20" stroke-linecap="round"/><line x1="17" y1="13.5" x2="17" y2="20" stroke-linecap="round"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Repisas</div><div class="psub">2 cm de espesor</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Repisas</div><div class="psub"><span class="solo-pub">Del largo que necesites</span><span class="solo-ven">2 cm de espesor</span></div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="peldano">
         <div class="pcard-img" id="img-peldano"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 20h4v-4h4v-4h4v-4h4V4" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Peldaños</div><div class="psub">A medida, 2 o 4 cm</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Peldaños</div><div class="psub"><span class="solo-pub">Para tu escalera, a medida</span><span class="solo-ven">A medida, 2 o 4 cm</span></div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" data-prod="puertas">
         <div class="pcard-img" id="img-puertas"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="3" width="16" height="20" rx="1"/><circle cx="16.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas</div><div class="psub">Granero, sin vidrio o con vidrio</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Puertas</div><div class="psub"><span class="solo-pub">De entrada, interiores y correderas</span><span class="solo-ven">Granero, sin vidrio o con vidrio</span></div></div><span class="parrow">→</span></div>
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
@@ -2383,7 +2436,7 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
            catálogo ya filtrado (data-mtipo → mesaTipo). Llenan una fila justa. -->
       <div class="pcard" id="pcard-mesa-comedor" data-prod="mesa" data-mtipo="comedor">
         <div class="pcard-img" id="img-mesa-comedor"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="6" width="19" height="2.6" rx=".8"/><path d="M5 8.6V19M19 8.6V19M5 13h14"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas de comedor</div><div class="psub">Para comer, adentro o en la terraza</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Mesas de comedor</div><div class="psub"><span class="solo-pub">Para adentro o la terraza</span><span class="solo-ven">Para comer, adentro o en la terraza</span></div></div><span class="parrow">→</span></div>
       </div>
 
       <div class="pcard" id="pcard-mesa-centro" data-prod="mesa" data-mtipo="centro">
@@ -2393,7 +2446,7 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 
       <div class="pcard" data-prod="revestimiento">
         <div class="pcard-img" id="img-revestimiento"><div class="img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="4" width="4" height="16" rx=".5"/><rect x="10" y="4" width="4" height="16" rx=".5"/><rect x="17" y="4" width="4" height="16" rx=".5"/></svg></div></div>
-        <div class="pcard-body"><div class="pinfo"><div class="pname">Revestimiento</div><div class="psub">Coihue o ciprés, por m²</div></div><span class="parrow">→</span></div>
+        <div class="pcard-body"><div class="pinfo"><div class="pname">Revestimiento</div><div class="psub"><span class="solo-pub">Para muros y cielos</span><span class="solo-ven">Coihue o ciprés, por m²</span></div></div><span class="parrow">→</span></div>
       </div>
 
       <!-- Solo visible con el link privado de vendedor (?pro=zr) -->
@@ -2424,11 +2477,14 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
          Casa Zaru (2% sobre $1,5M y 5% sobre $3M comprados en el año, más el
          5% por transferencia) se explican por WhatsApp: acá va solo la
          invitación. Al 5558, no al número de anuncios. -->
-    <a class="prof-banner" href="https://wa.me/56956375558?text=Hola%2C%20soy%20profesional%20del%20rubro%20y%20quiero%20abrir%20mi%20Cuenta%20Casa%20Zaru." target="_blank" rel="noopener">
-      <span><strong>¿Arquitecto, diseñador o empresa?</strong> Con la Cuenta Casa Zaru llegas hasta un 10% bajo el valor de lista.</span>
-      <span class="prof-cta">Quiero mi cuenta →</span>
+    <!-- salida para quien no tiene medidas o busca otra cosa (24-11-2026). Al 5558. -->
+    <a class="s1-duda solo-pub" href="https://wa.me/56956375558?text=Hola%2C%20quiero%20cotizar%20y%20tengo%20una%20duda." target="_blank" rel="noopener" onclick="embudoTick('duda')">
+      <svg viewBox="0 0 24 24"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg>
+      <span>¿No tienes las medidas o buscas otra cosa? <b>Escríbenos por WhatsApp →</b></span>
     </a>
-    <p class="s1-confianza">6 años fabricando en Villarrica · Garantía 5 años · Envío a todo Chile · 3 cuotas sin interés</p>
+    <a class="prof-banner" href="https://wa.me/56956375558?text=Hola%2C%20soy%20profesional%20del%20rubro%20y%20quiero%20abrir%20mi%20Cuenta%20Casa%20Zaru." target="_blank" rel="noopener">
+      <span>¿Arquitecto, diseñador o empresa? <span class="prof-cta">Abre tu Cuenta Casa Zaru</span></span>
+    </a>
   </div>
 </div>
 
