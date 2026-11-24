@@ -2203,7 +2203,10 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 }
 #s-dash.pz .pz-n.wa, #s-dash.pz .pz-pt.wa { background:var(--pz-wa); }
 /* en su propia página el título ya está arriba: el recuadro no lo repite */
-#s-dash.pz .pz-wa-vista .wa-tit, #s-dash.pz .pz-wa-vista .wa-logo { display:none; }
+/* 24-11-2026: el título de cada caja ahora es el canal (5558, 0141, Instagram): se muestra */
+#s-dash.pz .pz-wa-vista .wa-tit { font-size:17px; }
+#s-dash.pz .pz-wa-vista .wa-cab .wa-t { flex:1 1 220px; }
+@media (max-width:600px){ #s-dash.pz .pz-wa-vista .wa-cab .wa-estado { margin-left:48px; } }
 #s-dash.pz .pz-wa-vista .wa-cab { flex-wrap:wrap; row-gap:6px; }
 #s-dash.pz .pz-wa-vista .wa-sub { font-size:13px; }
 #s-dash.pz .pz-seg { padding:4px 0 18px; min-width:0; }
@@ -2263,10 +2266,12 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
 #s-dash.pz .pz-acc.wap .pz-i { width:17px; height:17px; }
 #s-dash.pz .pz-acc.apag { opacity:.45; }
 /* Canales de WhatsApp al día (23-11-2026): 5558 · 0141 anuncios · Instagram */
-#s-dash.pz .wa-chips { display:flex; gap:6px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid var(--pz-linea); }
-#s-dash.pz .wa-chip { height:30px; border:1px solid var(--pz-linea); background:#fff; border-radius:999px; padding:0 9px; font:inherit; font-size:12.5px; color:var(--pz-tinta); cursor:pointer; }
-#s-dash.pz .wa-chip b { font-weight:600; margin-left:3px; }
-#s-dash.pz .wa-chip.on { background:var(--pz-tinta); color:#fff; border-color:var(--pz-tinta); }
+/* 24-11-2026: una caja por canal, separadas (antes, una caja con chips de filtro) */
+#s-dash.pz .wa-caja + .wa-caja { margin-top:16px; }
+#s-dash.pz .wa-caja.c0141 { border-left-color:#B5652E; }
+#s-dash.pz .wa-caja.c0141 .wa-logo { background:#F6E8DD; color:#B5652E; }
+#s-dash.pz .wa-caja.cig { border-left-color:#B1407A; }
+#s-dash.pz .wa-caja.cig .wa-logo { background:#F6E6EF; color:#B1407A; }
 #s-dash.pz .wa-canal { display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.3px; border-radius:3px; padding:1px 6px; margin-right:6px; vertical-align:1px; background:var(--pz-papel); color:var(--pz-sec); }
 #s-dash.pz .wa-canal.c0141 { background:#E5F1EA; color:var(--pz-wa); }
 #s-dash.pz .wa-canal.cig { background:#F6E6EF; color:#B1407A; }
@@ -12263,7 +12268,7 @@ function pzCabecera(metas){
    aparece y el panel queda como siempre. */
 var WA = null;            /* { filas:[...], revision:'iso' } o null */
 var waAbiertos = {};      /* id → true/false, lo que el usuario abrió o cerró */
-var waVerTodos = false;
+var waVerTodos = {};      /* canal → true cuando se pidió «ver más» en esa sección */
 var WA_MAX = 5;
 function waPuede(){ return isPanelAdmin() || !!(panelSeller && panelSeller.code === 'cesar'); }
 async function waCargar(){
@@ -12289,7 +12294,6 @@ async function waCargar(){
    · instagram = DM de Instagram (Meta Business Suite, sin número). Cada fila trae
    su canal; una revisión de un canal no cierra filas de otro (wa_cargar, 0012). */
 var WA_CANALES = [['5558', '5558'], ['0141', '0141 anuncios'], ['instagram', 'Instagram']];
-var waCanalVer = 'todos';
 function waCanal(f){ return (f && f.canal) || '5558'; }
 function waCanalTag(c){
   if (c === '0141') return '<span class="wa-canal c0141">0141</span>';
@@ -12298,13 +12302,6 @@ function waCanalTag(c){
 }
 /* hay más de un canal en juego → se muestran chips y etiquetas */
 function waMulti(){ return !!WA && WA.filas.some(function(f){ return waCanal(f) !== '5558'; }); }
-function waEnCanal(f){ return waCanalVer === 'todos' || waCanal(f) === waCanalVer; }
-function waVerCanal(c){ waCanalVer = c; waVerTodos = false; waRepintar(); }
-function waRevCanal(){
-  var revs = (WA && WA.revs) || {};
-  if (waCanalVer !== 'todos') return revs[waCanalVer] || null;
-  return Object.keys(revs).reduce(function(a, k){ return (!a || revs[k] > a) ? revs[k] : a; }, null);
-}
 function waNombreCanal(c){ return c === '0141' ? 'el 0141' : (c === 'instagram' ? 'Instagram' : 'el 5558'); }
 function waCuando(iso){
   var d = new Date(iso); if (isNaN(d.getTime())) return '';
@@ -12336,7 +12333,7 @@ function waFila(f, i){
   var h = '<div class="wa-fila '+cls+(abierta ? ' abierta' : '')+'">'+
     '<div class="wa-fl" onclick="waToggle(\''+id+'\')">'+
       '<div class="wa-ico">'+waIco(f)+'</div>'+
-      '<div class="wa-t"><div class="wa-n"><span>'+(waMulti() ? waCanalTag(waCanal(f)) : '')+(f.pedido ? '<small>#'+escA(f.pedido)+'</small>' : '')+escA(f.cliente)+'</span>'+(em ? '<em>'+escA(em)+'</em>' : '')+'</div>'+
+      '<div class="wa-t"><div class="wa-n"><span>'+(f.pedido ? '<small>#'+escA(f.pedido)+'</small>' : '')+escA(f.cliente)+'</span>'+(em ? '<em>'+escA(em)+'</em>' : '')+'</div>'+
         (f.contexto ? '<div class="wa-d">'+escA(f.contexto)+'</div>' : '')+
         (f.cita ? '<div class="wa-q">«'+escA(f.cita)+'»</div>' : '')+
       '</div></div>';
@@ -12375,34 +12372,41 @@ function waFila(f, i){
   }
   return h + '</div></div>';
 }
+/* Una caja por canal (24-11-2026, pedido del usuario: «se mezclan mucho los chats»).
+   Antes era una sola caja con chips de filtro; ahora 5558, 0141 e Instagram son
+   secciones separadas, cada una con su revisión, sus números y su «ver más».
+   El 5558 sale siempre; los otros, solo si tienen filas de hoy o una revisión. */
+var WA_SECC = {
+  '5558':      { tit:'WhatsApp 5558', sub:'web y catálogo', cls:'' },
+  '0141':      { tit:'WhatsApp 0141', sub:'anuncios', cls:' c0141' },
+  'instagram': { tit:'Instagram', sub:'mensajes directos', cls:' cig' }
+};
 function waBloqueHtml(){
   if (!WA) return '';
+  var revs = WA.revs || {};
+  return WA_CANALES.map(function(c){ return c[0]; }).filter(function(c){
+    return c === '5558' || !!revs[c] || WA.filas.some(function(f){ return waCanal(f) === c; });
+  }).map(waSeccionHtml).join('');
+}
+function waSeccionHtml(canal){
   var h0 = new Date(); h0.setHours(0, 0, 0, 0);
-  var multi = waMulti();
-  if (!multi) waCanalVer = 'todos';
-  var pendTodos = WA.filas.filter(function(f){ return f.estado === 'pendiente'; });
-  var pend = pendTodos.filter(waEnCanal);
+  var S = WA_SECC[canal] || WA_SECC['5558'];
+  var pend = WA.filas.filter(function(f){ return f.estado === 'pendiente' && waCanal(f) === canal; });
   var hechos = WA.filas.filter(function(f){
-    return waEnCanal(f) && (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
+    return waCanal(f) === canal && (f.estado === 'respondido' || f.estado === 'no_corresponde') && f.resuelto_at && new Date(f.resuelto_at) >= h0;
   });
-  var revAt = waRevCanal();
-  var AL = { '5558':'al 5558', '0141':'al 0141', instagram:'por Instagram' };
-  var dondeTxt = waCanalVer === 'todos' ? (multi ? 'al 5558, al 0141 y por Instagram' : 'al 5558') : AL[waCanalVer];
-  var sub = revAt ? 'Revisado ' + escA(waCuando(revAt)) +
-            '<span class="wa-sub-l"> · lo que escribieron '+escA(dondeTxt)+'</span>' : 'Todavía no hay una revisión cargada';
+  var revAt = (WA.revs || {})[canal] || null;
+  var sub = escA(S.sub) + (revAt ? ' · revisado ' + escA(waCuando(revAt)) : ' · todavía sin revisión cargada');
   /* los de plata no se responden (solo se mira si llegó): se cuentan aparte */
   var nResp = pend.filter(function(f){ return f.tipo !== 'plata'; }).length;
   var nPlata = pend.length - nResp;
   var chipTxt = [nResp ? nResp + ' por responder' : '', nPlata ? nPlata + ' por cobrar' : ''].filter(Boolean).join(' · ');
-  var chip = pend.length ? '<span class="wa-estado'+(nResp ? '' : ' ok')+'">'+chipTxt+'</span>' : '<span class="wa-estado ok">Todo respondido</span>';
-  var h = '<div class="wa-caja"><div class="wa-cab"><div class="wa-ico wa-logo"><svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg></div>'+
-          '<div class="wa-t"><div class="wa-tit">WhatsApp al día</div><div class="wa-sub">'+sub+'</div></div>'+chip+'</div>';
-  if (multi) {
-    var nCanal = function(c){ return pendTodos.filter(function(f){ return f.tipo !== 'plata' && (c === 'todos' || waCanal(f) === c); }).length; };
-    h += '<div class="wa-chips">'+[['todos', 'Todos']].concat(WA_CANALES).map(function(c){
-      return '<button class="wa-chip'+(waCanalVer === c[0] ? ' on' : '')+'" onclick="waVerCanal(\''+c[0]+'\')">'+c[1]+'<b>'+nCanal(c[0])+'</b></button>';
-    }).join('')+'</div>';
-  }
+  var chip = pend.length ? '<span class="wa-estado'+(nResp ? '' : ' ok')+'">'+chipTxt+'</span>' : '<span class="wa-estado ok">Al día</span>';
+  var logo = canal === 'instagram'
+    ? '<svg class="pz-i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4.5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.6" cy="7.4" r=".6"/></svg>'
+    : '<svg class="pz-i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/></svg>';
+  var h = '<div class="wa-caja'+S.cls+'"><div class="wa-cab"><div class="wa-ico wa-logo">'+logo+'</div>'+
+          '<div class="wa-t"><div class="wa-tit">'+escA(S.tit)+'</div><div class="wa-sub">'+sub+'</div></div>'+chip+'</div>';
   if (pend.length) {
     var plata = pend.reduce(function(a, f){ return a + (f.monto || 0); }, 0);
     var espMax = pend.reduce(function(a, f){
@@ -12414,14 +12418,14 @@ function waBloqueHtml(){
            '<div><b>'+(espMax ? waEspera(new Date(espMax).toISOString()).replace('hace ', '') : '—')+'</b><small>la espera más larga</small></div>'+
            '<div><b>'+hechos.length+' de '+(hechos.length + pend.length)+'</b><small>respondidos hoy</small></div>'+
          '</div>';
-    var ver = waVerTodos ? pend : pend.slice(0, WA_MAX);
+    var ver = waVerTodos[canal] ? pend : pend.slice(0, WA_MAX);
     h += ver.map(waFila).join('');
     if (pend.length > ver.length) {
       var resto = pend.slice(WA_MAX).map(function(f){ return f.cliente; });
-      h += '<a class="wa-mas" href="#" onclick="waVerTodos=true;waRepintar();return false">Ver '+resto.length+' más · '+escA(resto.slice(0, 2).join(', '))+(resto.length > 2 ? '…' : '')+'</a>';
+      h += '<a class="wa-mas" href="#" onclick="waVerTodos[\''+canal+'\']=true;waRepintar();return false">Ver '+resto.length+' más · '+escA(resto.slice(0, 2).join(', '))+(resto.length > 2 ? '…' : '')+'</a>';
     }
   } else {
-    h += '<div class="wa-vacio">'+(revAt ? 'Nadie está esperando respuesta en '+escA(waCanalVer === 'todos' ? (multi ? 'ningún canal' : 'el 5558') : waNombreCanal(waCanalVer))+'.' : 'Cuando corra la revisión de WhatsApp, aquí aparece lo que hay que responder.')+'</div>';
+    h += '<div class="wa-vacio">'+(revAt ? 'Nadie está esperando respuesta en '+escA(waNombreCanal(canal))+'.' : 'Cuando corra la revisión de '+escA(waNombreCanal(canal))+', aquí aparece lo que hay que responder.')+'</div>';
   }
   if (hechos.length) {
     h += '<details class="wa-hechos"><summary>Respondidos hoy · '+hechos.length+'</summary>'+
@@ -12446,7 +12450,7 @@ function waToggle(id){
   var f = waBuscar(id); if (!f) return;
   var el = document.getElementById('wa-m-' + id);
   if (el) f.mensaje = el.value;          /* lo editado no se pierde al cerrar */
-  var idx = WA.filas.filter(function(x){ return x.estado === 'pendiente' && waEnCanal(x); }).indexOf(f);
+  var idx = WA.filas.filter(function(x){ return x.estado === 'pendiente' && waCanal(x) === waCanal(f); }).indexOf(f);
   var abierta = (id in waAbiertos) ? waAbiertos[id] : (idx === 0 && f.tipo !== 'plata' && !!f.mensaje);
   waAbiertos[id] = !abierta;
   waRepintar();
