@@ -10777,9 +10777,11 @@ function asisDe(g){
    mensaje no lo mandó él. Se dice «Claude» y no «asistente» para no confundirlo con
    el asistente de la bandeja (asisBadge). */
 function esDeClaude(q){ return !!(q && q.registrada_por === 'claude'); }
-/* chip del filtro: solo sale si hay alguna abierta; el número son las cotizaciones abiertas */
+/* chip del filtro: solo sale si hay alguna abierta; el número son los clientes con alguna abierta */
 function segChipClaude(){
-  var n = (dashRows || []).filter(function(q){ return esDeClaude(q) && !q.eliminada && (q.estado || 'enviada') === 'enviada'; }).length;
+  var ks = {};
+  (dashRows || []).forEach(function(q){ if (esDeClaude(q) && !q.eliminada && (q.estado || 'enviada') === 'enviada') ks[clientKey(q)] = 1; });
+  var n = Object.keys(ks).length;   /* clientes, igual que la lista que filtra */
   if (!n && !segSoloClaude) return '';
   return '<button class="seg-chip'+(segSoloClaude?' on':'')+'" onclick="toggleSegClaude()" title="Clientes con una cotización que registró Claude">De Claude <b>'+n+'</b></button>';
 }
