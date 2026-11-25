@@ -2779,7 +2779,7 @@ var DOOR_MODELS = [
   { id:'puertovaras', nombre:'Puerto Varas',     tipo:'maciza',  img:CDN+'Photoroom_20250613_172822.jpg' },
   { id:'pucon',       nombre:'Pucón',             tipo:'vidrios', img:CDN+'Photoroom_20250613_135536.jpg' },
   { id:'ensenada',    nombre:'Ensenada',          tipo:'vidrios', img:CDN+'Photoroom_20250613_162049.jpg' },
-  /* Ralún (24-11-2026): 6 vidrios en una columna. Va con la fórmula de la
+  /* Ralún (24-11-2026): 12 vidrios, 2 columnas de 6. Va con la fórmula de la
      granero porque lleva bastante menos madera que las de vidrio. */
   { id:'ralun',       nombre:'Ralún',             tipo:'granero', img:CDN+'puerta-ralun-12.jpg' }   /* 25-11: foto nueva de Shopify, frontal con fondo claro */
 ];
@@ -5746,10 +5746,11 @@ var VIDRIO_MODELOS = {
   'Cochamó':    { modo:'panos', div:2, n:1, partes:6 },
   'Entrelagos': { modo:'tiras', alto:16, n:6, nAlto:7, sobreAlto:210 },
   'Pucón':      { modo:'fijo',  n:8, al:10, an:40 },
-  /* Ralún (24-11-2026): 6 vidrios en una sola columna. Cabezal y pieinazo del
-     ancho del batiente, pero los travesaños entre vidrio y vidrio son delgados:
-     se suponen 5 cm, medidos sobre la foto del taller. Confirmar con el taller. */
-  'Ralún':      { modo:'columna', n:6, trav:5 }
+  /* Ralún: 12 vidrios por hoja, 2 columnas de 6 (25-11-2026; antes se calculaba
+     con una sola columna de 6). Cabezal y pieinazo del ancho del batiente, pero
+     los travesaños y el parante del medio son delgados: se suponen 5 cm, medidos
+     sobre la foto. Confirmar con el taller. */
+  'Ralún':      { modo:'columna', n:6, cols:2, trav:5 }
 };
 function vidrioPuerta(modelo, altoCm, anchoCm) {
   var cfg = VIDRIO_MODELOS[modelo];
@@ -5767,8 +5768,11 @@ function vidrioPuerta(modelo, altoCm, anchoCm) {
   }
   if (cfg.modo === 'columna') {
     var alVid = (altoCm - 2*b - (cfg.n - 1) * cfg.trav) / cfg.n;
-    if (alVid <= 0) return null;
-    return { piezas:cfg.n, al:alVid, an:anLibre, m2: cfg.n * (alVid/100) * (anLibre/100) };
+    var cols = cfg.cols || 1;
+    var anVid = (anLibre - (cols - 1) * cfg.trav) / cols;
+    if (alVid <= 0 || anVid <= 0) return null;
+    var pz = cfg.n * cols;
+    return { piezas:pz, al:alVid, an:anVid, m2: pz * (alVid/100) * (anVid/100) };
   }
   var alPano = (altoCm - (cfg.div + 1) * b) / cfg.div;
   if (alPano <= 0) return null;
