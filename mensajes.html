@@ -2,6 +2,7 @@
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Mensajes · Casa Zaru</title>
+<link rel="manifest" href="mensajes.webmanifest"><meta name="theme-color" content="#485B3D"><link rel="apple-touch-icon" href="fotos/icono-mensajes-192.png">
 <!--
   Bandeja de mensajes (18-11-2026) · ETAPA 2: LEER, EDITAR Y ENVIAR CON APROBACIÓN.
   Muestra los chats que llegan al WhatsApp de la bandeja (+56 9 9305 1122) por la API oficial
@@ -13,6 +14,10 @@
   (rutas /enviar y /tomar) con la sesión del usuario, y es la base la que acepta o rechaza
   (ventana de 24 horas, tope de 2 sin respuesta, chat tomado, texto). Quién ve qué lo decide RLS.
   Probar en el PC: localhost + ?local lee mensajes-local.json (datos de mentira; el envío se simula).
+  AVISOS (25-11-2026, migración 0014): la campana activa las notificaciones de ESTE dispositivo
+  (mensajes-sw.js + ruta /push de la función). Con la página abierta, además, suena y muestra una
+  franja cuando un cliente escribe: cada 15 segundos pregunta solo si llegó algo (una consulta
+  mínima) y recién entonces recarga todo.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -90,11 +95,31 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .login label{font-size:13px;display:flex;flex-direction:column;gap:4px}
 .login input{font:15px Poppins;padding:10px;border:1px solid var(--linea);border-radius:8px}
 .login .msgl{font-size:13px;color:var(--rojo);min-height:18px;margin:0}
+.top button.camp{display:flex;align-items:center;gap:5px}
+.top button.camp svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top button.camp i{background:#fff;color:var(--terra);border-radius:9px;font-style:normal;font-weight:600;font-size:11px;padding:0 6px;line-height:16px}
+.franja{background:var(--terra);color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;font-size:14px}
+.franja[hidden]{display:none}
+.franja svg.i{stroke:#fff}.franja div{min-width:0;flex:1}
+.franja b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.franja small{display:block;opacity:.9;font-size:12px}
+.franja button{background:#fff;color:var(--terra);border:none;border-radius:8px;font:600 12px Poppins;padding:7px 10px;white-space:nowrap;cursor:pointer}
+.fila.nuevo{background:#fbf3ec;box-shadow:inset 4px 0 0 var(--terra)}
+.chip.v{background:#e4ecdf;color:var(--verde)}
+.avisos{background:#fff;border-bottom:1px solid var(--linea);padding:12px 14px 14px}
+.avisos h3{margin:0 0 2px;font:600 15px Poppins}.avisos p{margin:0 0 8px;font-size:13px;color:var(--suave)}
+.avisos .op{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linea);font-size:14px}.avisos .op span{flex:1}
+.avisos .bots{padding:10px 0 0}.avisos p.nota{margin:8px 0 0}
+.sw{width:40px;height:24px;border-radius:12px;border:none;background:#cfcac0;position:relative;cursor:pointer;flex:none;padding:0}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw[aria-checked="true"]{background:var(--verde)}.sw[aria-checked="true"]::after{left:18px}
+.sw:disabled{opacity:.45;cursor:default}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw;z-index:5}
 </style></head><body>
 <div class="wrap">
-  <header class="top"><div><h1>Mensajes</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="act" hidden>Actualizar</button><button id="salir" hidden>Salir</button></header>
+  <header class="top"><div><h1>Mensajes</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="camp" class="camp" hidden aria-expanded="false" aria-controls="avisos"></button><button id="act" hidden>Actualizar</button><button id="salir" hidden>Salir</button></header>
   <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a href="mi-dia.html">Mi día</a><a class="on" href="mensajes.html">Mensajes</a></nav>
+  <div id="franja" class="franja" hidden role="status"></div>
+  <section id="avisos" class="avisos" hidden aria-label="Avisos"></section>
   <main id="main"></main>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -131,7 +156,9 @@ var ICO = {
   candado: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
   lapiz: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
   si: '<svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>',
-  no: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  no: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  globo: '<svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  campana: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>'
 };
 
 /* ── Formato ─────────────────────────────────────────────────────────── */
@@ -166,8 +193,9 @@ function ventana(c){
   var ms = new Date(c.ultimo_entrante_at).getTime() + 24 * 3600000 - Date.now();
   if (!(ms > 0)) return { abierta: false, texto: 'Ventana de 24 horas cerrada: solo se le puede escribir con una plantilla aprobada.' };
   var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
-  return { abierta: true, texto: 'Ventana de 24 horas abierta: quedan ' + (h ? h + ' h ' : '') + m + ' min para responder con texto libre.' };
+  return { abierta: true, ms: ms, texto: 'Ventana de 24 horas abierta: quedan ' + (h ? h + ' h ' : '') + m + ' min para responder con texto libre.' };
 }
+function falta(ms){ var m = Math.max(0, Math.floor(ms / 60000)); return m >= 60 ? Math.floor(m / 60) + ' h' : m + ' min'; }
 function chatPorId(id){ for (var i = 0; i < CHATS.length; i++) if (Number(CHATS[i].id) === Number(id)) return CHATS[i]; return null; }
 
 /* ── Pantallas ───────────────────────────────────────────────────────── */
@@ -194,8 +222,11 @@ function fila(c){
   if (rev.cotiza) chips += '<span class="chip">Lleva cotización</span>';
   if (rev.necesita_humano) chips += '<span class="chip r">Necesita una persona</span>';
   if (rev.falta_precio) chips += '<span class="chip a">Falta un precio</span>';
-  if (!ventana(c).abierta) chips += '<span class="chip a">Fuera de 24 h</span>';
-  return '<button class="fila" data-chat="' + Number(c.id) + '"><span class="ini">' + esc(iniciales(c)) + '</span><span class="txt">' +
+  /* Si el último mensaje es del cliente, la fila dice cuánto queda para responderle. */
+  var v = ventana(c);
+  if (!v.abierta) chips += '<span class="chip a">Fuera de 24 h</span>';
+  else if (u && u.autor === 'cliente') chips += v.ms <= 3 * 3600000 ? '<span class="chip r">Se cierra en ' + falta(v.ms) + '</span>' : '<span class="chip v">Quedan ' + falta(v.ms) + '</span>';
+  return '<button class="fila' + (NUEVOS[c.id] ? ' nuevo' : '') + '" data-chat="' + Number(c.id) + '"><span class="ini">' + esc(iniciales(c)) + '</span><span class="txt">' +
     '<span class="l1"><span class="nom">' + esc(nombre(c)) + '</span><span class="hora">' + esc(cuando(u ? u.enviado_at : c.ultimo_entrante_at)) + '</span></span>' +
     '<span class="ult">' + esc(u ? (u.autor !== 'cliente' ? 'Nosotros: ' : '') + textoMsg(u) : 'Sin mensajes') + '</span>' +
     (b ? '<span class="borr">' + esc(b.texto) + '</span>' : '') +
@@ -352,6 +383,7 @@ async function cargarDatos(){
   CHATS = chats; ULT = {}; BORR = {};
   msgs.forEach(function(m){ if (!ULT[m.chat_id]) ULT[m.chat_id] = m; });       /* vienen del más nuevo al más viejo */
   borrs.forEach(function(b){ if (!BORR[b.chat_id]) BORR[b.chat_id] = b; });
+  notarLlegadas();
 }
 async function cargarMsgs(id){
   if (LOCAL) { MSGS = (LOCAL_MSGS[id] || []).slice().sort(function(a, b){ return a.enviado_at < b.enviado_at ? -1 : 1; }); return; }
@@ -359,7 +391,8 @@ async function cargarMsgs(id){
   if (r.error) throw new Error('mensajes');
   MSGS = r.data || [];
 }
-function firma(){ return JSON.stringify([CHATS, BORR, ABIERTO, MSGS.length, NUM]); }
+/* El tramo de 10 minutos hace que los «Quedan X h» de la lista se repinten aunque no llegue nada. */
+function firma(){ return JSON.stringify([CHATS, BORR, ABIERTO, MSGS.length, NUM, NUEVOS, Math.floor(Date.now() / 600000)]); }
 async function recargar(silencio){
   try {
     await cargarDatos();
@@ -371,7 +404,7 @@ async function recargar(silencio){
   } catch (e) { if (!silencio) toast('No se pudo actualizar. Revisa la conexión.'); }
 }
 async function abrir(id){
-  ABIERTO = Number(id); MSGS = []; render(); window.scrollTo(0, 0);
+  ABIERTO = Number(id); MSGS = []; delete NUEVOS[ABIERTO]; pintarFranja(); render(); window.scrollTo(0, 0);
   try { await cargarMsgs(ABIERTO); } catch (e) { toast('No se pudieron cargar los mensajes.'); }
   FIRMA = firma(); render();
 }
@@ -482,6 +515,9 @@ async function tomarConfirmado(){
 /* Un solo listener para todo (los botones se repintan). */
 document.addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b || !LISTO) return;
+  if (b.id === 'camp') { AV.abierto = !AV.abierto; AV.nota = ''; pintarAvisos(); return; }
+  if (b.dataset.sw) { cambiarAviso(b.dataset.sw); return; }
+  if (b.hasAttribute('data-prueba')) { avisoDePrueba(); return; }
   if (b.dataset.tab) { TAB = b.dataset.tab; render(); return; }
   if (b.dataset.chat) { CONFIRMA = null; abrir(b.dataset.chat); return; }
   if (b.hasAttribute('data-atras')) { if (OCUPADO) return; ABIERTO = null; MSGS = []; CONFIRMA = null; FIRMA = firma(); render(); window.scrollTo(0, 0); return; }
@@ -516,8 +552,228 @@ async function cargar(){
   LISTO = true; FIRMA = firma();
   $('#act').hidden = false;
   render();
-  /* Se refresca sola, salvo mientras alguien escribe, confirma o hay un envío en curso. */
-  setInterval(function(){ if (!document.hidden && !OCUPADO && !CONFIRMA && !escribiendo()) recargar(true); }, 60000);
+  $('#camp').hidden = false;
+  iniciarAvisos();
+  /* Si se llegó tocando una notificación (?chat=N), abre ese chat y limpia la dirección. */
+  var q = /[?&]chat=(\d+)/.exec(location.search);
+  if (q) { try { history.replaceState(null, '', AQUI + (LOCAL ? '?local' : '')); } catch (e) {} if (chatPorId(q[1])) abrir(q[1]); }
+  /* Cada 15 segundos pregunta solo si llegó algo (una fila, una columna); si llegó, recarga todo.
+     Sin novedad, la recarga completa sigue siendo cada minuto y solo con la página a la vista.
+     Mientras alguien escribe o confirma no se repinta el chat: solo aparece la franja y suena. */
+  var tic = 0;
+  setInterval(async function(){
+    if (OCUPADO) return;
+    tic++;
+    var llego = false;
+    try { llego = await hayNovedad(); } catch (e) { llego = false; }
+    if (OCUPADO) return;
+    var quieto = !!CONFIRMA || escribiendo();
+    if (llego && quieto) { try { await cargarDatos(); } catch (e) {} return; }
+    if (llego || (tic % 4 === 0 && !document.hidden && !quieto)) { recargar(true); return; }
+    pintarFranja();
+  }, 15000);
+}
+
+/* ── Avisos: franja y sonido con la página abierta, notificaciones con la página cerrada ── */
+var NUEVOS = {}, ENTR = null, MARCA = null, AUDIO = null, SWREG = null;
+var SONIDO = (function(){ try { return localStorage.getItem('cz_mensajes_sonido') !== 'no'; } catch (e) { return true; } })();
+var AV = { abierto: false, soporta: false, permiso: 'default', activo: false, recordatorios: true, fuera: false, ocupado: false, nota: '' };
+
+/* Compara lo recién cargado con lo anterior: un chat cuyo último mensaje del cliente es más nuevo
+   que el que se conocía es una llegada. La primera carga no cuenta (no hay con qué comparar). */
+function notarLlegadas(){
+  var antes = ENTR, suena = false;
+  ENTR = {};
+  CHATS.forEach(function(c){
+    var t = c.ultimo_entrante_at ? new Date(c.ultimo_entrante_at).getTime() : 0;
+    ENTR[c.id] = t;
+    var u = ULT[c.id];
+    if (antes && t && t > (antes[c.id] || 0) && u && u.autor === 'cliente') {
+      suena = true;
+      if (!(Number(c.id) === Number(ABIERTO) && !document.hidden)) NUEVOS[c.id] = Date.now();
+    }
+  });
+  /* lo que ya se respondió o ya no está en la lista deja de marcarse */
+  Object.keys(NUEVOS).forEach(function(id){
+    var c = chatPorId(id), u = ULT[id];
+    if (!c || !u || u.autor !== 'cliente') delete NUEVOS[id];
+  });
+  if (suena) sonar();
+  pintarFranja();
+}
+function pintarFranja(){
+  var f = $('#franja');
+  var ids = Object.keys(NUEVOS).filter(function(id){ return !!chatPorId(id); });
+  document.title = (ids.length ? '(' + ids.length + ') ' : '') + 'Mensajes · Casa Zaru';
+  if (!ids.length) { if (!f.hidden) { f.hidden = true; f.innerHTML = ''; } return; }
+  ids.sort(function(a, b){ return NUEVOS[b] - NUEVOS[a]; });
+  var c = chatPorId(ids[0]);
+  var min = Math.floor((Date.now() - NUEVOS[ids[0]]) / 60000);
+  var titulo = ids.length > 1 ? ids.length + ' clientes escribieron' : nombre(c) + ' escribió';
+  f.innerHTML = ICO.globo + '<div><b>' + esc(titulo) + '</b><small>' + esc(min < 1 ? 'recién' : 'hace ' + min + ' min') + '</small></div>' +
+    '<button data-chat="' + Number(c.id) + '">Ver chat</button>';
+  f.hidden = false;
+}
+/* Consulta mínima: la hora del último mensaje de cliente en toda la bandeja. */
+async function hayNovedad(){
+  if (LOCAL) return false;
+  var r = await sb.from('mensajes_chats').select('ultimo_entrante_at').is('deleted_at', null)
+    .order('ultimo_entrante_at', { ascending: false, nullsFirst: false }).limit(1);
+  if (r.error) return false;
+  var m = (r.data && r.data[0] && r.data[0].ultimo_entrante_at) || '';
+  var cambio = MARCA !== null && m !== MARCA;
+  MARCA = m;
+  return cambio;
+}
+/* El navegador solo deja sonar después de un toque en la página: el primer clic prepara el audio. */
+document.addEventListener('click', function(){
+  if (AUDIO) return;
+  try { var C = window.AudioContext || window.webkitAudioContext; if (C) AUDIO = new C(); } catch (e) { AUDIO = null; }
+});
+function sonar(){
+  if (!SONIDO || !AUDIO) return;
+  try {
+    if (AUDIO.state === 'suspended') AUDIO.resume();
+    [[0, 660], [0.19, 880]].forEach(function(n){
+      var o = AUDIO.createOscillator(), g = AUDIO.createGain(), t = AUDIO.currentTime + n[0];
+      o.type = 'sine'; o.frequency.value = n[1];
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+      o.connect(g); g.connect(AUDIO.destination); o.start(t); o.stop(t + 0.19);
+    });
+  } catch (e) { /* sin sonido */ }
+}
+
+function opcion(texto, id, on, dis){
+  return '<div class="op"><span>' + esc(texto) + '</span><button class="sw" role="switch" data-sw="' + id + '" aria-checked="' + (on ? 'true' : 'false') + '"' +
+    ' aria-label="' + esc(texto) + '"' + (dis ? ' disabled' : '') + '></button></div>';
+}
+function pintarAvisos(){
+  var b = $('#camp');
+  b.innerHTML = ICO.campana + '<span>Avisos</span>' + (AV.activo ? '' : '<i>!</i>');
+  b.setAttribute('aria-expanded', AV.abierto ? 'true' : 'false');
+  b.title = AV.activo ? 'Avisos activados en este dispositivo' : 'Los avisos no están activados en este dispositivo';
+  var p = $('#avisos');
+  if (!AV.abierto) { p.hidden = true; p.innerHTML = ''; return; }
+  var no = '';
+  if (!AV.soporta) no = 'Este navegador no permite notificaciones. En iPhone, agrega esta página a la pantalla de inicio (Compartir, «Agregar a inicio») y ábrela desde ahí.';
+  else if (AV.permiso === 'denied') no = 'Las notificaciones están bloqueadas para este sitio. Permítelas en los ajustes del navegador y recarga la página.';
+  var d = AV.ocupado;
+  p.innerHTML = '<h3>Avisos en este dispositivo</h3>' +
+    '<p>' + esc(no || 'Llega una notificación cuando un cliente escribe, aunque esta página esté cerrada. El navegador pide permiso una sola vez.') + '</p>' +
+    opcion('Notificaciones', 'push', AV.activo, d || !!no) +
+    opcion('Sonido con la bandeja abierta', 'sonido', SONIDO, false) +
+    opcion('Recordatorios si nadie responde', 'rec', AV.recordatorios, d || !AV.activo) +
+    opcion('Avisar también fuera de horario', 'fuera', AV.fuera, d || !AV.activo) +
+    '<div class="bots"><button class="btn ok" data-prueba' + (d || !AV.activo ? ' disabled' : '') + '>' + (d ? 'Un momento…' : 'Enviarme un aviso de prueba') + '</button></div>' +
+    '<p class="nota">' + esc(AV.nota || 'Horario: lunes a viernes de 9:00 a 17:30 y sábado de 10:00 a 14:00. Fuera de ese horario solo llega el aviso de que una ventana está por cerrarse.') + '</p>';
+  p.hidden = false;
+}
+function aBytes(s){
+  var t = String(s).replace(/-/g, '+').replace(/_/g, '/'), bin = atob(t + '==='.slice((t.length + 3) % 4));
+  var o = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i);
+  return o;
+}
+function aTexto(buf){
+  var b = new Uint8Array(buf), s = '';
+  for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function iniciarAvisos(){
+  AV.soporta = LOCAL || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));
+  if (LOCAL || !AV.soporta) { pintarAvisos(); return; }
+  AV.permiso = Notification.permission;
+  pintarAvisos();
+  try {
+    /* Tocar una notificación con la página ya abierta: el service worker pide abrir ese chat. */
+    navigator.serviceWorker.addEventListener('message', function(e){
+      var id = e.data && Number(e.data.abrirChat);
+      if (!id || !LISTO || OCUPADO) return;
+      recargar(true).then(function(){ if (chatPorId(id)) { CONFIRMA = null; abrir(id); } });
+    });
+    SWREG = (await navigator.serviceWorker.getRegistration()) || null;
+    var s = SWREG ? await SWREG.pushManager.getSubscription() : null;
+    if (s && AV.permiso === 'granted') {
+      var r = await llamar('push', { accion: 'estado', endpoint: s.endpoint });
+      if (r.j && r.j.ok) { AV.activo = !!r.j.activo; AV.recordatorios = r.j.recordatorios !== false; AV.fuera = r.j.fuera_horario === true; }
+    }
+  } catch (e) { /* sin avisos: la bandeja funciona igual */ }
+  pintarAvisos();
+}
+async function guardarAvisos(s){
+  var k = (s.toJSON() || {}).keys || {};
+  var r = await llamar('push', { accion: 'guardar', endpoint: s.endpoint, p256dh: k.p256dh, auth: k.auth,
+    recordatorios: AV.recordatorios, fuera_horario: AV.fuera, dispositivo: String(navigator.userAgent || '').slice(0, 200) });
+  if (r.j && r.j.ok) return true;
+  AV.nota = (r.j && r.j.error) || 'No se pudo guardar. Revisa la conexión.';
+  return false;
+}
+async function activarAvisos(){
+  var perm = await Notification.requestPermission();
+  AV.permiso = perm;
+  if (perm !== 'granted') { AV.nota = 'No se dio el permiso de notificaciones.'; return; }
+  await navigator.serviceWorker.register('mensajes-sw.js', { scope: './mensajes' });
+  SWREG = await navigator.serviceWorker.ready;
+  var k = null;
+  try { k = await llamar('push', { accion: 'clave' }); } catch (e) { k = null; }
+  if (!k) { AV.nota = 'Los avisos todavía no están disponibles. Intenta de nuevo más tarde.'; return; }
+  if (!k.j || !k.j.publica) { AV.nota = (k.j && k.j.error) || 'No se pudo activar. Intenta de nuevo.'; return; }
+  var s = await SWREG.pushManager.getSubscription();
+  /* Una inscripción hecha con otra llave (si alguna vez se cambia) no sirve: se rehace. */
+  if (s && s.options && s.options.applicationServerKey && aTexto(s.options.applicationServerKey) !== k.j.publica) { await s.unsubscribe(); s = null; }
+  if (!s) s = await SWREG.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: aBytes(k.j.publica) });
+  if (await guardarAvisos(s)) { AV.activo = true; AV.nota = 'Avisos activados en este dispositivo. Prueba con el botón de abajo.'; }
+}
+async function desactivarAvisos(){
+  var s = SWREG ? await SWREG.pushManager.getSubscription() : null;
+  if (s) {
+    var r = await llamar('push', { accion: 'quitar', endpoint: s.endpoint });
+    if (!(r.j && r.j.ok)) { AV.nota = (r.j && r.j.error) || 'No se pudo desactivar. Revisa la conexión.'; return; }
+    try { await s.unsubscribe(); } catch (e) { /* ya no estaba */ }
+  }
+  AV.activo = false; AV.nota = 'Avisos desactivados en este dispositivo.';
+}
+async function cambiarAviso(id){
+  if (id === 'sonido') {
+    SONIDO = !SONIDO;
+    try { localStorage.setItem('cz_mensajes_sonido', SONIDO ? 'si' : 'no'); } catch (e) { /* solo esta visita */ }
+    if (SONIDO) sonar();
+    pintarAvisos(); return;
+  }
+  if (AV.ocupado) return;
+  AV.ocupado = true; AV.nota = ''; pintarAvisos();
+  try {
+    if (LOCAL) {
+      if (id === 'push') AV.activo = !AV.activo; else if (id === 'rec') AV.recordatorios = !AV.recordatorios; else AV.fuera = !AV.fuera;
+      AV.nota = 'Simulado: en modo local no se inscribe nada.';
+    } else if (id === 'push') {
+      if (AV.activo) await desactivarAvisos(); else await activarAvisos();
+    } else if (AV.activo) {
+      var antes = { r: AV.recordatorios, f: AV.fuera };
+      if (id === 'rec') AV.recordatorios = !AV.recordatorios; else AV.fuera = !AV.fuera;
+      var s = SWREG ? await SWREG.pushManager.getSubscription() : null;
+      if (!s || !(await guardarAvisos(s))) { AV.recordatorios = antes.r; AV.fuera = antes.f; if (!s) AV.nota = 'Este dispositivo perdió su inscripción. Desactiva y vuelve a activar las notificaciones.'; }
+    }
+  } catch (e) { AV.nota = 'No se pudo cambiar. Revisa la conexión y vuelve a intentar.'; }
+  AV.ocupado = false; pintarAvisos();
+}
+async function avisoDePrueba(){
+  if (AV.ocupado || !AV.activo) return;
+  AV.ocupado = true; AV.nota = ''; pintarAvisos();
+  try {
+    if (LOCAL) AV.nota = 'Simulado: en modo local no se envía nada.';
+    else {
+      var s = SWREG ? await SWREG.pushManager.getSubscription() : null;
+      if (!s) AV.nota = 'Este dispositivo perdió su inscripción. Desactiva y vuelve a activar las notificaciones.';
+      else {
+        var r = await llamar('push', { accion: 'prueba', endpoint: s.endpoint });
+        AV.nota = (r.j && r.j.ok) ? 'Aviso enviado: debería aparecer en unos segundos.' : ((r.j && r.j.error) || 'No se pudo enviar el aviso de prueba.');
+      }
+    }
+  } catch (e) { AV.nota = 'No se pudo enviar el aviso de prueba. Revisa la conexión.'; }
+  AV.ocupado = false; pintarAvisos();
 }
 $('#salir').onclick = async function(){ await sb.auth.signOut(); location.replace(AQUI); };
 $('#act').onclick = function(){ recargar(false); };
