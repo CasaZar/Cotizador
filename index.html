@@ -1243,6 +1243,9 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 .hz-btn { display:inline-block; padding:8px 14px; border-radius:8px; font-size:14px; font-weight:600; font-family:inherit; text-decoration:none; border:1px solid var(--bd); background:#fff; color:var(--tx); cursor:pointer; white-space:nowrap; }
 .hz-btn.wa { background:#16A34A; border-color:#16A34A; color:#fff; }
 .hz-btn.mail { background:#fff; border-color:#16A34A; color:#166534; }
+.hz-btn.ig, .sbtn.ig { background:#16A34A; border-color:#16A34A; color:#fff; }
+#s-dash.pz .hz-btn.ig { background:var(--pz-terra); border-color:var(--pz-terra); color:#fff; }
+.hz-btn.ig.esperando, #s-dash.pz .hz-btn.ig.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
 .hz-btn.esperando { background:#FEF3C7; border-color:#F59E0B; color:#92400E; }
 /* flujo 0141 (23-10-2026): se escribe desde el otro WhatsApp, el botón es morado */
 .hz-btn.wa.b0141, .sbtn.wa.b0141 { background:#6D28D9; border-color:#6D28D9; color:#fff; }
@@ -12915,7 +12918,7 @@ function pendPreguntar(){
   var p = a[0];
   var x = COTIS[p.id];
   var quien = escA(p.nombre || (x && x.cliente) || 'este cliente');
-  var canal = p.canal === 'mail' ? 'el correo' : 'WhatsApp';
+  var canal = p.canal === 'mail' ? 'el correo' : (p.canal === 'ig' ? 'Instagram' : 'WhatsApp');
   if (p.canal === 'camp') {   /* campaña peldaños: solo el sí o el no */
     pModal('<h3>¿Le escribiste a '+quien+'?</h3>'+
       '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña «'+escA(CAMPANA ? CAMPANA.nombre : '')+'». Queda anotado y no se vuelve a pedir.</div>'+
@@ -13523,7 +13526,28 @@ function segBotonContacto(g, x, clase){
            'href="'+escA(correoUrl(x, g))+'">'+
            (esperando ? '⏳ ¿Le escribiste?' : '✉ Correo')+'</a>';
   }
+  /* contacto «instagram:usuario» (25-11-2026): antes la fila quedaba sin botón.
+     Instagram no deja abrir el chat con el texto escrito, así que se abre el
+     perfil y el mensaje queda copiado para pegarlo (igCopiar). */
+  if (esInstagram(x.contacto)) {
+    var igU = String(x.contacto).trim().slice(10);
+    return '<a class="'+clase+' ig'+(esperando?' esperando':'')+'" target="_blank" rel="noopener" '+
+           'onclick="event.stopPropagation();'+accion('ig')+'igCopiar(\''+x.id+'\');" '+
+           'href="https://www.instagram.com/'+escA(igU)+'/" title="Abre su perfil de Instagram y copia el mensaje">'+
+           (esperando ? '⏳ ¿Le escribiste?' : 'Instagram')+'</a>';
+  }
   return '';
+}
+/* copia el mensaje del seguimiento para pegarlo en el chat de Instagram; al
+   lead creado a mano no se le copia nada (la plantilla cita link y producto) */
+function igCopiar(id){
+  var x = COTIS[id]; if (!x) return;
+  if (esLeadManual(x)) { showToast('Se abrió su Instagram: toca «Mensaje» y escríbele', true); return; }
+  try {
+    navigator.clipboard.writeText(waMsg(x)).then(
+      function(){ showToast('Mensaje copiado. En su Instagram toca «Mensaje» y pégalo', true); },
+      function(){ showToast('Se abrió su Instagram, pero no se pudo copiar el mensaje', false); });
+  } catch (e) { showToast('Se abrió su Instagram, pero no se pudo copiar el mensaje', false); }
 }
 /* Antes de abrir el chat del 0141 se pregunta a la base si alguien ya le
    escribió (Tomás y César ven la misma sección, y el panel no se recarga
