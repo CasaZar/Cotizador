@@ -2750,7 +2750,7 @@ function prodNombre(p) {
 }
 var FIERRO_KG_M = 3;   /* 18 kg los 6 metros de perfil */
 var MODELOS = {
-  granero: ['Granero Clásico','Granero Cruz','Ralún'],
+  granero: ['Granero Clásico','Granero Cruz'],
   maciza:  ['Panguipulli','Lago Ranco','Frutillar','Puerto Varas'],
   vidrios: ['Valdivia','Entrelagos','Cochamó','Pucón','Ensenada']
 };
@@ -2758,6 +2758,11 @@ var MODELOS = {
    Ensenada es más simple de fabricar que el resto de las puertas con vidrio. */
 var DESC_MODELO = { 'Ensenada': 50000 };
 function descModelo(mo){ return DESC_MODELO[mo] || 0; }
+/* Sobredimensión (25-11-2026, regla del usuario): cada puerta (hoja) de más de
+   140 cm de ancho suma un cargo fijo de $140.000 por unidad, IVA incluido e
+   igual en las tres maderas. */
+var SOBREDIM = { anchoMax: 140, cargo: 140000 };
+function cargoSobredim(an){ return (parseFloat(an) || 0) > SOBREDIM.anchoMax ? SOBREDIM.cargo : 0; }
 /* Fotos: las MISMAS que se publican en casazaru.cl (21-08-2026). Antes eran
    renders y no correspondían a la puerta que llega. Van sin el ?v= de Shopify
    porque el render les agrega ?width=300 y dos query strings rompen la URL. */
@@ -2773,10 +2778,7 @@ var DOOR_MODELS = [
   { id:'granero-cru', nombre:'Granero Cruz',     tipo:'granero', img:CDN+'Photoroom_20250613_140642.jpg' },
   { id:'puertovaras', nombre:'Puerto Varas',     tipo:'maciza',  img:CDN+'Photoroom_20250613_172822.jpg' },
   { id:'pucon',       nombre:'Pucón',             tipo:'vidrios', img:CDN+'Photoroom_20250613_135536.jpg' },
-  { id:'ensenada',    nombre:'Ensenada',          tipo:'vidrios', img:CDN+'Photoroom_20250613_162049.jpg' },
-  /* Ralún (24-11-2026): 6 vidrios en una columna. Va con la fórmula de la
-     granero porque lleva bastante menos madera que las de vidrio. */
-  { id:'ralun',       nombre:'Ralún',             tipo:'granero', img:CDN+'puerta-ralun.jpg' }
+  { id:'ensenada',    nombre:'Ensenada',          tipo:'vidrios', img:CDN+'Photoroom_20250613_162049.jpg' }
 ];
 /* ── ESPESOR 8 CM MACIZO (cubiertas y peldaños) ──
    No es un % plano: doble madera + un proceso extra de encolado que suma ~$13.000
@@ -4042,8 +4044,9 @@ function calcLive() {
       var dsc=descModelo(moe?moe.value:'');
       var m2p=(parseFloat(lge.value)||0)/100*(parseFloat(ane.value)||0)/100;
       var ca2=parseInt((cae&&cae.value)||1)||1;
-      sumBajo += (m2p * PR[prod].bajo.m2 + PR[prod].bajo.fijo - dsc) * ca2;
-      sumAlto += (m2p * PR[prod].alto.m2 + PR[prod].alto.fijo - dsc) * ca2;
+      var sdc=cargoSobredim(ane.value);
+      sumBajo += (m2p * PR[prod].bajo.m2 + PR[prod].bajo.fijo - dsc + sdc) * ca2;
+      sumAlto += (m2p * PR[prod].alto.m2 + PR[prod].alto.fijo - dsc + sdc) * ca2;
     }
     var vidrioExtraLive = vidrioExtraTotal();   /* por medida propia del vidrio, no de la puerta */
     sumBajo += vidrioExtraLive; sumAlto += vidrioExtraLive;
@@ -5616,20 +5619,13 @@ function rvDatos() {
   };
 }
 
-function tienePuertaVidrioExtra(tipo, conVidrio) {
-  if (tipo === 'vidrios') return true;
-  return tipo === 'granero' && (vendorMode || !!conVidrio);
-}
-function renderDoorSub(tipo, conVidrio) {
+function renderDoorSub(tipo) {
   /* Solo las puertas CON vidrio ofrecen el vidrio especial. Las granero
      estaban incluidas y no corresponde: la ficha de la tienda las describe
      macizas de 4 cm y no traen ningún paño que se pueda cambiar por termopanel
      o biselado, así que la opción confundía y no tenía qué cotizar
-     (21-08-2026). Las macizas nunca la mostraron.
-     Excepción desde el 24-11-2026: la Ralún es granero y sí lleva vidrios.
-     Su termopanel se ofrece SOLO en el cotizador de vendedores (en la tienda
-     es «a pedido»); conVidrio lo muestra al reabrir un link que ya lo trae. */
-  var hasExtra = tienePuertaVidrioExtra(tipo, conVidrio);
+     (21-08-2026). Las macizas nunca la mostraron. */
+  var hasExtra = tipo === 'vidrios';
   var opts = (MODELOS[tipo]||[]).map(function(m){ return '<option>'+m+'</option>'; }).join('');
   var sub = document.getElementById('door-sub');
   if (!sub) return;
@@ -5641,7 +5637,7 @@ function renderDoorSub(tipo, conVidrio) {
     '</div>' +
     (hasExtra ?
       '<div class="fsec">' +
-        '<label class="flabel">Vidrio especial (opcional' + (tipo === 'granero' ? ', solo Ralún' : '') + ')</label>' +
+        '<label class="flabel">Vidrio especial (opcional)</label>' +
         '<select class="fsel" id="vt" onchange="toggleVidrioExtra()">' +
           '<option value="">Sin extra de vidrio</option>' +
           '<option value="Termopanel">Termopanel (+$47.600/m² con IVA)</option>' +
@@ -5739,11 +5735,7 @@ var VIDRIO_MODELOS = {
   'Valdivia':   { modo:'panos', div:2, n:2 },
   'Cochamó':    { modo:'panos', div:2, n:1, partes:6 },
   'Entrelagos': { modo:'tiras', alto:16, n:6, nAlto:7, sobreAlto:210 },
-  'Pucón':      { modo:'fijo',  n:8, al:10, an:40 },
-  /* Ralún (24-11-2026): 6 vidrios en una sola columna. Cabezal y pieinazo del
-     ancho del batiente, pero los travesaños entre vidrio y vidrio son delgados:
-     se suponen 5 cm, medidos sobre la foto del taller. Confirmar con el taller. */
-  'Ralún':      { modo:'columna', n:6, trav:5 }
+  'Pucón':      { modo:'fijo',  n:8, al:10, an:40 }
 };
 function vidrioPuerta(modelo, altoCm, anchoCm) {
   var cfg = VIDRIO_MODELOS[modelo];
@@ -5758,11 +5750,6 @@ function vidrioPuerta(modelo, altoCm, anchoCm) {
   if (cfg.modo === 'tiras') {
     var n = altoCm > cfg.sobreAlto ? cfg.nAlto : cfg.n;
     return { piezas:n, al:cfg.alto, an:anLibre, m2: n * (cfg.alto/100) * (anLibre/100) };
-  }
-  if (cfg.modo === 'columna') {
-    var alVid = (altoCm - 2*b - (cfg.n - 1) * cfg.trav) / cfg.n;
-    if (alVid <= 0) return null;
-    return { piezas:cfg.n, al:alVid, an:anLibre, m2: cfg.n * (alVid/100) * (anLibre/100) };
   }
   var alPano = (altoCm - (cfg.div + 1) * b) / cfg.div;
   if (alPano <= 0) return null;
@@ -7233,7 +7220,7 @@ function comboResumenHtml(items, ds, comunes, nom) {
         var rf = sh.refs[k] || {};
         return { mo: (sh.mods || [])[k] || '', lg: r.lg, an: r.an, ca: parseInt(r.ca, 10) || 1, c: rf.c || '', l: rf.l || '' };
       });
-      return puertasFilasHtml(pf, (it.p === 'vidrios' || it.p === 'granero') ? sh.vt : '');
+      return puertasFilasHtml(pf, it.p === 'vidrios' ? sh.vt : '');
     }
     var medTiene = (it.lineas || []).some(function(l){ return l.largo_cm && l.ancho_cm; });
     var med = medTiene ? vLineaDesc(it) : '';
@@ -7407,9 +7394,7 @@ function puertasFilasHtml(filas, vt) {
     var cod = f.c ? '<span class="pf-cod">' + escA(f.c) + '</span>' : '';
     var lugar = f.l ? escA(f.l) : (f.mo ? 'Modelo ' + escA(f.mo) : 'Puerta');
     var mod = f.l && f.mo ? 'Modelo ' + escA(f.mo) : '';
-    /* el vidrio va por producto, pero solo lo llevan los modelos con vidrios
-       (una Granero Clásico junto a una Ralún no lleva termopanel) */
-    if (vTxt && VIDRIO_MODELOS[f.mo]) mod +=(mod ? ' · ' : '') + '<em>' + vTxt + '</em>';
+    if (vTxt) mod += (mod ? ' · ' : '') + '<em>' + vTxt + '</em>';
     var med = 'Alto ' + String(f.lg).replace('.', ',') + ' × ancho ' + String(f.an).replace('.', ',') + ' cm';
     return '<div class="pf-item"><div class="pf-foto">' + foto + '</div><div class="pf-txt">' +
       '<div class="pf-tit">' + cod + '<span>' + lugar + '</span></div>' +
@@ -7419,7 +7404,7 @@ function puertasFilasHtml(filas, vt) {
   }).join('');
 }
 function htmlPuerta(cli, fecha) {
-  var hasExtra = !!document.getElementById('vt');   /* lo decide renderDoorSub: vidrios, o Ralún (granero) */
+  var hasExtra = prod==='vidrios';   /* solo las puertas con vidrio, ver renderDoorSub */
   var filas=[];
   for (var i=1; i<=nrows; i++) {
     var moEl=document.getElementById('mo'+i), lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
@@ -7440,7 +7425,7 @@ function htmlPuerta(cli, fecha) {
   var tierRows = tiers.map(function(t) {
     var sumNeto=0;
     filas.forEach(function(f) {
-      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo - descModelo(f.mo)) * f.ca;
+      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo - descModelo(f.mo) + cargoSobredim(f.an)) * f.ca;
     });
     if (mcM2 > 0) sumNeto += mcM2 * PR.cubierta[t];
     sumNeto += vidrioExtra;
@@ -7458,6 +7443,10 @@ function htmlPuerta(cli, fecha) {
     total_alto:  Math.round(tierRows[2].total),
     vidrio_tipo: (vd && vd.tipo) || null
   }, filas.map(function(f){ return {modelo:f.mo, largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; }));
+  var sdN = filas.reduce(function(a, f){ return a + (cargoSobredim(f.an) ? f.ca : 0); }, 0);
+  var sdNote = sdN
+    ? '<div class="info-bar">Incluye cargo por sobredimensión: <strong>' + fmt(SOBREDIM.cargo) + '</strong> por cada puerta de más de ' + SOBREDIM.anchoMax + ' cm de ancho' + (sdN > 1 ? ' (' + sdN + ' puertas)' : '') + '</div>'
+    : '';
   var vidrioNote = (vd && vd.tipo)
     ? '<div class="info-bar">Vidrio extra incluido: <strong>'+vd.tipo+'</strong>'+
       (vd.an>0 && vd.al>0
@@ -7486,6 +7475,7 @@ function htmlPuerta(cli, fecha) {
   return shell(PNAME[prod], cli, fecha,
     (conRef ? '' : fotosHtml) +
     vidrioNote +
+    sdNote +
     (mcM2>0 ? '<div class="info-bar">Marco: <strong>'+mcMl.toFixed(2)+' ml · '+mcM2.toFixed(2)+' m²</strong></div>' : '') +
     (conRef
       ? '<div class="pf-lista">' + puertasFilasHtml(filas, vd && vd.tipo) + '</div>'
@@ -9131,7 +9121,7 @@ function restoreProducto(d) {
   if (isPuerta) {
     prod = d.p;
     nrows = 1;
-    renderDoorSub(prod, !!d.vt);
+    renderDoorSub(prod);
     document.getElementById('door-sub').classList.remove('hidden');
   }
   if (d.p !== 'revlibre' && d.p !== 'especial') {   /* revlibre ya restauró sus extras arriba, dentro de d.rv */

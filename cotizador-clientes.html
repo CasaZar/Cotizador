@@ -2758,6 +2758,11 @@ var MODELOS = {
    Ensenada es más simple de fabricar que el resto de las puertas con vidrio. */
 var DESC_MODELO = { 'Ensenada': 50000 };
 function descModelo(mo){ return DESC_MODELO[mo] || 0; }
+/* Sobredimensión (25-11-2026, regla del usuario): cada puerta (hoja) de más de
+   140 cm de ancho suma un cargo fijo de $140.000 por unidad, IVA incluido e
+   igual en las tres maderas. */
+var SOBREDIM = { anchoMax: 140, cargo: 140000 };
+function cargoSobredim(an){ return (parseFloat(an) || 0) > SOBREDIM.anchoMax ? SOBREDIM.cargo : 0; }
 /* Fotos: las MISMAS que se publican en casazaru.cl (21-08-2026). Antes eran
    renders y no correspondían a la puerta que llega. Van sin el ?v= de Shopify
    porque el render les agrega ?width=300 y dos query strings rompen la URL. */
@@ -4039,8 +4044,9 @@ function calcLive() {
       var dsc=descModelo(moe?moe.value:'');
       var m2p=(parseFloat(lge.value)||0)/100*(parseFloat(ane.value)||0)/100;
       var ca2=parseInt((cae&&cae.value)||1)||1;
-      sumBajo += (m2p * PR[prod].bajo.m2 + PR[prod].bajo.fijo - dsc) * ca2;
-      sumAlto += (m2p * PR[prod].alto.m2 + PR[prod].alto.fijo - dsc) * ca2;
+      var sdc=cargoSobredim(ane.value);
+      sumBajo += (m2p * PR[prod].bajo.m2 + PR[prod].bajo.fijo - dsc + sdc) * ca2;
+      sumAlto += (m2p * PR[prod].alto.m2 + PR[prod].alto.fijo - dsc + sdc) * ca2;
     }
     var vidrioExtraLive = vidrioExtraTotal();   /* por medida propia del vidrio, no de la puerta */
     sumBajo += vidrioExtraLive; sumAlto += vidrioExtraLive;
@@ -7419,7 +7425,7 @@ function htmlPuerta(cli, fecha) {
   var tierRows = tiers.map(function(t) {
     var sumNeto=0;
     filas.forEach(function(f) {
-      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo - descModelo(f.mo)) * f.ca;
+      sumNeto += (f.m2 * PR[prod][t].m2 + PR[prod][t].fijo - descModelo(f.mo) + cargoSobredim(f.an)) * f.ca;
     });
     if (mcM2 > 0) sumNeto += mcM2 * PR.cubierta[t];
     sumNeto += vidrioExtra;
@@ -7437,6 +7443,10 @@ function htmlPuerta(cli, fecha) {
     total_alto:  Math.round(tierRows[2].total),
     vidrio_tipo: (vd && vd.tipo) || null
   }, filas.map(function(f){ return {modelo:f.mo, largo_cm:f.lg, ancho_cm:f.an, cantidad:f.ca, m2:f.m2}; }));
+  var sdN = filas.reduce(function(a, f){ return a + (cargoSobredim(f.an) ? f.ca : 0); }, 0);
+  var sdNote = sdN
+    ? '<div class="info-bar">Incluye cargo por sobredimensión: <strong>' + fmt(SOBREDIM.cargo) + '</strong> por cada puerta de más de ' + SOBREDIM.anchoMax + ' cm de ancho' + (sdN > 1 ? ' (' + sdN + ' puertas)' : '') + '</div>'
+    : '';
   var vidrioNote = (vd && vd.tipo)
     ? '<div class="info-bar">Vidrio extra incluido: <strong>'+vd.tipo+'</strong>'+
       (vd.an>0 && vd.al>0
@@ -7465,6 +7475,7 @@ function htmlPuerta(cli, fecha) {
   return shell(PNAME[prod], cli, fecha,
     (conRef ? '' : fotosHtml) +
     vidrioNote +
+    sdNote +
     (mcM2>0 ? '<div class="info-bar">Marco: <strong>'+mcMl.toFixed(2)+' ml · '+mcM2.toFixed(2)+' m²</strong></div>' : '') +
     (conRef
       ? '<div class="pf-lista">' + puertasFilasHtml(filas, vd && vd.tipo) + '</div>'
