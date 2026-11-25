@@ -6888,8 +6888,7 @@ function vAgregarProd(i) {
 /* el mensaje que se copia al guardar. Lo firma César aunque lo mande otro
    (así lo pidió el usuario) y va en párrafos, como los del panel. */
 function vMensaje(link) {
-  var nom = String(document.getElementById('f-cli').value || '').trim().split(/\s+/)[0] || '';
-  nom = /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(nom) ? nom.charAt(0).toUpperCase() + nom.slice(1).toLowerCase() : '';
+  var nom = waNombre({ cliente: document.getElementById('f-cli').value });   /* misma regla del panel: «Peldaños» no es un nombre */
   var cods = combo.map(function(it){ return it.p; });
   if (prod && cods.indexOf(prod) === -1) cods.push(prod);
   /* con profesional, el mensaje va a ELLA (no al cliente final): su link para
@@ -10203,10 +10202,21 @@ var WA_PROD = {
   especial:      { un:'un trabajo a medida',     preg:'¿Quieres que ajustemos algo del presupuesto?' }
 };
 /* nombre de pila en formato normal ("MARIA JOSE" → "Maria"); si en el campo
-   vino un teléfono o nada, se saluda sin nombre */
+   vino un teléfono o nada, se saluda sin nombre.
+   25-11-2026: un seguimiento salió «Hola Peldaños,» porque el contacto estaba
+   guardado con el producto en vez del nombre. Las palabras de WA_NO_NOMBRE
+   (productos, maderas, saludos, «cliente»…) no son nombre de persona. */
+var WA_NO_NOMBRE = ('peldano peldanos escalera escaleras escalon escalones cubierta cubiertas meson mesones ' +
+  'mesa mesas banca bancas puerta puertas repisa repisas revestimiento revestimientos cocina closet ' +
+  'madera maderas roble rauli coihue lenga castano cipres manio oregon pino ' +
+  'cliente clienta contacto cotizacion cotizaciones consulta pedido proyecto obra casa depto departamento ' +
+  'empresa constructora arquitecto arquitecta arq sr sra srta don dona hola buenas buenos dias tardes ' +
+  'interesado interesada whatsapp instagram facebook anuncio web desconocido sin nombre na').split(' ');
 function waNombre(x){
   var n = String(x.cliente||'').trim().split(/\s+/)[0] || '';
   if (!/^[A-Za-zÁÉÍÓÚÑÜáéíóúñü]{2,}$/.test(n)) return '';
+  var base = n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (WA_NO_NOMBRE.indexOf(base) >= 0) return '';
   return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
 }
 /* cuándo cotizó, dicho como lo diría una persona */
