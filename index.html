@@ -1534,6 +1534,29 @@ body { font-family: 'Jost', sans-serif; background: var(--bg); color: var(--tx);
 #s1 .prof-cta { color: var(--verde); font-weight: 600; }
 body.modo-vendedor #s1 .prof-banner { display: none; }
 #s1 .s1-confianza { text-align: center; font-size: 12px; color: var(--tm); margin: 14px auto 0; max-width: 1120px; line-height: 1.5; }
+/* ── PRUEBA B DEL PASO DE DATOS (25-11-2026) ── todo cuelga de body.ab-b, que solo
+   existe con la prueba encendida, en cubiertas y fuera del modo vendedor (abSync) */
+.ab-b-solo { display: none; }
+body.ab-b span.ab-b-solo { display: inline; }
+body.ab-b div.ab-b-solo, body.ab-b a.ab-b-solo { display: block; }
+body.ab-b .ab-a, body.ab-b #s2 .ab-comuna { display: none; }
+#s2 .live-price-wrap.ab-lista { text-align: left; }
+#s2 .live-price-wrap.ab-lista .lp-label { font-family: var(--ff-tit, inherit); font-size: 18px; color: var(--tx); margin-bottom: 4px; }
+#s2 .live-price-wrap.ab-lista .lp-range { font-size: 16px; line-height: 1.3; }
+.ab-mad { display: flex; align-items: center; gap: 11px; padding: 9px 0; border-top: 1px solid var(--bd); }
+.ab-mad:first-child { border-top: 0; }
+.ab-mad i { width: 42px; height: 42px; border-radius: 8px; flex: none; background-size: cover; background-position: center; background-color: var(--bg3); }
+.ab-mad-n { font-size: 13.5px; font-weight: 400; color: var(--tx); }
+.ab-mad-p { margin-left: auto; font-weight: 600; font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#s2 .live-price-wrap.ab-lista .lp-note { font-size: 11.5px; line-height: 1.5; margin-top: 4px; }
+body.ab-b #s2 .datos-sec { display: flex; flex-direction: column; }
+body.ab-b #s2 .datos-sec .ab-ganas { order: 1; margin: 2px 0 12px; }
+body.ab-b #s2 .datos-sec .ab-wa { order: 2; }
+body.ab-b #s2 .datos-sec .ab-nom { order: 3; margin-bottom: 0; }
+.ab-gana { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.4; margin-top: 8px; color: var(--tx); }
+.ab-gana svg { width: 19px; height: 19px; flex: none; stroke: var(--terracota); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
+#s2 a.ab-alt { text-align: center; font-size: 13px; margin-top: 12px; color: var(--tm); text-decoration: none; }
+#s2 a.ab-alt b { color: var(--verde); font-weight: 600; }
 /* ── INICIO PÚBLICO (24-11-2026, boceto aprobado) ──
    Todo cuelga de body:not(.modo-vendedor) o de .solo-pub: el vendedor no ve
    ni un píxel distinto. Título que dice qué es, tres pasos, confianza arriba,
@@ -2551,12 +2574,18 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
          que ven su precio solo el 23% dejaba sus datos, y el bloque no decía qué
          se recibía a cambio. Ahora lo dice el título y lo repite el botón. -->
     <div class="datos-sec">
-      <div class="datos-h"><span class="solo-pub">Mira el precio exacto de cada madera</span><span class="solo-ven">Cliente</span></div>
-      <div class="fsec">
+      <div class="datos-h"><span class="solo-pub"><span class="ab-a">Mira el precio exacto de cada madera</span><span class="ab-b-solo">Recibe tu cotización por WhatsApp</span></span><span class="solo-ven">Cliente</span></div>
+      <!-- prueba B (25-11-2026): qué recibe a cambio de su WhatsApp. Solo con body.ab-b -->
+      <div class="ab-b-solo ab-ganas">
+        <div class="ab-gana"><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg><span>Con el valor del envío a tu comuna</span></div>
+        <div class="ab-gana"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span>Queda guardada, con un link para volver a verla</span></div>
+        <div class="ab-gana"><svg viewBox="0 0 24 24"><path d="M4 20l1.5-4.5A8 8 0 1 1 8.5 18.5z"/></svg><span>César te ayuda a elegir la madera</span></div>
+      </div>
+      <div class="fsec ab-nom">
         <label class="flabel" for="f-cli"><span class="solo-pub">Tu nombre</span><span class="solo-ven">Nombre</span></label>
         <input class="finput" type="text" id="f-cli" placeholder="Ej. Camila Muñoz" autocomplete="name">
       </div>
-      <div class="fsec" style="margin-bottom:14px">
+      <div class="fsec ab-wa" style="margin-bottom:14px">
         <label class="flabel" for="f-con" id="f-con-lbl">Tu WhatsApp</label>
         <!-- type="tel": abre el teclado numérico (con type="text" salía el de letras) -->
         <input class="finput" type="tel" inputmode="tel" id="f-con" placeholder="+56 9 1234 5678" autocomplete="tel">
@@ -2567,12 +2596,12 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
              datos" de antes no era exacto: pasan por Meta (WhatsApp) y otros
              proveedores. Ofertas y novedades necesitarían consentimiento
              aparte, con casilla desmarcada. -->
-        <div class="finput-hint"><span class="solo-pub">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.</span>
+        <div class="finput-hint"><span class="solo-pub"><span class="ab-a">Te enviaremos esta cotización y su seguimiento por WhatsApp. Puedes pedir que paremos cuando quieras.</span><span class="ab-b-solo">Lo usamos solo para esta cotización y su seguimiento. Puedes pedir que paremos cuando quieras.</span></span>
           <a href="#" class="con-modo" id="f-con-modo" onclick="conModo(); return false;">Prefiero dejar mi correo</a></div>
       </div>
       <!-- comuna de entrega (17-10-2026): opcional. Con ella la cotización trae el
            valor del envío Starken a domicilio (ver stkMontar). -->
-      <div class="fsec" style="margin-bottom:0">
+      <div class="fsec ab-comuna" style="margin-bottom:0">
         <label class="flabel" for="stk-form-comuna"><span class="solo-pub">¿A qué comuna lo enviamos?</span><span class="solo-ven">Comuna</span><span class="flabel-op">opcional</span></label>
         <div class="es-busca">
           <input class="finput" type="text" id="stk-form-comuna" placeholder="Ej. Ñuñoa" autocomplete="off" onfocus="stkDestinos().catch(function(){})" oninput="stkBuscar(this.value, 'form')" onblur="stkAutoElegir('form')">
@@ -2590,6 +2619,7 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
     <div class="v-barra-pc">
     <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
     </div>
+    <a class="ab-b-solo ab-alt" href="#" target="_blank" rel="noopener" onclick="abWaClick(this)">¿Prefieres escribirnos tú? <b>Abrir WhatsApp →</b></a>
     <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
     <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
@@ -3577,8 +3607,62 @@ var PASOS_CLIC = ['whatsapp', 'duda', 'muestrario'];
 /* una prueba local (localhost o file://) no cuenta como visita (11-11-2026: la
    revisión del panel en el celular dejó una visita falsa, id 6280) */
 var EMBUDO_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\]|)$/.test(location.hostname);
+/* ── PRUEBA DEL PASO DE DATOS A MITAD DE VISITAS (25-11-2026, boceto aprobado) ──
+   En 30 días, 447 de 549 personas vieron su precio estimado y se fueron sin
+   dejar datos: el rango gratis ya trae dos de los tres precios exactos.
+     A = como siempre (rango + «Mira el precio exacto de cada madera»)
+     B = las tres maderas con su precio a la vista + «Recibe tu cotización por WhatsApp»
+   Solo cubiertas y solo la entrada pública. El interruptor es la fila
+   `prueba_datos` de cotizador_valores (migración 0015 del Cotizador):
+     apagado → nadie ve la B · prueba → solo con ?ab=b · activo → `pct` de cada 100
+   Sin esa fila no pasa nada, y tampoco se manda `variante` al embudo (la columna
+   llega con la misma migración). Quien fuerza la versión con ?ab= no cuenta. */
+var AB_KEY = 'zaru_ab_datos', abForzada = null, abMem = null;
+try { var abQ = (new URLSearchParams(location.search).get('ab') || '').toUpperCase(); if (abQ === 'A' || abQ === 'B') abForzada = abQ; } catch (e) {}
+function abVar() {
+  if (vendorMode || embudoSoloClics || asis) return null;
+  var c = VALORES_CRUDOS && VALORES_CRUDOS.prueba_datos;
+  if (!c || typeof c !== 'object') return null;
+  if (c.estado === 'prueba') return abForzada;
+  if (c.estado !== 'activo') return null;
+  if (abForzada) return abForzada;
+  if (abMem) return abMem;
+  var v = null;
+  try { v = localStorage.getItem(AB_KEY); } catch (e) {}
+  if (v !== 'A' && v !== 'B') {
+    var pct = (typeof c.pct === 'number' && c.pct >= 0 && c.pct <= 100) ? c.pct : 50;
+    v = (Math.random() * 100 < pct) ? 'B' : 'A';
+    try { localStorage.setItem(AB_KEY, v); } catch (e) {}
+  }
+  abMem = v;
+  return v;
+}
+function abEsB() { return prod === 'cubierta' && abVar() === 'B'; }
+/* el <body> lleva la marca: todo lo de la B cuelga de body.ab-b */
+function abSync() {
+  var b = abEsB();
+  document.body.classList.toggle('ab-b', b);
+  /* el botón del cliente; el del vendedor lo arma su propia vista y no se toca */
+  var bc = document.getElementById('btn-calc');
+  if (bc && !vendorMode && /precio por madera|Enviarme mi/.test(bc.textContent)) {
+    var t = b ? 'Enviarme mi cotización →' : 'Ver precio por madera →';
+    if (bc.textContent !== t) bc.textContent = t;
+  }
+}
+/* tocó el campo de nombre o de WhatsApp: se cuenta solo dentro de la prueba */
+function abFoco() { if (prod === 'cubierta' && abVar()) embudoTick('datos_foco'); }
+/* B: salida para quien prefiere escribir antes que dejar su número */
+function abWaClick(a) {
+  var m = [];
+  for (var i = 1; i <= nrows; i++) {
+    var l = document.getElementById('lg' + i), n = document.getElementById('an' + i);
+    if (l && n && l.value && n.value) m.push(l.value + ' × ' + n.value + ' cm');
+  }
+  a.href = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent('Hola, quiero cotizar una cubierta' + (m.length ? ' de ' + m.join(' y ') : '') + '.');
+  embudoTick('duda');
+}
 function embudoTick(paso) {
-  if (vendorMode || EMBUDO_LOCAL) return;
+  if (vendorMode || EMBUDO_LOCAL || abForzada) return;
   if (embudoSoloClics && PASOS_CLIC.indexOf(paso) === -1) return;
   if (!embudoListo) { embudoCola.push(paso); return; }
   try {
@@ -3593,6 +3677,8 @@ function embudoTick(paso) {
     var ev = { sesion: ses, paso: paso, producto: prod || null, canal: embudoCanal };
     var og = embudoOrigen();
     if (og) { ev.fuente = og.fuente; ev.campana = og.campana; ev.anuncio = og.anuncio; ev.medio = og.medio; }
+    var av = (prod === 'cubierta') ? abVar() : null;   /* solo con la prueba encendida (ver abVar) */
+    if (av) ev.variante = av;
     sbClient.from('embudo_eventos')
       .insert(ev)
       .then(function(){}, function(){});
@@ -4039,6 +4125,12 @@ function calcLive() {
      en vivo al público, porque su base se calcula sola (mesaBaseSugerida). */
   var sinLive = (prod === 'revlibre') || (prod === 'especial') || (prod === 'mesa' && vendorMode);
   if (wrapEl) wrapEl.style.display = sinLive ? 'none' : '';
+  /* prueba B: parte como siempre; si corresponde, más abajo se pinta la lista */
+  abSync();
+  if (wrapEl && wrapEl.classList.contains('ab-lista')) {
+    wrapEl.classList.remove('ab-lista');
+    var lblR = wrapEl.querySelector('.lp-label'); if (lblR) lblR.textContent = 'Tu precio estimado';
+  }
   rbAutoSync();   /* los ml del reborde dependen de las medidas Y de las cantidades */
   tnSync();       /* el teñido por tarifa sigue a los m² de las piezas */
   mesaSugerenciaRefrescar();   /* la sugerencia de base sigue al modelo y al largo */
@@ -4060,6 +4152,8 @@ function calcLive() {
     if (sumM2 > 0) {
       bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive + contraValor('bajo');
       alto = sumM2 * currentPR().alto * espesorFactor('alto') + fijoLive + contraValor('alto');
+      /* prueba B: también la madera del medio, con la misma fórmula */
+      var medioLive = sumM2 * currentPR().medio * espesorFactor('medio') + fijoLive + contraValor('medio');
     }
 
   } else if (prod === 'mesa') {
@@ -4143,6 +4237,18 @@ function calcLive() {
       ? (nP + ' peldaños · ' + fmt((bajo + exT) / nP) + ' a ' + fmt((alto + exT) / nP) + ' c/u' + (contraDatos() ? ' con contrahuella' : '') + ' · IVA incluido · Envío según comuna')
       : ((unPrecio ? 'Mismo precio en todas las maderas' : 'Según la madera') + ' · IVA incluido · Envío según comuna · Hasta 3 cuotas sin interés');
     noteEl.style.display = 'block';
+    /* prueba B (solo cubiertas): el precio de cada madera en vez del rango */
+    var esB = abEsB() && !unPrecio && typeof medioLive !== 'undefined' && medioLive > 0;
+    if (esB) {
+      var lblEl = wrapEl ? wrapEl.querySelector('.lp-label') : null;
+      if (lblEl) lblEl.textContent = 'Tu precio, según la madera';
+      if (wrapEl) wrapEl.classList.add('ab-lista');
+      var filasB = [['bajo', bajo, 'oregon'], ['medio', medioLive + rebordeValor('medio'), 'castano'], ['alto', alto, 'coihue']];
+      rangeEl.innerHTML = filasB.map(function(f, i){
+        return '<div class="ab-mad"><i style="background-image:url(fotos/maderas/' + f[2] + '.jpg)"></i><span class="ab-mad-n">' + V_TIERS[i][1] + '</span><span class="ab-mad-p">' + fmt(f[1] + exT) + '</span></div>';
+      }).join('');
+      noteEl.textContent = 'IVA incluido · 5 % menos por transferencia · Hasta 3 cuotas sin interés · Envío aparte';
+    }
     embudoTick('medidas');
     barraPrecio.hay = true;
     var bpv = document.getElementById('bp-v'); if (bpv && !vendorMode) bpv.textContent = unPrecio ? fmt(bajo + exT) : fmt(bajo + exT) + ' – ' + fmt(alto + exT);
@@ -16277,6 +16383,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('btn-back').addEventListener('click', function() { show('s1'); });
   document.getElementById('btn-calc').addEventListener('click', generar);
   document.getElementById('f-con').addEventListener('focus', conPrefijo);
+  document.getElementById('f-con').addEventListener('focus', abFoco);
+  document.getElementById('f-cli').addEventListener('focus', abFoco);
   barraIniciar();
   /* "Inicio" desde la cotización = empezar otra: los productos que se habían
      juntado ya quedaron en el documento y no deben colarse en la siguiente */
