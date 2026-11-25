@@ -5808,8 +5808,9 @@ var VIDRIO_MODELOS = {
   /* Ralún: 12 vidrios por hoja, 2 columnas de 6 (25-11-2026; antes se calculaba
      con una sola columna de 6). Cabezal y pieinazo del ancho del batiente, pero
      los travesaños y el parante del medio son delgados: se suponen 5 cm, medidos
-     sobre la foto y confirmados por el taller el 25-11-2026. */
-  'Ralún':      { modo:'columna', n:6, cols:2, trav:5 }
+     sobre la foto y confirmados por el taller el 25-11-2026. Bajo 200 cm de
+     alto van 10 vidrios (2 columnas de 5): lo dijo el usuario el 25-11-2026. */
+  'Ralún':      { modo:'columna', n:6, cols:2, trav:5, nBajo:5, bajoAlto:200 }
 };
 function vidrioPuerta(modelo, altoCm, anchoCm) {
   var cfg = VIDRIO_MODELOS[modelo];
@@ -5826,11 +5827,12 @@ function vidrioPuerta(modelo, altoCm, anchoCm) {
     return { piezas:n, al:cfg.alto, an:anLibre, m2: n * (cfg.alto/100) * (anLibre/100) };
   }
   if (cfg.modo === 'columna') {
-    var alVid = (altoCm - 2*b - (cfg.n - 1) * cfg.trav) / cfg.n;
+    var nCol = (cfg.nBajo && altoCm < cfg.bajoAlto) ? cfg.nBajo : cfg.n;
+    var alVid = (altoCm - 2*b - (nCol - 1) * cfg.trav) / nCol;
     var cols = cfg.cols || 1;
     var anVid = (anLibre - (cols - 1) * cfg.trav) / cols;
     if (alVid <= 0 || anVid <= 0) return null;
-    var pz = cfg.n * cols;
+    var pz = nCol * cols;
     return { piezas:pz, al:alVid, an:anVid, m2: pz * (alVid/100) * (anVid/100) };
   }
   var alPano = (altoCm - (cfg.div + 1) * b) / cfg.div;
