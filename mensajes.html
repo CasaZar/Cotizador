@@ -113,13 +113,83 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .sw::after{content:"";position:absolute;left:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
 .sw[aria-checked="true"]{background:var(--verde)}.sw[aria-checked="true"]::after{left:18px}
 .sw:disabled{opacity:.45;cursor:default}
+/* ── Rediseño 26-11-2026: lista por urgencia, respuesta fija abajo, dos paneles en computador ── */
+.top{align-items:center}
+.top button.camp{width:38px;height:38px;padding:0;justify-content:center;position:relative;border-radius:10px}
+.top button.camp svg{width:18px;height:18px}
+.top button.camp i{position:absolute;top:-6px;right:-6px}
+.menu{background:#fff;border-bottom:1px solid var(--linea);padding:4px 14px 8px}
+.menu>button{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--linea);font:500 14px Poppins;color:var(--txt);padding:12px 0;cursor:pointer}
+.menu>button:last-of-type{border-bottom:none}
+.menu .nums{border:none;padding:8px 0 4px}
+.busca{display:flex;gap:8px;align-items:center;margin:10px 12px 0;background:#fff;border:1px solid var(--linea);border-radius:10px;padding:0 10px;color:var(--suave)}
+.busca svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;flex:none}
+.busca input{flex:1;min-width:0;border:none;outline:none;background:none;font:14px Poppins;padding:9px 0;color:var(--txt)}
+.seg{display:flex;gap:6px;padding:10px 12px}
+.tab{background:#fff;border:1px solid var(--linea);border-radius:10px;font:500 12px/1.25 Poppins;color:var(--suave);padding:7px 4px}
+.tab b{display:block;font:600 17px/1.2 Poppins;color:var(--txt)}
+.tab.on{background:var(--verde);border-color:var(--verde);color:#e8eee4;font-weight:500}.tab.on b{color:#fff}
+.gr{font:600 11px Poppins;letter-spacing:.06em;text-transform:uppercase;color:var(--suave);margin:0;padding:4px 14px 6px}
+.fila{width:calc(100% - 24px);margin:0 12px 8px;border:1px solid var(--linea);border-radius:12px;padding:11px 12px}
+.fila.urg{border-left:4px solid var(--rojo)}.fila.ok{border-left:4px solid var(--verde)}.fila.per{border-left:4px solid var(--terra)}
+.fila.nuevo{box-shadow:none;background:#fbf3ec}
+.fila.sel{outline:2px solid var(--verde);outline-offset:-2px}
+.ini{border-radius:50%;width:38px;height:38px}
+.l1{align-items:center}
+.pill{font:600 11.5px Poppins;border-radius:10px;padding:2px 8px;white-space:nowrap;flex:none}
+.pill.r{background:#f6e3df;color:var(--rojo)}.pill.v{background:#e4ecdf;color:var(--verde)}.pill.g{background:var(--gris);color:var(--suave)}
+.est{display:flex;gap:6px;align-items:flex-start;font-size:12.5px;margin-top:5px;color:var(--suave)}
+.est svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:2px}
+.est span{min-width:0}
+.est.t{color:var(--terra)}.est.v{color:var(--verde)}
+.cab .pill{margin-left:auto}
+.chat{min-height:120px}
+.comp{background:#fff;border-top:1px solid var(--linea);padding:10px 12px 12px;position:sticky;bottom:0;z-index:2;box-shadow:0 -6px 14px rgba(0,0,0,.05)}
+.comp .lab{font:600 11px Poppins;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.comp .lab svg.i{width:14px;height:14px;stroke:var(--terra)}
+.comp .lab .link{margin-left:auto;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--suave)}
+.comp textarea{display:block;width:100%;font:14px/1.45 Poppins,system-ui,sans-serif;color:var(--txt);background:#fffcf8;border:1px solid var(--linea);border-radius:12px;padding:9px 10px;resize:none;min-height:72px}
+.comp textarea[readonly]{background:#f6f3ee;color:var(--suave)}
+.aviso{display:flex;gap:8px;align-items:flex-start;font-size:13px;border-radius:10px;padding:8px 10px;margin:8px 0 0;background:#f7ecd6;color:#8a5d0c}
+.aviso svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;margin-top:1px}
+.aviso.r{background:#f6e3df;color:var(--rojo)}.aviso.i{background:#e4ecdf;color:var(--verde)}
+.comp>.aviso:first-child{margin:0 0 10px}
+.comp .bots{padding:10px 0 0;align-items:stretch}
+.comp .conf{margin:10px 0 0}
+.comp .nota{margin:8px 0 0}
+.btn.ok{display:flex;gap:8px;align-items:center;justify-content:center}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn.ico{flex:none;width:48px;display:grid;place-items:center;color:var(--cafe);padding:0}
+.btn.wa{color:var(--verde);border:1.5px solid var(--verde)}
+.elige{padding:60px 20px}
+@media (max-width:899px){
+  #main.con-chat .pl{display:none}
+  #main.con-chat .pc{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+  #main.con-chat .pc .chat{flex:1}
+  #main.bandeja:not(.con-chat) .pc{display:none}
+  body.chat-abierto .top,body.chat-abierto .nav{display:none}
+  body.chat-abierto .wrap{padding-bottom:0}
+}
+@media (min-width:900px){
+  .wrap{max-width:1180px}
+  #main.bandeja{display:grid;grid-template-columns:380px minmax(0,1fr);align-items:start}
+  .wrap{padding-bottom:0}
+  .pl{border-right:1px solid var(--linea);position:sticky;top:0;height:var(--alto,100vh);overflow:auto;padding-bottom:12px}
+  .pc{display:flex;flex-direction:column;height:var(--alto,100vh);position:sticky;top:0}
+  .pc .chat{flex:1;overflow:auto}
+  .pc .comp{position:static;box-shadow:none}
+  .pc .atras{display:none}
+  .pc .cab{position:static}
+  .elige{margin:auto}
+}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw;z-index:5}
 </style></head><body>
 <div class="wrap">
-  <header class="top"><div><h1>Mensajes</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="camp" class="camp" hidden aria-expanded="false" aria-controls="avisos"></button><button id="act" hidden>Actualizar</button><button id="salir" hidden>Salir</button></header>
+  <header class="top"><div><h1>Mensajes</h1><p id="sub">Cargando…</p></div><div class="sp"></div><button id="camp" class="camp" hidden aria-expanded="false" aria-controls="avisos" aria-label="Avisos"></button><button id="mas" class="camp" hidden aria-expanded="false" aria-controls="menu" aria-label="Más opciones"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg></button></header>
   <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a href="mi-dia.html">Mi día</a><a class="on" href="mensajes.html">Mensajes</a></nav>
   <div id="franja" class="franja" hidden role="status"></div>
   <section id="avisos" class="avisos" hidden aria-label="Avisos"></section>
+  <section id="menu" class="menu" hidden aria-label="Más opciones"><button id="act" hidden>Actualizar ahora</button><button data-nums>Números del asistente</button><button id="salir" hidden>Salir</button><div id="nums"></div></section>
   <main id="main"></main>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -133,18 +203,19 @@ var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /[?&]local\b
 var sb = LOCAL ? null : supabase.createClient(SB_URL, SB_KEY);
 var AQUI = location.origin + location.pathname;
 
-var TABS = [ { k: 'por_aprobar', n: 'Por aprobar' }, { k: 'de_cesar', n: 'De César' }, { k: 'esperando', n: 'Esperando' } ];
+/* Los grupos se calculan en la página (grupoDe): no son el campo «estado» de la base. */
+var TABS = [ { k: 'responder', n: 'Responder' }, { k: 'esperando', n: 'Esperando al cliente' }, { k: 'cerrados', n: 'Cerrados' } ];
 var VACIO = {
-  por_aprobar: 'No hay mensajes por aprobar.',
-  de_cesar: 'César no ha tomado ningún chat.',
-  esperando: 'No hay chats esperando respuesta del cliente.'
+  responder: 'Nadie espera respuesta. Todo al día.',
+  esperando: 'No hay chats esperando al cliente.',
+  cerrados: 'No hay chats cerrados.'
 };
-var CHATS = [], ULT = {}, BORR = {}, MSGS = [], TAB = 'por_aprobar', ABIERTO = null, LISTO = false, FIRMA = '';
+var CHATS = [], ULT = {}, BORR = {}, MSGS = [], TAB = 'responder', ABIERTO = null, LISTO = false, FIRMA = '';
 var LOCAL_MSGS = {}, LOCAL_DATOS = null;
 var ADMIN_MAIL = 'hola@casazaru.cl';   /* solo para mostrar: quién puede qué lo deciden RLS y la función */
 var MI_MAIL = '', VEND = {};
 /* Redacción: lo que la persona escribió por chat, la clave de cada envío (reintentar no duplica),
-   la confirmación abierta ('enviar' | 'tomar') y si hay una llamada en curso. */
+   la confirmación abierta ('enviar') y si hay una llamada en curso. */
 var EDIT = {}, CLAVE = {}, CONFIRMA = null, OCUPADO = false;
 
 function $(s){ return document.querySelector(s); }
@@ -158,7 +229,12 @@ var ICO = {
   si: '<svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg>',
   no: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   globo: '<svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
-  campana: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>'
+  campana: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  persona: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  alerta: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>',
+  enviar: '<svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-3-6z"/></svg>',
+  copiar: '<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+  buscar: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>'
 };
 
 /* ── Formato ─────────────────────────────────────────────────────────── */
@@ -199,7 +275,7 @@ function falta(ms){ var m = Math.max(0, Math.floor(ms / 60000)); return m >= 60 
 function chatPorId(id){ for (var i = 0; i < CHATS.length; i++) if (Number(CHATS[i].id) === Number(id)) return CHATS[i]; return null; }
 
 /* ── Pantallas ───────────────────────────────────────────────────────── */
-function bloquear(t, p){ $('#main').innerHTML = '<div class="bloqueo"><h2>' + esc(t) + '</h2><p>' + esc(p) + '</p></div>'; $('#sub').textContent = ''; }
+function bloquear(t, p){ $('#main').className = ''; document.body.classList.remove('chat-abierto'); $('#main').innerHTML ='<div class="bloqueo"><h2>' + esc(t) + '</h2><p>' + esc(p) + '</p></div>'; $('#sub').textContent = ''; }
 function formLogin(){
   bloquear('Mensajes', 'Entra con tu correo y contraseña del panel de Casa Zaru.');
   $('.bloqueo').insertAdjacentHTML('beforeend',
@@ -214,23 +290,50 @@ function formLogin(){
   };
 }
 
-function fila(c){
-  var u = ULT[c.id], b = BORR[c.id], rev = (b && b.revision) || {};
-  var chips = '<span class="chip ' + (c.canal === 'instagram' ? 'ig' : 'wa') + '">' + (c.canal === 'instagram' ? 'Instagram' : 'WhatsApp') + '</span>';
-  var an = anuncio(c);
-  if (an) chips += '<span class="chip">' + esc(corta('Anuncio: ' + an, 34)) + '</span>';
-  if (rev.cotiza) chips += '<span class="chip">Lleva cotización</span>';
-  if (rev.necesita_humano) chips += '<span class="chip r">Necesita una persona</span>';
-  if (rev.falta_precio) chips += '<span class="chip a">Falta un precio</span>';
-  /* Si el último mensaje es del cliente, la fila dice cuánto queda para responderle. */
+/* ── Lista: tres grupos con nombre de acción (rediseño 26-11-2026) ───── */
+/* responder = la ventana sigue abierta y el último mensaje es del cliente;
+   esperando = ya le respondimos; cerrados = pasaron las 24 horas. */
+function grupoDe(c){
+  if (!ventana(c).abierta) return 'cerrados';
+  var u = ULT[c.id];
+  return (u && u.autor !== 'cliente') ? 'esperando' : 'responder';
+}
+function urgente(c){ var v = ventana(c); return v.abierta && v.ms <= 3 * 3600000; }
+/* Con menos de 3 horas se muestran también los minutos: ahí cada media hora importa. */
+function quedaTxt(ms){
+  var m = Math.max(0, Math.floor(ms / 60000)), h = Math.floor(m / 60), r = m % 60;
+  var t = (h >= 1 && h < 3) ? h + ' h' + (r ? ' ' + r + ' min' : '') : falta(ms);
+  return (h === 1 || (h === 0 && m === 1) ? 'Queda ' : 'Quedan ') + t;
+}
+function llevaTxt(c){
+  var q = quienLleva(c);
+  return q ? (q === 'tú' ? ' · lo llevas tú' : ' · lo lleva ' + q) : '';
+}
+/* Una sola línea de estado por chat: lo más importante primero. */
+function estadoDe(c, g){
+  var b = BORR[c.id], rev = (b && b.revision) || {};
+  if (g === 'cerrados') return { cls: '', ico: ICO.candado, t: 'Ya no se le puede escribir desde aquí' };
+  if (g === 'esperando') return { cls: '', ico: ICO.reloj, t: 'Respondido · esperando al cliente' + llevaTxt(c) };
+  if (rev.necesita_humano) return { cls: 't', ico: ICO.persona, t: 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : '') + llevaTxt(c) };
+  if (rev.falta_precio) return { cls: 't', ico: ICO.alerta, t: 'Falta completar un precio' + llevaTxt(c) };
+  if (rev.links_ok === false || rev.sin_palabras_prohibidas === false) return { cls: 't', ico: ICO.alerta, t: 'Revisar la respuesta antes de enviar' + llevaTxt(c) };
+  if (b) return { cls: 'v', ico: ICO.si, t: 'Respuesta lista para enviar' + llevaTxt(c) };
+  return { cls: 't', ico: ICO.lapiz, t: 'Sin respuesta sugerida: escríbela tú' + llevaTxt(c) };
+}
+function pillDe(c, g){
+  if (g === 'cerrados') return '<span class="pill g">Cerrado</span>';
+  if (g === 'esperando') return '<span class="hora">' + esc(cuando((ULT[c.id] || {}).enviado_at)) + '</span>';
   var v = ventana(c);
-  if (!v.abierta) chips += '<span class="chip a">Fuera de 24 h</span>';
-  else if (u && u.autor === 'cliente') chips += v.ms <= 3 * 3600000 ? '<span class="chip r">Se cierra en ' + falta(v.ms) + '</span>' : '<span class="chip v">Quedan ' + falta(v.ms) + '</span>';
-  return '<button class="fila' + (NUEVOS[c.id] ? ' nuevo' : '') + '" data-chat="' + Number(c.id) + '"><span class="ini">' + esc(iniciales(c)) + '</span><span class="txt">' +
-    '<span class="l1"><span class="nom">' + esc(nombre(c)) + '</span><span class="hora">' + esc(cuando(u ? u.enviado_at : c.ultimo_entrante_at)) + '</span></span>' +
+  return '<span class="pill ' + (urgente(c) ? 'r' : 'v') + '">' + esc(quedaTxt(v.ms)) + '</span>';
+}
+function fila(c, g){
+  var u = ULT[c.id], e = estadoDe(c, g);
+  var borde = g !== 'responder' ? '' : (urgente(c) ? ' urg' : (e.cls === 't' ? ' per' : ' ok'));
+  return '<button class="fila' + borde + (NUEVOS[c.id] ? ' nuevo' : '') + (Number(c.id) === Number(ABIERTO) ? ' sel' : '') +
+    '" data-chat="' + Number(c.id) + '"><span class="ini">' + esc(iniciales(c)) + '</span><span class="txt">' +
+    '<span class="l1"><span class="nom">' + esc(nombre(c)) + '</span>' + pillDe(c, g) + '</span>' +
     '<span class="ult">' + esc(u ? (u.autor !== 'cliente' ? 'Nosotros: ' : '') + textoMsg(u) : 'Sin mensajes') + '</span>' +
-    (b ? '<span class="borr">' + esc(b.texto) + '</span>' : '') +
-    '<span class="chips">' + chips + '</span></span></button>';
+    '<span class="est ' + e.cls + '">' + e.ico + '<span>' + esc(e.t) + '</span></span></span></button>';
 }
 /* Cotizaciones del asistente (0008): cuántos links salieron, cuántos se abrieron y en qué terminaron. */
 var NUM = null;
@@ -245,19 +348,40 @@ function numerosHtml(){
     k(NUM.enviados, 'links enviados') + k(NUM.abiertos, 'abiertos') + k(NUM.cotizaron, 'cotizaron') + k(NUM.ventas, 'ventas') + '</div>' +
     (por.length ? '<p>' + por.join(' · ') + '</p>' : '') + '</div>';
 }
-function renderLista(){
-  var g = { por_aprobar: [], de_cesar: [], esperando: [] };
-  CHATS.forEach(function(c){ if (g[c.estado]) g[c.estado].push(c); });
-  var h = '<div class="tabs">' + TABS.map(function(t){
-    return '<button class="tab' + (TAB === t.k ? ' on' : '') + '" data-tab="' + t.k + '">' + esc(t.n) + ' · ' + g[t.k].length + '</button>';
-  }).join('') + '</div>';
-  h += numerosHtml();
-  h += g[TAB].length ? g[TAB].map(fila).join('') : '<p class="vacio">' + esc(VACIO[TAB]) + '</p>';
-  $('#main').innerHTML = h;
-  $('#sub').textContent = g.por_aprobar.length + ' por aprobar · actualizado ' + hora(new Date());
+var BUSCA = '';
+function coincide(c){
+  var q = BUSCA.trim().toLowerCase();
+  if (!q) return true;
+  var d = q.replace(/\D/g, '');
+  return String(c.nombre || '').toLowerCase().indexOf(q) !== -1 ||
+    (d.length >= 3 && String(c.telefono || '').replace(/\D/g, '').indexOf(d) !== -1);
+}
+function grupos(){
+  var g = { responder: [], esperando: [], cerrados: [] };
+  CHATS.forEach(function(c){ g[grupoDe(c)].push(c); });
+  /* Responder: lo que cierra antes, primero. Los otros dos: lo más reciente arriba. */
+  g.responder.sort(function(a, b){ return ventana(a).ms - ventana(b).ms; });
+  var reciente = function(c){ var u = ULT[c.id]; return new Date((u && u.enviado_at) || c.ultimo_entrante_at || 0).getTime() || 0; };
+  var porReciente = function(a, b){ return reciente(b) - reciente(a); };
+  g.esperando.sort(porReciente); g.cerrados.sort(porReciente);
+  return g;
+}
+function pintarLista(){
+  var g = grupos();
+  $('#seg').innerHTML = TABS.map(function(t){
+    return '<button class="tab' + (TAB === t.k ? ' on' : '') + '" data-tab="' + t.k + '"><b>' + g[t.k].length + '</b>' + esc(t.n) + '</button>';
+  }).join('');
+  var lista = g[TAB].filter(coincide), h = '';
+  var filas = function(l){ return l.map(function(c){ return fila(c, TAB); }).join(''); };
+  if (!lista.length) h = '<p class="vacio">' + esc(BUSCA.trim() ? 'Nadie coincide con esa búsqueda en este grupo.' : VACIO[TAB]) + '</p>';
+  else if (TAB === 'responder') {
+    var pronto = lista.filter(urgente), resto = lista.filter(function(c){ return !urgente(c); });
+    if (pronto.length) h += '<p class="gr">Cierran pronto</p>' + filas(pronto);
+    if (resto.length) h += (pronto.length ? '<p class="gr">Con tiempo</p>' : '') + filas(resto);
+  } else h = filas(lista);
+  $('#filas').innerHTML = h;
 }
 
-function chk(ok, si, no){ return '<li' + (ok ? '' : ' class="no"') + '>' + (ok ? ICO.si : ICO.no) + '<span>' + esc(ok ? si : no) + '</span></li>'; }
 /* Quién lleva el chat y qué puedo hacer yo (la función y la base lo vuelven a comprobar). */
 function quienLleva(c){
   var t = String(c.tomado_por || '').toLowerCase();
@@ -279,41 +403,48 @@ function motivoNoEnviar(c){
 }
 function textoActual(c, b){ return EDIT[c.id] != null ? EDIT[c.id] : (b ? b.texto : ''); }
 
+function avisoHtml(cls, ico, t){ return '<div class="aviso' + (cls ? ' ' + cls : '') + '">' + ico + '<span>' + esc(t) + '</span></div>'; }
+/* Chat cerrado: abre el WhatsApp de quien está mirando, con el número del cliente y el texto escrito. */
+function linkWa(c, texto){
+  var d = String(c.telefono || '').replace(/\D/g, '');
+  if (c.canal !== 'whatsapp' || d.length < 8) return '';
+  return 'https://wa.me/' + d + (texto ? '?text=' + encodeURIComponent(texto) : '');
+}
+/* La respuesta queda fija abajo. Solo se muestran avisos cuando hay algo que revisar. */
 function redaccionHtml(c, b){
   var rev = (b && b.revision) || {};
-  var t = Number(c.toques_sin_respuesta) || 0;
+  var cerrado = !ventana(c).abierta;
   var no = motivoNoEnviar(c);
   var fijo = OCUPADO || CONFIRMA === 'enviar';
   var dis = OCUPADO ? ' disabled' : '';
-  var h = '<div class="draft"><div class="lab">' + ICO.lapiz + esc(b ? (b.para === 'cesar' ? 'Sugerencia de Claude' : 'Borrador de Claude') : 'Tu respuesta') + '</div>' +
-    '<textarea id="txt" rows="7" maxlength="4000" placeholder="Escribe la respuesta…"' + (fijo ? ' readonly' : '') + '>' + esc(textoActual(c, b)) + '</textarea>';
+  var editado = b && EDIT[c.id] != null && EDIT[c.id] !== b.texto;
+  var h = '<div class="comp">';
+  if (cerrado) h += avisoHtml('r', ICO.candado, 'Pasaron más de 24 horas desde su último mensaje. Desde aquí ya no se le puede escribir.');
+  h += '<div class="lab">' + ICO.lapiz + '<span>' + esc(b ? 'Respuesta sugerida' : 'Tu respuesta') + '</span>' +
+    (editado && !fijo ? '<button class="link" data-restaurar>Deshacer cambios</button>' : '') + '</div>' +
+    '<textarea id="txt" rows="3" maxlength="4000" placeholder="Escribe la respuesta…"' + (fijo ? ' readonly' : '') + '>' + esc(textoActual(c, b)) + '</textarea>';
   if (b) {
-    var ch = chk(!c.tomado_por, 'Nadie ha tomado este chat', 'Chat tomado: aquí nada sale automático') +
-      chk(t < 2, 'Mensajes sin respuesta: ' + t + ' de 2', 'Ya van ' + t + ' mensajes sin respuesta: no insistir') +
-      chk(rev.sin_palabras_prohibidas !== false, 'Sin palabras ni signos prohibidos', 'Revisar: usa una palabra o signo prohibido');
-    if (rev.links_ok === false) ch += chk(false, '', 'Trae un link que no es de la casa: revísalo antes de enviar');
-    if (rev.cotiza) ch += chk(true, 'Lleva el link de su cotización con las medidas puestas', '');
-    if (rev.falta_precio) ch += chk(false, '', 'Falta completar un precio (busca [PRECIO: …] en el texto)');
-    if (rev.necesita_humano) ch += chk(false, '', 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : ''));
-    h += '<ul class="checks">' + ch + '</ul>';
+    if (rev.necesita_humano) h += avisoHtml('', ICO.persona, 'Necesita una persona' + (rev.motivo ? ': ' + rev.motivo : '') + '. Revisa antes de enviar.');
+    if (rev.falta_precio) h += avisoHtml('', ICO.alerta, 'Falta completar un precio: busca [PRECIO: …] en el texto.');
+    if (rev.links_ok === false) h += avisoHtml('', ICO.alerta, 'Trae un link que no es de la casa: revísalo antes de enviar.');
+    if (rev.sin_palabras_prohibidas === false) h += avisoHtml('', ICO.alerta, 'Usa una palabra o un signo prohibido: revísalo antes de enviar.');
+    if (rev.cotiza) h += avisoHtml('i', ICO.si, 'Lleva el link de su cotización con las medidas puestas.');
   }
-  h += '</div>';
+  if (!cerrado && no) h += avisoHtml('r', ICO.alerta, no);
   if (CONFIRMA === 'enviar') {
-    return h + '<div class="conf"><p>Se enviará por WhatsApp a <b>' + esc(nombre(c)) + '</b>' +
+    h += '<div class="conf"><p>Se enviará por WhatsApp a <b>' + esc(nombre(c)) + '</b>' +
       (c.nombre && c.telefono ? ' (' + esc(telBonito(c.telefono)) + ')' : '') + '. No se puede deshacer.</p>' +
       '<div class="bots"><button class="btn ok" data-confirmar="enviar"' + dis + '>' + (OCUPADO ? 'Enviando…' : 'Sí, enviar') + '</button>' +
       '<button class="btn" data-cancelar' + dis + '>Cancelar</button></div></div>';
+  } else if (cerrado) {
+    h += '<div class="bots">' + (linkWa(c, '') ? '<button class="btn wa" data-wa>Escribirle desde mi WhatsApp</button>' : '') +
+      '<button class="btn ico" data-copiar aria-label="Copiar el texto" title="Copiar el texto">' + ICO.copiar + '</button></div>' +
+      (linkWa(c, '') ? '<p class="nota">Se abre tu WhatsApp con este texto. Ese mensaje sale de tu número y no queda registrado aquí.</p>' : '');
+  } else {
+    h += '<div class="bots"><button class="btn ok" data-enviar' + (no ? ' disabled' : '') + '>' + ICO.enviar + 'Enviar</button>' +
+      '<button class="btn ico" data-copiar aria-label="Copiar el texto" title="Copiar el texto">' + ICO.copiar + '</button></div>';
   }
-  if (CONFIRMA === 'tomar') {
-    return h + '<div class="conf"><p>El chat queda a tu nombre y ya no vuelve a «Por aprobar». Claude te sigue sugiriendo respuestas, pero aquí nunca saldrá nada automático.</p>' +
-      '<div class="bots"><button class="btn ok" data-confirmar="tomar"' + dis + '>' + (OCUPADO ? 'Guardando…' : 'Sí, tomar') + '</button>' +
-      '<button class="btn" data-cancelar' + dis + '>Cancelar</button></div></div>';
-  }
-  h += '<div class="bots"><button class="btn ok" data-enviar' + (no ? ' disabled' : '') + '>Enviar</button><button class="btn" data-copiar>Copiar</button></div>';
-  if (no) h += '<p class="nota aviso">' + esc(no) + '</p>';
-  if (b && EDIT[c.id] != null && EDIT[c.id] !== b.texto) h += '<p class="nota"><button class="link" data-restaurar>Volver al borrador de Claude</button></p>';
-  if (!c.tomado_por) h += '<p class="nota"><button class="link" data-tomar>Tomar este chat</button></p>';
-  return h;
+  return h + '</div>';
 }
 function burbujas(){
   var h = '', ant = null;
@@ -327,27 +458,57 @@ function burbujas(){
   });
   return h;
 }
-function renderChat(){
-  var c = chatPorId(ABIERTO);
-  if (!c) { ABIERTO = null; renderLista(); return; }
-  var b = BORR[c.id], v = ventana(c), an = anuncio(c);
-  var sub = (c.canal === 'instagram' ? 'Instagram' : 'WhatsApp') + (c.nombre && c.telefono ? ' · ' + telBonito(c.telefono) : '') + (an ? ' · Anuncio: ' + an : '');
-  var h = '<div class="cab"><button class="atras" data-atras aria-label="Volver a la lista">' + ICO.atras + '</button><div><b>' + esc(nombre(c)) + '</b><small>' + esc(sub) + '</small></div></div>';
-  h += '<div class="chat">' + (MSGS.length ? burbujas() : '<p class="vacio">Cargando mensajes…</p>') + '</div>';
-  h += '<div class="vent' + (v.abierta ? '' : ' no') + '">' + ICO.reloj + '<span>' + esc(v.texto) + '</span></div>';
-  if (c.tomado_por) {
-    var ql = quienLleva(c);
-    h += '<div class="bloq">' + ICO.candado + '<span>' + esc(ql === 'tú' ? 'Este chat lo llevas tú.' : 'Este chat lo lleva ' + ql + '.') + ' Aquí nada sale automático.</span></div>';
-  }
-  h += redaccionHtml(c, b);
-  $('#main').innerHTML = h;
+function pintarChat(){
+  var p = $('#pc');
+  var c = ABIERTO ? chatPorId(ABIERTO) : null;
+  if (!c) { ABIERTO = null; p.innerHTML = '<p class="vacio elige">Elige un chat de la lista.</p>'; return; }
+  var b = BORR[c.id], v = ventana(c), an = anuncio(c), ql = quienLleva(c);
+  var sub = [
+    c.nombre && c.telefono ? telBonito(c.telefono) : (c.canal === 'instagram' ? 'Instagram' : ''),
+    an ? 'Anuncio: ' + an : '',
+    ql ? (ql === 'tú' ? 'Lo llevas tú' : 'Lo lleva ' + ql) : ''
+  ].filter(Boolean).join(' · ');
+  var pill = v.abierta ? '<span class="pill ' + (urgente(c) ? 'r' : 'v') + '">' + esc(quedaTxt(v.ms)) + '</span>' : '<span class="pill g">Cerrado</span>';
+  p.innerHTML = '<div class="cab"><button class="atras" data-atras aria-label="Volver a la lista">' + ICO.atras + '</button>' +
+    '<div><b>' + esc(nombre(c)) + '</b><small>' + esc(sub) + '</small></div>' + pill + '</div>' +
+    '<div class="chat" id="msgs">' + (MSGS.length ? burbujas() : '<p class="vacio">Cargando mensajes…</p>') + '</div>' +
+    redaccionHtml(c, b);
+  ajustarTxt();
+}
+/* El cuadro de texto crece con lo escrito, hasta un tercio de la pantalla. */
+function ajustarTxt(){
+  var t = $('#txt'); if (!t) return;
+  t.style.height = 'auto';
+  t.style.height = Math.max(72, Math.min(t.scrollHeight + 2, Math.round(window.innerHeight * 0.36))) + 'px';
+}
+function ancho(){ return window.matchMedia('(min-width:900px)').matches; }
+/* En computador los dos paneles ocupan justo lo que queda de pantalla bajo el encabezado. */
+function medirAlto(){
+  var m = $('#main'); if (!m) return;
+  if (!ancho()) { m.style.removeProperty('--alto'); return; }
+  var arriba = m.getBoundingClientRect().top + window.scrollY;
+  m.style.setProperty('--alto', Math.max(420, window.innerHeight - arriba) + 'px');
+}
+window.addEventListener('resize', medirAlto);
+/* Al abrir un chat se muestra lo último que se dijo, como en WhatsApp. */
+function bajar(){
+  var m = $('#msgs'); if (!m) return;
+  if (ancho()) m.scrollTop = m.scrollHeight; else window.scrollTo(0, document.documentElement.scrollHeight);
 }
 function render(){
-  if (ABIERTO) {
-    renderChat();
-    var n = CHATS.filter(function(c){ return c.estado === 'por_aprobar'; }).length;
-    $('#sub').textContent = n + ' por aprobar · actualizado ' + hora(new Date());
-  } else renderLista();
+  var m = $('#main');
+  if (!$('#pl')) {
+    m.innerHTML = '<div id="pl" class="pl"><label class="busca">' + ICO.buscar +
+      '<input id="bus" type="search" placeholder="Buscar por nombre o teléfono" autocomplete="off" aria-label="Buscar por nombre o teléfono"></label>' +
+      '<div id="seg" class="seg"></div><div id="filas"></div></div><div id="pc" class="pc"></div>';
+  }
+  pintarChat();
+  pintarLista();
+  m.className = 'bandeja' + (ABIERTO ? ' con-chat' : '');
+  medirAlto();
+  document.body.classList.toggle('chat-abierto', !!ABIERTO);
+  var n = grupos().responder.length;
+  $('#sub').textContent = (n ? n + ' por responder' : 'Todo al día') + ' · actualizado ' + hora(new Date());
 }
 
 /* ── Datos (solo lectura) ────────────────────────────────────────────── */
@@ -406,7 +567,7 @@ async function recargar(silencio){
 async function abrir(id){
   ABIERTO = Number(id); MSGS = []; delete NUEVOS[ABIERTO]; pintarFranja(); render(); window.scrollTo(0, 0);
   try { await cargarMsgs(ABIERTO); } catch (e) { toast('No se pudieron cargar los mensajes.'); }
-  FIRMA = firma(); render();
+  FIRMA = firma(); render(); bajar();
 }
 async function copiar(){
   var c = chatPorId(ABIERTO); if (!c) return;
@@ -492,26 +653,6 @@ async function enviarConfirmado(){
   if (res.j && res.j.definitivo) delete CLAVE[c.id];
   render(); toast((res.j && res.j.error) || 'No se pudo enviar.', 6000);
 }
-async function tomarConfirmado(){
-  var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
-  OCUPADO = true; render();
-  var res = null;
-  try {
-    if (LOCAL) {
-      await new Promise(function(r){ setTimeout(r, 400); });
-      c.estado = 'de_cesar'; c.tomado_por = MI_MAIL || 'tu@prueba.cl';
-      LOCAL_DATOS.borradores.forEach(function(x){ if (x.chat_id === c.id) x.para = 'cesar'; });
-      res = { status: 200, j: { ok: true } };
-    } else {
-      res = await llamar('tomar', { chat_id: Number(c.id) });
-    }
-  } catch (e) { res = null; }
-  OCUPADO = false; CONFIRMA = null;
-  if (res && res.j && res.j.ok) { await recargar(true); render(); toast('El chat quedó a tu nombre.'); return; }
-  await recargar(true); render();
-  toast((res && res.j && res.j.error) || 'No se pudo tomar el chat. Revisa la conexión.', 5000);
-}
-
 /* Un solo listener para todo (los botones se repintan). */
 document.addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b || !LISTO) return;
@@ -523,14 +664,25 @@ document.addEventListener('click', function(e){
   if (b.hasAttribute('data-atras')) { if (OCUPADO) return; ABIERTO = null; MSGS = []; CONFIRMA = null; FIRMA = firma(); render(); window.scrollTo(0, 0); return; }
   if (b.hasAttribute('data-copiar')) { copiar(); return; }
   if (b.hasAttribute('data-enviar')) { pedirEnvio(); return; }
-  if (b.hasAttribute('data-tomar')) { if (!OCUPADO) { CONFIRMA = 'tomar'; render(); } return; }
+  if (b.id === 'mas') { var mn = $('#menu'); mn.hidden = !mn.hidden; b.setAttribute('aria-expanded', mn.hidden ? 'false' : 'true'); return; }
+  if (b.id === 'act') { $('#menu').hidden = true; $('#mas').setAttribute('aria-expanded', 'false'); return; }
+  if (b.hasAttribute('data-nums')) { var nu = $('#nums'); nu.innerHTML = nu.innerHTML ? '' : (numerosHtml() || '<p class="nota">Todavía no hay números del asistente.</p>'); return; }
+  if (b.hasAttribute('data-wa')) {
+    var cw = chatPorId(ABIERTO); if (!cw) return;
+    var lw = linkWa(cw, String(textoActual(cw, BORR[cw.id]) || '').trim());
+    if (lw) window.open(lw, '_blank', 'noopener');
+    return;
+  }
   if (b.hasAttribute('data-cancelar')) { if (!OCUPADO) { CONFIRMA = null; render(); } return; }
   if (b.hasAttribute('data-restaurar')) { if (ABIERTO) { delete EDIT[ABIERTO]; delete CLAVE[ABIERTO]; render(); } return; }
   if (b.dataset.confirmar === 'enviar') { enviarConfirmado(); return; }
-  if (b.dataset.confirmar === 'tomar') { tomarConfirmado(); return; }
 });
 /* Lo que se escribe queda guardado por chat: un repintado no lo pierde. */
-document.addEventListener('input', function(e){ if (e.target && e.target.id === 'txt' && ABIERTO) EDIT[ABIERTO] = e.target.value; });
+document.addEventListener('input', function(e){
+  if (!e.target) return;
+  if (e.target.id === 'txt' && ABIERTO) { EDIT[ABIERTO] = e.target.value; ajustarTxt(); }
+  if (e.target.id === 'bus') { BUSCA = e.target.value; if (LISTO) pintarLista(); }
+});
 function escribiendo(){ return !!(document.activeElement && document.activeElement.id === 'txt'); }
 
 async function cargar(){
@@ -552,7 +704,7 @@ async function cargar(){
   LISTO = true; FIRMA = firma();
   $('#act').hidden = false;
   render();
-  $('#camp').hidden = false;
+  $('#camp').hidden = false; $('#mas').hidden = false;
   iniciarAvisos();
   /* Si se llegó tocando una notificación (?chat=N), abre ese chat y limpia la dirección. */
   var q = /[?&]chat=(\d+)/.exec(location.search);
@@ -651,7 +803,7 @@ function opcion(texto, id, on, dis){
 }
 function pintarAvisos(){
   var b = $('#camp');
-  b.innerHTML = ICO.campana + '<span>Avisos</span>' + (AV.activo ? '' : '<i>!</i>');
+  b.innerHTML = ICO.campana + (AV.activo ? '' : '<i>!</i>');
   b.setAttribute('aria-expanded', AV.abierto ? 'true' : 'false');
   b.title = AV.activo ? 'Avisos activados en este dispositivo' : 'Los avisos no están activados en este dispositivo';
   var p = $('#avisos');
