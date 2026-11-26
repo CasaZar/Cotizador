@@ -1606,6 +1606,23 @@ body:not(.modo-vendedor) #s1 .prof-cta { text-decoration: underline; text-underl
 .med-frec { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin: 2px 0 10px; -webkit-overflow-scrolling: touch; }
 .med-frec button { flex: 0 0 auto; border: 1px solid var(--verde); color: var(--verde); background: #fff; border-radius: 20px; padding: 6px 12px; font-size: 13.5px; cursor: pointer; font-family: 'Poppins', sans-serif; min-height: 36px; }
 .med-frec button:active { background: #EEF1EA; }
+/* entrada pública de puertas y peldaños (26-11-2026) */
+.dm-desde { font-size:11.5px; text-align:center; color:var(--ac); font-weight:600; padding:0 3px 5px; margin-top:-2px; }
+.dm-eleg { display:flex; align-items:center; gap:11px; background:#fff; border:2px solid var(--ac); border-radius:12px; padding:8px 10px; margin-bottom:16px; }
+.dm-eleg.hidden { display:none; }
+.dm-eleg img { width:46px; height:62px; object-fit:cover; border-radius:6px; background:#EFE8DC; flex:none; }
+.dm-eleg b { display:block; font-size:15px; font-weight:600; color:var(--tx); }
+.dm-eleg small { font-size:12px; color:var(--tm); }
+.dm-eleg button { margin-left:auto; background:none; border:0; color:var(--verde); font-size:13.5px; text-decoration:underline; text-underline-offset:2px; cursor:pointer; font-family:inherit; min-height:44px; padding:0 4px; white-space:nowrap; }
+#f-dyn.dm-elegido #r1 > .door-mo { display:none; }
+.peld-ref { display:flex; gap:12px; align-items:center; background:#F2EEE3; border-radius:12px; padding:11px 12px; margin-bottom:16px; }
+.peld-ref svg { width:84px; flex:none; }
+.peld-ref p { font-size:13px; line-height:1.45; margin:0; color:var(--tx); }
+.peld-ref b { display:block; font-size:15px; font-weight:600; }
+.peld-esp { display:flex; gap:8px; }
+.peld-esp button { flex:1; text-align:left; border:1px solid var(--bd2); border-radius:10px; padding:9px 11px; background:#fff; font-family:inherit; font-size:12.5px; color:var(--tm); cursor:pointer; min-height:48px; }
+.peld-esp button b { display:block; font-size:15px; color:var(--tx); font-weight:600; }
+.peld-esp button.on { border:2px solid var(--verde); padding:8px 10px; }
 #barra-precio { display: none; }
 @media (max-width: 899px) {
   #barra-precio.ver { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; align-items: center; justify-content: space-between; gap: 10px;
@@ -2620,7 +2637,7 @@ textarea.es-in { resize: vertical; line-height: 1.4; }
     <button class="btn-primary" id="btn-calc">Ver precio por madera →</button>
     </div>
     <a class="ab-b-solo ab-alt" href="#" target="_blank" rel="noopener" onclick="abWaClick(this)">¿Prefieres escribirnos tú? <b>Abrir WhatsApp →</b></a>
-    <div class="confianza">Garantía 5 años · Madera maciza 100% sólida · Envío a todo Chile</div>
+    <div class="confianza"><span class="solo-ven">Garantía 5 años · </span>Madera maciza 100% sólida · Envío a todo Chile</div>
     <div class="legal-datos">Muvale Diseño SpA (Casa Zaru) usa tu nombre y contacto para responder tu cotización. Puedes ver, corregir o borrar tus datos escribiendo a hola@casazaru.cl · <a href="https://www.casazaru.cl/policies/privacy-policy" target="_blank" rel="noopener">Política de privacidad</a></div>
     <!-- solo vendedores: guarda este producto y vuelve al selector por otro -->
     <button class="btn-vista v-solo" type="button" onclick="vVistaPrevia()">Vista del cliente</button>
@@ -3509,11 +3526,56 @@ function selectDoorModel(id) {
     if (card) card.classList.toggle('dm-sel', m.id === id);
   });
   document.getElementById('door-sub').classList.remove('hidden');
+  /* público: cambiar de modelo no borra la medida que ya se escribió */
+  var medPrev = vendorMode ? null : ['lg1','an1','ca1'].map(function(i){ var e = document.getElementById(i); return e ? e.value : ''; });
   nrows = 1;
   renderDoorSub(prod);
   var moEl = document.getElementById('mo1');
   if (moEl) { Array.from(moEl.options).forEach(function(opt,i){ if(opt.text===model.nombre) moEl.selectedIndex=i; }); }
+  if (medPrev) ['lg1','an1','ca1'].forEach(function(i, k){ var e = document.getElementById(i); if (e && medPrev[k]) e.value = medPrev[k]; });
+  /* público: la galería se pliega, queda el modelo elegido y la pantalla sube
+     al título, con las medidas a la vista */
+  var dmSec = document.getElementById('dm-sec'), dmEl = document.getElementById('dm-eleg');
+  if (!vendorMode && dmSec && dmEl) {
+    dmEl.innerHTML = '<img src="' + model.img + '?width=300" alt=""><div><b>' + model.nombre + '</b><small>Modelo elegido</small></div>' +
+      '<button type="button" onclick="doorCambiarModelo()">Cambiar modelo</button>';
+    dmSec.classList.add('hidden'); dmEl.classList.remove('hidden');
+    var fd = document.getElementById('f-dyn'); if (fd) fd.classList.add('dm-elegido');
+    embudoTick('modelo');
+    var tit = document.getElementById('f-title'); if (tit) tit.scrollIntoView({ block: 'start' });
+  }
   calcLive();
+}
+/* vuelve a mostrar la galería de modelos (público) */
+function doorCambiarModelo(sinScroll) {
+  var dmSec = document.getElementById('dm-sec'), dmEl = document.getElementById('dm-eleg'), fd = document.getElementById('f-dyn');
+  if (!dmSec || !dmEl || dmEl.classList.contains('hidden')) return;
+  dmSec.classList.remove('hidden'); dmEl.classList.add('hidden');
+  if (fd) fd.classList.remove('dm-elegido');
+  if (!sinScroll) dmSec.scrollIntoView({ block: 'start' });
+}
+/* precio de partida de un modelo: 200 × 80 cm en la madera más económica, con
+   la misma fórmula de calcLive (m² + fijo − descuento del modelo) */
+function puertaDesde(m) {
+  var t = PR[m.tipo] && PR[m.tipo].bajo;
+  return t ? (2.0 * 0.8 * t.m2 + t.fijo - descModelo(m.nombre)) : 0;
+}
+/* el marco es opcional: al público se le muestra recién cuando lo pide */
+function marcoVer() {
+  var s = document.getElementById('marco-sec'), b = document.getElementById('btn-ver-marco');
+  if (s) s.classList.remove('hidden');
+  if (b) b.classList.add('hidden');
+}
+/* peldaños (público): botones de espesor sobre el select de siempre */
+function peldEspSel(v) {
+  var s = document.getElementById('f-espesor-peldano');
+  if (s) s.value = v;
+  setPeldanoEspesor(v);
+}
+function peldEspSync() {
+  var box = document.getElementById('peld-esp'); if (!box) return;
+  var v = getPeldanoEspesor();
+  Array.from(box.querySelectorAll('button')).forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-v') === v); });
 }
 
 /* prod holds actual product type (granero/maciza/vidrios when in puertas mode) */
@@ -4148,7 +4210,7 @@ function calcLive() {
       nUnid += ca;
       fijoLive += fijoUnidad(lg) * ca;
     }
-    if (prod === 'peldano') contraSync();
+    if (prod === 'peldano') { contraSync(); peldEspSync(); }
     if (sumM2 > 0) {
       bajo = sumM2 * currentPR().bajo * espesorFactor('bajo') + fijoLive + contraValor('bajo');
       alto = sumM2 * currentPR().alto * espesorFactor('alto') + fijoLive + contraValor('alto');
@@ -4489,7 +4551,31 @@ function renderForm(p) {
         '</select>' +
         '<div id="uso-aviso" class="uso-aviso hidden"></div>' +
       '</div>';
-    var addRowLabel = cubiertaSolo ? '+ Agregar cubierta' : '+ Agregar pieza';
+    /* ── ENTRADA PÚBLICA DE PELDAÑOS (26-11-2026) ── precio de referencia antes
+       de pedir nada, medidas primero y el espesor después, con botones. El
+       select de siempre queda oculto: es el que leen getPeldanoEspesor y los links. */
+    var peldPub = (p === 'peldano' && !vendorMode);
+    var peldEspPub = '';
+    if (peldPub) {
+      var pRef = function(t){ return (100 / 100) * (28 / 100) * PR.peldano[t] * espesorFactor(t); };
+      usoField =
+        '<div class="peld-ref">' +
+          '<svg viewBox="0 0 92 62" fill="none" stroke="#B5652E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 30l52-14 24 8-52 15z"/><path d="M8 30v7l24 9v-7M32 46l52-15v-7"/></svg>' +
+          '<p><b>' + fmt(pRef('bajo')) + ' a ' + fmt(pRef('alto')) + ' cada uno</b>Peldaño de 100 × 28 cm y 4 cm de espesor, según la madera. IVA incluido.</p>' +
+        '</div>';
+      peldEspPub =
+        '<div class="fsec">' +
+          '<label class="flabel">Espesor</label>' +
+          '<div class="peld-esp" id="peld-esp">' +
+            '<button type="button" class="on" data-v="4" onclick="peldEspSel(\'4\')"><b>4 cm</b>Estándar</button>' +
+            '<button type="button" data-v="2" onclick="peldEspSel(\'2\')"><b>2 cm</b>Más delgado</button>' +
+          '</div>' +
+          '<select class="fsel hidden" id="f-espesor-peldano" onchange="setPeldanoEspesor(this.value)">' +
+            '<option value="4" selected>4 cm</option><option value="2">2 cm</option>' +
+          '</select>' +
+        '</div>';
+    }
+    var addRowLabel = cubiertaSolo ? '+ Agregar cubierta' : peldPub ? '+ Tengo peldaños de otra medida' : '+ Agregar pieza';
     /* El público no ve los checkboxes de extras (ver initProd), así que esta nota
        es la que le dice que el teñido y las perforaciones existen. Al peldaño no
        se le nombran perforaciones ni formas: no lleva lavaplatos ni llaves. */
@@ -4526,7 +4612,7 @@ function renderForm(p) {
       : (p === 'pcocina')
       ? '<div class="finput-hint">Cada puerta suma <strong>' + fmt(PR.pcocina.fijo) + '</strong> sobre el valor de la madera. En «Cant.» va el número de puertas de esa medida.</div>'
       : (p === 'peldano')
-      ? '<div class="finput-hint">En «Cant.» va cuántos peldaños tienen esa medida.</div>'
+      ? '<div class="finput-hint">En «' + (peldPub ? '¿Cuántos?' : 'Cant.') + '» va cuántos peldaños tienen esa medida.</div>'
       : '';
     /* ── PELDAÑOS (06-10-2026) ── 96 cotizaciones y 0 ventas en 60 días. Lo
        que hacen los mejores configuradores de escaleras (ViewRail, Stairbox,
@@ -4564,7 +4650,7 @@ function renderForm(p) {
           '<div class="col-lbl num"></div>' +
           '<div class="col-lbl">Largo cm</div>' +
           '<div class="col-lbl">' + (p === 'peldano' ? 'Fondo cm' : 'Ancho cm') + '</div>' +
-          '<div class="col-lbl nar">Cant.</div>' +
+          '<div class="col-lbl nar">' + (peldPub ? '¿Cuántos?' : 'Cant.') + '</div>' +
           '<div class="col-lbl del"></div>' +
         '</div>') +
         '<div id="drows">' + dimRow(1) + '</div>' +
@@ -4574,7 +4660,7 @@ function renderForm(p) {
         (p === 'cubierta' ? medFrecHtml() : '') +
         maderaNota +
       '</div>' +
-      espCubField + peldanoExtra +
+      espCubField + peldEspPub + peldanoExtra +
       /* al vendedor el espesor del documento le queda como un link al final */
       (vendorMode ? vExtrasFieldHtml() + vEspesorFieldHtml() : vEspesorFieldHtml() + vExtrasFieldHtml());
     c.addEventListener('click', function(e) {
@@ -4585,19 +4671,29 @@ function renderForm(p) {
 
   } else if (p === 'puertas') {
     selectedDoorModel = '';
+    /* ── ENTRADA PÚBLICA DE PUERTAS (26-11-2026) ── 125 entraron y 36 vieron un
+       precio (14-09 al 25-11). Cada modelo muestra su precio de partida, y al
+       tocarlo la galería se pliega y quedan las medidas a la vista (antes solo
+       cambiaba el borde y las medidas quedaban bajo la pantalla). Solo público. */
     var cards = DOOR_MODELS.map(function(m) {
+      var desde = vendorMode ? '' : '<div class="dm-desde">desde ' + fmt(puertaDesde(m)) + '</div>';
       return '<div class="dm-card" id="dmc-'+m.id+'" onclick="selectDoorModel(\''+m.id+'\')">' +
         '<img src="'+m.img+'?width=300" loading="lazy">' +
-        '<div class="dm-lbl">'+m.nombre+'</div>' +
+        '<div class="dm-lbl">'+m.nombre+'</div>' + desde +
       '</div>';
     }).join('');
     c.innerHTML =
-      '<div class="fsec">' +
-        '<label class="flabel">Elige el modelo y luego escribe las medidas</label>' +
+      '<div class="fsec" id="dm-sec">' +
+        '<label class="flabel">' + (vendorMode ? 'Elige el modelo y luego escribe las medidas' : 'Toca el modelo que te gusta') + '</label>' +
         '<div class="dm-grid">'+cards+'</div>' +
+        (vendorMode ? '' : '<div class="finput-hint" style="margin-top:8px">Precio de partida: puerta de 200 × 80 cm en Pino Oregón, IVA incluido. Con tus medidas ves el tuyo.</div>') +
       '</div>' +
+      (vendorMode ? '' : '<div id="dm-eleg" class="dm-eleg hidden"></div>') +
       '<div id="door-sub" class="hidden"></div>';
     c.addEventListener('click', function(e) {
+      /* si se quita una fila, la primera puede dejar de ser la del modelo
+         elegido arriba: se vuelve a la galería y cada fila muestra su modelo */
+      if (e.target.closest('.btn-del-row') && e.target.closest('#drows')) doorCambiarModelo(true);
       if (e.target.closest('#btn-add-row')) addRow();
       if (e.target.closest('#btn-add-marco')) addMarcoRow();
       if (e.target.closest('#btn-add-vextra')) addVExtra();
@@ -5808,7 +5904,13 @@ function renderDoorSub(tipo, conVidrio) {
     '<div class="fsec">' +
       '<label class="flabel">Puertas</label>' +
       '<div id="drows">' + doorRow(1, opts) + '</div>' +
+      (vendorMode ? '' :
+        '<div class="finput-hint" style="margin:8px 0 5px">¿Aún no tienes la medida? Toca una de las habituales (alto × ancho):</div>' +
+        '<div class="med-frec">' + [[200,70],[200,80],[200,90]].map(function(m){
+          return '<button type="button" onclick="medFrec(' + m[0] + ',' + m[1] + ')">' + m[0] + ' × ' + m[1] + '</button>';
+        }).join('') + '</div>') +
       '<button class="btn-add" id="btn-add-row">+ Agregar puerta</button>' +
+      (vendorMode ? '' : '<button type="button" class="btn-add" id="btn-ver-marco" onclick="marcoVer()">+ Agregar marco (opcional)</button>') +
     '</div>' +
     (hasExtra ?
       '<div class="fsec">' +
@@ -5841,7 +5943,7 @@ function renderDoorSub(tipo, conVidrio) {
         '</div>' +
       '</div>'
     : '') +
-    '<div class="fsec">' +
+    '<div class="fsec' + (vendorMode ? '' : ' hidden') + '" id="marco-sec">' +
       '<label class="flabel">Marco (opcional)</label>' +
       '<div class="col-labels">' +
         '<div class="col-lbl">Metros lineales</div>' +
@@ -9334,6 +9436,7 @@ function restoreProducto(d) {
     toggleVidrioExtra();
   }
   if (d.marco && d.marco.length) {
+    marcoVer();
     document.getElementById('mcml1').value = d.marco[0].ml;
     document.getElementById('mcan1').value = d.marco[0].an;
     document.getElementById('mcca1').value = d.marco[0].ca || 1;
