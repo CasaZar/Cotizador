@@ -18,6 +18,10 @@
   (mensajes-sw.js + ruta /push de la función). Con la página abierta, además, suena y muestra una
   franja cuando un cliente escribe: cada 15 segundos pregunta solo si llegó algo (una consulta
   mínima) y recién entonces recarga todo.
+  DEVOLVER AL ASISTENTE y FRASES (26-11-2026, migración 0017): un chat tomado por una persona se le puede
+  devolver al asistente (ruta /soltar: el dueño o quien lo lleva). El menú «Frases del asistente» muestra las
+  frases fijas, las que funcionan y las que nunca se dicen; el dueño las cambia (ruta /frases) y la función
+  las usa desde el próximo borrador.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -182,6 +186,32 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
   .pc .cab{position:static}
   .elige{margin:auto}
 }
+/* ── Devolver al asistente y Frases del asistente (26-11-2026) ── */
+.soltar{display:flex;gap:8px;align-items:center;font-size:13px;border-radius:10px;padding:8px 10px;margin:0 0 10px;background:var(--gris);color:var(--cafe)}
+.soltar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.soltar span{flex:1;min-width:0}
+.soltar button{background:#fff;border:1.5px solid var(--verde);color:var(--verde);border-radius:8px;font:600 12.5px Poppins;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.soltar button:disabled{opacity:.5;cursor:default}
+.fr{max-width:760px;margin:0 auto;padding:4px 0 30px}
+.fr-cab{display:flex;align-items:center;gap:10px;padding:12px 12px 6px}
+.fr-cab h2{font:600 20px 'Playfair Display',serif;margin:0;flex:1}
+.fr-int{font-size:13px;color:var(--suave);margin:0 14px 4px}
+.fr h3{font:600 11px Poppins;letter-spacing:.06em;text-transform:uppercase;color:var(--suave);margin:20px 14px 2px;display:flex;align-items:center;gap:8px}
+.fr h3 .link{margin-left:auto;text-transform:none;letter-spacing:0;font-size:13px}
+.fr-exp{font-size:12.5px;color:var(--suave);margin:0 14px 8px}
+.frc{background:#fff;border:1px solid var(--linea);border-radius:12px;margin:0 12px 8px;padding:10px 12px}
+.frc.off{opacity:.55}
+.frc .cu{font-size:12px;color:var(--terra);font-weight:500}
+.frc .fx{font-size:14.5px;margin:3px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.frc.ev .fx{color:var(--rojo)}
+.frc .pie{display:flex;gap:14px;align-items:center;margin-top:8px;font-size:12px;color:var(--suave)}
+.frc .pie span{flex:1;min-width:0}
+.frc label{display:block;font-size:12px;color:var(--suave);margin-top:8px}
+.frc label:first-child{margin-top:0}
+.frc textarea,.frc input,.frc select{display:block;width:100%;font:14px/1.45 Poppins,system-ui,sans-serif;color:var(--txt);background:#fffcf8;border:1px solid var(--linea);border-radius:10px;padding:8px 10px;margin-top:3px}
+.frc textarea{resize:vertical;min-height:76px}
+.frc .bots{padding:10px 0 0}
+.frc .nota{margin:8px 0 0}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#2b2b2b;color:#fff;border-radius:10px;padding:10px 16px;font-size:14px;max-width:90vw;z-index:5}
 </style></head><body>
 <div class="wrap">
@@ -189,7 +219,7 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
   <nav class="nav"><a href="./?panel=zr25">Panel</a><a href="fototeca.html">Fototeca</a><a href="mi-dia.html">Mi día</a><a class="on" href="mensajes.html">Mensajes</a></nav>
   <div id="franja" class="franja" hidden role="status"></div>
   <section id="avisos" class="avisos" hidden aria-label="Avisos"></section>
-  <section id="menu" class="menu" hidden aria-label="Más opciones"><button id="act" hidden>Actualizar ahora</button><button data-nums>Números del asistente</button><button id="salir" hidden>Salir</button><div id="nums"></div></section>
+  <section id="menu" class="menu" hidden aria-label="Más opciones"><button id="act" hidden>Actualizar ahora</button><button data-frases>Frases del asistente</button><button data-nums>Números del asistente</button><button id="salir" hidden>Salir</button><div id="nums"></div></section>
   <main id="main"></main>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -394,6 +424,10 @@ function puedoEscribir(c){
   var t = String(c.tomado_por || '').toLowerCase();
   return !t || t === MI_MAIL || MI_MAIL === ADMIN_MAIL;
 }
+function puedoSoltar(c){
+  var t = String(c.tomado_por || '').toLowerCase();
+  return !!t && (MI_MAIL === ADMIN_MAIL || t === MI_MAIL);
+}
 function motivoNoEnviar(c){
   if (c.canal !== 'whatsapp') return 'Por ahora solo se puede enviar por WhatsApp.';
   if (!ventana(c).abierta) return 'No se puede enviar: la ventana de 24 horas está cerrada.';
@@ -419,6 +453,12 @@ function redaccionHtml(c, b){
   var dis = OCUPADO ? ' disabled' : '';
   var editado = b && EDIT[c.id] != null && EDIT[c.id] !== b.texto;
   var h = '<div class="comp">';
+  /* Chat tomado por una persona: el asistente se calla ahí. Se le puede devolver (26-11-2026). */
+  if (c.tomado_por) {
+    var ql = quienLleva(c);
+    h += '<div class="soltar">' + ICO.persona + '<span>' + esc((ql === 'tú' ? 'Lo llevas tú' : 'Lo lleva ' + ql) + ': el asistente no responde solo en este chat.') + '</span>' +
+      (puedoSoltar(c) && CONFIRMA !== 'enviar' ? '<button data-soltar' + dis + '>Devolver al asistente</button>' : '') + '</div>';
+  }
   if (cerrado) h += avisoHtml('r', ICO.candado, 'Pasaron más de 24 horas desde su último mensaje. Desde aquí ya no se le puede escribir.');
   h += '<div class="lab">' + ICO.lapiz + '<span>' + esc(b ? 'Respuesta sugerida' : 'Tu respuesta') + '</span>' +
     (editado && !fijo ? '<button class="link" data-restaurar>Deshacer cambios</button>' : '') + '</div>' +
@@ -496,6 +536,7 @@ function bajar(){
   if (ancho()) m.scrollTop = m.scrollHeight; else window.scrollTo(0, document.documentElement.scrollHeight);
 }
 function render(){
+  if (VISTA === 'frases') return;          /* la pantalla de frases se pinta sola (pintarFrases) */
   var m = $('#main');
   if (!$('#pl')) {
     m.innerHTML = '<div id="pl" class="pl"><label class="busca">' + ICO.buscar +
@@ -565,6 +606,7 @@ async function recargar(silencio){
   } catch (e) { if (!silencio) toast('No se pudo actualizar. Revisa la conexión.'); }
 }
 async function abrir(id){
+  if (VISTA === 'frases') { VISTA = 'chats'; FR_EDIT = null; FR_ERR = ''; $('#main').innerHTML = ''; }
   ABIERTO = Number(id); MSGS = []; delete NUEVOS[ABIERTO]; pintarFranja(); render(); window.scrollTo(0, 0);
   try { await cargarMsgs(ABIERTO); } catch (e) { toast('No se pudieron cargar los mensajes.'); }
   FIRMA = firma(); render(); bajar();
@@ -653,9 +695,157 @@ async function enviarConfirmado(){
   if (res.j && res.j.definitivo) delete CLAVE[c.id];
   render(); toast((res.j && res.j.error) || 'No se pudo enviar.', 6000);
 }
+/* ── Devolver al asistente (26-11-2026): va por la función (/soltar) ── */
+async function soltarChat(){
+  var c = chatPorId(ABIERTO); if (!c || OCUPADO) return;
+  OCUPADO = true; render();
+  var res = null;
+  try {
+    if (LOCAL) { await new Promise(function(r){ setTimeout(r, 500); }); c.tomado_por = null; c.estado = 'por_aprobar'; res = { status: 200, j: { ok: true } }; }
+    else res = await llamar('soltar', { chat_id: Number(c.id) });
+  } catch (e) { res = null; }
+  OCUPADO = false;
+  if (res && res.j && res.j.ok) { await recargar(true); render(); toast('Listo: el asistente vuelve a responder solo en este chat cuando el cliente escriba.', 4500); return; }
+  render(); toast((res && res.j && res.j.error) || 'No se pudo devolver el chat. Revisa la conexión.', 5000);
+}
+
+/* ── Frases del asistente (0017): las ve el equipo, las cambia el dueño (ruta /frases) ── */
+var VISTA = 'chats', FRASES = [], FR_EDIT = null, FR_OCUP = false, FR_ERR = '';
+var FR_TIPOS = [
+  { k: 'fija', n: 'Frases fijas', e: 'Las dice tal cual cuando se da la situación. Lo que va entre corchetes, como [nombre], lo completa él.' },
+  { k: 'preferida', n: 'Las que nos funcionan', e: 'Salieron de chats del 5558 que terminaron en venta. Las usa cuando calzan.' },
+  { k: 'evitar', n: 'Nunca decir', e: 'Si una respuesta trae una de estas, no sale sola: queda para que la revise una persona.' }
+];
+var FR_SISTEMA = { saludo: true, aviso_cotiza: true };
+function esDueno(){ return MI_MAIL === ADMIN_MAIL; }
+function frasePorId(id){ for (var i = 0; i < FRASES.length; i++) if (String(FRASES[i].id) === String(id)) return FRASES[i]; return null; }
+async function cargarFrases(){
+  if (LOCAL) { FRASES = ((LOCAL_DATOS && LOCAL_DATOS.frases) || []).filter(function(f){ return !f.deleted_at; }); return; }
+  var r = await sb.from('mensajes_frases').select('id,tipo,clave,cuando,frase,activo,orden,updated_at,updated_by')
+    .is('deleted_at', null).order('orden', { ascending: true }).order('id', { ascending: true });
+  if (r.error) throw new Error('frases');
+  FRASES = r.data || [];
+}
+function quienEdito(f){
+  var u = String(f.updated_by || '').toLowerCase();
+  if (!u || u.indexOf('migraci') === 0) return 'Original';
+  var n = u === ADMIN_MAIL ? 'Tomás' : (VEND[u] || u.split('@')[0]);
+  var d = new Date(f.updated_at);
+  return 'Cambiada' + (isNaN(d.getTime()) ? '' : ' el ' + diaCorto(d)) + ' por ' + n;
+}
+function frCard(f){
+  if (FR_EDIT && String(FR_EDIT.id) === String(f.id)) return frForm(FR_EDIT);
+  var h = '<div class="frc' + (f.activo ? '' : ' off') + (f.tipo === 'evitar' ? ' ev' : '') + '"><div class="cu">' + esc(f.cuando) + '</div>' +
+    '<p class="fx">' + esc(f.tipo === 'evitar' ? '«' + f.frase + '»' : f.frase) + '</p>' +
+    '<div class="pie"><span>' + esc((f.activo ? '' : 'En pausa · ') + quienEdito(f)) + '</span>';
+  if (esDueno() && !FR_EDIT) {
+    h += '<button class="link" data-fr-editar="' + Number(f.id) + '">Editar</button>';
+    if (!FR_SISTEMA[f.clave]) h += '<button class="link" data-fr-pausa="' + Number(f.id) + '">' + (f.activo ? 'Pausar' : 'Activar') + '</button>';
+  }
+  return h + '</div></div>';
+}
+function frForm(d){
+  var sis = !!(d.clave && FR_SISTEMA[d.clave]);
+  var dis = FR_OCUP ? ' disabled' : '';
+  var h = '<div class="frc">' +
+    '<label>Cuándo se usa<input id="fr-cuando" maxlength="300" value="' + esc(d.cuando) + '" placeholder="Ej.: cuando preguntan si hacen envíos"></label>' +
+    '<label>' + (d.tipo === 'evitar' ? 'Palabra o frase que nunca debe decir' : 'Frase') + '<textarea id="fr-frase" maxlength="800">' + esc(d.frase) + '</textarea></label>';
+  if (!sis) h += '<label>Tipo<select id="fr-tipo">' + FR_TIPOS.map(function(t){ return '<option value="' + t.k + '"' + (d.tipo === t.k ? ' selected' : '') + '>' + esc(t.n) + '</option>'; }).join('') + '</select></label>';
+  else h += '<p class="nota">' + esc(d.clave === 'aviso_cotiza'
+    ? 'Este texto sale solo, tal cual, apenas el cliente da sus medidas: sin corchetes ni links.'
+    : 'Esta frase la usa el sistema: se puede cambiar el texto, pero no pausar ni borrar.') + '</p>';
+  if (FR_ERR) h += avisoHtml('r', ICO.alerta, FR_ERR);
+  h += '<div class="bots"><button class="btn ok" data-fr-guardar' + dis + '>' + (FR_OCUP ? 'Guardando…' : 'Guardar') + '</button>' +
+    '<button class="btn" data-fr-cancelar' + dis + '>Cancelar</button></div>';
+  if (d.id !== 'nuevo' && !sis) h += '<p class="nota"><button class="link" data-fr-borrar="' + Number(d.id) + '"' + dis + '>Borrar esta frase</button></p>';
+  return h + '</div>';
+}
+function pintarFrases(){
+  var m = $('#main');
+  m.className = 'frases'; document.body.classList.remove('chat-abierto');
+  var h = '<div class="fr"><div class="fr-cab"><button class="atras" data-fr-volver aria-label="Volver a los chats">' + ICO.atras + '</button><h2>Frases del asistente</h2></div>' +
+    '<p class="fr-int">' + esc(esDueno()
+      ? 'Lo que cambies aquí lo usa el asistente desde el próximo mensaje que redacte. Cada cambio guarda la versión anterior.'
+      : 'Estas son las frases que usa el asistente. Las cambia Tomás.') + '</p>';
+  FR_TIPOS.forEach(function(t){
+    var l = FRASES.filter(function(f){ return f.tipo === t.k; });
+    h += '<h3>' + esc(t.n) + (esDueno() && !FR_EDIT ? '<button class="link" data-fr-nueva="' + t.k + '">Agregar</button>' : '') + '</h3>' +
+      '<p class="fr-exp">' + esc(t.e) + '</p>';
+    if (FR_EDIT && FR_EDIT.id === 'nuevo' && FR_EDIT.grupo === t.k) h += frForm(FR_EDIT);
+    h += l.length ? l.map(frCard).join('') : '<p class="vacio" style="padding:8px 20px 14px">Sin frases todavía.</p>';
+  });
+  m.innerHTML = h + '</div>';
+  $('#sub').textContent = FRASES.length + (FRASES.length === 1 ? ' frase' : ' frases');
+}
+async function abrirFrases(){
+  $('#menu').hidden = true; $('#mas').setAttribute('aria-expanded', 'false');
+  VISTA = 'frases'; FR_EDIT = null; FR_ERR = ''; ABIERTO = null; MSGS = []; CONFIRMA = null;
+  $('#main').className = 'frases'; $('#main').innerHTML = '<p class="vacio">Cargando frases…</p>';
+  try { await cargarFrases(); }
+  catch (e) { VISTA = 'chats'; $('#main').innerHTML = ''; render(); toast('No se pudieron cargar las frases.'); return; }
+  pintarFrases(); window.scrollTo(0, 0);
+}
+function cerrarFrases(){ VISTA = 'chats'; FR_EDIT = null; FR_ERR = ''; $('#main').innerHTML = ''; FIRMA = firma(); render(); window.scrollTo(0, 0); }
+/* Modo local: las frases se guardan solo en memoria. */
+async function simFrase(cuerpo){
+  await new Promise(function(r){ setTimeout(r, 500); });
+  var l = LOCAL_DATOS.frases = LOCAL_DATOS.frases || [];
+  var ahora = new Date().toISOString();
+  if (cuerpo.accion === 'borrar') { var fb = frasePorId(cuerpo.id); if (fb) fb.deleted_at = ahora; return { status: 200, j: { ok: true } }; }
+  if (cuerpo.id == null) { l.push({ id: Date.now(), tipo: cuerpo.tipo, clave: null, cuando: cuerpo.cuando, frase: cuerpo.frase, activo: true, orden: 500, updated_at: ahora, updated_by: MI_MAIL }); return { status: 200, j: { ok: true } }; }
+  var f = frasePorId(cuerpo.id); if (!f) return { status: 404, j: { error: 'Esa frase ya no existe.' } };
+  f.tipo = cuerpo.tipo; f.cuando = cuerpo.cuando; f.frase = cuerpo.frase; if (typeof cuerpo.activo === 'boolean') f.activo = cuerpo.activo;
+  f.updated_at = ahora; f.updated_by = MI_MAIL;
+  return { status: 200, j: { ok: true } };
+}
+async function mandarFrase(cuerpo, okTxt){
+  FR_OCUP = true; FR_ERR = ''; pintarFrases();
+  var res = null;
+  try { res = LOCAL ? await simFrase(cuerpo) : await llamar('frases', cuerpo); } catch (e) { res = null; }
+  FR_OCUP = false;
+  if (res && res.j && res.j.ok) {
+    FR_EDIT = null;
+    try { await cargarFrases(); } catch (e) {}
+    pintarFrases(); toast(okTxt, 3500); return;
+  }
+  var err = (res && res.j && res.j.error) || 'No se pudo guardar. Revisa la conexión.';
+  if (FR_EDIT) { FR_ERR = err; pintarFrases(); } else { pintarFrases(); toast(err, 5000); }
+}
+function guardarFrase(){
+  if (!FR_EDIT || FR_OCUP) return;
+  var d = FR_EDIT;
+  var cuerpo = { accion: 'guardar', id: d.id === 'nuevo' ? null : Number(d.id), tipo: d.tipo,
+    cuando: String(d.cuando || '').replace(/\s+/g, ' ').trim(), frase: String(d.frase || '').trim() };
+  FR_ERR = '';
+  if (cuerpo.cuando.length < 3) FR_ERR = 'Escribe cuándo se usa.';
+  else if (cuerpo.frase.length < 2) FR_ERR = 'Escribe la frase.';
+  else if (d.tipo !== 'evitar' && /[¡¿]/.test(cuerpo.frase)) FR_ERR = 'Sin signos de apertura: solo los de cierre (? !).';
+  if (FR_ERR) { pintarFrases(); return; }
+  mandarFrase(cuerpo, 'Frase guardada. El asistente la usa desde el próximo mensaje.');
+}
+function pausarFrase(id){
+  var f = frasePorId(id); if (!f || FR_OCUP) return;
+  mandarFrase({ accion: 'guardar', id: Number(f.id), tipo: f.tipo, cuando: f.cuando, frase: f.frase, activo: !f.activo },
+    f.activo ? 'Frase en pausa: el asistente deja de usarla.' : 'Frase activa de nuevo.');
+}
+function borrarFrase(id){
+  var f = frasePorId(id); if (!f || FR_OCUP) return;
+  if (!window.confirm('Borrar esta frase? El asistente deja de usarla (la versión anterior queda guardada).')) return;
+  mandarFrase({ accion: 'borrar', id: Number(f.id) }, 'Frase borrada.');
+}
+
 /* Un solo listener para todo (los botones se repintan). */
 document.addEventListener('click', function(e){
   var b = e.target.closest('button'); if (!b || !LISTO) return;
+  if (b.hasAttribute('data-frases')) { abrirFrases(); return; }
+  if (b.hasAttribute('data-fr-volver')) { if (!FR_OCUP) cerrarFrases(); return; }
+  if (b.dataset.frNueva) { FR_EDIT = { id: 'nuevo', grupo: b.dataset.frNueva, tipo: b.dataset.frNueva, cuando: '', frase: '', activo: true }; FR_ERR = ''; pintarFrases(); var fi = $('#fr-cuando'); if (fi) fi.focus(); return; }
+  if (b.dataset.frEditar) { var fe = frasePorId(b.dataset.frEditar); if (fe) { FR_EDIT = { id: fe.id, clave: fe.clave, tipo: fe.tipo, cuando: fe.cuando, frase: fe.frase, activo: fe.activo }; FR_ERR = ''; pintarFrases(); } return; }
+  if (b.hasAttribute('data-fr-cancelar')) { if (!FR_OCUP) { FR_EDIT = null; FR_ERR = ''; pintarFrases(); } return; }
+  if (b.hasAttribute('data-fr-guardar')) { guardarFrase(); return; }
+  if (b.dataset.frPausa) { pausarFrase(b.dataset.frPausa); return; }
+  if (b.dataset.frBorrar) { borrarFrase(b.dataset.frBorrar); return; }
+  if (b.hasAttribute('data-soltar')) { soltarChat(); return; }
   if (b.id === 'camp') { AV.abierto = !AV.abierto; AV.nota = ''; pintarAvisos(); return; }
   if (b.dataset.sw) { cambiarAviso(b.dataset.sw); return; }
   if (b.hasAttribute('data-prueba')) { avisoDePrueba(); return; }
@@ -681,7 +871,10 @@ document.addEventListener('click', function(e){
 document.addEventListener('input', function(e){
   if (!e.target) return;
   if (e.target.id === 'txt' && ABIERTO) { EDIT[ABIERTO] = e.target.value; ajustarTxt(); }
-  if (e.target.id === 'bus') { BUSCA = e.target.value; if (LISTO) pintarLista(); }
+  if (e.target.id === 'bus') { BUSCA = e.target.value; if (LISTO && VISTA === 'chats') pintarLista(); }
+  if (FR_EDIT && e.target.id === 'fr-cuando') FR_EDIT.cuando = e.target.value;
+  if (FR_EDIT && e.target.id === 'fr-frase') FR_EDIT.frase = e.target.value;
+  if (FR_EDIT && e.target.id === 'fr-tipo') FR_EDIT.tipo = e.target.value;
 });
 function escribiendo(){ return !!(document.activeElement && document.activeElement.id === 'txt'); }
 
