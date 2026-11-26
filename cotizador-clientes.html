@@ -10686,7 +10686,8 @@ var PZ_ICO = {
   foto:'<rect x="3" y="5" width="18" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
   mkt:'<path d="M3 10v4h3l6 4V6L6 10H3z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
   proy:'<path d="M4 20V9l8-5 8 5v11M4 20h16M9 20v-6h6v6"/>',
-  camp:'<path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/>'
+  camp:'<path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/>',
+  msj:'<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>'
 };
 /* Fototeca: buscador de fotos y videos del Drive (09-11-2026). Es fototeca.html, en este
    mismo sitio: usa la sesión del panel y lee sus datos del bucket privado «fototeca».
@@ -10718,6 +10719,8 @@ function pzTabs(){
   if (isPanelAdmin()) t.push({id:'camp', label:'Campañas', ico:'camp', g:2});   /* 21-11-2026 */
   t.push({id:'actividad', label:isPanelAdmin() ? 'Actividad' : 'Mi actividad', ico:'actividad', g:3});
   if (MKT) t.push({id:'mkt', label:'Marketing', ico:'mkt', g:3});
+  /* Mensajes: la bandeja del 1122 e Instagram (mensajes.html, misma sesión). 26-11-2026 */
+  if (isPanelAdmin() || !panelSeller.b2b) t.push({id:'mensajes', label:'Mensajes', ico:'msj', g:3, url:'mensajes.html'});
   t.push({id:'fototeca', label:'Fototeca', ico:'foto', g:3, url:FOTOTECA_URL});
   if (isPanelAdmin() && esDueno()){
     t.push({id:'manual', label:'Manual', ico:'manual', g:3});
