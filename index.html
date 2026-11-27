@@ -3854,22 +3854,39 @@ function dctoPct() { return b2bAplica() ? b2bDcto : dctoEsp; }
 function dctoFactor() { var p = dctoPct(); return p > 0 ? 1 - p / 100 : 1; }
 /* monto rebajado, redondeado igual que lo guarda saveQuote (primero el total, despues el descuento): asi el precio que se ve, el del mensaje y el del panel son el mismo peso */
 function dctoMonto(x) { return dctoPct() > 0 ? Math.round(Math.round(x) * dctoFactor()) : x; }
+/* ── «10 % CON TRANSFERENCIA» (27-11-2026, Black Friday) ──
+   El usuario: «10 % en total pagando con transferencia», no 14,5 %. Es el 5 %
+   especial SUMADO al 5 % de transferencia (no multiplicado), igual que la
+   cuenta empresa: tarjeta = lista × 0,95; transferencia = lista × 0,90 justo.
+   Solo vale con el 5 %. El link lo lleva en data.ds = 1 y la fila en
+   origen.dcto_suma. */
+var dctoSuma = false;
+function dctoSumaAplica() { return dctoSuma && dctoEsp === 5 && !b2bAplica() && !profModo; }
+function dctoSelVal() { return dctoSuma && dctoEsp === 5 ? '5s' : String(dctoEsp || 0); }
+function dctoMarcarBotones() {
+  var v = dctoSelVal();
+  document.querySelectorAll('.dcto-op:not(.smad-op)').forEach(function(b){ b.classList.toggle('on', (b.getAttribute('data-v') || '0') === v); });
+}
 function dctoSel(v) {
-  dctoEsp = dctoValido(v);
-  document.querySelectorAll('.dcto-op:not(.smad-op)').forEach(function(b){
-    b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
-  });
+  dctoSuma = v === '5s';
+  dctoEsp = dctoSuma ? 5 : dctoValido(v);
+  dctoMarcarBotones();
   b2bPintar();   /* el aviso de la cuenta dice cuál de los dos se usa */
   vCambio();     /* la tabla de precios del vendedor sigue al descuento */
 }
 function dctoSelHtml() {
+  var sel = dctoSelVal();
+  var ops = [['0', 'Sin']].concat(DCTO_OPCIONES.map(function(v){ return [String(v), v + ' %']; }))
+    .concat([['5s', (transfPct() + 5) + ' % con transf.']]);
   return '<div class="vx-sub">' +
     '<div class="vx-sub-h">Descuento especial</div>' +
     '<div class="dcto-seg">' +
-      [0].concat(DCTO_OPCIONES).map(function(v){
-        return '<button type="button" class="dcto-op' + (v === dctoEsp ? ' on' : '') + '" data-v="' + v + '" onclick="dctoSel(' + v + ')">' + (v ? v + ' %' : 'Sin') + '</button>';
+      ops.map(function(o){
+        return '<button type="button" class="dcto-op' + (o[0] === sel ? ' on' : '') + '" data-v="' + o[0] + '" onclick="dctoSel(\'' + o[0] + '\')">' + o[1] + '</button>';
       }).join('') +
     '</div>' +
+    '<div class="finput-hint" style="margin:6px 0 12px">' + (transfPct() + 5) + ' % con transf.: 5 % con tarjeta y ' + (transfPct() + 5) + ' % justo pagando por transferencia (se suman). El 10 % se multiplica con la transferencia: ' +
+      String(Math.round((1 - 0.9 * (1 - transfPct() / 100)) * 1000) / 10).replace('.', ',') + ' %.</div>' +
   '</div>';
 }
 /* ── SOLO UNA MADERA (23-11-2026, pedido del usuario) ──
@@ -3920,7 +3937,7 @@ function dctoBannerHtml(cli) {
   var hasta = Date.now() <= vence.getTime()
     ? '<span class="dcto-hasta">válido hasta el ' + ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][vence.getDay()] + ' ' + vence.getDate() + ' de ' + vence.toLocaleDateString('es-CL', {month:'long'}) + '</span>' : '';
   return '<div class="dcto-banda">' + (nom ? escA(nom) + ', esta' : 'Esta') + ' cotización tiene un' +
-    '<span class="dcto-big">descuento especial de ' + dctoEsp + '%</span>' + hasta + '</div>';
+    '<span class="dcto-big">' + (dctoSumaAplica() ? 'descuento de ' + (transfPct() + dctoEsp) + '% pagando por transferencia' : 'descuento especial de ' + dctoEsp + '%') + '</span>' + hasta + '</div>';
 }
 /* fuente de verdad = lo que el cliente ve en el selector; la variable se usa de respaldo
    (antes se desincronizaba al reentrar al producto o al abrir la cotización desde un link) */
@@ -4373,11 +4390,13 @@ function recBadgeText() {
    sumados, no encadenados, igual que lo que dice la página de la cuenta. */
 function transferFactor(){
   var t = VALORES.generales.transferencia * 100;   /* % de dcto por transferencia, editable en el Manual */
-  return b2bAplica() ? (1 - (t + b2bDcto) / 100) / (1 - b2bDcto / 100) : (1 - t / 100);
+  if (b2bAplica()) return (1 - (t + b2bDcto) / 100) / (1 - b2bDcto / 100);
+  if (dctoSumaAplica()) return (1 - (t + dctoEsp) / 100) / (1 - dctoEsp / 100);   /* «10 % con transf.»: sumados */
+  return 1 - t / 100;
 }
 /* % de transferencia para textos ("Transferencia −5%"): sigue al Manual */
 function transfPct(){ return Math.round(VALORES.generales.transferencia * 100); }
-function transfLabel(){ return b2bAplica() ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : ('Transferencia −' + transfPct() + '%'); }
+function transfLabel(){ return b2bAplica() ? ('Transferencia −' + (transfPct() + b2bDcto) + '%') : dctoSumaAplica() ? ('Transferencia −' + (transfPct() + dctoEsp) + '%') : ('Transferencia −' + transfPct() + '%'); }
 /* «Cuenta empresa»: solo el vendedor la ve, en todos los productos */
 var B2B_SB_URL = 'https://padnttpgzuotxeipjrry.supabase.co';   /* Gestión: la llave solo ejecuta b2b_estado y b2b_tramo_rut */
 var B2B_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhZG50dHBnenVvdHhlaXBqcnJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzg3MDMsImV4cCI6MjA5NzQ1NDcwM30.AKtkpG1W-J6sB_QNtyYdh3n_85U1TvTxtKyPjwJwDEs';
@@ -6959,9 +6978,7 @@ function vPrecioPintar() {
   var box = document.getElementById('v-precio');
   if (!vendorMode || !box) return;
   /* el descuento puede venir de un link abierto: los botones siguen a la variable */
-  document.querySelectorAll('.dcto-op:not(.smad-op)').forEach(function(b){
-    b.classList.toggle('on', (parseInt(b.getAttribute('data-v'), 10) || 0) === dctoEsp);
-  });
+  dctoMarcarBotones();
   document.querySelectorAll('.smad-op').forEach(function(b){
     b.classList.toggle('on', (b.getAttribute('data-v') || '') === soloMad);
   });
@@ -8881,7 +8898,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
   if (smW && soloMadTotal) { bajo = alto = soloMadTotal; nombreProd = (nombreProd || PNAME[prod]) + ' en ' + smW.n; }
   if (dctoPct() > 0) { bajo = dctoMonto(bajo); alto = dctoMonto(alto); }   /* el mensaje lleva el precio rebajado */
   var detalle = (bajo && alto) ? ('\n\nProducto: ' + (nombreProd || PNAME[prod]) + (det ? ' (' + det + ')' : '') + '\nPrecio: ' + fmt(bajo) + (Math.round(alto) !== Math.round(bajo) ? ' – ' + fmt(alto) : '') + ' con IVA' +
-    (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
+    (b2bAplica() ? ' (con el descuento de mi cuenta empresa, ' + b2bDcto + '%)' : dctoSumaAplica() ? ' (con tarjeta; con el descuento de ' + (transfPct() + dctoEsp) + '% pagando por transferencia: ' + fmt(Math.round(bajo * transferFactor())) + (Math.round(alto) !== Math.round(bajo) ? ' – ' + fmt(Math.round(alto * transferFactor())) : '') + ')' : dctoEsp > 0 ? ' (con descuento especial de ' + dctoEsp + '%)' : '')) : '';
   var link = '\n\nVer detalle: ' + (linkLimpio() || buildShareUrl(SHARE_URL));
   var msg = 'Hola, quiero avanzar con mi cotización ' + qnum + ' de Casa Zaru.' + detalle + link + '\n\n¿Me ayudas con los detalles?';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);
@@ -9173,6 +9190,7 @@ function getShareData(conValores) {
     if (b2bAplica()) { d.b2b = b2bDcto; if (b2bEmp && b2bEmp.nombre) d.ben = b2bEmp.nombre; }
     profAlLink(d);
     if (dctoEsp > 0) d.de = dctoEsp;   /* descuento especial del vendedor */
+    if (dctoSumaAplica()) d.ds = 1;    /* «10 % con transf.» (27-11-2026) */
     if (stkComuna) d.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };
     if (waNumero() === WA_ANUNCIOS) d.wa = WA_ANUNCIOS;
     return d;
@@ -9203,6 +9221,7 @@ function getShareDataProducto(conValores) {
   }
   profAlLink(data);
   if (dctoEsp > 0) data.de = dctoEsp;    /* y el descuento especial del vendedor */
+  if (dctoSumaAplica()) data.ds = 1;     /* sumado a la transferencia (27-11-2026) */
   if (soloMad) data.sm = soloMad;        /* y si se cotizó en una sola madera */
   if (stkComuna) data.com = { c: stkComuna.c, ciudad: stkComuna.ciudad, cod: stkComuna.cod };   /* comuna de entrega (envío Starken) */
   if (prod === 'peldano') data.esp = getPeldanoEspesor();   /* sin esto el link volvía siempre a 4 cm */
@@ -9316,6 +9335,7 @@ function restoreFromData(d) {
   profRut = profModo && d.pro ? rutValido(d.pro.r) : '';
   if (profModo && profRut && vendorMode) b2bBuscar(profRut);
   dctoEsp = dctoValido(d.de);       /* descuento especial: solo 5 o 10, o nada */
+  dctoSuma = (d.ds === 1 || d.ds === '1') && dctoEsp === 5;   /* «10 % con transf.»: solo con el 5 */
   soloMad = soloMadValido(d.sm);    /* una sola madera: solo una clave de MADERA_FOTOS */
   /* solo se acepta el número de anuncios: el link lo escribe cualquiera con la llave pública */
   waDestino = (d.wa === WA_ANUNCIOS) ? WA_ANUNCIOS : null;
@@ -9761,7 +9781,7 @@ async function saveQuote(data, lineas) {
       ['total_bajo','total_medio','total_alto'].forEach(function(k){ if (payload[k]) payload[k] = Math.round(payload[k] * fdS); });
       payload.origen = Object.assign({}, payload.origen || {}, b2bAplica()
         ? { cuenta_empresa: { pct: b2bDcto, rut: b2bEmp ? b2bEmp.rut : '', nombre: b2bEmp ? b2bEmp.nombre : '' } }
-        : { dcto_especial: dctoEsp });
+        : (dctoSumaAplica() ? { dcto_especial: dctoEsp, dcto_suma: true } : { dcto_especial: dctoEsp }));
     }
     /* la registra el asistente (solo la cuenta hola@ puede marcarla: lo cuida la base) */
     if (vendorMode && porClaude) payload.registrada_por = 'claude';
