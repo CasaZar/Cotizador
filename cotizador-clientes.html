@@ -13149,9 +13149,9 @@ function pendGuardar(a){
   PEND_MEM = a;
   try { localStorage.setItem(PEND_KEY, JSON.stringify(a)); } catch(e){}
 }
-function pendAgregar(id, nombre, canal){
+function pendAgregar(id, nombre, canal, camp){
   var a = pendLeer().filter(function(p){ return p.id !== id; });
-  a.push({ id:id, nombre:nombre, canal:canal, ts:Date.now() });
+  a.push({ id:id, nombre:nombre, canal:canal, camp:camp || '', ts:Date.now() });   /* camp: id de la campaña (varias activas, 27-11-2026) */
   pendGuardar(a);
 }
 function pendQuitar(id){ pendGuardar(pendLeer().filter(function(p){ return p.id !== id; })); }
@@ -13166,9 +13166,10 @@ function pendPreguntar(){
   var x = COTIS[p.id];
   var quien = escA(p.nombre || (x && x.cliente) || 'este cliente');
   var canal = p.canal === 'mail' ? 'el correo' : (p.canal === 'ig' ? 'Instagram' : 'WhatsApp');
-  if (p.canal === 'camp') {   /* campaña peldaños: solo el sí o el no */
+  if (p.canal === 'camp') {   /* campaña: solo el sí o el no */
+    var pcp = (p.camp && campPorId(p.camp)) || CAMPANA;
     pModal('<h3>¿Le escribiste a '+quien+'?</h3>'+
-      '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña «'+escA(CAMPANA ? CAMPANA.nombre : '')+'». Queda anotado y no se vuelve a pedir.</div>'+
+      '<div class="seg-empty" style="text-align:center;padding:0 4px 14px">Campaña «'+escA(pcp ? pcp.nombre : '')+'». Queda anotado y no se vuelve a pedir.</div>'+
       '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',true)">Sí, ya le escribí</button>'+
       '<button class="mbtn" onclick="pendConfirmar(\''+p.id+'\',false)">No, todavía no</button>'+
       '<button class="mbtn cancel" onclick="pClose()">Preguntar después</button>');
@@ -13219,9 +13220,9 @@ function pendResponder(id, resp){
 }
 function pendConfirmar(id, si){
   pClose();
-  var esCamp = pendLeer().some(function(p){ return p.id === id && p.canal === 'camp'; });
+  var pc = pendLeer().filter(function(p){ return p.id === id && p.canal === 'camp'; })[0];
   pendQuitar(id);
-  if (si) { if (esCamp) campanaAnotar(id); else segHecho(id); }
+  if (si) { if (pc) campanaAnotar(id, pc.camp); else segHecho(id); }
   else { renderVistaActual(); showToast('Sin marcar — queda pendiente para hoy', true); }
   setTimeout(pendPreguntar, 400);   /* si abrió varios chats, sigue con el próximo */
 }
@@ -13246,8 +13247,13 @@ function pendConfirmar(id, si){
    la pestaña Campañas (activar, pausar, terminar, reactivar como ronda).
    CAMPANA = la que está activa, o null. La de octubre quedó sembrada como
    «terminada» con la misma nota, así que sus resultados se siguen viendo. */
+/* Desde el 27-11-2026 (Black Friday junto a peldaños ronda 2) puede haber
+   VARIAS activas a la vez (migración 0019 del Cotizador quita el índice de
+   una sola). Cada una pinta su bloque en Seguimiento; un cliente sale en una
+   sola (la que termina antes). CAMPANA queda como la primera, para lo viejo. */
 var CAMPANAS = [];        /* todas, sin las borradas, la más nueva primero */
-var CAMPANA = null;       /* la activa */
+var CAMPANAS_ACT = [];    /* las activas, la que termina antes primero */
+var CAMPANA = null;       /* la primera activa */
 var CAMP_TABLA_OK = null; /* false si la tabla no existe todavía (falta la 0010) */
 function campNorm(c){
   var f = (c.filtros && typeof c.filtros === 'object') ? c.filtros : {};
@@ -13261,11 +13267,26 @@ async function campCargar(){
     CAMP_TABLA_OK = !r.error;
     CAMPANAS = (!r.error && r.data) ? r.data.map(campNorm) : [];
   } catch(e){ CAMP_TABLA_OK = false; CAMPANAS = []; }
-  CAMPANA = CAMPANAS.filter(function(c){ return c.estado === 'activa'; })[0] || null;
+  CAMPANAS_ACT = CAMPANAS.filter(function(c){ return c.estado === 'activa'; })
+    .sort(function(a, b){ return String(a.hasta || '9999').localeCompare(String(b.hasta || '9999')) || (a.id - b.id); });
+  CAMPANA = CAMPANAS_ACT[0] || null;
 }
-function campanaActiva(){
-  if (!CAMPANA || !CAMPANA.desde || !CAMPANA.hasta) return false;
-  var h = hoyISO(); return h >= CAMPANA.desde && h <= CAMPANA.hasta;
+function campanaActiva(cp){
+  cp = cp || CAMPANA;
+  if (!cp || !cp.desde || !cp.hasta) return false;
+  var h = hoyISO(); return h >= cp.desde && h <= cp.hasta;
+}
+/* productos de la campaña: filtros.productos (varios, 27-11-2026) o la
+   columna producto (una sola). Se busca dentro de cotizaciones.producto, así
+   que «cubierta» también toma «cubierta+vidrios». */
+function campProductos(cp){
+  var f = (cp && cp.filtros) || {};
+  if (Array.isArray(f.productos) && f.productos.length) return f.productos.slice();
+  return cp && cp.producto && cp.producto !== 'varios' ? [String(cp.producto)] : [];
+}
+function campProdOk(prods, q){
+  var p = String((q && q.producto) || '');
+  return prods.some(function(k){ return k && p.indexOf(k) !== -1; });
 }
 /* el historial de un cliente (todas sus cotizaciones) tiene esta nota */
 function campTieneNota(qs, nota){
@@ -13276,36 +13297,50 @@ function campTieneNota(qs, nota){
 function campanaClientes(cp){
   cp = cp || CAMPANA;
   if (!cp) return [];
-  var f = cp.filtros || {}, prod = String(cp.producto || '');
+  var f = cp.filtros || {}, prods = campProductos(cp);
   var excl = Array.isArray(f.excluir_notas) ? f.excluir_notas : [];
+  var sacarSi = Array.isArray(f.sacar_si_cotizo) ? f.sacar_si_cotizo : [];
   var map = {};
   (dashRows || []).forEach(function(x){ if (x.eliminada) return; var k = clientKey(x); (map[k] = map[k] || []).push(x); });
   var out = [];
   Object.keys(map).forEach(function(k){
     var qs = map[k];
-    var pel = qs.filter(function(q){ return prod && String(q.producto || '').indexOf(prod) !== -1; })
+    var pel = qs.filter(function(q){ return campProdOk(prods, q); })
                 .sort(function(a,b){ return new Date(b.fecha_creacion || 0) - new Date(a.fecha_creacion || 0); });
     if (!pel.length) return;
     if (f.sacar_compraron !== false && pel.some(function(q){ return q.estado === 'ganado'; })) return;
+    /* p. ej. Black Friday: quien cotizó peldaños ya está en su campaña (27-11-2026) */
+    if (sacarSi.length && qs.some(function(q){ return campProdOk(sacarSi, q); })) return;
+    /* solo las cotizaciones desde esa fecha (Black Friday: las del mes) */
+    if (f.cotizo_desde) pel = pel.filter(function(q){ return fechaBaseISO(q.fecha_creacion) >= f.cotizo_desde; });
+    if (!pel.length) return;
     var x = pel[0];
     var mot = String(x.motivo_perdida || '');
     if (/no funciona/i.test(mot)) return;                                   /* número malo: siempre fuera */
     if (f.sacar_otro_lado !== false && /otro lado/i.test(mot)) return;
     if (f.sacar_desistio && /desisti/i.test(mot)) return;
     if (!f.incluir_cerradas && (x.estado || 'enviada') !== 'enviada') return;
+    /* monto mínimo de la cotización (opción media), aparte para las cerradas */
+    var abierta = (x.estado || 'enviada') === 'enviada';
+    var minimo = abierta ? (Number(f.monto_min) || 0) : (Number(f.monto_min_cerradas) || Number(f.monto_min) || 0);
+    if (minimo && (Number(x.total_medio) || 0) < minimo) return;
     if (!waPhone(x.contacto)) return;
     /* p. ej. peldaños de octubre: quien cotizó con el precio nuevo ya puesto no tenía descuento que recibir */
     if (f.solo_antes_de && fechaBaseISO(x.fecha_creacion) >= f.solo_antes_de) return;
     if (excl.some(function(n){ return campTieneNota(qs, n); })) return;
     var hecho = campTieneNota(qs, cp.nota);
-    if (!hecho && mensajesSinResp(qs) >= TOPE_SIN_RESP) return;   /* 2 sin respuesta: fuera de toda campaña */
-    out.push({ x:x, qs:qs, hecho:hecho, abierta:(x.estado || 'enviada') === 'enviada' });
+    /* 2 sin respuesta: fuera de la campaña, salvo que la campaña pida
+       mostrarlos aparte para evaluarlos (mostrar_tope, 27-11-2026). Igual no
+       llevan botón de WhatsApp para el vendedor: ver campanaBotonTope. */
+    var tope = !hecho && mensajesSinResp(qs) >= TOPE_SIN_RESP;
+    if (tope && !f.mostrar_tope) return;
+    out.push({ x:x, qs:qs, hecho:hecho, abierta:abierta, tope:tope, cp:cp });
   });
   /* entre los cerrados, primero los que dijeron «caro» (el descuento es para
      ellos) y al final los que desistieron (26-10-2026) */
   var rango = function(c){ var t = campanaTipo(c); return t === 'caro' ? 0 : t === 'fuera' ? 2 : 1; };
   out.sort(function(a,b){
-    return (a.hecho - b.hecho) || (b.abierta - a.abierta) || (rango(a) - rango(b)) ||
+    return (a.tope - b.tope) || (a.hecho - b.hecho) || (b.abierta - a.abierta) || (rango(a) - rango(b)) ||
            String(b.x.fecha_creacion || '').localeCompare(String(a.x.fecha_creacion || ''));
   });
   return out;
@@ -13329,14 +13364,24 @@ function campanaMsg(x, cp){
   });
   return waLimpio(t);
 }
+/* un bloque por campaña activa (27-11-2026); el cliente que ya salió en una
+   no se repite en la siguiente */
 function campanaHtml(){
-  if (!campanaActiva()) return '';
-  var L = campanaClientes();
+  var vistos = {}, html = '';
+  CAMPANAS_ACT.forEach(function(cp){ if (campanaActiva(cp)) html += campanaBloqueHtml(cp, vistos); });
+  return html;
+}
+function campanaBloqueHtml(CAMPANA, vistos){
+  var L = campanaClientes(CAMPANA).filter(function(c){ var k = clientKey(c.x); if (vistos[k]) return false; vistos[k] = true; return true; });
   /* con un filtro puesto la campaña también se filtra (27-10-2026): con
      «Nunca contactados» seguía mostrando sus 109 clientes, todos ya escritos */
   if (rapActivo() || omniRaw) L = L.filter(function(c){ return applyDashFilters([c.x]).length > 0; });
   if (!L.length) return '';
+  /* los del tope (si la campaña los muestra) van aparte, cerrados, para evaluarlos */
+  var T = L.filter(function(c){ return c.tope; });
+  L = L.filter(function(c){ return !c.tope; });
   var pend = L.filter(function(c){ return !c.hecho; }).length;
+  var detKey = 'campana-cerrada-' + CAMPANA.id;
   /* Cada cliente es la MISMA fila de la lista de siempre (hoyFila): al tocarla
      se abren las respuestas, las acciones y la ficha completa con su historial
      (24-10-2026, pedido del usuario). Lo único propio de la campaña es el
@@ -13345,13 +13390,21 @@ function campanaHtml(){
   /* Abierta por defecto, pero si la cerraste queda cerrada (24-10-2026): antes
      llevaba «open» fijo y se volvía a abrir cada vez que se repintaba la
      lista, o sea al tocar cualquier cliente. */
-  var campCerrada = !!detLeer()['campana-cerrada'];
-  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' ontoggle="campRecordar(this)"><summary>Campaña · ' + escA(CAMPANA.nombre) + ' · ' + pend + ' por escribir' +
+  var campCerrada = !!detLeer()[detKey];
+  var topeHtml = '';
+  if (T.length){
+    var topeKey = 'campana-tope-abierta-' + CAMPANA.id;
+    topeHtml = '<details class="hz-pleg"' + (detLeer()[topeKey] ? ' open' : '') + ' data-det="' + topeKey + '" data-inv="1" ontoggle="campRecordar(this)" style="margin-top:10px">' +
+      '<summary>✋ Con 2 mensajes sin respuesta · para evaluar<span class="hz-pleg-n">' + T.length + '</span></summary>' +
+      '<div class="hz-pleg-nota">Calzan con la campaña, pero ya llevan 2 mensajes nuestros sin respuesta. No tienen botón de WhatsApp: si se decide escribirles, lo hace el dueño con «Escribir igual».</div>' +
+      '<div class="hz-lista">' + T.map(function(c){ return hoyFila(campanaGrupo(c), 'camp'); }).join('') + '</div></details>';
+  }
+  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' data-det="' + detKey + '" ontoggle="campRecordar(this)"><summary>Campaña · ' + escA(CAMPANA.nombre) + ' · ' + pend + ' por escribir' +
     '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
     '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario, hasta el ' + escA(fmtFechaCorta(CAMPANA.hasta)) + '. ' +
     (CAMPANA.oferta ? 'Se ofrece <strong>' + escA(CAMPANA.oferta) + '</strong>. ' : '') +
     escA(CAMPANA.instruccion || '') + '</div>' +
-    '<div class="hz-lista">' + filas + '</div></details>';
+    '<div class="hz-lista">' + filas + '</div>' + topeHtml + '</details>';
 }
 /* En qué quedó el cliente, en palabras (24-10-2026). Antes decía «abierta» o
    «cerrada» según el estado de la cotización, y un cliente dormido (6 mensajes
@@ -13405,22 +13458,39 @@ function campanaGrupo(c){
 function campanaBoton(c, clase){
   var x = c.x, nom = String(x.cliente || '').replace(/'/g, ''), esperando = pendTiene(x.id);
   if (c.hecho) return '<span class="' + clase + ' sec" style="cursor:default">✓ Escrito</span>';
+  var cid = String((c.cp && c.cp.id) || '');
   return '<a class="' + clase + ' wa' + (esperando ? ' esperando' : '') + '" target="_blank" ' +
-    'onclick="event.stopPropagation();pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\');renderVistaActual();" ' +
-    'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x)) + '">' +
+    'onclick="event.stopPropagation();pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\',\'' + escA(cid) + '\');renderVistaActual();" ' +
+    'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x, c.cp)) + '">' +
     (esperando ? '⏳ ¿Le escribiste?' : '💬 WhatsApp') + '</a>';
 }
+/* cliente de campaña en el tope de 2 sin respuesta (27-11-2026): el aviso de
+   siempre y, solo para el dueño, «Escribir igual» con confirmación */
+function campanaBotonTope(g, x, clase){
+  var c = g.camp;
+  if (g._sinResp == null) g._sinResp = mensajesSinResp(g.quotes);
+  if (pendTiene(x.id)) return campanaBoton(c, clase);
+  if (!esDueno()) return botonTope(g, x, clase);
+  /* dos botones, como el aviso de siempre (tres no caben a 390 px) */
+  var nom = String(x.cliente || '').replace(/'/g, ''), cid = String((c.cp && c.cp.id) || '');
+  return '<a class="' + clase + ' sec tope" target="_blank" title="' + g._sinResp + ' mensajes nuestros seguidos sin respuesta" ' +
+    'onclick="event.stopPropagation();if(!confirm(\'Lleva ' + g._sinResp + ' mensajes sin respuesta. ¿Escribirle igual con el mensaje de la campaña?\')){event.preventDefault();return false;}pendAgregar(\'' + x.id + '\',\'' + escA(nom) + '\',\'camp\',\'' + escA(cid) + '\');renderVistaActual();" ' +
+    'href="https://wa.me/' + waPhone(x.contacto) + '?text=' + encodeURIComponent(campanaMsg(x, c.cp)) + '">✋ ' + g._sinResp + ' · Escribir igual</a>' +
+    '<button class="' + clase + ' sec" onclick="event.stopPropagation();segRespondio(\'' + x.id + '\')" title="El cliente escribió: se anota y vuelve a tener botón de WhatsApp">Me contestó</button>';
+}
 function campRecordar(el){
-  var a = detLeer();
-  if (el.open) delete a['campana-cerrada']; else a['campana-cerrada'] = 1;
+  var a = detLeer(), k = el.getAttribute('data-det') || 'campana-cerrada';
+  var marcar = el.getAttribute('data-inv') ? el.open : !el.open;   /* data-inv: se recuerda abierto (lo normal es cerrado) */
+  if (marcar) a[k] = 1; else delete a[k];
   DET_MEM = a;
   try { localStorage.setItem(DET_KEY, JSON.stringify(a)); } catch(e){}
 }
-async function campanaAnotar(id){
-  var x = COTIS[id]; if (!x || !CAMPANA) return;
+async function campanaAnotar(id, campId){
+  var cp = (campId && campPorId(campId)) || CAMPANA;
+  var x = COTIS[id]; if (!x || !cp) return;
   var hist = Array.isArray(x.seg_historial) ? x.seg_historial.slice() : [];
-  hist.push({ etapa:0, fecha:hoyISO(), nota:CAMPANA.nota });
-  var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña «' + CAMPANA.nombre + '»');
+  hist.push({ etapa:0, fecha:hoyISO(), nota:cp.nota });
+  var ok = await segSave(id, { seg_historial:hist }, 'Anotado en la campaña «' + cp.nombre + '»');
   if (ok) registrarToque(x, 0, 'cadencia');
 }
 /* ── PESTAÑA CAMPAÑAS (21-11-2026) ──
@@ -13439,7 +13509,7 @@ async function campanaAnotar(id){
 var CAMP_SEL = null, CAMP_EDIT = null;
 function campPorId(id){ return CAMPANAS.filter(function(c){ return String(c.id) === String(id); })[0] || null; }
 function campRes(cp){
-  var prod = String(cp.producto || ''), map = {};
+  var prods = campProductos(cp), map = {};
   (dashRows || []).forEach(function(x){ if (x.eliminada) return; var k = clientKey(x); (map[k] = map[k] || []).push(x); });
   var R = { escritos:0, respondieron:0, recotizados:0, compraron:[], venta:0, abiertos:[] };
   Object.keys(map).forEach(function(k){
@@ -13451,7 +13521,7 @@ function campRes(cp){
     });
     if (!f0) return;
     R.escritos++;
-    var delProd = qs.filter(function(q){ return String(q.producto || '').indexOf(prod) !== -1; });
+    var delProd = qs.filter(function(q){ return campProdOk(prods, q); });
     var ganadas = delProd.filter(function(q){ return q.estado === 'ganado' && fechaBaseISO(q.fecha_concretada || q.fecha_creacion) >= f0; });
     var recot = delProd.some(function(q){ return q.fecha_creacion && fechaBaseISO(q.fecha_creacion) >= f0; });
     var anotada = qs.some(function(q){
@@ -13534,7 +13604,7 @@ function renderCampanas(){
     html += '<div class="cp-btns">' + campBotones(c, false) + '</div></div>';
   });
   if (esDueno()) html += campBtn('＋ Nueva campaña', 'campNueva()', 'pri');
-  html += '<p class="cp-nota">Solo una campaña puede estar activa a la vez. Mientras dura, su bloque aparece arriba de Seguimiento con el botón de WhatsApp y su mensaje.</p></div>';
+  html += '<p class="cp-nota">Puede haber varias activas a la vez. Mientras dura, cada una aparece arriba de Seguimiento con el botón de WhatsApp y su mensaje; un cliente sale en una sola, la que termina antes.</p></div>';
   el.innerHTML = html;
 }
 function campDetalleHtml(c){
@@ -13563,7 +13633,7 @@ function campDetalleHtml(c){
   var todo = [];
   if (c.estado === 'activa'){
     var L = campanaClientes(c), pend = L.filter(function(x){ return !x.hecho; }).length;
-    if (!campanaActiva()) todo.push(hoyISO() < c.desde ? 'Parte el <b>' + escA(fmtFechaCorta(c.desde)) + '</b>: desde ese día aparece en Seguimiento.' : 'Venció el <b>' + escA(fmtFechaCorta(c.hasta)) + '</b> y ya no se muestra en Seguimiento. Termínala para cerrar sus resultados.');
+    if (!campanaActiva(c)) todo.push(hoyISO() < c.desde ? 'Parte el <b>' + escA(fmtFechaCorta(c.desde)) + '</b>: desde ese día aparece en Seguimiento.' : 'Venció el <b>' + escA(fmtFechaCorta(c.hasta)) + '</b> y ya no se muestra en Seguimiento. Termínala para cerrar sus resultados.');
     else todo.push('<b>' + pend + ' por escribir</b> de ' + L.length + '. Están arriba de Seguimiento.');
   }
   if (R.abiertos.length){
@@ -13578,8 +13648,13 @@ function campDetalleHtml(c){
   if (todo.length) html += '<div class="cp-sec">Qué hacer ahora</div><div class="cp-todo">' + todo.map(function(t){ return '<div>' + t + '</div>'; }).join('') + '</div>';
   /* cómo está armada */
   var f = c.filtros || {}, fl = [];
-  fl.push('Cotizaron: ' + escA(prodNombre(c.producto)));
+  fl.push('Cotizaron: ' + campProductos(c).map(function(p){ return escA(prodNombre(p)); }).join(', '));
+  if (f.cotizo_desde) fl.push('desde el ' + escA(fmtFechaCorta(f.cotizo_desde)));
   fl.push(f.incluir_cerradas ? 'abiertas y cerradas' : 'solo abiertas');
+  if (Number(f.monto_min)) fl.push('abiertas desde ' + escA(fmt(Number(f.monto_min))));
+  if (f.incluir_cerradas && Number(f.monto_min_cerradas)) fl.push('cerradas desde ' + escA(fmt(Number(f.monto_min_cerradas))));
+  if (Array.isArray(f.sacar_si_cotizo) && f.sacar_si_cotizo.length) fl.push('sin quien cotizó ' + f.sacar_si_cotizo.map(function(p){ return escA(prodNombre(p)); }).join(', '));
+  if (f.mostrar_tope) fl.push('los de 2 sin respuesta, aparte para evaluar');
   if (f.sacar_compraron !== false) fl.push('sin los que compraron');
   if (f.sacar_otro_lado !== false) fl.push('sin «compró en otro lado»');
   if (f.sacar_desistio) fl.push('sin «desistió»');
@@ -13602,7 +13677,10 @@ function campBorradorRonda(c){
   while (CAMPANAS.some(function(o){ return o.nota === baseNota + ' · ronda ' + n; })) n++;
   return campNorm({ id:null, estado:'borrador', nombre:base + ' · ronda ' + n, nota:baseNota + ' · ronda ' + n,
     desde:'', hasta:'', producto:c.producto, mensaje:c.mensaje || '', oferta:'', instruccion:c.instruccion || '', _de:c.nombre,
-    filtros:{ incluir_cerradas:true, sacar_compraron:true, sacar_otro_lado:true, sacar_desistio:true, solo_antes_de:'', excluir_notas:[] } });
+    filtros:{ incluir_cerradas:true, sacar_compraron:true, sacar_otro_lado:true, sacar_desistio:true, solo_antes_de:'', excluir_notas:[],
+              productos:campProductos(c), cotizo_desde:'', monto_min:Number((c.filtros || {}).monto_min) || 0,
+              monto_min_cerradas:Number((c.filtros || {}).monto_min_cerradas) || 0,
+              sacar_si_cotizo:((c.filtros || {}).sacar_si_cotizo || []).slice(), mostrar_tope:!!(c.filtros || {}).mostrar_tope } });
 }
 function campRonda(id){ var c = campPorId(id); if (!c) return; CAMP_EDIT = campBorradorRonda(c); CAMP_SEL = null; renderVistaActual(); window.scrollTo(0, 0); }
 function campNueva(){
@@ -13625,7 +13703,20 @@ function campFormHtml(){
   var chk = function(k, txt){
     return '<label class="cp-tg"><input type="checkbox"' + (f[k] ? ' checked' : '') + ' onchange="CAMP_EDIT.filtros.' + k + '=this.checked;campFormRefrescar()"> ' + txt + '</label>';
   };
-  var prodOpts = Object.keys(PNAME).map(function(k){ return '<option value="' + k + '"' + (c.producto === k ? ' selected' : '') + '>' + PNAME[k] + '</option>'; }).join('');
+  /* productos: varios a la vez (27-11-2026); y a quién sacar por haber cotizado otro */
+  if (!Array.isArray(f.productos) || !f.productos.length) f.productos = campProductos(c);
+  if (!Array.isArray(f.sacar_si_cotizo)) f.sacar_si_cotizo = [];
+  var prodChk = function(lista, txt){
+    return '<div class="fsec"><label class="flabel">' + txt + '</label><div style="display:flex;flex-wrap:wrap;gap:4px 12px">' +
+      Object.keys(PNAME).map(function(k){
+        return '<label class="cp-tg" style="margin:0"><input type="checkbox"' + (f[lista].indexOf(k) !== -1 ? ' checked' : '') +
+          ' onchange="campProdMarcar(\'' + lista + '\',\'' + k + '\',this.checked)"> ' + PNAME[k] + '</label>';
+      }).join('') + '</div></div>';
+  };
+  var num = function(lbl, k, ph){
+    return '<div class="fsec"><label class="flabel">' + lbl + '</label><input class="finput" type="number" min="0" step="1000" value="' + escA(f[k] || '') + '" placeholder="' + ph + '"' +
+      ' onchange="CAMP_EDIT.filtros.' + k + '=Number(this.value)||0;campFormRefrescar()"></div>';
+  };
   var otras = CAMPANAS.filter(function(o){ return String(o.id) !== String(c.id); });
   var excl = otras.map(function(o){
     var on = f.excluir_notas.indexOf(o.nota) !== -1;
@@ -13644,8 +13735,13 @@ function campFormHtml(){
       : inp('Nota que queda en el historial del cliente (única)', 'nota', 'text', ' maxlength="80" placeholder="Ej.: Campaña mesas"')) +
     '<div style="display:flex;gap:8px">' + inp('Desde', 'desde', 'date') + inp('Hasta', 'hasta', 'date') + '</div>' +
     '<div class="cp-sec">A quién</div>' +
-    '<div class="fsec"><label class="flabel">Cotizaron</label><select class="finput" onchange="CAMP_EDIT.producto=this.value;campFormRefrescar()">' + prodOpts + '</select></div>' +
+    prodChk('productos', 'Cotizaron') +
+    '<div class="fsec"><label class="flabel">Solo los que cotizaron desde (opcional)</label><input class="finput" type="date" value="' + escA(f.cotizo_desde || '') + '" onchange="CAMP_EDIT.filtros.cotizo_desde=this.value;campFormRefrescar()"></div>' +
+    num('Monto mínimo de la cotización abierta (opción media, opcional)', 'monto_min', 'Ej.: 500000') +
     chk('incluir_cerradas', 'Incluir cotizaciones cerradas') +
+    num('Monto mínimo si está cerrada (opcional; si no, el de arriba)', 'monto_min_cerradas', 'Ej.: 1000000') +
+    prodChk('sacar_si_cotizo', 'Sacar a quien cotizó (opcional)') +
+    chk('mostrar_tope', 'Mostrar aparte, para evaluar, a los que llevan 2 mensajes sin respuesta') +
     chk('sacar_compraron', 'Sacar a los que ya compraron') +
     chk('sacar_otro_lado', 'Sacar «compró en otro lado»') +
     chk('sacar_desistio', 'Sacar «desistió del proyecto»') +
@@ -13661,6 +13757,12 @@ function campFormHtml(){
     '<div class="cp-btns" style="margin-top:14px">' + campBtn('Guardar', 'campGuardar(false)') + campBtn('Guardar y activar', 'campGuardar(true)', 'pri') + '</div>' +
     '</div></div>';
 }
+function campProdMarcar(lista, k, on){
+  var a = (CAMP_EDIT.filtros[lista] || []).filter(function(p){ return p !== k; });
+  if (on) a.push(k);
+  CAMP_EDIT.filtros[lista] = a;
+  campFormRefrescar();
+}
 function campExcluir(nota, on){
   var a = CAMP_EDIT.filtros.excluir_notas.filter(function(n){ return n !== nota; });
   if (on) a.push(nota);
@@ -13671,7 +13773,9 @@ function campFormRefrescar(){
   if (!CAMP_EDIT) return;
   var L = campanaClientes(CAMP_EDIT);
   var el = document.getElementById('camp-calzan');
-  if (el) el.innerHTML = 'Hoy calzan <b>' + L.length + ' clientes</b>. El tope de 2 mensajes sin respuesta se respeta siempre.';
+  var nTope = L.filter(function(c){ return c.tope; }).length;
+  if (el) el.innerHTML = 'Hoy calzan <b>' + (L.length - nTope) + ' clientes</b>' +
+    (nTope ? ', más <b>' + nTope + '</b> con 2 mensajes sin respuesta que se muestran aparte, sin botón de WhatsApp para el vendedor.' : '. El tope de 2 mensajes sin respuesta se respeta siempre.');
   var pv = document.getElementById('camp-preview');
   if (pv){
     var x = L.length ? L[0].x : { cliente:'Ana', contacto:'', fecha_creacion:addDias(hoyISO(), -20) };
@@ -13694,10 +13798,16 @@ async function campGuardar(activar){
     if (igual && !confirm('El mensaje es igual al de «' + igual.nombre + '» (con su oferta y sus fechas). ¿Activarla igual?')) return;
   }
   var f = c.filtros;
-  var row = { nombre:nombre, nota:nota, desde:c.desde || null, hasta:c.hasta || null, producto:c.producto, mensaje:String(c.mensaje || ''),
+  var prods = Array.isArray(f.productos) ? f.productos.filter(function(p){ return PNAME[p]; }) : campProductos(c);
+  if (!prods.length) { showToast('Marca al menos un producto', false); return; }
+  /* uno: va en la columna producto, como siempre; varios: producto «varios» y la lista en filtros */
+  var row = { nombre:nombre, nota:nota, desde:c.desde || null, hasta:c.hasta || null, producto:prods.length === 1 ? prods[0] : 'varios', mensaje:String(c.mensaje || ''),
     oferta:String(c.oferta || '').trim() || null, instruccion:String(c.instruccion || '').trim() || null,
     filtros:{ incluir_cerradas:!!f.incluir_cerradas, sacar_compraron:f.sacar_compraron !== false, sacar_otro_lado:f.sacar_otro_lado !== false,
-              sacar_desistio:!!f.sacar_desistio, solo_antes_de:f.solo_antes_de || '', excluir_notas:f.excluir_notas.slice() } };
+              sacar_desistio:!!f.sacar_desistio, solo_antes_de:f.solo_antes_de || '', excluir_notas:f.excluir_notas.slice(),
+              productos:prods.length > 1 ? prods : [], cotizo_desde:f.cotizo_desde || '',
+              monto_min:Number(f.monto_min) || 0, monto_min_cerradas:Number(f.monto_min_cerradas) || 0,
+              sacar_si_cotizo:(f.sacar_si_cotizo || []).filter(function(p){ return PNAME[p]; }), mostrar_tope:!!f.mostrar_tope } };
   var orig = c.id ? campPorId(c.id) : null;
   if (orig && campNotaUsada(orig.nota)) delete row.nota;   /* no se cambia: ver campNotaUsada */
   var r = c.id ? await sbClient.from('campanas').update(row).eq('id', c.id).select()
@@ -13713,16 +13823,12 @@ async function campEstado(id, estado){
   var c = campPorId(id); if (!c) return;
   if (estado === 'activa'){
     if (!c.desde || !c.hasta || String(c.mensaje || '').trim().length < 20) { showToast('Para activarla faltan fechas o mensaje: edítala primero', false); return; }
-    var otra = (CAMPANA && String(CAMPANA.id) !== String(id)) ? CAMPANA : null;
-    if (otra){
-      if (!confirm('Ya está activa «' + otra.nombre + '». ¿La pauso y activo «' + c.nombre + '»?')) return;
-      var p = await sbClient.from('campanas').update({ estado:'pausada' }).eq('id', otra.id).select();
-      if (p.error || !p.data || !p.data.length){ showToast('No se pudo pausar «' + otra.nombre + '»', false); return; }
-    }
+    /* desde la 0019 pueden convivir varias activas (27-11-2026): ya no se pausa la otra */
   }
   if (estado === 'terminada' && !confirm('¿Terminar «' + c.nombre + '»? Deja de aparecer en Seguimiento; sus resultados se siguen viendo aquí.')) return;
   var r = await sbClient.from('campanas').update({ estado:estado }).eq('id', id).select();
   await campCargar();
+  if (r.error && /campanas_una_activa/.test(r.error.message || '')){ showToast('Ya hay otra activa: falta aplicar la migración 0019 del Cotizador', false); renderVistaActual(); return; }
   if (r.error || !r.data || !r.data.length){ showToast('No se pudo cambiar: ' + (r.error ? r.error.message : 'sin permiso'), false); renderVistaActual(); return; }
   CAMP_SEL = id; renderTabs(); renderVistaActual();
   showToast(estado === 'activa' ? 'Activada: aparece arriba de Seguimiento' : estado === 'pausada' ? 'Pausada' : 'Terminada', true);
@@ -13738,8 +13844,9 @@ function botonTope(g, x, clase){
 function segBotonContacto(g, x, clase){
   /* el grupo trae todas sus cotizaciones; sin grupo se juntan por cliente */
   var gT = g || { quotes:(dashRows || []).filter(function(q){ return clientKey(q) === clientKey(x); }) };
+  if (g && g.camp && g.camp.tope) return campanaBotonTope(g, x, clase);   /* campaña, en el tope: para evaluar */
   if (!pendTiene(x.id) && topeLleno(gT)) return botonTope(gT, x, clase);
-  if (g && g.camp) return campanaBoton(g.camp, clase);   /* fila o ficha de la campaña de peldaños */
+  if (g && g.camp) return campanaBoton(g.camp, clase);   /* fila o ficha de una campaña */
   var etapa = x.seg_etapa||0;
   var nom = String(x.cliente||'').replace(/'/g,'');
   /* si ya está en espera, el botón se ve apretado y lo dice */
