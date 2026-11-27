@@ -12640,6 +12640,37 @@ async function waCargar(){
     WA = { filas:filas, revs:revs };
   } catch (e) { WA = null; }
 }
+/* ── Refresco solo de «WhatsApp al día» (27-11-2026) ──
+   Las revisiones de WhatsApp corren cada hora: el panel trae lo nuevo sin que
+   César recargue la página. Cada 5 minutos y al volver a la pestaña relee
+   whatsapp_pendientes; solo repinta si algo cambió, si no hay un aviso abierto
+   y si no está escribiendo en un campo. Si repinta, conserva el scroll. */
+function waFirma(){
+  if (!WA) return '';
+  return JSON.stringify(WA.revs) + '|' + WA.filas.map(function(f){ return f.id + ':' + f.estado + ':' + (f.revision_at || ''); }).join(',');
+}
+async function waRefrescar(){
+  if (typeof sbClient === 'undefined' || !sbClient || !waPuede() || document.hidden) return;
+  if (!dashRows.length) return;                       /* el panel aún no carga */
+  var antes = waFirma();
+  var previo = WA;
+  await waCargar();
+  if (!WA) { WA = previo; return; }                    /* error de red: se queda lo que había */
+  if (waFirma() === antes) return;
+  var bg = document.getElementById('pmodal-bg');
+  var ae = document.activeElement;
+  var ocupado = (bg && !bg.classList.contains('hidden')) || (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
+  if (ocupado || (dashView !== 'seg' && dashView !== 'wa')) return;   /* se ve en el próximo repintado */
+  var y = window.scrollY;
+  renderVistaActual();
+  window.scrollTo(0, y);
+}
+(function(){
+  setInterval(waRefrescar, 5 * 60 * 1000);
+  var alVolverWA = function(){ if (!document.hidden) setTimeout(waRefrescar, 800); };
+  window.addEventListener('focus', alVolverWA);
+  document.addEventListener('visibilitychange', alVolverWA);
+})();
 /* ── Canales (23-11-2026) ──
    5558 = web y catálogo (app de WhatsApp del PC) · 0141 = anuncios (WhatsApp Web)
    · instagram = DM de Instagram (Meta Business Suite, sin número). Cada fila trae
