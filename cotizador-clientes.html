@@ -8911,7 +8911,7 @@ function whatsappCTA(bajo, alto, det, nombreProd) {
       /* la cotización especial no ofrece muestrario: suele ser otra madera y otra terminación */
       (prod === 'especial' ? '' :
       '<a href="' + urlMuest + '" target="_blank" onclick="embudoTick(\'muestrario\')"><strong>¿Quieres ver la madera antes? →</strong>' +
-        '<span>Te enviamos un muestrario a $20.000 con envío. Se descuenta de tu compra.</span></a>') +
+        '<span>Te enviamos un muestrario a $30.000 con envío. Se descuenta de tu primera compra.</span></a>') +
     '</div>' +
   '</div>' +
   '<div class="doc-acciones">' +
@@ -9143,7 +9143,7 @@ function muestrario() {
   var msg = 'Hola, me interesa recibir el muestrario de maderas de Casa Zaru.';
   var url = 'https://wa.me/' + waNumero() + '?text=' + encodeURIComponent(msg);   /* mismo chat que su cotización */
   return '<div class="muest-block">' +
-    '<p class="muest-txt">¿Quieres ver y tocar la madera antes de confirmar? Te enviamos un muestrario a <strong>$20.000 con envío incluido</strong> — ese valor se descuenta de tu compra. <a href="' + url + '" target="_blank" style="color:var(--ac);font-weight:600;text-decoration:none">Escríbenos →</a></p>' +
+    '<p class="muest-txt">¿Quieres ver y tocar la madera antes de confirmar? Te enviamos un muestrario a <strong>$30.000 con envío incluido</strong> — ese valor se descuenta de tu primera compra. <a href="' + url + '" target="_blank" style="color:var(--ac);font-weight:600;text-decoration:none">Escríbenos →</a></p>' +
   '</div>';
 }
 
@@ -10601,8 +10601,8 @@ function waMsg(x){
     /* día 3: si contestó al primero, se sigue lo que dijo; si no, un dato real
        (el plazo de fabricación) y una pregunta */
     if (muestraToque2(x))        m = resp === 'pensando'
-      ? hola + ', ¿cómo vas con la decisión?\n\nSi te sirve ver la madera antes, te puedo mandar un muestrario a $20.000 con envío incluido, y ese monto se descuenta de tu compra.\n\n¿Te lo envío?'
-      : (yaPres ? hola + ', c' : presento.trim() + '\n\nC') + 'otizaste ' + W.un + ' con nosotros y quería ofrecerte algo que ayuda harto a decidir.\n\nTe puedo mandar un muestrario de nuestras maderas a $20.000 con envío incluido, y ese monto se descuenta de tu compra.\n\n¿Te lo envío?';
+      ? hola + ', ¿cómo vas con la decisión?\n\nSi te sirve ver la madera antes, te puedo mandar un muestrario a $30.000 con envío incluido, y ese monto se descuenta de tu primera compra.\n\n¿Te lo envío?'
+      : (yaPres ? hola + ', c' : presento.trim() + '\n\nC') + 'otizaste ' + W.un + ' con nosotros y quería ofrecerte algo que ayuda harto a decidir.\n\nTe puedo mandar un muestrario de nuestras maderas a $30.000 con envío incluido, y ese monto se descuenta de tu primera compra.\n\n¿Te lo envío?';
     else if (resp === 'fotos')   m = hola + ', ¿pudiste ver las fotos? Si quieres ver otra madera u otro tono, dime cuál y te la mando.';
     else if (resp === 'medidas') m = hola + ', ¿ya tienes las medidas definitivas? Me las mandas por acá y te actualizo la cotización al tiro.';
     else if (resp === 'pensando')m = hola + ', ¿cómo vas con la decisión? Si hay algo que te hace dudar, la madera, el precio o el plazo, dime y lo vemos.';
