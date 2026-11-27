@@ -13410,7 +13410,7 @@ function campPorEscribir(){
     if (!campanaActiva(cp)) return;
     campanaClientes(cp).forEach(function(c){
       var k = clientKey(c.x); if (vistos[k]) return; vistos[k] = true;
-      if (!c.hecho && !c.tope) n++;
+      if (!c.hecho) n++;   /* los del tope también: se les puede escribir (27-11-2026) */
     });
   });
   return n;
@@ -13442,14 +13442,15 @@ function campanaBloqueHtml(CAMPANA, vistos){
   var campCerrada = !!detLeer()[detKey];
   var topeHtml = '';
   if (T.length){
-    var topeKey = 'campana-tope-abierta-' + CAMPANA.id;
-    topeHtml = '<details class="hz-pleg"' + (detLeer()[topeKey] ? ' open' : '') + ' data-det="' + topeKey + '" data-inv="1" ontoggle="campRecordar(this)" style="margin-top:10px">' +
-      '<summary>✋ Con 2 mensajes sin respuesta · para evaluar<span class="hz-pleg-n">' + T.length + '</span></summary>' +
-      '<div class="hz-pleg-nota">Calzan con la campaña, pero ya llevan 2 mensajes nuestros sin respuesta. No tienen botón de WhatsApp: si se decide escribirles, lo hace el dueño con «Escribir igual».</div>' +
+    /* abierto por defecto y se les puede escribir (27-11-2026); si lo cierras, queda cerrado */
+    var topeKey = 'campana-tope-cerrada-' + CAMPANA.id;
+    topeHtml = '<details class="hz-pleg"' + (detLeer()[topeKey] ? '' : ' open') + ' data-det="' + topeKey + '" ontoggle="campRecordar(this)" style="margin-top:10px">' +
+      '<summary>✋ Con 2 mensajes sin respuesta<span class="hz-pleg-n">' + T.length + '</span></summary>' +
+      '<div class="hz-pleg-nota">Calzan con la campaña, pero ya llevan 2 mensajes nuestros sin respuesta. Se les puede escribir con «Escribir igual»: antes de abrir WhatsApp sale el aviso.</div>' +
       '<div class="hz-lista">' + T.map(function(c){ return hoyFila(campanaGrupo(c), 'camp'); }).join('') + '</div></details>';
   }
-  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' data-det="' + detKey + '" ontoggle="campRecordar(this)"><summary>Campaña · ' + escA(CAMPANA.nombre) + ' · ' + pend + ' por escribir' +
-    '<span class="hz-pleg-n">' + L.length + ' clientes</span></summary>' +
+  return '<details class="hz-pleg hz-camp"' + (campCerrada ? '' : ' open') + ' data-det="' + detKey + '" ontoggle="campRecordar(this)"><summary>Campaña · ' + escA(CAMPANA.nombre) + ' · ' + (pend + T.filter(function(c){ return !c.hecho; }).length) + ' por escribir' +
+    '<span class="hz-pleg-n">' + (L.length + T.length) + ' clientes</span></summary>' +
     '<div class="hz-pleg-nota">Campaña aparte de tu seguimiento diario, hasta el ' + escA(fmtFechaCorta(CAMPANA.hasta)) + '. ' +
     (CAMPANA.oferta ? 'Se ofrece <strong>' + escA(CAMPANA.oferta) + '</strong>. ' : '') +
     escA(CAMPANA.instruccion || '') + '</div>' +
@@ -13519,7 +13520,8 @@ function campanaBotonTope(g, x, clase){
   var c = g.camp;
   if (g._sinResp == null) g._sinResp = mensajesSinResp(g.quotes);
   if (pendTiene(x.id)) return campanaBoton(c, clase);
-  if (!esDueno()) return botonTope(g, x, clase);
+  /* desde el 27-11-2026 cualquiera puede escribirles: solo sale el aviso
+     (antes solo el dueño, pedido del usuario) */
   /* dos botones, como el aviso de siempre (tres no caben a 390 px) */
   var nom = String(x.cliente || '').replace(/'/g, ''), cid = String((c.cp && c.cp.id) || '');
   return '<a class="' + clase + ' sec tope" target="_blank" title="' + g._sinResp + ' mensajes nuestros seguidos sin respuesta" ' +
