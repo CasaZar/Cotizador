@@ -73,6 +73,7 @@ svg.i{width:17px;height:17px;stroke:var(--cafe);fill:none;stroke-width:1.6;strok
 .ped .t{flex:1;min-width:0}.ped .t b{font-weight:500;display:block}.ped .t small{color:var(--suave);font-size:12.5px}
 .ped button{flex:none;font:500 12px Poppins;white-space:nowrap;padding:5px 10px;border-radius:12px;border:1px solid var(--linea);color:var(--cafe);background:#fff;cursor:pointer}
 .ped button.on{background:#e4ecdf;border-color:#e4ecdf;color:var(--verde)}
+.ped a.abrir{flex:none;font:500 12px Poppins;white-space:nowrap;padding:5px 10px;border-radius:12px;border:1px solid var(--linea);color:var(--cafe);background:#fff;text-decoration:none}
 .ad{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:13.5px}
 .ad .t{flex:1;min-width:0;word-break:break-word}.ad small{display:block;color:var(--suave);font-size:12px}
 .dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:5px;background:#b9b3a7}
@@ -114,6 +115,7 @@ var ICO = {
   cola: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   camara: '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/></svg>',
   parlante: '<svg class="i" viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg>',
+  capas: '<svg class="i" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg>',
   globo: '<svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>'
 };
 function fechaCorta(iso){ if (!iso) return ''; var p = String(iso).slice(0,10).split('-'); return p[2] + '-' + p[1]; }
@@ -262,6 +264,16 @@ function render(){
         '<button data-fotos="' + esc(c.num) + '"' + (on ? ' class="on"' : '') + '>' + (on ? 'Fotos pedidas' : 'Pedir fotos') + '</button></div>';
     }).join('');
     h += '<p class="nota">Pedidos que se despachan esta semana. «Pedir fotos» le avisa a Tomás para que el taller las saque antes de embalar.</p></section>';
+  }
+  /* Carruseles listos en Canva (26-11-2026): salen de Cerebro\equipo\carruseles.json vía armar-equipo.ps1. */
+  if (d.carruseles && d.carruseles.length) {
+    h += '<section class="sec"><h2>' + ICO.capas + 'Carruseles para publicar<span class="n">' + d.carruseles.length + '</span></h2>';
+    h += d.carruseles.map(function(c){
+      var ok = /^https:\/\/www\.canva\.com\//.test(c.link || '');
+      return '<div class="ped"><div class="t"><b>' + esc(c.titulo) + '</b><small>' + esc(c.detalle || '') + '</small></div>' +
+        (ok ? '<a class="abrir" href="' + esc(c.link) + '" target="_blank" rel="noopener">Abrir en Canva</a>' : '') + '</div>';
+    }).join('');
+    h += '<p class="nota">Cifras ya verificadas: no cambies números ni fuentes. Puedes mover textos, fotos y colores. Publicar lo decide Tomás.</p></section>';
   }
   var p = d.pulso;
   if (p && p.cifras && p.cifras.length) {
