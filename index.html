@@ -5298,15 +5298,17 @@ function removeVExtra(n) {
    perforación redonda son $5.000 + IVA. Solo el vendedor los ve: estas
    opciones viven en el bloque de extras, que el público no tiene. */
 var VX_TARIFAS = {
-  tenidoM2: 10000,        /* teñido, por m² de las piezas cotizadas */
+  tenidoM2: 15000,        /* teñido, por m² de las piezas cotizadas ($10.000 hasta el 27-11-2026) */
   perfLavaplatos: 14900,  /* lavaplatos / encimera de cocina */
   perfRedonda: 5950       /* redonda: llaves, enchufes, etc. */
 };
 /* m² actuales de las piezas, para la tarifa de teñido. Mismo cálculo que
    calcLive: filas lg/an/ca, y en mesa se suma la cubierta inferior del par
-   Río Bueno. Puertas y revestimiento devuelven 0: ahí va valor manual. */
+   Río Bueno. Las puertas cuentan alto × ancho × cantidad (27-11-2026: antes
+   daban 0 y el teñido quedaba sin valor, «0 m² × tarifa»). El revestimiento
+   devuelve 0: ahí va valor manual. */
 function vxM2Actual() {
-  if (!['cubierta','repisa','peldano','mesa'].includes(prod)) return 0;
+  if (!['cubierta','repisa','peldano','mesa','granero','maciza','vidrios'].includes(prod)) return 0;
   var m2 = 0;
   for (var i=1; i<=nrows; i++) {
     var lgEl=document.getElementById('lg'+i), anEl=document.getElementById('an'+i), caEl=document.getElementById('ca'+i);
